@@ -9,6 +9,8 @@ import { useReturnManagement } from '../../hooks/useReturnManagement';
 import { handleImageError } from '../../../utils/media/imageUtils';
 import { PLACEHOLDER_IMAGES } from '../../../constants/placeholderImages';
 import { WhatsAppIcon } from '../../../components/ui/WhatsAppIcon';
+import { InvoiceTemplate } from '../../../components/ui';
+import api from '../../../services/api';
 import {
   StatusBadge,
   EmptyState,
@@ -17,6 +19,7 @@ import {
   stagger,
 } from '../../components/AdminUIKit';
 import AdminExchangeDetailView from './AdminExchangeDetailView';
+import AdminCustomerProfileModal from '../../components/AdminCustomerProfileModal';
 
 const formatINR = (val) => {
   if (val === null || val === undefined || isNaN(val)) return '0';
@@ -162,6 +165,9 @@ const AdminReturnDetail = () => {
     notes: '',
   });
   const [isSubmittingSettle, setIsSubmittingSettle] = useState(false);
+  const [invoiceOrder, setInvoiceOrder] = useState(null);
+  const [loadingInvoice, setLoadingInvoice] = useState(false);
+  const [showCustomerModal, setShowCustomerModal] = useState(false);
   const confirm = useConfirm();
 
   const handleInspectionChange = (itemIndex, field, value) => {
@@ -373,9 +379,37 @@ const AdminReturnDetail = () => {
   const isCOD = request.orderId?.paymentMethod === 'cod' || request.order?.paymentMethod === 'cod';
 
   // Addresses & contacts
-  const pickupAddr = request.pickup?.address || request.orderId?.shippingAddress || {};
+  const orderShippingAddr =
+    request.orderId?.shippingAddress || request.order?.shippingAddress || {};
+  const pickupRaw =
+    request.pickup?.address && typeof request.pickup?.address === 'object'
+      ? request.pickup.address
+      : typeof request.pickup?.address === 'string'
+        ? { address: request.pickup.address }
+        : {};
+  const pickupAddr = {
+    ...orderShippingAddr,
+    ...pickupRaw,
+  };
   const rawPhone = String(request.userId?.phone || pickupAddr.phone || '').replace(/\D/g, '');
   const waPhone = rawPhone.length === 10 ? `91${rawPhone}` : rawPhone;
+
+  const customerId =
+    request.userId?._id ||
+    request.userId?.id ||
+    (typeof request.userId === 'string' && request.userId) ||
+    request.user?._id ||
+    request.user;
+
+  const resolvedCustomer = customerId
+    ? {
+        _id: customerId,
+        name: request.userId?.name || pickupAddr.name || 'Customer',
+        email: request.userId?.email || '',
+        phone: request.userId?.phone || pickupAddr.phone || '',
+        shippingAddress: pickupAddr,
+      }
+    : null;
 
   // Order link helper
   const orderIdVal = request.orderId?._id || request.orderId?.id || request.orderId;
@@ -416,6 +450,61 @@ const AdminReturnDetail = () => {
     }
   };
 
+  const handleViewInvoice = async () => {
+    // 1. If request.orderId is already populated with items and details
+    if (request.orderId && typeof request.orderId === 'object' && request.orderId.items?.length) {
+      const ord = {
+        ...request.orderId,
+        id: request.orderId.id || request.orderId._id,
+        _id: request.orderId._id || request.orderId.id,
+        orderCode:
+          request.orderId.orderCode ||
+          request.orderId.orderNumber ||
+          request.orderId._id?.slice(-8),
+        date: request.orderId.createdAt
+          ? format(new Date(request.orderId.createdAt), 'dd MMM yyyy, hh:mm a')
+          : undefined,
+        shippingAddress: request.orderId.shippingAddress || pickupAddr,
+        user: request.orderId.user || request.userId,
+      };
+      setInvoiceOrder(ord);
+      return;
+    }
+
+    // 2. Fetch full order from API
+    const targetOrderId =
+      request.orderId?._id ||
+      request.orderId?.id ||
+      (typeof request.orderId === 'string' ? request.orderId : null);
+
+    if (!targetOrderId) {
+      toast.error('No linked order found for this return');
+      return;
+    }
+
+    try {
+      setLoadingInvoice(true);
+      const res = await api.get(`/orders/${targetOrderId}`);
+      const fetchedOrder = res.data?.data || res.data?.order || res.data;
+      if (fetchedOrder) {
+        setInvoiceOrder({
+          ...fetchedOrder,
+          id: fetchedOrder.id || fetchedOrder._id || targetOrderId,
+          _id: fetchedOrder._id || fetchedOrder.id || targetOrderId,
+          shippingAddress: fetchedOrder.shippingAddress || pickupAddr,
+          user: fetchedOrder.user || request.userId,
+        });
+      } else {
+        toast.error('Order invoice could not be loaded');
+      }
+    } catch (err) {
+      console.error('Failed to load order for invoice:', err);
+      toast.error('Failed to load order invoice');
+    } finally {
+      setLoadingInvoice(false);
+    }
+  };
+
   return (
     <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6 text-left">
       {/* ─── 1. TOP HEADER (Exact OrderHeader Layout & Rounded-[4px]) ─── */}
@@ -423,57 +512,149 @@ const AdminReturnDetail = () => {
         variants={fadeUp}
         className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-6 bg-white/50 dark:bg-stone-850/50 backdrop-blur-sm p-3 sm:p-4 rounded-[4px] border border-[var(--admin-border-subtle)] shadow-sm"
       >
-        <div className="flex flex-col w-full sm:w-auto overflow-hidden">
-          {/* Row 1: Title on left, Status / Type Badges on right */}
-          <div className="flex items-center justify-between gap-3 w-full">
-            <h2 className="text-[18px] sm:text-[20px] font-bold text-[var(--admin-text-primary)] tracking-tight leading-none">
-              Return Details
-            </h2>
-            <div className="flex items-center gap-1.5 shrink-0">
-              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-[4px] shadow-2xs border bg-stone-100 text-stone-700 border-stone-200 dark:bg-stone-800 dark:text-stone-300 dark:border-stone-700">
-                Standard Return
-              </span>
+        {/* Left Column: Title and Return/Order IDs */}
+        <div className="flex flex-col w-full sm:w-auto min-w-0">
+          {/* Title Row */}
+          <div className="flex items-center justify-between gap-2.5 w-full">
+            <div className="flex items-center gap-2 min-w-0">
+              <h2 className="text-[18px] sm:text-[20px] font-bold text-[var(--admin-text-primary)] tracking-tight whitespace-nowrap leading-tight">
+                Return Details
+              </h2>
+              {request.returnType === 'exchange' && (
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-[4px] shadow-2xs border bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800 shrink-0">
+                  Exchange
+                </span>
+              )}
+            </div>
+            {/* Status badge in top-right for mobile only */}
+            <div className="sm:hidden shrink-0">
               <StatusBadge status={request.status} />
             </div>
           </div>
 
-          {/* Row 2: Return ID on left, Date Chip on right */}
-          <div className="flex items-center justify-between gap-3 w-full mt-2">
-            <span
-              className="text-[12px] sm:text-[13px] font-normal text-[var(--admin-text-secondary)] select-all truncate max-w-[180px] sm:max-w-none font-mono"
-              title={request.returnId || request._id}
-            >
-              #{request.returnId || request._id}
-            </span>
-            <span className="text-[11px] font-medium text-[var(--admin-text-secondary)] bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] px-2.5 py-0.5 rounded-[4px] shadow-2xs whitespace-nowrap shrink-0">
-              Requested on{' '}
-              {request.createdAt
-                ? format(new Date(request.createdAt), 'dd MMM yyyy, hh:mm a')
-                : 'N/A'}
-            </span>
+          {/* Row 2: IDs on Left (stacked 1 below another on mobile), Date at Right bottom on mobile */}
+          <div className="flex items-end justify-between gap-2.5 w-full mt-1 sm:mt-1.5">
+            {/* IDs: one below another on mobile, inline on laptop */}
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2 min-w-0">
+              {/* Return ID with Copy Button */}
+              <div className="flex items-center gap-1 leading-none">
+                <span
+                  className="font-mono text-[12px] sm:text-[12.5px] font-medium text-[var(--admin-text-secondary)] select-all"
+                  title={request.returnId || request._id}
+                >
+                  #{request.returnId || request._id}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const rId = request.returnId || request._id;
+                    if (rId) {
+                      navigator.clipboard.writeText(rId);
+                      toast.success('Return ID copied to clipboard');
+                    }
+                  }}
+                  className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 p-0.5 cursor-pointer transition-colors shrink-0"
+                  title="Copy Return ID"
+                >
+                  <span className="material-symbols-outlined text-[13px] sm:text-[14px] block">
+                    content_copy
+                  </span>
+                </button>
+              </div>
+
+              {/* Order ID below Return ID on mobile, inline with dot on laptop */}
+              {orderIdVal && (
+                <>
+                  <span className="text-stone-300 dark:text-stone-600 select-none text-[11px] hidden sm:inline">
+                    •
+                  </span>
+                  <Link
+                    to={`/admin/orders/${orderIdVal}`}
+                    className="font-mono text-[11.5px] sm:text-[12px] text-[var(--admin-accent)] hover:underline inline-flex items-center gap-1 font-medium truncate leading-none"
+                    title="View Original Order"
+                  >
+                    <span className="material-symbols-outlined text-[13px]">shopping_bag</span>
+                    <span>Order #{orderCodeVal}</span>
+                  </Link>
+                </>
+              )}
+            </div>
+
+            {/* Date Chip: on mobile aligned to the right bottom */}
+            <div className="sm:hidden shrink-0 self-end">
+              <span className="text-[10.5px] font-medium text-[var(--admin-text-secondary)] bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] px-2 py-0.5 rounded-[4px] shadow-2xs whitespace-nowrap flex items-center gap-1">
+                <span className="material-symbols-outlined text-[12px] text-[var(--admin-text-tertiary)] shrink-0">
+                  schedule
+                </span>
+                <span>
+                  {request.createdAt
+                    ? format(new Date(request.createdAt), 'dd MMM yyyy, hh:mm a')
+                    : 'N/A'}
+                </span>
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Action Buttons: Back, WhatsApp */}
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto mt-2 sm:mt-0 shrink-0">
-          <button
-            onClick={() => navigate('/admin/returns')}
-            className="admin-btn admin-btn-outline flex-1 sm:flex-none h-10 px-3 sm:px-5 !rounded-[4px] text-[12px] sm:text-[13px] font-bold shadow-sm min-w-max cursor-pointer"
-          >
-            <span className="material-symbols-outlined text-[18px]">arrow_back</span>
-            Back to Returns
-          </button>
-          {waPhone && (
-            <a
-              href={`https://wa.me/${waPhone}?text=Hi%20${encodeURIComponent(pickupAddr.name || request.userId?.name || 'Customer')},%20regarding%20your%20Return%20Request%20#${encodeURIComponent(request.returnId || request._id)}:`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="h-10 px-3 sm:px-5 rounded-[4px] flex-1 sm:flex-none flex items-center justify-center gap-2 bg-[#25D366] text-white hover:bg-[#128C7E] font-bold text-[12px] sm:text-[13px] transition-colors shadow-sm min-w-max"
+        {/* Right Column: Status & Date (above), Buttons (below) on laptop */}
+        <div className="flex flex-col sm:items-end w-full sm:w-auto mt-2 sm:mt-0 shrink-0 gap-1.5 sm:gap-2">
+          {/* On laptop: Status Badge on top, Date chip directly below it */}
+          <div className="hidden sm:flex flex-col items-end gap-1">
+            <StatusBadge status={request.status} />
+            <span className="text-[11px] font-medium text-[var(--admin-text-secondary)] bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] px-2 py-0.5 rounded-[4px] shadow-2xs whitespace-nowrap flex items-center gap-1">
+              <span className="material-symbols-outlined text-[12px] text-[var(--admin-text-tertiary)] shrink-0">
+                schedule
+              </span>
+              <span>
+                {request.createdAt
+                  ? format(new Date(request.createdAt), 'dd MMM yyyy, hh:mm a')
+                  : 'N/A'}
+              </span>
+            </span>
+          </div>
+
+          {/* Action Buttons: Back, Invoice, WhatsApp */}
+          <div className="flex items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
+            <button
+              type="button"
+              onClick={() => navigate('/admin/returns')}
+              className="admin-btn admin-btn-outline flex-1 sm:flex-none !h-9 sm:!h-10 !py-0 px-3 sm:px-4 !rounded-[4px] text-[12px] sm:text-[13px] font-bold shadow-sm min-w-max cursor-pointer inline-flex items-center justify-center gap-1.5 box-border"
             >
-              <WhatsAppIcon className="w-[16px] sm:w-[18px] h-[16px] sm:h-[18px]" />
-              WhatsApp
-            </a>
-          )}
+              <span className="material-symbols-outlined text-[17px] sm:text-[18px] leading-none">
+                arrow_back
+              </span>
+              <span>Back</span>
+            </button>
+            {orderIdVal && (
+              <button
+                type="button"
+                onClick={handleViewInvoice}
+                disabled={loadingInvoice}
+                className="admin-btn admin-btn-outline flex-1 sm:flex-none !h-9 sm:!h-10 !py-0 px-3 sm:px-4 !rounded-[4px] text-[12px] sm:text-[13px] font-bold shadow-sm min-w-max cursor-pointer inline-flex items-center justify-center gap-1.5 hover:border-[var(--admin-accent)] hover:text-[var(--admin-accent)] transition-colors box-border"
+                title="View Order Invoice"
+              >
+                {loadingInvoice ? (
+                  <span className="w-3.5 h-3.5 border-2 border-amber-600 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <span className="material-symbols-outlined text-[17px] sm:text-[18px] leading-none">
+                    receipt_long
+                  </span>
+                )}
+                <span>Invoice</span>
+              </button>
+            )}
+            {waPhone && (
+              <a
+                href={`https://wa.me/${waPhone}?text=Hi%20${encodeURIComponent(pickupAddr.name || request.userId?.name || 'Customer')},%20regarding%20your%20Return%20Request%20#${encodeURIComponent(request.returnId || request._id)}:`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="admin-btn flex-1 sm:flex-none !h-9 sm:!h-10 !py-0 px-3 sm:px-4 !rounded-[4px] text-[12px] sm:text-[13px] font-bold shadow-sm min-w-max cursor-pointer inline-flex items-center justify-center gap-1.5 bg-[#25D366] !text-white hover:!bg-[#128C7E] border border-[#25D366] hover:border-[#128C7E] transition-colors box-border"
+              >
+                <WhatsAppIcon className="w-[17px] sm:w-[18px] h-[17px] sm:h-[18px]" />
+                <span>WhatsApp</span>
+              </a>
+            )}
+          </div>
         </div>
       </motion.div>
 
@@ -574,7 +755,7 @@ const AdminReturnDetail = () => {
                         </div>
                         <div className="text-center mt-1">
                           <span
-                            className={`text-[9.5px] sm:text-[11px] font-bold uppercase tracking-wider block transition-colors leading-tight ${
+                            className={`text-[9.5px] sm:text-[11px] font-bold uppercase tracking-wider block transition-colors leading-tight whitespace-nowrap ${
                               isActive
                                 ? colors.completedText || 'text-[var(--admin-text-primary)]'
                                 : isCompleted
@@ -582,7 +763,14 @@ const AdminReturnDetail = () => {
                                   : 'text-[var(--admin-text-tertiary)]'
                             }`}
                           >
-                            {step}
+                            {step === 'Item Picked Up' ? (
+                              <>
+                                <span className="sm:hidden">Pickup</span>
+                                <span className="hidden sm:inline">Item Picked Up</span>
+                              </>
+                            ) : (
+                              step
+                            )}
                           </span>
                         </div>
                       </div>
@@ -592,8 +780,8 @@ const AdminReturnDetail = () => {
               </div>
 
               {/* Footer Quick Action Bar (Contextual buttons + stage advances) */}
-              <div className="bg-gray-50 dark:bg-stone-850 border-t border-[var(--admin-border-subtle)] px-4 sm:px-5 py-3 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-                <span className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-widest">
+              <div className="bg-gray-50 dark:bg-stone-850 border-t border-[var(--admin-border-subtle)] px-3.5 sm:px-5 py-2.5 sm:py-3.5 flex flex-row items-center justify-between gap-2.5 sm:gap-4 flex-wrap">
+                <span className="text-[10px] sm:text-[11px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-widest shrink-0">
                   Operational Actions
                 </span>
 
@@ -713,14 +901,14 @@ const AdminReturnDetail = () => {
               </div>
             </div>
 
-            {/* CARD 2: RETURNED ITEMS & QC INSPECTION (Matches OrderItems.jsx) */}
-            <div className="bg-[var(--admin-surface)] rounded-[4px] shadow-sm border border-[var(--admin-border)] overflow-hidden">
-              <div className="px-3 sm:px-5 py-3 sm:py-4 border-b border-[var(--admin-border-subtle)] bg-[var(--admin-bg-subtle)] flex items-center justify-between">
+            {/* CARD 2: RETURNED ITEMS & QC INSPECTION (Matches Lifecycle Progression style) */}
+            <div className="bg-white dark:bg-stone-900 rounded-[4px] shadow-sm border border-[var(--admin-border-subtle)] overflow-hidden">
+              <div className="px-5 py-4 border-b border-[var(--admin-border-subtle)] flex items-center justify-between">
                 <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)] flex items-center gap-2">
                   <span className="material-symbols-outlined text-[18px]">outbox</span>
-                  Returned Items & Inspection
+                  Returned Items
                 </h3>
-                <span className="text-[12px] font-bold text-[var(--admin-text-secondary)] bg-[var(--admin-surface-muted)] px-2.5 py-0.5 rounded-[4px] border border-[var(--admin-border-subtle)]">
+                <span className="text-[11px] font-semibold text-[var(--admin-text-secondary)] bg-[var(--admin-surface-muted)] px-2.5 py-0.5 rounded-[4px] border border-[var(--admin-border-subtle)]">
                   Total: {request.items?.length || 1} Item(s)
                 </span>
               </div>
@@ -732,7 +920,7 @@ const AdminReturnDetail = () => {
                   const itemTotal = itemUnit * itemQty;
 
                   return (
-                    <div key={index} className="p-3 sm:p-5 space-y-4">
+                    <div key={index} className="p-4 sm:p-5 space-y-4">
                       {/* Product Header Strip */}
                       <div className="flex gap-3 sm:gap-4 items-start">
                         <img
@@ -740,7 +928,7 @@ const AdminReturnDetail = () => {
                           alt={item.title || 'Product'}
                           onError={handleImageError}
                           onClick={() => item.imageSrc && setPreviewImage(item.imageSrc)}
-                          className="w-14 h-14 sm:w-16 sm:h-16 object-cover rounded-[4px] border border-[var(--admin-border)] shadow-2xs flex-shrink-0 cursor-pointer hover:opacity-90 transition-opacity"
+                          className="w-14 h-14 sm:w-16 sm:h-16 object-cover rounded-[4px] border border-[var(--admin-border-subtle)] shadow-2xs flex-shrink-0 cursor-pointer hover:opacity-90 transition-opacity"
                         />
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -759,7 +947,7 @@ const AdminReturnDetail = () => {
                               </span>
                             )}
                             {item.variant && (
-                              <span className="inline-block bg-[var(--admin-bg-subtle)] text-[var(--admin-text-secondary)] text-[10px] font-semibold px-2 py-0.5 rounded-[4px] border border-[var(--admin-border)]">
+                              <span className="inline-block bg-[var(--admin-bg-subtle)] text-[var(--admin-text-secondary)] text-[10px] font-semibold px-2 py-0.5 rounded-[4px] border border-[var(--admin-border-subtle)]">
                                 Variant: {item.variant}
                               </span>
                             )}
@@ -781,9 +969,11 @@ const AdminReturnDetail = () => {
                       </div>
 
                       {/* Customer Reason Quote */}
-                      <div className="p-3 rounded-[4px] bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] text-xs space-y-1">
-                        <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-bold text-[var(--admin-text-tertiary)]">
-                          <span className="material-symbols-outlined text-[13px]">help_center</span>
+                      <div className="p-3.5 rounded-[4px] bg-amber-500/5 border border-amber-500/20 text-xs space-y-1">
+                        <div className="flex items-center gap-1.5 text-[10.5px] uppercase tracking-wider font-bold text-amber-800 dark:text-amber-300">
+                          <span className="material-symbols-outlined text-[14px] text-amber-600">
+                            help_center
+                          </span>
                           Customer Return Reason:
                         </div>
                         <p className="font-semibold text-[var(--admin-text-primary)]">
@@ -809,7 +999,7 @@ const AdminReturnDetail = () => {
                                 src={img}
                                 alt="Evidence"
                                 onClick={() => setPreviewImage(img)}
-                                className="w-14 h-14 object-cover rounded-[4px] border border-[var(--admin-border)] shadow-2xs cursor-pointer hover:scale-105 transition-transform shrink-0"
+                                className="w-14 h-14 object-cover rounded-[4px] border border-[var(--admin-border-subtle)] shadow-2xs cursor-pointer hover:scale-105 transition-transform shrink-0"
                               />
                             ))}
                           </div>
@@ -819,7 +1009,7 @@ const AdminReturnDetail = () => {
                       {/* Warehouse Quality Inspection Section */}
                       <div className="pt-2">
                         {item.inspectionResult?.inspectedAt ? (
-                          <div className="p-3.5 rounded-[4px] bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] space-y-3 text-xs">
+                          <div className="p-3.5 rounded-[4px] bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] space-y-3 text-xs">
                             <div className="flex items-center justify-between pb-2 border-b border-[var(--admin-border-subtle)]">
                               <span className="font-bold text-[var(--admin-text-primary)] flex items-center gap-1.5">
                                 <span className="material-symbols-outlined text-[16px] text-emerald-600">
@@ -834,64 +1024,46 @@ const AdminReturnDetail = () => {
                               </span>
                             </div>
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                              <div className="p-2 bg-[var(--admin-surface)] rounded-[4px] border border-[var(--admin-border)]">
+                              <div className="p-2 bg-[var(--admin-surface)] rounded-[4px] border border-[var(--admin-border-subtle)]">
                                 <span className="text-[10px] text-[var(--admin-text-tertiary)] block font-medium">
                                   Original Product
                                 </span>
                                 <span
-                                  className={`font-bold flex items-center gap-1 text-[11px] mt-0.5 ${item.inspectionResult.originalProduct ? 'text-emerald-700' : 'text-red-700'}`}
+                                  className={`font-bold ${item.inspectionResult.originalProduct ? 'text-emerald-700' : 'text-red-700'}`}
                                 >
-                                  <span className="material-symbols-outlined text-[13px]">
-                                    {item.inspectionResult.originalProduct
-                                      ? 'check_circle'
-                                      : 'cancel'}
-                                  </span>
-                                  {item.inspectionResult.originalProduct ? 'Verified' : 'Missing'}
+                                  {item.inspectionResult.originalProduct ? 'Verified' : 'Failed'}
                                 </span>
                               </div>
-                              <div className="p-2 bg-[var(--admin-surface)] rounded-[4px] border border-[var(--admin-border)]">
+                              <div className="p-2 bg-[var(--admin-surface)] rounded-[4px] border border-[var(--admin-border-subtle)]">
                                 <span className="text-[10px] text-[var(--admin-text-tertiary)] block font-medium">
                                   Accessories
                                 </span>
                                 <span
-                                  className={`font-bold flex items-center gap-1 text-[11px] mt-0.5 ${item.inspectionResult.accessoriesPresent ? 'text-emerald-700' : 'text-red-700'}`}
+                                  className={`font-bold ${item.inspectionResult.accessoriesPresent ? 'text-emerald-700' : 'text-red-700'}`}
                                 >
-                                  <span className="material-symbols-outlined text-[13px]">
-                                    {item.inspectionResult.accessoriesPresent
-                                      ? 'check_circle'
-                                      : 'cancel'}
-                                  </span>
-                                  {item.inspectionResult.accessoriesPresent ? 'Present' : 'Missing'}
+                                  {item.inspectionResult.accessoriesPresent
+                                    ? 'Complete'
+                                    : 'Missing'}
                                 </span>
                               </div>
-                              <div className="p-2 bg-[var(--admin-surface)] rounded-[4px] border border-[var(--admin-border)]">
+                              <div className="p-2 bg-[var(--admin-surface)] rounded-[4px] border border-[var(--admin-border-subtle)]">
                                 <span className="text-[10px] text-[var(--admin-text-tertiary)] block font-medium">
                                   Packaging
                                 </span>
                                 <span
-                                  className={`font-bold flex items-center gap-1 text-[11px] mt-0.5 ${item.inspectionResult.packagingIntact ? 'text-emerald-700' : 'text-red-700'}`}
+                                  className={`font-bold ${item.inspectionResult.packagingIntact ? 'text-emerald-700' : 'text-red-700'}`}
                                 >
-                                  <span className="material-symbols-outlined text-[13px]">
-                                    {item.inspectionResult.packagingIntact
-                                      ? 'check_circle'
-                                      : 'cancel'}
-                                  </span>
                                   {item.inspectionResult.packagingIntact ? 'Intact' : 'Damaged'}
                                 </span>
                               </div>
-                              <div className="p-2 bg-[var(--admin-surface)] rounded-[4px] border border-[var(--admin-border)]">
+                              <div className="p-2 bg-[var(--admin-surface)] rounded-[4px] border border-[var(--admin-border-subtle)]">
                                 <span className="text-[10px] text-[var(--admin-text-tertiary)] block font-medium">
                                   Condition
                                 </span>
                                 <span
-                                  className={`font-bold flex items-center gap-1 text-[11px] mt-0.5 ${item.inspectionResult.workingCondition ? 'text-emerald-700' : 'text-red-700'}`}
+                                  className={`font-bold ${item.inspectionResult.workingCondition ? 'text-emerald-700' : 'text-red-700'}`}
                                 >
-                                  <span className="material-symbols-outlined text-[13px]">
-                                    {item.inspectionResult.workingCondition
-                                      ? 'check_circle'
-                                      : 'cancel'}
-                                  </span>
-                                  {item.inspectionResult.workingCondition ? 'Good' : 'Damaged'}
+                                  {item.inspectionResult.workingCondition ? 'Working' : 'Defective'}
                                 </span>
                               </div>
                             </div>
@@ -905,7 +1077,7 @@ const AdminReturnDetail = () => {
                             )}
                           </div>
                         ) : ['return_received', 'inspection_started'].includes(request.status) ? (
-                          <div className="p-3.5 rounded-[4px] bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] space-y-3">
+                          <div className="p-3.5 rounded-[4px] bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] space-y-3">
                             <h5 className="text-xs font-bold text-[var(--admin-text-primary)] flex items-center gap-1.5 pb-2 border-b border-[var(--admin-border-subtle)]">
                               <span className="material-symbols-outlined text-[16px] text-[var(--admin-accent)]">
                                 fact_check
@@ -973,7 +1145,7 @@ const AdminReturnDetail = () => {
                               </div>
                               <div>
                                 <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1 block">
-                                  Inspection Remarks
+                                  Inspector Observations
                                 </label>
                                 <textarea
                                   className="w-full text-xs p-2 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] outline-none focus:border-[var(--admin-accent)] resize-none"
@@ -995,11 +1167,14 @@ const AdminReturnDetail = () => {
                             </div>
                           </div>
                         ) : (
-                          <div className="py-2 text-xs text-[var(--admin-text-tertiary)] flex items-center gap-1.5 italic">
-                            <span className="material-symbols-outlined text-[16px]">
+                          <div className="p-3.5 rounded-[4px] bg-purple-500/5 border border-purple-500/15 text-xs text-purple-900 dark:text-purple-300 flex items-center gap-2 font-medium">
+                            <span className="material-symbols-outlined text-[17px] text-purple-600 shrink-0">
                               pending_actions
                             </span>
-                            Quality inspection will unlock once item is marked received at facility.
+                            <span>
+                              Quality inspection will unlock once item is marked received at
+                              facility.
+                            </span>
                           </div>
                         )}
                       </div>
@@ -1008,101 +1183,19 @@ const AdminReturnDetail = () => {
                 })}
               </div>
             </div>
-
-            {/* CARD 3: INTERNAL NOTES & AUDIT STREAM */}
-            <div className="bg-[var(--admin-surface)] rounded-[4px] shadow-sm border border-[var(--admin-border)] overflow-hidden">
-              <div className="px-3 sm:px-5 py-3 sm:py-4 border-b border-[var(--admin-border-subtle)] bg-[var(--admin-bg-subtle)] flex items-center justify-between">
-                <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)] flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[18px]">history_edu</span>
-                  Internal Notes & Audit Stream
-                </h3>
-              </div>
-              <div className="p-4 sm:p-5 space-y-4">
-                {/* Add Note Form */}
-                <form onSubmit={handleAddNote} className="space-y-2">
-                  <textarea
-                    rows="2"
-                    value={internalNote}
-                    onChange={(e) => setInternalNote(e.target.value)}
-                    placeholder="Add an internal operational note for this return..."
-                    className="w-full text-xs p-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] outline-none focus:border-[var(--admin-accent)] transition-colors resize-none"
-                  />
-                  <div className="flex justify-end">
-                    <button
-                      type="submit"
-                      disabled={!internalNote.trim()}
-                      className="admin-btn admin-btn-primary h-8 px-4 text-xs font-bold !rounded-[4px] cursor-pointer disabled:opacity-50"
-                    >
-                      Post Note
-                    </button>
-                  </div>
-                </form>
-
-                {/* Timeline / Audit Stream */}
-                <div className="border-t border-[var(--admin-border-subtle)] pt-4 space-y-3">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-text-tertiary)] block">
-                    Event History ({request.timeline?.length || 0})
-                  </span>
-                  {request.timeline && request.timeline.length > 0 ? (
-                    <div className="space-y-3">
-                      {[...request.timeline].reverse().map((event, idx) => (
-                        <div
-                          key={idx}
-                          className="flex gap-3 text-xs p-2.5 rounded-[4px] bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)]"
-                        >
-                          <div className="w-7 h-7 rounded-full bg-[var(--admin-surface)] border border-[var(--admin-border)] flex items-center justify-center shrink-0 text-[var(--admin-accent)]">
-                            <span className="material-symbols-outlined text-[14px]">
-                              {event.action?.includes('refund') ? 'payments' : 'history'}
-                            </span>
-                          </div>
-                          <div className="min-w-0 flex-1 space-y-0.5">
-                            <div className="flex items-center justify-between gap-2 flex-wrap">
-                              <span className="font-bold text-[var(--admin-text-primary)] capitalize">
-                                {event.action?.replace(/_/g, ' ') ||
-                                  event.status?.replace(/_/g, ' ') ||
-                                  'Event'}
-                              </span>
-                              <span className="text-[10px] text-[var(--admin-text-tertiary)]">
-                                {event.timestamp
-                                  ? format(new Date(event.timestamp), 'dd MMM yyyy, hh:mm a')
-                                  : ''}
-                              </span>
-                            </div>
-                            {event.description && (
-                              <p className="text-[var(--admin-text-secondary)] leading-relaxed">
-                                {event.description}
-                              </p>
-                            )}
-                            {event.note && (
-                              <p className="text-[var(--admin-text-primary)] italic bg-[var(--admin-surface)] p-1.5 rounded-[4px] border border-[var(--admin-border-subtle)] mt-1">
-                                "{event.note}"
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-[var(--admin-text-tertiary)] italic">
-                      No prior audit events recorded yet.
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* ─── RIGHT COLUMN: Settlement, Customer & Linked Order (1/3 Width Sticky) ─── */}
           <div className="xl:col-span-1 flex flex-col gap-3 sm:gap-6 lg:gap-8 sticky top-[88px]">
-            {/* CARD 1: FINANCIAL SETTLEMENT (Matches OrderSettlement.jsx) */}
-            <div className="bg-[var(--admin-surface)] rounded-[4px] shadow-sm border border-[var(--admin-border)] overflow-hidden">
-              <div className="px-3 sm:px-5 py-3 sm:py-4 border-b border-[var(--admin-border-subtle)] bg-[var(--admin-bg-subtle)] flex items-center justify-between">
+            {/* CARD 1: FINANCIAL SETTLEMENT (Matches Lifecycle Progression style) */}
+            <div className="bg-white dark:bg-stone-900 rounded-[4px] shadow-sm border border-[var(--admin-border-subtle)] overflow-hidden">
+              <div className="px-5 py-4 border-b border-[var(--admin-border-subtle)] flex items-center justify-between">
                 <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)] flex items-center gap-2">
                   <span className="material-symbols-outlined text-[18px]">account_balance</span>
                   Financial Settlement
                 </h3>
                 <span
-                  className={`text-[10px] px-2 py-0.5 rounded-[4px] font-bold uppercase tracking-wider border shadow-2xs ${
+                  className={`text-[10.5px] px-2.5 py-0.5 rounded-[4px] font-bold uppercase tracking-wider border shadow-2xs ${
                     isRefundSettled
                       ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300'
                       : 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300'
@@ -1112,7 +1205,7 @@ const AdminReturnDetail = () => {
                 </span>
               </div>
 
-              <div className="px-3 py-4 sm:p-5 space-y-4">
+              <div className="p-4 sm:p-5 space-y-4 text-xs">
                 {/* Breakdown Ledger */}
                 <div className="space-y-2 text-xs">
                   <div className="flex justify-between items-center text-[var(--admin-text-secondary)]">
@@ -1179,7 +1272,7 @@ const AdminReturnDetail = () => {
 
                 {/* Customer UPI Display if available */}
                 {upiId && (
-                  <div className="p-2.5 rounded-[4px] bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] flex items-center justify-between gap-2 text-xs">
+                  <div className="p-2.5 rounded-[4px] bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] flex items-center justify-between gap-2 text-xs">
                     <div>
                       <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-text-tertiary)] block">
                         Customer UPI ID:
@@ -1230,14 +1323,14 @@ const AdminReturnDetail = () => {
                         });
                         setIsSettleModalOpen(true);
                       }}
-                      className="w-full h-10 rounded-[4px] bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-750 text-[var(--admin-text-primary)] font-bold text-xs border border-[var(--admin-border)] shadow-2xs transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                      className="w-full h-10 rounded-[4px] bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-750 text-[var(--admin-text-primary)] font-bold text-xs border border-[var(--admin-border-subtle)] shadow-2xs transition-colors flex items-center justify-center gap-2 cursor-pointer"
                     >
                       <span className="material-symbols-outlined text-[16px]">verified</span>
                       Record Payment / Payout
                     </button>
                   </div>
                 ) : isRefundSettled ? (
-                  <div className="p-3 bg-[var(--admin-bg-subtle)] border border-emerald-200 dark:border-emerald-800 rounded-[4px] text-xs space-y-1.5">
+                  <div className="p-3.5 bg-emerald-500/5 dark:bg-emerald-950/30 border border-emerald-500/20 dark:border-emerald-800/40 rounded-[4px] text-xs space-y-1.5">
                     <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-bold">
                       <span className="material-symbols-outlined text-[16px]">check_circle</span>
                       Payout Registered: ₹{formatINR(settledAmount)}
@@ -1264,7 +1357,7 @@ const AdminReturnDetail = () => {
                         });
                         setIsSettleModalOpen(true);
                       }}
-                      className="mt-2 w-full text-center text-xs font-bold text-[var(--admin-accent)] hover:underline pt-1 border-t border-[var(--admin-border-subtle)] cursor-pointer"
+                      className="mt-2 w-full text-center text-xs font-bold text-[var(--admin-accent)] hover:underline pt-1.5 border-t border-emerald-500/15 cursor-pointer"
                     >
                       Update Payout Record
                     </button>
@@ -1273,84 +1366,187 @@ const AdminReturnDetail = () => {
               </div>
             </div>
 
-            {/* CARD 2: CUSTOMER & REVERSE PICKUP DOSSIER (Matches OrderCustomer.jsx) */}
-            <div className="bg-[var(--admin-surface)] rounded-[4px] shadow-sm border border-[var(--admin-border)] overflow-hidden">
-              <div className="px-3 sm:px-5 py-3 sm:py-4 border-b border-[var(--admin-border-subtle)] bg-[var(--admin-bg-subtle)] flex items-center justify-between">
+            {/* CARD 2: CUSTOMER & REVERSE PICUP DOSSIER (Matches Lifecycle Progression style) */}
+            <div className="bg-white dark:bg-stone-900 rounded-[4px] shadow-sm border border-[var(--admin-border-subtle)] overflow-hidden">
+              <div className="px-5 py-4 border-b border-[var(--admin-border-subtle)] flex items-center justify-between">
                 <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)] flex items-center gap-2">
                   <span className="material-symbols-outlined text-[18px]">person</span>
-                  Customer & Pickup Dossier
+                  Customer
                 </h3>
+                {resolvedCustomer && (
+                  <button
+                    type="button"
+                    onClick={() => setShowCustomerModal(true)}
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-[var(--admin-accent)] hover:text-[var(--admin-accent-hover)] hover:underline cursor-pointer transition-colors"
+                    title="View Customer Profile"
+                  >
+                    <span>View Profile</span>
+                    <span className="material-symbols-outlined text-[12px]">open_in_new</span>
+                  </button>
+                )}
               </div>
 
-              <div className="p-4 sm:p-5 space-y-4 text-xs">
+              <div className="p-4 sm:p-5 space-y-5 text-xs">
                 {/* Customer Identity Row */}
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[var(--admin-accent)] text-white font-bold text-sm flex items-center justify-center shrink-0 shadow-2xs">
-                    {request.userId?.name?.charAt(0) || 'C'}
+                <div
+                  onClick={() => resolvedCustomer && setShowCustomerModal(true)}
+                  className={`flex items-start gap-3.5 p-1.5 -m-1.5 rounded-[4px] transition-colors ${
+                    resolvedCustomer
+                      ? 'hover:bg-[var(--admin-surface-muted)]/70 cursor-pointer group'
+                      : ''
+                  }`}
+                  title={resolvedCustomer ? 'Click to view customer profile' : undefined}
+                >
+                  <div
+                    className={`w-11 h-11 rounded-full bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400 flex items-center justify-center shrink-0 font-bold text-[15px] border border-blue-100 dark:border-blue-900/40 shadow-2xs ${resolvedCustomer ? 'group-hover:scale-105 transition-transform' : ''}`}
+                  >
+                    {(request.userId?.name || pickupAddr.name || 'C').charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h4 className="font-bold text-[var(--admin-text-primary)] text-sm truncate">
-                      {request.userId?.name || pickupAddr.name || 'Customer Name'}
-                    </h4>
-                    <p className="text-[var(--admin-text-secondary)] truncate">
-                      {request.userId?.email || 'No email provided'}
-                    </p>
-                    <p className="font-mono text-[var(--admin-text-secondary)] mt-0.5">
-                      {request.userId?.phone || pickupAddr.phone || 'No phone provided'}
-                    </p>
+                    <div className="flex items-center gap-1.5">
+                      <p
+                        className={`text-[14.5px] font-bold text-[var(--admin-text-primary)] truncate ${resolvedCustomer ? 'group-hover:text-[var(--admin-accent)] transition-colors' : ''}`}
+                      >
+                        {request.userId?.name || pickupAddr.name || 'Customer Name'}
+                      </p>
+                      {resolvedCustomer && (
+                        <span className="material-symbols-outlined text-[13px] text-[var(--admin-text-tertiary)] opacity-0 group-hover:opacity-100 transition-opacity">
+                          open_in_new
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-[12px] text-[var(--admin-text-secondary)] mt-1 flex flex-col gap-1">
+                      <span className="flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-[14px] text-[var(--admin-text-tertiary)]">
+                          phone
+                        </span>
+                        <span className="font-mono text-[11.5px]">
+                          {request.userId?.phone || pickupAddr.phone || 'No phone provided'}
+                        </span>
+                      </span>
+                      <span className="flex items-center gap-1.5 truncate">
+                        <span className="material-symbols-outlined text-[14px] text-[var(--admin-text-tertiary)]">
+                          mail
+                        </span>
+                        <span className="truncate">
+                          {request.userId?.email || 'No email provided'}
+                        </span>
+                      </span>
+                    </div>
                   </div>
                 </div>
 
-                {/* Fraud & Trust Score Stats */}
-                <div className="grid grid-cols-3 gap-2 p-2.5 rounded-[4px] bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] text-center">
+                {/* Account Activity & Return Metrics */}
+                <div className="!mt-4 grid grid-cols-3 gap-2 py-2.5 px-3 rounded-[4px] bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] text-center">
                   <div>
-                    <span className="text-[10px] text-[var(--admin-text-tertiary)] uppercase font-semibold">
+                    <span className="text-[10px] text-[var(--admin-text-tertiary)] uppercase font-bold tracking-wider block">
                       Orders
                     </span>
-                    <p className="text-sm font-black text-[var(--admin-text-primary)] mt-0.5">
+                    <p className="text-[14px] font-bold font-mono text-[var(--admin-text-primary)] mt-0.5">
                       {userStats?.totalOrders || 1}
                     </p>
                   </div>
-                  <div className="border-x border-[var(--admin-border)]">
-                    <span className="text-[10px] text-[var(--admin-text-tertiary)] uppercase font-semibold">
+                  <div className="border-x border-[var(--admin-border-subtle)]">
+                    <span className="text-[10px] text-[var(--admin-text-tertiary)] uppercase font-bold tracking-wider block">
                       Returns
                     </span>
-                    <p className="text-sm font-black text-[var(--admin-warning)] mt-0.5">
+                    <p className="text-[14px] font-bold font-mono text-amber-600 dark:text-amber-400 mt-0.5">
                       {userStats?.totalReturns || 0}
                     </p>
                   </div>
                   <div>
-                    <span className="text-[10px] text-[var(--admin-text-tertiary)] uppercase font-semibold">
-                      Rate
+                    <span className="text-[10px] text-[var(--admin-text-tertiary)] uppercase font-bold tracking-wider block">
+                      Return Rate
                     </span>
-                    <p className="text-sm font-black text-[var(--admin-text-primary)] mt-0.5">
+                    <p className="text-[14px] font-bold font-mono text-[var(--admin-text-primary)] mt-0.5">
                       {userStats?.returnPercentage || 0}%
                     </p>
                   </div>
                 </div>
 
-                {/* Pickup Address Strip */}
-                <div className="space-y-1.5 pt-2 border-t border-[var(--admin-border-subtle)]">
-                  <span className="text-[10px] uppercase tracking-wider font-bold text-[var(--admin-text-tertiary)] block">
-                    Reverse Pickup Address:
-                  </span>
-                  <p className="text-[var(--admin-text-primary)] font-medium leading-relaxed">
-                    {pickupAddr.name && <span className="font-bold block">{pickupAddr.name}</span>}
-                    {pickupAddr.address ||
-                      pickupAddr.addressLine1 ||
-                      'Address details not provided'}
-                    {pickupAddr.locality && `, ${pickupAddr.locality}`}
-                    <br />
-                    {pickupAddr.city || 'City'}, {pickupAddr.state || 'State'} -{' '}
-                    <strong className="text-[var(--admin-text-primary)]">
-                      {pickupAddr.pincode || pickupAddr.pinCode || ''}
-                    </strong>
-                  </p>
+                {/* Reverse Pickup Address */}
+                <div className="pt-4 border-t border-[var(--admin-border-subtle)]">
+                  <div className="flex items-start gap-3.5">
+                    <div className="w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-200/60 dark:border-amber-800/40 shadow-2xs mt-0.5">
+                      <span className="material-symbols-outlined text-[20px]">location_on</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      {/* Section Label & Top-Right Button */}
+                      <div className="flex items-center justify-between gap-2 mb-1.5">
+                        <span className="text-[10.5px] uppercase font-bold text-[var(--admin-text-tertiary)] tracking-wider block">
+                          Reverse Pickup Address
+                        </span>
+                        <a
+                          href={`https://maps.google.com/?q=${encodeURIComponent(
+                            [
+                              pickupAddr.address || pickupAddr.addressLine1,
+                              pickupAddr.addressLine2,
+                              pickupAddr.locality,
+                              pickupAddr.landmark,
+                              pickupAddr.city,
+                              pickupAddr.state,
+                              pickupAddr.pincode || pickupAddr.pinCode,
+                            ]
+                              .filter(Boolean)
+                              .join(', '),
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 h-6 px-2 rounded-[3px] text-[10.5px] font-semibold text-[var(--admin-text-primary)] hover:text-[var(--admin-accent)] bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 hover:border-[var(--admin-accent)] transition-all shadow-2xs cursor-pointer shrink-0"
+                          title="Open Reverse Pickup Address in Google Maps"
+                        >
+                          <span className="material-symbols-outlined text-[13px] text-amber-600 dark:text-amber-400">
+                            map
+                          </span>
+                          <span>Open in Maps</span>
+                          <span className="material-symbols-outlined text-[11px] opacity-70">
+                            open_in_new
+                          </span>
+                        </a>
+                      </div>
+
+                      <div className="text-[13px] text-[var(--admin-text-primary)] leading-normal space-y-1">
+                        {/* Street & Area */}
+                        <p className="font-medium text-[13px] text-[var(--admin-text-primary)]">
+                          {pickupAddr.address ||
+                            pickupAddr.addressLine1 ||
+                            'Address details not provided'}
+                          {pickupAddr.addressLine2 ? `, ${pickupAddr.addressLine2}` : ''}
+                          {pickupAddr.locality ? `, ${pickupAddr.locality}` : ''}
+                        </p>
+
+                        {/* Landmark */}
+                        {pickupAddr.landmark && (
+                          <p className="text-[11.5px] text-[var(--admin-text-secondary)] flex items-center gap-1">
+                            <span className="text-[var(--admin-text-tertiary)] font-medium">
+                              Landmark:
+                            </span>
+                            <span>{pickupAddr.landmark}</span>
+                          </p>
+                        )}
+
+                        {/* City, State & Pincode */}
+                        {(pickupAddr.city || pickupAddr.state) && (
+                          <p className="text-[12px] text-[var(--admin-text-secondary)] font-medium">
+                            {[pickupAddr.city, pickupAddr.state].filter(Boolean).join(', ')}
+                            {(pickupAddr.pincode || pickupAddr.pinCode) && (
+                              <>
+                                {' — '}
+                                <span className="font-mono font-bold text-[var(--admin-text-primary)]">
+                                  {pickupAddr.pincode || pickupAddr.pinCode}
+                                </span>
+                              </>
+                            )}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Courier / Logistics Strip */}
                 {(request.pickup?.partner || request.pickup?.trackingId) && (
-                  <div className="p-3 rounded-[4px] bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] space-y-1">
+                  <div className="p-3 rounded-[4px] bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] space-y-1">
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase">
                         Courier: {request.pickup.partner || 'Assigned'}
@@ -1366,39 +1562,28 @@ const AdminReturnDetail = () => {
                     )}
                   </div>
                 )}
-
-                {/* Open in Maps Button */}
-                <a
-                  href={`https://maps.google.com/?q=${encodeURIComponent(
-                    [
-                      pickupAddr.address || pickupAddr.addressLine1,
-                      pickupAddr.locality,
-                      pickupAddr.city,
-                      pickupAddr.state,
-                      pickupAddr.pincode || pickupAddr.pinCode,
-                    ]
-                      .filter(Boolean)
-                      .join(', '),
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full h-10 flex items-center justify-center rounded-[4px] bg-[var(--admin-surface)] text-[var(--admin-text-primary)] hover:bg-[var(--admin-bg-subtle)] transition-colors border border-[var(--admin-border)] shadow-2xs font-bold text-xs"
-                >
-                  <span className="material-symbols-outlined text-[16px] mr-1.5">map</span>
-                  Open in Google Maps
-                </a>
               </div>
             </div>
 
-            {/* CARD 3: LINKED ORIGINAL ORDER (Matches OrderContext) */}
-            <div className="bg-[var(--admin-surface)] rounded-[4px] shadow-sm border border-[var(--admin-border)] overflow-hidden">
-              <div className="px-3 sm:px-5 py-3 sm:py-4 border-b border-[var(--admin-border-subtle)] bg-[var(--admin-bg-subtle)] flex items-center justify-between">
+            {/* CARD 3: LINKED ORIGINAL ORDER (Matches Lifecycle Progression style) */}
+            <div className="bg-white dark:bg-stone-900 rounded-[4px] shadow-sm border border-[var(--admin-border-subtle)] overflow-hidden">
+              <div className="px-4 sm:px-5 py-3 border-b border-[var(--admin-border-subtle)] flex items-center justify-between">
                 <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)] flex items-center gap-2">
                   <span className="material-symbols-outlined text-[18px]">receipt_long</span>
                   Linked Order
                 </h3>
+                {orderIdVal && (
+                  <Link
+                    to={`/admin/orders/${orderIdVal}`}
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-[var(--admin-accent)] hover:text-[var(--admin-accent-hover)] hover:underline transition-colors"
+                    title="View Original Order Details"
+                  >
+                    <span>View Order</span>
+                    <span className="material-symbols-outlined text-[12px]">arrow_forward</span>
+                  </Link>
+                )}
               </div>
-              <div className="p-4 sm:p-5 text-xs space-y-3 font-medium">
+              <div className="px-4 sm:px-5 py-2.5 sm:py-3 text-xs space-y-2 font-medium">
                 <div className="flex justify-between items-center py-1 border-b border-[var(--admin-border-subtle)]">
                   <span className="text-[var(--admin-text-secondary)]">Order ID:</span>
                   <Link
@@ -1813,6 +1998,108 @@ const AdminReturnDetail = () => {
                       </button>
                     </div>
                   </form>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>,
+          document.body,
+        )}
+
+      {/* Customer 360 Profile Modal */}
+      <AnimatePresence>
+        {showCustomerModal && resolvedCustomer && (
+          <AdminCustomerProfileModal
+            customer={resolvedCustomer}
+            onClose={() => setShowCustomerModal(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Order Invoice App Drawer Modal (Matches AdminOrderDetail, AdminRentalDetail, AdminOrdersTable) */}
+      {typeof document !== 'undefined' &&
+        createPortal(
+          <AnimatePresence>
+            {invoiceOrder && (
+              <div
+                className={`admin-section-root ${
+                  document.documentElement.classList.contains('dark') ||
+                  document.body.classList.contains('dark')
+                    ? 'dark'
+                    : ''
+                }`}
+              >
+                {/* Full-screen Backdrop */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setInvoiceOrder(null)}
+                  className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] no-print cursor-pointer"
+                />
+                {/* Modal Container */}
+                <motion.div
+                  initial={{ y: '100%', opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: '100%', opacity: 0 }}
+                  transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                  className="invoice-modal-container fixed bottom-0 left-0 right-0 lg:top-0 lg:bottom-0 lg:my-auto lg:h-fit lg:rounded-[6px] mx-auto w-full max-w-[580px] max-h-[92vh] bg-white dark:bg-[#1f1e1b] rounded-t-[6px] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] border border-[#e8e4d9] dark:border-white/10 z-[101] overflow-y-auto custom-scrollbar pt-2.5 pb-2 px-3 sm:pt-3 sm:pb-2.5 sm:px-4 print:static print:translate-x-0 print:translate-y-0 print:h-auto print:max-w-none print:shadow-none print:bg-white print:p-0 print:border-none font-sans"
+                  style={{
+                    backgroundColor: 'var(--admin-surface, #ffffff)',
+                    borderColor: 'var(--admin-border, #e8e4d9)',
+                    fontFamily:
+                      "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+                  }}
+                >
+                  <style type="text/css" media="print">
+                    {`
+                      @page { size: A4 portrait; margin: 10mm; }
+                      html, body { 
+                        height: 100vh !important; 
+                        overflow: hidden !important; 
+                        margin: 0 !important; 
+                        padding: 0 !important; 
+                      }
+                      body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background: white !important; }
+                      body * { visibility: hidden !important; }
+                      .invoice-modal-container {
+                        position: fixed !important;
+                        left: 0 !important;
+                        top: 0 !important;
+                        width: 100vw !important;
+                        height: 100vh !important;
+                        transform: none !important;
+                        overflow: hidden !important;
+                        background: transparent !important;
+                        box-shadow: none !important;
+                      }
+                      .print-invoice-area, .print-invoice-area * {
+                        visibility: visible !important;
+                        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+                      }
+                      .print-invoice-area .font-mono {
+                        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+                      }
+                      .print-invoice-area {
+                        position: static !important;
+                        width: 540px !important;
+                        max-width: 540px !important;
+                        margin: 0 auto !important;
+                        padding: 16px !important;
+                        box-shadow: none !important;
+                        border: 1px solid #e5e7eb !important;
+                        background: white !important;
+                        overflow: visible !important;
+                      }
+                      .no-print, .no-print * { display: none !important; }
+                    `}
+                  </style>
+                  <div className="relative">
+                    <InvoiceTemplate
+                      order={invoiceOrder}
+                      onClose={() => setInvoiceOrder(null)}
+                      isAdmin={true}
+                    />
+                  </div>
                 </motion.div>
               </div>
             )}

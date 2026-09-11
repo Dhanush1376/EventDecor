@@ -1,3 +1,4 @@
+import Category from '../../models/Category';
 import UserInteraction from '../../models/UserInteraction';
 import Product from '../../models/Product';
 import Event from '../../models/Event';
@@ -33,7 +34,7 @@ function levenshteinDistance(a: string, b: string): number {
 }
 
 /**
- * Get trending search terms based on user interaction aggregation.
+ * Get trending search terms based on user interaction aggregation with high-quality catalog fallbacks.
  */
 export async function getTrendingSearches(
   options: { limit?: number; days?: number } = {},
@@ -66,78 +67,117 @@ export async function getTrendingSearches(
       { $limit: limit * 2 },
     ]);
 
+    const canonicalizeTerm = (term: string) => {
+      let t = term.trim().toLowerCase();
+      t = t.replace(/\bjewelry\b/g, 'jewellery');
+      t = t.replace(/\bpuja\b/g, 'pooja');
+      t = t.replace(/\bthamboolam\b/g, 'thambulam');
+      t = t.replace(/\btamboolam\b/g, 'thambulam');
+      t = t.replace(/\baarthi\b/g, 'harathi');
+      t = t.replace(/\baarathi\b/g, 'harathi');
+      return t;
+    };
+
     const seen = new Set<string>();
+    const seenRoots = new Map<string, number>();
     const trending: { query: string; count: number }[] = [];
 
-    for (const r of results) {
-      const normalized = r._id.trim();
-      if (normalized.length < 2) continue;
+    const canAddTerm = (normalized: string) => {
+      if (normalized.length < 3) return false;
+      if (/^[0-9a-f]{20,}$/i.test(normalized)) return false;
 
-      // Filter out raw MongoDB ObjectIds and other long hex IDs (20+ chars) from trending searches
-      if (/^[0-9a-f]{20,}$/i.test(normalized)) continue;
-
-      const isDuplicate = Array.from(seen).some(
-        (existing) =>
+      for (const existing of seen) {
+        if (
+          existing === normalized ||
           existing.includes(normalized) ||
           normalized.includes(existing) ||
-          levenshteinDistance(existing, normalized) <= 2,
-      );
-
-      if (!isDuplicate) {
-        seen.add(normalized);
-        trending.push({
-          query: normalized
-            .split(/\s+/)
-            .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-            .join(' '),
-          count: r.count,
-        });
+          levenshteinDistance(existing, normalized) <= 2
+        ) {
+          return false;
+        }
       }
 
+      // Root diversity cap: max 2 tray suggestions to avoid monochromatic lists
+      if (normalized.includes('tray')) {
+        const trayCount = seenRoots.get('tray') || 0;
+        if (trayCount >= 2) return false;
+      }
+      return true;
+    };
+
+    const addTerm = (rawTerm: string, count: number = 1): boolean => {
+      const canonical = canonicalizeTerm(rawTerm);
+      if (!canAddTerm(canonical)) return false;
+
+      seen.add(canonical);
+      if (canonical.includes('tray')) {
+        seenRoots.set('tray', (seenRoots.get('tray') || 0) + 1);
+      }
+
+      const displayTerm = canonical
+        .split(/\s+/)
+        .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ');
+
+      trending.push({ query: displayTerm, count });
+      return true;
+    };
+
+    // 1. Process recent user searches
+    for (const r of results) {
       if (trending.length >= limit) break;
+      addTerm(r._id, r.count);
     }
 
-    // Dynamic database-driven fallbacks to make trending queries fully dynamic when session activity is empty
+    // 2. High-quality database category-driven fallbacks for diversity and relevance
+    if (trending.length < limit) {
+      const activeCategories = await Category.find({ isActive: true })
+        .select('name')
+        .sort({ sortOrder: 1, name: 1 })
+        .lean()
+        .catch(() => []);
+
+      for (const cat of activeCategories) {
+        if (trending.length >= limit) break;
+        if (cat.name) addTerm(cat.name, 1);
+      }
+    }
+
+    // 3. High-demand signature event & decor terms fallback
+    if (trending.length < limit) {
+      const signatureTerms = [
+        'Coconut Decorations',
+        'Jewellery Trays',
+        'Bangle Trays',
+        'Harathi Plates',
+        'Return Gift Hampers',
+        'Haldi Ceremony Decor',
+        'Dry Fruit Trays',
+        'Pooja Setup',
+        'Engagement Ring Trays',
+        'Welcome Board',
+      ];
+
+      for (const term of signatureTerms) {
+        if (trending.length >= limit) break;
+        addTerm(term, 1);
+      }
+    }
+
+    // 4. Product title fallback if still below limit
     if (trending.length < limit) {
       const fallbackProducts = await Product.find({ isActive: true })
-        .select('title primaryCategory tags')
-        .limit(limit * 3)
-        .lean();
+        .select('title')
+        .limit(20)
+        .lean()
+        .catch(() => []);
 
-      const extraTerms = new Set<string>();
       for (const p of fallbackProducts) {
-        if (p.primaryCategory) {
-          extraTerms.add(p.primaryCategory.toString());
-        }
-        if (p.tags && Array.isArray(p.tags)) {
-          p.tags.forEach((t) => {
-            if (t && t.length > 2) extraTerms.add(t);
-          });
-        }
+        if (trending.length >= limit) break;
         if (p.title) {
           const words = p.title.trim().split(/\s+/);
-          if (words.length <= 3) {
-            extraTerms.add(p.title);
-          } else {
-            extraTerms.add(words.slice(0, 2).join(' '));
-          }
-        }
-      }
-
-      for (const term of extraTerms) {
-        if (trending.length >= limit) break;
-        const normalizedTerm = term.trim();
-
-        if (/^[0-9a-f]{20,}$/i.test(normalizedTerm)) continue;
-
-        const displayTerm = normalizedTerm
-          .split(/\s+/)
-          .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-          .join(' ');
-
-        if (displayTerm.length >= 3 && !seen.has(displayTerm.toLowerCase())) {
-          seen.add(displayTerm.toLowerCase());
-          trending.push({ query: displayTerm, count: 1 });
+          const shortTitle = words.length <= 3 ? p.title : words.slice(0, 2).join(' ');
+          addTerm(shortTitle, 1);
         }
       }
     }

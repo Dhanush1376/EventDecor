@@ -12,6 +12,7 @@ import {
   formatCurrency,
   fadeUp,
   stagger,
+  AdminFilterDrawer,
 } from '../components/AdminUIKit';
 import { isWithinPeriod } from '../utils/dateFilters';
 
@@ -487,103 +488,73 @@ export function AdminPayments() {
                 )}
               </button>
 
-              <AnimatePresence>
-                {showFiltersMenu && (
-                  <>
-                    <div
-                      onClick={() => setShowFiltersMenu(false)}
-                      className="fixed inset-0 z-[120] bg-black/30 sm:bg-transparent"
-                    />
-                    <motion.div
-                      initial={{ opacity: 0, y: -8, scale: 0.98 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: -8, scale: 0.98 }}
-                      transition={{ duration: 0.15 }}
-                      className="fixed sm:absolute bottom-0 inset-x-0 sm:top-full sm:bottom-auto sm:right-0 sm:left-auto z-[130] sm:mt-2 w-full sm:w-[300px] bg-[var(--admin-surface)] rounded-t-[8px] sm:rounded-[4px] shadow-2xl border border-[var(--admin-border-strong)] flex flex-col p-5 sm:p-4 text-left"
-                    >
-                      <div className="flex items-center justify-between pb-3 border-b border-[var(--admin-border-subtle)]">
-                        <span className="font-bold text-[13px] text-[var(--admin-text-primary)]">
-                          Filter Transactions
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setDateFilter('All Time');
-                            setMethodFilter('All');
-                            setSortBy('Newest first');
-                          }}
-                          className="text-[11px] text-[var(--admin-accent)] hover:underline font-semibold"
-                        >
-                          Reset
-                        </button>
-                      </div>
+              <AdminFilterDrawer
+                isOpen={showFiltersMenu}
+                onClose={() => setShowFiltersMenu(false)}
+                title="Filter Transactions"
+                icon="tune"
+                activeCount={activeFilterCount}
+                onClearAll={() => {
+                  setDateFilter('All Time');
+                  setMethodFilter('All');
+                  setSortBy('Newest first');
+                }}
+                clearAllLabel="Reset"
+                onApply={() => setShowFiltersMenu(false)}
+              >
+                {/* Time Period */}
+                <div>
+                  <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                    Time Period
+                  </label>
+                  <select
+                    value={dateFilter}
+                    onChange={(e) => setDateFilter(e.target.value)}
+                    className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                  >
+                    <option value="All Time">All Time</option>
+                    <option value="Today">Today</option>
+                    <option value="Last 7 Days">Last 7 Days</option>
+                    <option value="This Month">This Month</option>
+                    <option value="This Year">This Year</option>
+                  </select>
+                </div>
 
-                      <div className="space-y-3.5 py-3 text-left">
-                        {/* Time Period */}
-                        <div>
-                          <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
-                            Time Period
-                          </label>
-                          <select
-                            value={dateFilter}
-                            onChange={(e) => setDateFilter(e.target.value)}
-                            className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
-                          >
-                            <option value="All Time">All Time</option>
-                            <option value="Today">Today</option>
-                            <option value="Last 7 Days">Last 7 Days</option>
-                            <option value="This Month">This Month</option>
-                            <option value="This Year">This Year</option>
-                          </select>
-                        </div>
+                {/* Payment Method */}
+                <div>
+                  <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                    Payment Method
+                  </label>
+                  <select
+                    value={methodFilter}
+                    onChange={(e) => setMethodFilter(e.target.value)}
+                    className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                  >
+                    <option value="All">All Methods</option>
+                    <option value="UPI">UPI</option>
+                    <option value="COD">Cash On Delivery (COD)</option>
+                    <option value="Card">Credit/Debit Card</option>
+                    <option value="NetBanking">Net Banking</option>
+                  </select>
+                </div>
 
-                        {/* Payment Method */}
-                        <div>
-                          <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
-                            Payment Method
-                          </label>
-                          <select
-                            value={methodFilter}
-                            onChange={(e) => setMethodFilter(e.target.value)}
-                            className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
-                          >
-                            <option value="All">All Methods</option>
-                            <option value="UPI">UPI</option>
-                            <option value="COD">Cash On Delivery (COD)</option>
-                            <option value="Card">Credit/Debit Card</option>
-                            <option value="NetBanking">Net Banking</option>
-                          </select>
-                        </div>
-
-                        {/* Sort By */}
-                        <div>
-                          <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
-                            Sort Order
-                          </label>
-                          <select
-                            value={sortBy}
-                            onChange={(e) => setSortBy(e.target.value)}
-                            className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
-                          >
-                            <option value="Newest first">Newest first</option>
-                            <option value="Oldest first">Oldest first</option>
-                            <option value="Amount ↑">Amount (Low to High)</option>
-                            <option value="Amount ↓">Amount (High to Low)</option>
-                          </select>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => setShowFiltersMenu(false)}
-                          className="w-full py-2 bg-[var(--admin-accent)] hover:bg-[var(--admin-accent-dark)] text-white text-[12px] font-bold rounded-[4px] transition-colors cursor-pointer mt-1"
-                        >
-                          Apply Filters
-                        </button>
-                      </div>
-                    </motion.div>
-                  </>
-                )}
-              </AnimatePresence>
+                {/* Sort By */}
+                <div>
+                  <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                    Sort Order
+                  </label>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                  >
+                    <option value="Newest first">Newest first</option>
+                    <option value="Oldest first">Oldest first</option>
+                    <option value="Amount ↑">Amount (Low to High)</option>
+                    <option value="Amount ↓">Amount (High to Low)</option>
+                  </select>
+                </div>
+              </AdminFilterDrawer>
             </div>
 
             {/* Export CSV Button */}
@@ -802,36 +773,35 @@ export function AdminPayments() {
                 onClick={() => navigate('/admin/orders')}
                 className="bg-[var(--admin-surface)] rounded-[4px] p-3.5 border border-[var(--admin-border)] shadow-xs flex flex-col gap-2.5 cursor-pointer hover:border-[var(--admin-border-strong)] transition-all text-left"
               >
-                {/* Header Row: Order Reference + Status Badge */}
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="font-mono font-bold text-[13px] text-[var(--admin-accent)]">
-                      #ORD-{p.order}
-                    </span>
-                    <span className="material-symbols-outlined text-[13px] text-[var(--admin-text-tertiary)]">
-                      open_in_new
-                    </span>
-                  </div>
-                  {getStatusBadge(p.status)}
-                </div>
-
-                {/* Customer Row */}
-                <div className="flex items-center justify-between text-[12px] pt-1 border-t border-[var(--admin-border-subtle)]">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-6 h-6 rounded-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] text-[var(--admin-accent)] font-bold text-[10.5px] flex items-center justify-center shrink-0">
+                {/* Header Row: Customer Name + Status Badge, with subtle Order ID */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <div className="w-7 h-7 rounded-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] text-[var(--admin-accent)] font-bold text-[11px] flex items-center justify-center shrink-0">
                       {(p.customer || 'C').charAt(0).toUpperCase()}
                     </div>
-                    <span className="font-semibold text-[var(--admin-text-primary)] truncate">
-                      {p.customer}
+                    <div className="min-w-0 flex-1">
+                      <span className="font-bold text-[13.5px] text-[var(--admin-text-primary)] block truncate leading-tight">
+                        {p.customer || 'Customer'}
+                      </span>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <span className="font-mono text-[11px] font-medium text-[var(--admin-text-tertiary)]">
+                          #ORD-{p.order}
+                        </span>
+                        <span className="material-symbols-outlined text-[12px] text-[var(--admin-text-tertiary)]">
+                          open_in_new
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-1 shrink-0">
+                    {getStatusBadge(p.status)}
+                    <span className="text-[10.5px] text-[var(--admin-text-tertiary)]">
+                      {new Date(p.date).toLocaleDateString(undefined, {
+                        month: 'short',
+                        day: 'numeric',
+                      })}
                     </span>
                   </div>
-                  <span className="text-[11px] text-[var(--admin-text-secondary)] shrink-0">
-                    {new Date(p.date).toLocaleDateString(undefined, {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })}
-                  </span>
                 </div>
 
                 {/* Payment Details Box */}

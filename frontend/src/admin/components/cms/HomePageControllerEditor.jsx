@@ -747,11 +747,11 @@ export function HomePageControllerEditor({ content, onUpdate }) {
                           const minOrderText =
                             c.minOrderAmount > 0 ? ` ON ORDERS ABOVE ₹${c.minOrderAmount}` : '';
                           const generatedText = `LIMITED TIME OFFER: GET ${discountStr} OFF${minOrderText} USING CODE ${c.code}`;
-                          let targetLink = '/collections';
+                          let targetLink = `/collections?coupon=${c.code}`;
                           if (c.targetType === 'categories' && c.targetCategories?.length) {
-                            targetLink = `/collections?collection=${c.targetCategories.join(',')}`;
+                            targetLink = `/collections?collection=${encodeURIComponent(c.targetCategories.join(','))}&coupon=${c.code}`;
                           } else if (c.targetType === 'products' && c.targetProductIds?.length) {
-                            targetLink = `/collections?ids=${c.targetProductIds.join(',')}`;
+                            targetLink = `/collections?ids=${encodeURIComponent(c.targetProductIds.join(','))}&coupon=${c.code}`;
                           }
 
                           onUpdate('promoBanner', {
@@ -852,7 +852,7 @@ export function HomePageControllerEditor({ content, onUpdate }) {
 
           <div className="pt-4 border-t border-[var(--admin-border-subtle)] space-y-4">
             <div className="flex justify-between items-center">
-              <span className="text-[12px] font-bold text-[var(--admin-text-primary)] uppercase tracking-[0.1em] block mb-4 pb-2">
+              <span className="text-[14px] sm:text-[15px] font-semibold text-[var(--admin-text-primary)] tracking-tight block mb-4 pb-2">
                 Select Store Categories to Feature
               </span>
             </div>
@@ -907,7 +907,7 @@ export function HomePageControllerEditor({ content, onUpdate }) {
 
           {content.categoryGrid?.categories?.length > 0 && (
             <div className="pt-6 border-t border-[var(--admin-border-subtle)] space-y-6">
-              <span className="text-[12px] font-bold text-[var(--admin-text-primary)] uppercase tracking-[0.1em] block mb-4 pb-2">
+              <span className="text-[14px] sm:text-[15px] font-semibold text-[var(--admin-text-primary)] tracking-tight block mb-4 pb-2">
                 Configure Cover Photos
               </span>
 
@@ -1085,7 +1085,7 @@ export function HomePageControllerEditor({ content, onUpdate }) {
             </AdminField>
           </div>
           <div className="pt-4 border-t border-[var(--admin-border-subtle)] space-y-4">
-            <span className="text-[12px] font-bold text-[var(--admin-text-primary)] uppercase tracking-[0.1em] block mb-4">
+            <span className="text-[14px] sm:text-[15px] font-semibold text-[var(--admin-text-primary)] tracking-tight block mb-4">
               Select Occasion Showcases
             </span>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[400px] overflow-y-auto p-1 pr-2 scrollbar-thin">
@@ -1228,7 +1228,7 @@ export function HomePageControllerEditor({ content, onUpdate }) {
           </div>
 
           <div className="pt-4 border-t border-[var(--admin-border-subtle)] space-y-4">
-            <span className="text-[12px] font-bold text-[var(--admin-text-primary)] uppercase tracking-[0.1em] block mb-4">
+            <span className="text-[14px] sm:text-[15px] font-semibold text-[var(--admin-text-primary)] tracking-tight block mb-4">
               Select Gallery Highlights
             </span>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[400px] overflow-y-auto p-1 pr-2 scrollbar-thin">

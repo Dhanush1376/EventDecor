@@ -1,5 +1,6 @@
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useCallback } from 'react';
+import { useParams, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAdmin } from '../context/AdminContext';
 import { useConfirm } from '../../context/ConfirmProvider';
@@ -12,6 +13,7 @@ import {
   fadeUp,
   stagger,
   SkeletonCard,
+  smoothScrollCardIntoView,
 } from '../components/AdminUIKit';
 import { formatDistanceToNow } from 'date-fns';
 import { EXTERNAL_URLS } from '../../config/constants';
@@ -22,6 +24,11 @@ import AdminCustomerProfileModal from '../components/AdminCustomerProfileModal';
 import { WhatsAppIcon } from '../../components/ui/WhatsAppIcon';
 
 export function AdminCustomers() {
+  const { customerId: routeCustomerId } = useParams();
+  const [searchParams] = useSearchParams();
+  const queryCustomerId =
+    routeCustomerId || searchParams.get('id') || searchParams.get('customerId');
+
   const { searchQuery, setSearchQuery } = useAdmin();
   const confirm = useConfirm();
 
@@ -30,6 +37,12 @@ export function AdminCustomers() {
   const [pageSize, setPageSize] = useState(50);
   const [selectedCustomerId, setSelectedCustomerId] = useState(null);
   const [expandedCardIds, setExpandedCardIds] = useState(new Set());
+
+  useEffect(() => {
+    if (queryCustomerId) {
+      setSelectedCustomerId(queryCustomerId);
+    }
+  }, [queryCustomerId]);
 
   const [customers, setCustomers] = useState([]);
   const [meta, setMeta] = useState({});
@@ -42,8 +55,13 @@ export function AdminCustomers() {
   const toggleExpandCard = (id) => {
     setExpandedCardIds((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      const isExpanding = !next.has(id);
+      if (isExpanding) {
+        next.add(id);
+        smoothScrollCardIntoView(`customer-card-${id}`);
+      } else {
+        next.delete(id);
+      }
       return next;
     });
   };
@@ -441,6 +459,7 @@ export function AdminCustomers() {
               return (
                 <motion.div
                   key={cId}
+                  id={`customer-card-${cId}`}
                   variants={fadeUp}
                   className="relative overflow-hidden rounded-[8px] p-3.5 shadow-xs border border-stone-200/90 dark:border-stone-700/80 bg-white dark:bg-stone-900 flex flex-col gap-3 transition-all hover:border-stone-300 dark:hover:border-stone-600 hover:shadow-sm"
                 >
@@ -781,7 +800,9 @@ export function AdminCustomers() {
       <AnimatePresence>
         {selectedCustomerId && (
           <AdminCustomerProfileModal
-            customer={customers.find((c) => c._id === selectedCustomerId)}
+            customer={
+              customers.find((c) => c._id === selectedCustomerId) || { _id: selectedCustomerId }
+            }
             onClose={() => setSelectedCustomerId(null)}
             onDelete={handleDeleteCustomer}
           />

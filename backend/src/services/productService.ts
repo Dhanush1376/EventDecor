@@ -9,6 +9,7 @@ import { categoryCache, MemoryCache } from '../utils/cache/MemoryCache';
 import redisClient from '../utils/cache/redis';
 import { MediaService } from './media/MediaService';
 import { analyzeQueryWithAI, escapeRegex, getMatchingProductCategory } from './searchService';
+import { computeSearchScore } from './search/rankingEngine';
 import Category from '../models/Category';
 import Coupon from '../models/Coupon';
 import { CategoryService } from './CategoryService';
@@ -109,16 +110,28 @@ class ProductService {
         .map((item) => item.trim())
         .filter((item) => Boolean(item) && item.toLowerCase() !== 'all');
       if (collections.length > 0) {
-        const matchedCats = await Category.find({
-          $or: [{ slug: { $in: collections } }, { name: { $in: collections } }],
-        }).lean();
-        if (matchedCats.length > 0) {
-          const catIds = matchedCats.map((c) => c._id);
-          filter.$or = filter.$or || [];
-          filter.$or.push(
-            { primaryCategory: { $in: catIds } },
-            { secondaryCategories: { $in: catIds } },
-          );
+        const catConditions: any[] = [
+          { slug: { $in: collections.map((c) => c.toLowerCase()) } },
+          { name: { $in: collections.map((c) => new RegExp(`^${escapeRegex(c)}$`, 'i')) } },
+        ];
+        const validObjectIds = collections
+          .filter((c) => mongoose.Types.ObjectId.isValid(c))
+          .map((c) => new mongoose.Types.ObjectId(c));
+        if (validObjectIds.length > 0) {
+          catConditions.push({ _id: { $in: validObjectIds } });
+        }
+        const matchedCats = await Category.find({ $or: catConditions }).lean();
+        if (matchedCats.length > 0 || validObjectIds.length > 0) {
+          const catIds = Array.from(
+            new Set([
+              ...validObjectIds.map((id) => String(id)),
+              ...matchedCats.map((c) => String(c._id)),
+            ]),
+          ).map((id) => new mongoose.Types.ObjectId(id));
+          filter.$and = filter.$and || [];
+          filter.$and.push({
+            $or: [{ primaryCategory: { $in: catIds } }, { secondaryCategories: { $in: catIds } }],
+          });
         }
       }
     }
@@ -168,25 +181,54 @@ class ProductService {
       }).lean();
       if (foundCoupon) {
         if (foundCoupon.targetType === 'categories' && foundCoupon.targetCategories?.length > 0) {
-          const matchedCats = await Category.find({
-            $or: [
-              { slug: { $in: foundCoupon.targetCategories } },
-              { name: { $in: foundCoupon.targetCategories } },
-            ],
-          }).lean();
-          if (matchedCats.length > 0) {
-            const catIds = matchedCats.map((c) => c._id);
-            filter.$or = filter.$or || [];
-            filter.$or.push(
-              { primaryCategory: { $in: catIds } },
-              { secondaryCategories: { $in: catIds } },
-            );
+          const catConditions: any[] = [
+            {
+              slug: {
+                $in: foundCoupon.targetCategories.map((c: any) => String(c).toLowerCase().trim()),
+              },
+            },
+            {
+              name: {
+                $in: foundCoupon.targetCategories.map(
+                  (c: any) => new RegExp(`^${escapeRegex(String(c).trim())}$`, 'i'),
+                ),
+              },
+            },
+          ];
+          const validObjectIds = foundCoupon.targetCategories
+            .filter((c: any) => mongoose.Types.ObjectId.isValid(c))
+            .map((c: any) => new mongoose.Types.ObjectId(c));
+          if (validObjectIds.length > 0) {
+            catConditions.push({ _id: { $in: validObjectIds } });
+          }
+
+          const matchedCats = await Category.find({ $or: catConditions }).lean();
+          const allCatIds = Array.from(
+            new Set([
+              ...validObjectIds.map((id) => String(id)),
+              ...matchedCats.map((c) => String(c._id)),
+            ]),
+          ).map((id) => new mongoose.Types.ObjectId(id));
+
+          if (allCatIds.length > 0) {
+            filter.$and = filter.$and || [];
+            filter.$and.push({
+              $or: [
+                { primaryCategory: { $in: allCatIds } },
+                { secondaryCategories: { $in: allCatIds } },
+              ],
+            });
           }
         } else if (
           foundCoupon.targetType === 'products' &&
           foundCoupon.targetProductIds?.length > 0
         ) {
-          filter._id = { $in: foundCoupon.targetProductIds };
+          const productIds = foundCoupon.targetProductIds
+            .filter((id: any) => mongoose.Types.ObjectId.isValid(id))
+            .map((id: any) => new mongoose.Types.ObjectId(id));
+          if (productIds.length > 0) {
+            filter._id = { $in: productIds };
+          }
         }
 
         if (foundCoupon.minOrderAmount > 0) {
@@ -237,15 +279,50 @@ class ProductService {
         }
       }
 
+      const phraseVariants = [search];
+      if (search.toLowerCase().includes('jewelry')) {
+        phraseVariants.push(search.replace(/\bjewelry\b/gi, 'jewellery'));
+      } else if (search.toLowerCase().includes('jewellery')) {
+        phraseVariants.push(search.replace(/\bjewellery\b/gi, 'jewelry'));
+      }
+      if (search.toLowerCase().includes('tray')) {
+        phraseVariants.push(search.replace(/\btray\b/gi, 'trays'));
+      } else if (search.toLowerCase().includes('trays')) {
+        phraseVariants.push(search.replace(/\btrays\b/gi, 'tray'));
+      }
+
+      const words = search
+        .trim()
+        .split(/\s+/)
+        .filter((w: string) => w.length > 1);
+      const wordVariants: string[] = [];
+      for (const w of words) {
+        const lower = w.toLowerCase();
+        wordVariants.push(lower);
+        if (lower === 'jewelry') wordVariants.push('jewellery');
+        if (lower === 'jewellery') wordVariants.push('jewelry');
+        if (lower === 'tray') wordVariants.push('trays');
+        if (lower === 'trays') wordVariants.push('tray');
+        if (lower === 'bangle') wordVariants.push('bangles');
+        if (lower === 'bangles') wordVariants.push('bangle');
+        if (lower === 'decoration') wordVariants.push('decorations');
+        if (lower === 'decorations') wordVariants.push('decoration');
+        if (lower === 'box') wordVariants.push('boxes');
+        if (lower === 'boxes') wordVariants.push('box');
+        if (lower === 'flower') wordVariants.push('flowers');
+        if (lower === 'flowers') wordVariants.push('flower');
+      }
+
       const allSearchTerms = [
-        search,
+        ...phraseVariants,
         ...(shouldSpellcheck && aiAnalysis.correctedQuery ? [aiAnalysis.correctedQuery] : []),
         ...aiAnalysis.expandedTerms,
+        ...wordVariants,
       ];
       const uniqueSearchTerms = [...new Set(allSearchTerms.filter(Boolean))];
       const regexPatterns = uniqueSearchTerms.map((t) => new RegExp(escapeRegex(t), 'i'));
 
-      const searchOr = [
+      const searchOr: any[] = [
         { title: { $in: regexPatterns } },
         { teluguTitle: { $in: regexPatterns } },
         { material: { $in: regexPatterns } },
@@ -253,12 +330,18 @@ class ProductService {
         { description: { $in: regexPatterns } },
       ];
 
-      // Add category text search matching
-      const matchingCats = await Category.find({ name: { $in: regexPatterns } }).lean();
+      // Add category matching when the query or its variants match a category
+      const categoryRegexes = phraseVariants.map((p) => new RegExp(`^${escapeRegex(p)}$`, 'i'));
+      const matchingCats = await Category.find({
+        $or: [
+          { name: { $in: categoryRegexes } },
+          { slug: { $in: phraseVariants.map((p) => p.toLowerCase().replace(/\s+/g, '-')) } },
+        ],
+      }).lean();
       if (matchingCats.length > 0) {
         const catIds = matchingCats.map((c) => c._id);
-        searchOr.push({ primaryCategory: { $in: catIds } } as any);
-        searchOr.push({ secondaryCategories: { $in: catIds } } as any);
+        searchOr.push({ primaryCategory: { $in: catIds } });
+        searchOr.push({ secondaryCategories: { $in: catIds } });
       }
 
       // Match colors if detected
@@ -285,22 +368,35 @@ class ProductService {
   }
 
   static async getAllProducts(queryParams: any, isAdmin: boolean = false) {
-    const { sort } = queryParams;
+    const { sort, search } = queryParams;
     const { page, limit, skip } = getPaginationOptions(queryParams);
 
     const { filter, correctedQuery } = await this.buildProductFilterQuery(queryParams, isAdmin);
 
+    const isSearchQuery = Boolean(search && String(search).trim().length > 0);
+    const searchQuery = isSearchQuery ? String(search).trim() : '';
+
     let sortOptions: any = { createdAt: -1, _id: 1 };
+    let isRelevanceSort = false;
+
     if (sort) {
       if (sort === 'price_asc') sortOptions = { price: 1, _id: 1 };
       else if (sort === 'price_desc') sortOptions = { price: -1, _id: 1 };
-      else if (sort === 'newest') sortOptions = { createdAt: -1, _id: 1 };
-      else if (sort === 'rating') sortOptions = { rating: -1, _id: 1 };
+      else if (sort === 'newest') {
+        if (isSearchQuery) isRelevanceSort = true;
+        else sortOptions = { createdAt: -1, _id: 1 };
+      } else if (sort === 'rating') sortOptions = { rating: -1, _id: 1 };
+    } else if (isSearchQuery) {
+      isRelevanceSort = true;
     }
 
     const filterHash = JSON.stringify(filter);
 
-    const [products, totalCount] = await Promise.all([
+    // If searching with relevance sort, fetch a wider pool (up to 150 items) to sort by relevance score
+    const queryLimit = isRelevanceSort ? Math.max(limit * page, 120) : limit;
+    const querySkip = isRelevanceSort ? 0 : skip;
+
+    const [rawProducts, totalCount] = await Promise.all([
       Product.find(filter)
         .select(
           isAdmin
@@ -310,11 +406,35 @@ class ProductService {
         .populate('primaryCategory', 'name slug type')
         .populate('secondaryCategories', 'name slug type')
         .sort(sortOptions)
-        .skip(skip)
-        .limit(limit)
+        .skip(querySkip)
+        .limit(queryLimit)
         .lean(),
       productCountCache.getOrSet(filterHash, () => Product.countDocuments(filter)),
     ]);
+
+    let products = rawProducts;
+    if (isRelevanceSort && searchQuery) {
+      const scored = (rawProducts as any[]).map((p) => {
+        const catName = p.primaryCategory?.name || '';
+        const score = computeSearchScore(
+          p.title,
+          catName,
+          p.tags || [],
+          searchQuery,
+          p.teluguTitle,
+          p.description,
+          p.material ? [p.material] : [],
+        );
+        return { p, score };
+      });
+
+      scored.sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        return new Date(b.p.createdAt).getTime() - new Date(a.p.createdAt).getTime();
+      });
+
+      products = scored.slice(skip, skip + limit).map((s) => s.p);
+    }
 
     const response: any = formatPaginationResponse(products, totalCount, page, limit);
     response.correctedQuery = correctedQuery;

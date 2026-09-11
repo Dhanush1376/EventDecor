@@ -14,6 +14,7 @@ import {
   stagger,
   AdminCouponsSkeleton,
   AdminCouponCardsSkeleton,
+  AdminFilterDrawer,
 } from '../components/AdminUIKit';
 
 export function AdminCoupons() {
@@ -265,112 +266,71 @@ export function AdminCoupons() {
                 )}
               </button>
 
-              <AnimatePresence>
-                {showFiltersMenu && (
-                  <>
-                    <div
-                      onClick={() => setShowFiltersMenu(false)}
-                      className="fixed inset-0 z-[120] bg-black/30 sm:bg-transparent"
-                    />
+              <AdminFilterDrawer
+                isOpen={showFiltersMenu}
+                onClose={() => setShowFiltersMenu(false)}
+                title="Filter Coupons"
+                icon="tune"
+                activeCount={activeFiltersCount}
+                onClearAll={() => {
+                  setStatusTab('All');
+                  setDiscountTypeFilter('All');
+                  setSortBy('newest');
+                  setSearchQuery('');
+                }}
+                clearAllLabel="Reset"
+                onApply={() => setShowFiltersMenu(false)}
+              >
+                {/* Status (for mobile where pill bar is hidden) */}
+                <div className="block sm:hidden">
+                  <label className="text-[11px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                    Status
+                  </label>
+                  <select
+                    value={statusTab}
+                    onChange={(e) => setStatusTab(e.target.value)}
+                    className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                  >
+                    <option value="All">All ({tabCounts.All})</option>
+                    <option value="Active">Active ({tabCounts.Active})</option>
+                    <option value="Inactive">Inactive ({tabCounts.Inactive})</option>
+                    <option value="Expired">Expired ({tabCounts.Expired})</option>
+                  </select>
+                </div>
 
-                    <motion.div
-                      initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                      transition={{ duration: 0.15 }}
-                      className="fixed sm:absolute inset-x-4 bottom-4 sm:inset-x-auto sm:bottom-auto sm:right-0 sm:top-[calc(100%+8px)] w-auto sm:w-72 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[8px] shadow-2xl p-4 z-[130] space-y-4"
-                    >
-                      <div className="flex items-center justify-between pb-2 border-b border-[var(--admin-border)]">
-                        <span className="font-bold text-[13px] text-[var(--admin-text-primary)] flex items-center gap-1.5">
-                          <span className="material-symbols-outlined text-[18px] text-[var(--admin-accent)]">
-                            tune
-                          </span>
-                          Filter Coupons
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setShowFiltersMenu(false)}
-                          className="text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] p-1 cursor-pointer"
-                        >
-                          <span className="material-symbols-outlined text-[18px]">close</span>
-                        </button>
-                      </div>
+                {/* Discount Type */}
+                <div>
+                  <label className="text-[11px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                    Discount Type
+                  </label>
+                  <select
+                    value={discountTypeFilter}
+                    onChange={(e) => setDiscountTypeFilter(e.target.value)}
+                    className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                  >
+                    <option value="All">All Discount Types</option>
+                    <option value="percentage">Percentage (%)</option>
+                    <option value="flat">Flat Amount (₹)</option>
+                  </select>
+                </div>
 
-                      {/* Status (for mobile where pill bar is hidden) */}
-                      <div className="block sm:hidden">
-                        <label className="text-[11px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
-                          Status
-                        </label>
-                        <select
-                          value={statusTab}
-                          onChange={(e) => setStatusTab(e.target.value)}
-                          className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
-                        >
-                          <option value="All">All ({tabCounts.All})</option>
-                          <option value="Active">Active ({tabCounts.Active})</option>
-                          <option value="Inactive">Inactive ({tabCounts.Inactive})</option>
-                          <option value="Expired">Expired ({tabCounts.Expired})</option>
-                        </select>
-                      </div>
-
-                      {/* Discount Type */}
-                      <div>
-                        <label className="text-[11px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
-                          Discount Type
-                        </label>
-                        <select
-                          value={discountTypeFilter}
-                          onChange={(e) => setDiscountTypeFilter(e.target.value)}
-                          className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
-                        >
-                          <option value="All">All Discount Types</option>
-                          <option value="percentage">Percentage (%)</option>
-                          <option value="flat">Flat Amount (₹)</option>
-                        </select>
-                      </div>
-
-                      {/* Sort By */}
-                      <div>
-                        <label className="text-[11px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
-                          Sort By
-                        </label>
-                        <select
-                          value={sortBy}
-                          onChange={(e) => setSortBy(e.target.value)}
-                          className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
-                        >
-                          <option value="newest">Newest First</option>
-                          <option value="expiring-soon">Expiring Soonest</option>
-                          <option value="discount-desc">Highest Discount</option>
-                          <option value="code-asc">Code (A → Z)</option>
-                        </select>
-                      </div>
-
-                      <div className="pt-2 border-t border-[var(--admin-border)] flex items-center justify-between gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setStatusTab('All');
-                            setDiscountTypeFilter('All');
-                            setSortBy('newest');
-                            setSearchQuery('');
-                          }}
-                          className="text-[11px] font-semibold text-[var(--admin-text-tertiary)] hover:text-rose-500 transition-colors cursor-pointer"
-                        >
-                          Reset
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setShowFiltersMenu(false)}
-                          className="admin-btn-primary px-4 py-2 !rounded-[4px] text-[12px]"
-                        >
-                          Apply Filters
-                        </button>
-                      </div>
-                    </motion.div>
-                  </>
-                )}
-              </AnimatePresence>
+                {/* Sort By */}
+                <div>
+                  <label className="text-[11px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                    Sort By
+                  </label>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                  >
+                    <option value="newest">Newest First</option>
+                    <option value="expiring-soon">Expiring Soonest</option>
+                    <option value="discount-desc">Highest Discount</option>
+                    <option value="code-asc">Code (A → Z)</option>
+                  </select>
+                </div>
+              </AdminFilterDrawer>
             </div>
 
             {/* Create Coupon Button */}

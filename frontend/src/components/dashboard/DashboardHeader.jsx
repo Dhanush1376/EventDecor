@@ -94,9 +94,9 @@ export function DashboardHeader() {
   return (
     <div
       ref={headerRef}
-      className={`sticky z-40 transition-all duration-500 flex justify-between items-center gap-4 h-[52px] mb-4 border-b ${
+      className={`sticky z-40 transition-all duration-300 flex justify-between items-center gap-4 h-[52px] mb-4 border-b ${
         isStuck
-          ? 'bg-white/95 backdrop-blur-md border-black/5 -mx-margin-mobile lg:-mx-margin-desktop px-margin-mobile lg:px-margin-desktop'
+          ? 'bg-surface-container-low/95 backdrop-blur-md border-outline-variant/30 shadow-2xs -mx-margin-mobile lg:-mx-margin-desktop px-margin-mobile lg:px-margin-desktop'
           : 'border-outline-variant/20 bg-surface-container-low'
       }`}
       style={{ top: isNavbarHidden ? '0px' : `${navbarHeight}px` }}

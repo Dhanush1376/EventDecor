@@ -14,8 +14,15 @@ export const SYNONYM_MAP: Record<string, string[]> = {
   ],
   turmeric: ['pasupu', 'kumkuma', 'haldi', 'kumkum'],
   garland: ['mala', 'poola danda', 'haar', 'flower garland', 'toran', 'thoranam'],
-  tray: ['thali', 'thambulam', 'tambulam', 'plate', 'platter', 'presentation'],
-  'return gift': ['thambulam', 'tambulam', 'prasadam', 'hamper', 'gift box'],
+  tray: ['trays', 'thali', 'thambulam', 'tambulam', 'plate', 'platter', 'presentation'],
+  trays: ['tray', 'thali', 'thambulam', 'tambulam', 'plate', 'platter', 'presentation'],
+  jewelry: ['jewellery', 'ornaments', 'jewel', 'accessories', 'ring tray', 'gold'],
+  jewellery: ['jewelry', 'ornaments', 'jewel', 'accessories', 'ring tray', 'gold'],
+  bangle: ['bangles', 'bangle ceremony', 'valaikappu', 'chudi', 'bangle tray'],
+  bangles: ['bangle', 'bangle ceremony', 'valaikappu', 'chudi', 'bangle tray'],
+  harathi: ['aarathi', 'arati', 'harathi plate', 'aarathi plate', 'camphor plate'],
+  'dry fruit': ['dry fruits', 'nuts tray', 'dry fruit tray', 'badam tray'],
+  'return gift': ['return gifts', 'thambulam', 'tambulam', 'prasadam', 'hamper', 'gift box'],
   'welcome board': ['swagath board', 'entrance board', 'name board'],
 
   // Event types

@@ -1,5 +1,5 @@
 import React from 'react';
-import { SectionHeader, AdminField, AdminInput, AdminTextarea, AdminToggle } from '../AdminUIKit';
+import { AdminField, AdminInput, AdminTextarea, AdminToggle } from '../AdminUIKit';
 
 export function NavigationFooterEditor({ nav = {}, footer = {}, onUpdate }) {
   // Navigation arrays
@@ -110,7 +110,7 @@ export function NavigationFooterEditor({ nav = {}, footer = {}, onUpdate }) {
       </div>
       <div className="relative z-10">
         <div className="flex justify-between items-center mb-6 border-b border-[var(--admin-border-subtle)] pb-3">
-          <span className="text-[12px] font-bold text-[var(--admin-text-primary)] uppercase tracking-[0.1em]">
+          <span className="text-[14px] sm:text-[15px] font-semibold text-[var(--admin-text-primary)] tracking-tight">
             {title}
           </span>
           <button
@@ -181,11 +181,9 @@ export function NavigationFooterEditor({ nav = {}, footer = {}, onUpdate }) {
           <span className="material-symbols-outlined text-[150px]">menu</span>
         </div>
         <div className="relative z-10 space-y-6">
-          <SectionHeader
-            icon="menu"
-            title="Navbar Builder"
-            description="Adjust boutique storefront name and main navigation links"
-          />
+          <span className="text-[14px] sm:text-[15px] font-semibold text-[var(--admin-text-primary)] tracking-tight block border-b border-[var(--admin-border-subtle)] pb-3 mb-6">
+            1. Navbar Builder
+          </span>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6">
             <AdminField label="Navbar Brand Name">
@@ -218,11 +216,9 @@ export function NavigationFooterEditor({ nav = {}, footer = {}, onUpdate }) {
           <span className="material-symbols-outlined text-[150px]">bottom_navigation</span>
         </div>
         <div className="relative z-10 space-y-6">
-          <SectionHeader
-            icon="bottom_navigation"
-            title="Footer Credentials"
-            description="Manage general description summary blocks rendered inside the page base layout"
-          />
+          <span className="text-[14px] sm:text-[15px] font-semibold text-[var(--admin-text-primary)] tracking-tight block border-b border-[var(--admin-border-subtle)] pb-3 mb-6">
+            2. Footer Credentials
+          </span>
 
           <div className="space-y-6 pb-6">
             <AdminField label="Footer Brand Biography">

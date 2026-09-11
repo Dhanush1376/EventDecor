@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { createPortal } from 'react-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -11,11 +10,16 @@ import {
   EmptyState,
   SkeletonTable,
   AdminStatusPill,
+  AdminFilterDrawer,
   fadeUp,
   stagger,
   formatCurrency,
+  smoothScrollCardIntoView,
 } from '../../components/AdminUIKit';
 import { isWithinPeriod } from '../../utils/dateFilters';
+import { useAdminFilters } from '../../components/filters/useAdminFilters';
+import { returnFilterConfig } from '../../components/filters/configs/returnFilterConfig';
+import { AdminActiveFilterChips } from '../../components/filters/AdminActiveFilterChips';
 import { WhatsAppIcon } from '../../../components/ui/WhatsAppIcon';
 import { EXTERNAL_URLS } from '../../../config/constants';
 
@@ -31,6 +35,91 @@ const formatDateDMY = (dateStr) => {
   const month = String(d.getMonth() + 1).padStart(2, '0');
   const year = d.getFullYear();
   return `${day}-${month}-${year}`;
+};
+
+const formatPickupFullAddress = (req) => {
+  if (!req) return 'Address on file';
+  const pickup = req.pickup?.address || req.pickupAddress;
+  const shipping = req.orderId?.shippingAddress || req.shippingAddress;
+
+  if (typeof pickup === 'string' && pickup.trim().length > 0) {
+    if (pickup.trim().length < 15 && shipping && typeof shipping === 'object') {
+      const parts = [
+        shipping.address || shipping.street || shipping.line1,
+        shipping.locality || shipping.area,
+        shipping.landmark ? `Near ${shipping.landmark}` : '',
+        shipping.city || pickup,
+        shipping.state
+          ? shipping.pincode
+            ? `${shipping.state} - ${shipping.pincode}`
+            : shipping.state
+          : shipping.pincode,
+      ].filter(Boolean);
+      if (parts.length > 0) return parts.join(', ');
+    }
+    return pickup;
+  }
+
+  const addr =
+    pickup && typeof pickup === 'object'
+      ? pickup
+      : shipping && typeof shipping === 'object'
+        ? shipping
+        : null;
+  if (!addr) return 'Address on file';
+
+  const street =
+    addr.address ||
+    addr.street ||
+    addr.line1 ||
+    addr.addressLine1 ||
+    shipping?.address ||
+    shipping?.street ||
+    '';
+  const line2 = addr.line2 || addr.addressLine2 || shipping?.line2 || '';
+  const locality = addr.locality || addr.area || shipping?.locality || '';
+  const landmark = addr.landmark
+    ? `Near ${addr.landmark}`
+    : shipping?.landmark
+      ? `Near ${shipping.landmark}`
+      : '';
+  const city = addr.city || shipping?.city || '';
+  const state = addr.state || shipping?.state || '';
+  const pincode =
+    addr.pincode ||
+    addr.postalCode ||
+    addr.zipCode ||
+    shipping?.pincode ||
+    shipping?.postalCode ||
+    '';
+
+  const uniqueParts = [];
+  [street, line2, locality, landmark, city].forEach((p) => {
+    if (
+      p &&
+      !uniqueParts.some((existing) => existing.trim().toLowerCase() === p.trim().toLowerCase())
+    ) {
+      uniqueParts.push(p.trim());
+    }
+  });
+
+  if (state || pincode) {
+    const region = state ? (pincode ? `${state} - ${pincode}` : state) : pincode;
+    if (
+      region &&
+      !uniqueParts.some((existing) => existing.trim().toLowerCase() === region.trim().toLowerCase())
+    ) {
+      uniqueParts.push(region.trim());
+    }
+  }
+
+  if (uniqueParts.length === 0) {
+    return addr.name || shipping?.name
+      ? `${addr.name || shipping?.name} (Address on file)`
+      : 'Address on file';
+  }
+
+  return uniqueParts.join(', ');
 };
 
 const RETURN_STATUS_OPTIONS = [
@@ -178,15 +267,21 @@ export default function AdminReturnsHub({ hideHeader = false }) {
     settleRefund,
   } = useReturnManagement();
 
-  const [savedView, setSavedView] = useState('All Returns');
-  const [sortBy, setSortBy] = useState('Newest first');
   const [searchTerm, setSearchTerm] = useState('');
-  const [returnTypeFilter, setReturnTypeFilter] = useState('All'); // 'All' | 'return' | 'exchange'
-  const [statusDropdownFilter, setStatusDropdownFilter] = useState('All');
-  const [dateFilter, setDateFilter] = useState('All Time');
-  const [customDateRange, setCustomDateRange] = useState({ from: '', to: '' });
-  const [refundValueRange, setRefundValueRange] = useState({ min: '', max: '' });
+  const [sortBy, setSortBy] = useState('Newest first');
   const [showFiltersMenu, setShowFiltersMenu] = useState(false);
+
+  const {
+    filteredItems: filteredReturnsBeforeSort,
+    filterState,
+    setFilterValue,
+    resetFilter,
+    resetAllFilters,
+    activeChips,
+    activeCount,
+    totalCount,
+    matchCount,
+  } = useAdminFilters(returnsList, returnFilterConfig, searchTerm);
   const [isMobile, setIsMobile] = useState(() =>
     typeof window !== 'undefined' ? window.innerWidth < 640 : false,
   );
@@ -218,8 +313,13 @@ export default function AdminReturnsHub({ hideHeader = false }) {
   const toggleExpandCard = (id) => {
     setExpandedCardIds((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      const isExpanding = !next.has(id);
+      if (isExpanding) {
+        next.add(id);
+        smoothScrollCardIntoView(`return-card-${id}`);
+      } else {
+        next.delete(id);
+      }
       return next;
     });
   };
@@ -243,141 +343,30 @@ export default function AdminReturnsHub({ hideHeader = false }) {
 
   const handleSavedViewChange = (e) => {
     const view = e.target.value;
-    setSavedView(view);
+    setFilterValue('savedView', view);
 
     // Reset status overrides when changing saved view
     if (view === 'All Returns') {
-      setStatusDropdownFilter('All');
+      setFilterValue('status', 'All');
     } else if (view === 'Needs Attention') {
-      setStatusDropdownFilter('submitted');
+      setFilterValue('status', 'submitted');
     } else if (view === 'Completed & Settled') {
-      setStatusDropdownFilter('completed');
+      setFilterValue('status', 'completed');
     } else {
-      setStatusDropdownFilter('All');
+      setFilterValue('status', 'All');
     }
   };
 
   const handleResetAllFilters = () => {
-    setSavedView('All Returns');
+    resetAllFilters();
     setSortBy('Newest first');
-    setReturnTypeFilter('All');
-    setStatusDropdownFilter('All');
-    setDateFilter('All Time');
-    setCustomDateRange({ from: '', to: '' });
-    setRefundValueRange({ min: '', max: '' });
   };
 
-  // Comprehensive dynamic filtering and sorting
+  // Comprehensive dynamic filtering and sorting (Two-stage memoized pipeline)
   const filteredReturns = useMemo(() => {
-    let result = [...returnsList];
+    let result = [...filteredReturnsBeforeSort];
 
-    // 1. Client Search query filter (instant fallback)
-    if (searchTerm && searchTerm.trim() !== '') {
-      const q = searchTerm.toLowerCase().trim();
-      result = result.filter((r) => {
-        const returnId = (r.returnId || r._id || '').toLowerCase();
-        const orderRef = (
-          typeof r.orderId === 'object'
-            ? r.orderId?._id || r.orderId?.orderId || ''
-            : r.orderId || ''
-        ).toLowerCase();
-        const customerName = (
-          r.userId?.name ||
-          r.user?.name ||
-          r.customer?.name ||
-          r.customerName ||
-          ''
-        ).toLowerCase();
-        const customerPhone = (
-          r.pickup?.address?.phone ||
-          r.userId?.phone ||
-          r.user?.phone ||
-          r.customer?.phone ||
-          ''
-        ).toLowerCase();
-        const customerEmail = (
-          r.userId?.email ||
-          r.user?.email ||
-          r.customer?.email ||
-          ''
-        ).toLowerCase();
-        const itemsMatch = r.items?.some((item) =>
-          (item.title || item.name || item.product?.title || '').toLowerCase().includes(q),
-        );
-        const trackingMatch = (r.pickup?.trackingId || '').toLowerCase().includes(q);
-
-        return (
-          returnId.includes(q) ||
-          orderRef.includes(q) ||
-          customerName.includes(q) ||
-          customerPhone.includes(q) ||
-          customerEmail.includes(q) ||
-          itemsMatch ||
-          trackingMatch
-        );
-      });
-    }
-
-    // 2. Saved View Filter
-    if (savedView === 'Needs Attention') {
-      result = result.filter((r) => r.status === 'submitted');
-    } else if (savedView === 'Pending Pickup') {
-      result = result.filter((r) =>
-        ['approved', 'return_courier_assigned', 'return_picked_up'].includes(r.status),
-      );
-    } else if (savedView === 'Pending Inspection') {
-      result = result.filter((r) => ['return_received', 'inspection_started'].includes(r.status));
-    } else if (savedView === 'Refund Ready') {
-      result = result.filter((r) =>
-        ['inspection_completed', 'refund_initiated'].includes(r.status),
-      );
-    } else if (savedView === 'Completed & Settled') {
-      result = result.filter((r) => ['completed', 'refund_completed'].includes(r.status));
-    } else if (savedView === 'High Fraud Risk') {
-      result = result.filter((r) => Number(r.fraudScore || 0) >= 50 || Boolean(r.isHighFraudRisk));
-    }
-
-    // 3. Request Type Filter
-    if (returnTypeFilter !== 'All') {
-      result = result.filter((r) => {
-        if (returnTypeFilter === 'exchange') {
-          return r.returnType === 'exchange' || Boolean(r.exchangeId) || Boolean(r.exchangeDetails);
-        }
-        return r.returnType === 'return' || (!r.exchangeId && !r.exchangeDetails);
-      });
-    }
-
-    // 4. Lifecycle Status Filter
-    if (statusDropdownFilter !== 'All') {
-      result = result.filter((r) => r.status === statusDropdownFilter);
-    }
-
-    // 5. Date Filter
-    if (dateFilter !== 'All Time') {
-      result = result.filter((r) => isWithinPeriod(r.createdAt, dateFilter, customDateRange));
-    }
-
-    // 6. Refund Value Range Filter
-    if (refundValueRange.min !== '') {
-      const minVal = Number(refundValueRange.min);
-      result = result.filter((r) => {
-        const amt = Number(
-          r.refundBreakdown?.grandTotal ?? r.totalRefundAmount ?? r.refundAmount ?? 0,
-        );
-        return amt >= minVal;
-      });
-    }
-    if (refundValueRange.max !== '') {
-      const maxVal = Number(refundValueRange.max);
-      result = result.filter((r) => {
-        const amt = Number(
-          r.refundBreakdown?.grandTotal ?? r.totalRefundAmount ?? r.refundAmount ?? 0,
-        );
-        return amt <= maxVal;
-      });
-    }
-
-    // 7. Sort By
+    // Sort By
     result.sort((a, b) => {
       const timeA = new Date(a.createdAt).getTime() || 0;
       const timeB = new Date(b.createdAt).getTime() || 0;
@@ -404,17 +393,7 @@ export default function AdminReturnsHub({ hideHeader = false }) {
     });
 
     return result;
-  }, [
-    returnsList,
-    searchTerm,
-    savedView,
-    returnTypeFilter,
-    statusDropdownFilter,
-    dateFilter,
-    customDateRange,
-    refundValueRange,
-    sortBy,
-  ]);
+  }, [filteredReturnsBeforeSort, sortBy]);
 
   // Operational Ledger Reconciliation Metrics
   const codStats = useMemo(() => {
@@ -447,16 +426,7 @@ export default function AdminReturnsHub({ hideHeader = false }) {
   }, [filteredReturns, returnsList, stats.totalRefundAmount]);
 
   // Active filter badge count for filter button
-  const activeFilterCount = useMemo(() => {
-    let count = 0;
-    if (savedView !== 'All Returns') count++;
-    if (sortBy !== 'Newest first') count++;
-    if (returnTypeFilter !== 'All') count++;
-    if (statusDropdownFilter !== 'All') count++;
-    if (dateFilter !== 'All Time') count++;
-    if (refundValueRange.min !== '' || refundValueRange.max !== '') count++;
-    return count;
-  }, [savedView, sortBy, returnTypeFilter, statusDropdownFilter, dateFilter, refundValueRange]);
+  const activeFilterCount = activeCount;
 
   // Bulk actions
   const handleSelectAll = (e) => {
@@ -673,7 +643,7 @@ export default function AdminReturnsHub({ hideHeader = false }) {
           Saved Views (Quick Filters)
         </label>
         <select
-          value={savedView}
+          value={filterState.savedView}
           onChange={handleSavedViewChange}
           className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-accent)] cursor-pointer"
         >
@@ -711,8 +681,8 @@ export default function AdminReturnsHub({ hideHeader = false }) {
           Request Type
         </label>
         <select
-          value={returnTypeFilter}
-          onChange={(e) => setReturnTypeFilter(e.target.value)}
+          value={filterState.returnType}
+          onChange={(e) => setFilterValue('returnType', e.target.value)}
           className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] outline-none cursor-pointer font-medium"
         >
           <option value="All">All Types</option>
@@ -727,8 +697,8 @@ export default function AdminReturnsHub({ hideHeader = false }) {
           Lifecycle Status
         </label>
         <select
-          value={statusDropdownFilter}
-          onChange={(e) => setStatusDropdownFilter(e.target.value)}
+          value={filterState.status}
+          onChange={(e) => setFilterValue('status', e.target.value)}
           className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] outline-none cursor-pointer font-medium"
         >
           <option value="All">All Statuses</option>
@@ -745,14 +715,31 @@ export default function AdminReturnsHub({ hideHeader = false }) {
         </select>
       </div>
 
+      {/* SLA & Urgency */}
+      <div>
+        <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-2 block">
+          SLA & Urgency
+        </label>
+        <select
+          value={filterState.sla}
+          onChange={(e) => setFilterValue('sla', e.target.value)}
+          className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] outline-none cursor-pointer font-medium"
+        >
+          <option value="All">All Requests</option>
+          <option value="overdue">Overdue (&gt;48h Pending Review/Pickup)</option>
+          <option value="today">Requested Today</option>
+          <option value="7days">Requested in Last 7 Days</option>
+        </select>
+      </div>
+
       {/* Date Range */}
       <div>
         <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-2 block">
           Date Range
         </label>
         <select
-          value={dateFilter}
-          onChange={(e) => setDateFilter(e.target.value)}
+          value={filterState.date}
+          onChange={(e) => setFilterValue('date', e.target.value)}
           className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] outline-none cursor-pointer font-medium"
         >
           <option value="All Time">All Time</option>
@@ -764,7 +751,7 @@ export default function AdminReturnsHub({ hideHeader = false }) {
         </select>
       </div>
 
-      {dateFilter === 'Custom' && (
+      {filterState.date === 'Custom' && (
         <div className="grid grid-cols-2 gap-2 pt-1">
           <div>
             <label className="text-[9.5px] font-bold text-[var(--admin-text-tertiary)] uppercase block mb-1">
@@ -772,14 +759,14 @@ export default function AdminReturnsHub({ hideHeader = false }) {
             </label>
             <input
               type="date"
-              value={customDateRange.from}
+              value={filterState.customDateRange?.from || ''}
               onChange={(e) =>
-                setCustomDateRange((prev) => ({
-                  ...prev,
+                setFilterValue('customDateRange', {
+                  ...filterState.customDateRange,
                   from: e.target.value,
-                }))
+                })
               }
-              className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-2 py-1.5 text-[11px] outline-none"
+              className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-2 py-1.5 text-[11px] outline-none text-[var(--admin-text-primary)]"
             />
           </div>
           <div>
@@ -788,14 +775,14 @@ export default function AdminReturnsHub({ hideHeader = false }) {
             </label>
             <input
               type="date"
-              value={customDateRange.to}
+              value={filterState.customDateRange?.to || ''}
               onChange={(e) =>
-                setCustomDateRange((prev) => ({
-                  ...prev,
+                setFilterValue('customDateRange', {
+                  ...filterState.customDateRange,
                   to: e.target.value,
-                }))
+                })
               }
-              className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-2 py-1.5 text-[11px] outline-none"
+              className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-2 py-1.5 text-[11px] outline-none text-[var(--admin-text-primary)]"
             />
           </div>
         </div>
@@ -810,26 +797,26 @@ export default function AdminReturnsHub({ hideHeader = false }) {
           <input
             type="number"
             placeholder="Min ₹"
-            value={refundValueRange.min}
+            value={filterState.refundRange?.min || ''}
             onChange={(e) =>
-              setRefundValueRange((prev) => ({
-                ...prev,
+              setFilterValue('refundRange', {
+                ...filterState.refundRange,
                 min: e.target.value,
-              }))
+              })
             }
-            className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-2.5 py-1.5 text-[12px] outline-none"
+            className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-2.5 py-1.5 text-[12px] outline-none text-[var(--admin-text-primary)]"
           />
           <input
             type="number"
             placeholder="Max ₹"
-            value={refundValueRange.max}
+            value={filterState.refundRange?.max || ''}
             onChange={(e) =>
-              setRefundValueRange((prev) => ({
-                ...prev,
+              setFilterValue('refundRange', {
+                ...filterState.refundRange,
                 max: e.target.value,
-              }))
+              })
             }
-            className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-2.5 py-1.5 text-[12px] outline-none"
+            className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-2.5 py-1.5 text-[12px] outline-none text-[var(--admin-text-primary)]"
           />
         </div>
       </div>
@@ -919,155 +906,194 @@ export default function AdminReturnsHub({ hideHeader = false }) {
           </button>
         </div>
 
-        <motion.div variants={fadeUp} className="flex flex-row items-center gap-2 w-full">
-          {/* Search Bar - Height exactly matches FilterBar/Actions (42px) */}
-          <div className="relative flex-1 min-w-0 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] flex items-center px-2.5 sm:px-3 h-[42px] min-h-[42px] max-h-[42px]">
-            <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] shrink-0">
-              search
-            </span>
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search returns..."
-              className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-full min-w-0"
-            />
-            {searchTerm && (
-              <button
-                type="button"
-                onClick={() => setSearchTerm('')}
-                className="text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] cursor-pointer p-1 flex items-center justify-center"
-              >
-                <span className="material-symbols-outlined text-[16px]">close</span>
-              </button>
-            )}
-          </div>
-
-          {/* Action Controls Group (no overflow clipping so dropdowns open on laptop) */}
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {/* Filters Button */}
-            <div className="relative shrink-0">
-              <button
-                type="button"
-                onClick={() => setShowFiltersMenu(!showFiltersMenu)}
-                className={`h-[42px] min-h-[42px] max-h-[42px] px-2.5 sm:px-3.5 flex items-center justify-center gap-1.5 rounded-[4px] border transition-colors shrink-0 cursor-pointer ${
-                  showFiltersMenu || activeFilterCount > 0
-                    ? 'bg-[var(--admin-accent)] text-white border-transparent shadow-sm font-semibold'
-                    : 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] border-[var(--admin-border)] hover:border-[var(--admin-border-strong)]'
-                }`}
-                title="Return Filters"
-              >
-                <span className="material-symbols-outlined text-[18px]">tune</span>
-                <span className="font-semibold text-[13px] hidden sm:inline">
-                  {activeFilterCount > 0 ? `${activeFilterCount} Filters` : 'Filters'}
-                </span>
-                {activeFilterCount > 0 && (
-                  <span className="min-w-[16px] h-4 px-1 rounded-full bg-white text-[var(--admin-accent)] text-[10px] font-bold flex items-center justify-center">
-                    {activeFilterCount}
-                  </span>
-                )}
-              </button>
-
-              {/* Desktop Filter Popover (sm and up) */}
-              {!isMobile && (
-                <AnimatePresence>
-                  {showFiltersMenu && (
-                    <>
-                      <div
-                        onClick={() => setShowFiltersMenu(false)}
-                        className="fixed inset-0 z-[60]"
-                      />
-
-                      <motion.div
-                        initial={{ opacity: 0, y: -6, scale: 0.98 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -6, scale: 0.98 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute top-full right-0 mt-2 z-[70] w-[340px] bg-[var(--admin-surface)] rounded-[6px] shadow-2xl border border-[var(--admin-border-strong)] flex flex-col p-4 text-left"
-                      >
-                        <div className="flex justify-between items-center mb-3">
-                          <h3 className="text-[13.5px] font-bold text-[var(--admin-text-primary)] flex items-center gap-2">
-                            <span className="material-symbols-outlined text-[18px]">tune</span>
-                            Return Filters
-                          </h3>
-                          {activeFilterCount > 0 && (
-                            <span className="px-1.5 py-0.5 rounded bg-[var(--admin-accent)]/15 text-[var(--admin-accent)] text-[10px] font-bold">
-                              {activeFilterCount} active
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="max-h-[60vh] overflow-y-auto scrollbar-hide pr-0.5">
-                          {renderFilterFields}
-                        </div>
-
-                        <div className="mt-4 pt-3 border-t border-[var(--admin-border-subtle)] flex gap-2">
-                          <button
-                            type="button"
-                            onClick={handleResetAllFilters}
-                            className="admin-btn-outline flex-1 justify-center py-2 !rounded-[4px] text-[12px] font-semibold cursor-pointer"
-                          >
-                            Clear All
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setShowFiltersMenu(false)}
-                            className="admin-btn-primary flex-1 justify-center py-2 !rounded-[4px] text-[12px] font-semibold cursor-pointer"
-                          >
-                            Apply Filters
-                          </button>
-                        </div>
-                      </motion.div>
-                    </>
-                  )}
-                </AnimatePresence>
+        <div className="relative w-full">
+          <motion.div variants={fadeUp} className="flex flex-row items-center gap-2 w-full">
+            {/* Search Bar - Height exactly matches FilterBar/Actions (42px) */}
+            <div className="relative flex-1 min-w-0 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] flex items-center px-2.5 sm:px-3 h-[42px] min-h-[42px] max-h-[42px]">
+              <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] shrink-0">
+                search
+              </span>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search returns..."
+                className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-full min-w-0"
+              />
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm('')}
+                  className="text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] cursor-pointer p-1 flex items-center justify-center"
+                >
+                  <span className="material-symbols-outlined text-[16px]">close</span>
+                </button>
               )}
             </div>
 
-            {/* View Mode Toggle (Table / Kanban) */}
-            <div className="flex items-center gap-1 shrink-0 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] p-1 h-[42px] min-h-[42px] max-h-[42px] box-border">
+            {/* Action Controls Group (no overflow clipping so dropdowns open on laptop) */}
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+              {/* Filters Button */}
+              <div className="relative shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setShowFiltersMenu(!showFiltersMenu)}
+                  className={`h-[42px] min-h-[42px] max-h-[42px] px-2.5 sm:px-3.5 flex items-center justify-center gap-1.5 rounded-[4px] border transition-colors shrink-0 cursor-pointer ${
+                    showFiltersMenu || activeFilterCount > 0
+                      ? 'bg-[var(--admin-accent)] text-white border-transparent shadow-sm font-semibold'
+                      : 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] border-[var(--admin-border)] hover:border-[var(--admin-border-strong)]'
+                  }`}
+                  title="Return Filters"
+                >
+                  <span className="material-symbols-outlined text-[18px]">tune</span>
+                  <span className="font-semibold text-[13px] hidden sm:inline">
+                    {activeFilterCount > 0 ? `${activeFilterCount} Filters` : 'Filters'}
+                  </span>
+                  {activeFilterCount > 0 && (
+                    <span className="min-w-[16px] h-4 px-1 rounded-full bg-white text-[var(--admin-accent)] text-[10px] font-bold flex items-center justify-center">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* Filter Drawer / Popover */}
+                <AdminFilterDrawer
+                  isOpen={showFiltersMenu}
+                  onClose={() => setShowFiltersMenu(false)}
+                  title="Return Filters"
+                  icon="tune"
+                  activeCount={activeFilterCount}
+                  onClearAll={handleResetAllFilters}
+                  clearAllLabel="Clear All"
+                  onApply={() => setShowFiltersMenu(false)}
+                >
+                  {renderFilterFields}
+                </AdminFilterDrawer>
+              </div>
+
+              {/* View Mode Toggle (Table / Kanban) - Hidden on Mobile */}
+              <div className="hidden md:flex items-center gap-1 shrink-0 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] p-1 h-[42px] min-h-[42px] max-h-[42px] box-border">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('table')}
+                  className={`h-[32px] w-[32px] min-h-[32px] min-w-[32px] max-h-[32px] max-w-[32px] rounded-[3px] box-border flex items-center justify-center transition-all cursor-pointer ${
+                    viewMode === 'table'
+                      ? 'bg-white dark:bg-stone-800 text-[var(--admin-accent)] shadow-xs font-bold'
+                      : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
+                  }`}
+                  title="Table View"
+                >
+                  <span className="material-symbols-outlined text-[18px] leading-none">
+                    view_list
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('kanban')}
+                  className={`h-[32px] w-[32px] min-h-[32px] min-w-[32px] max-h-[32px] max-w-[32px] rounded-[3px] box-border flex items-center justify-center transition-all cursor-pointer ${
+                    viewMode === 'kanban'
+                      ? 'bg-white dark:bg-stone-800 text-[var(--admin-accent)] shadow-xs font-bold'
+                      : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
+                  }`}
+                  title="Cards View"
+                >
+                  <span className="material-symbols-outlined text-[18px] leading-none">
+                    view_kanban
+                  </span>
+                </button>
+              </div>
+
+              {/* Export CSV Button */}
               <button
                 type="button"
-                onClick={() => setViewMode('table')}
-                className={`h-[32px] w-[32px] min-h-[32px] min-w-[32px] max-h-[32px] max-w-[32px] rounded-[3px] box-border flex items-center justify-center transition-all cursor-pointer ${
-                  viewMode === 'table'
-                    ? 'bg-white dark:bg-stone-800 text-[var(--admin-accent)] shadow-xs font-bold'
-                    : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
-                }`}
-                title="Table View"
+                onClick={handleExportCSV}
+                className="h-[42px] min-h-[42px] max-h-[42px] w-[42px] sm:w-auto px-0 sm:px-3.5 bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-border-subtle)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] rounded-[4px] flex items-center justify-center cursor-pointer transition-all active:scale-95 border border-[var(--admin-border)] shrink-0 gap-1.5 font-semibold text-[13px]"
+                title="Export CSV"
               >
-                <span className="material-symbols-outlined text-[18px] leading-none">
-                  view_list
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('kanban')}
-                className={`h-[32px] w-[32px] min-h-[32px] min-w-[32px] max-h-[32px] max-w-[32px] rounded-[3px] box-border flex items-center justify-center transition-all cursor-pointer ${
-                  viewMode === 'kanban'
-                    ? 'bg-white dark:bg-stone-800 text-[var(--admin-accent)] shadow-xs font-bold'
-                    : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
-                }`}
-                title="Cards View"
-              >
-                <span className="material-symbols-outlined text-[18px] leading-none">
-                  view_kanban
-                </span>
+                <span className="material-symbols-outlined text-[18px]">download</span>
+                <span className="hidden sm:inline">Export</span>
               </button>
             </div>
+          </motion.div>
 
-            {/* Export CSV Button */}
-            <button
-              type="button"
-              onClick={handleExportCSV}
-              className="h-[42px] min-h-[42px] max-h-[42px] w-[42px] sm:w-auto px-0 sm:px-3.5 bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-border-subtle)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] rounded-[4px] flex items-center justify-center cursor-pointer transition-all active:scale-95 border border-[var(--admin-border)] shrink-0 gap-1.5 font-semibold text-[13px]"
-              title="Export CSV"
-            >
-              <span className="material-symbols-outlined text-[18px]">download</span>
-              <span className="hidden sm:inline">Export</span>
-            </button>
-          </div>
-        </motion.div>
+          {/* Contextual Bulk Action Bar - Overlaps entire searchbar in-place */}
+          <AnimatePresence>
+            {selectedIds.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: -4, scale: 0.99 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -4, scale: 0.99 }}
+                transition={{ duration: 0.15 }}
+                className="absolute inset-0 z-30 flex flex-row items-center justify-between gap-2 sm:gap-3 px-3 sm:px-4 bg-[var(--admin-surface)] border border-[var(--admin-border-strong)] rounded-[4px] shadow-sm h-[42px] min-h-[42px] max-h-[42px] box-border"
+              >
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                  <span className="w-5 h-5 rounded-full bg-[var(--admin-accent)]/15 flex items-center justify-center text-[11px] font-extrabold text-[var(--admin-accent)] shrink-0">
+                    {selectedIds.length}
+                  </span>
+                  <span className="text-[12px] sm:text-[13px] font-bold text-[var(--admin-text-primary)] truncate">
+                    {selectedIds.length} return{selectedIds.length > 1 ? 's' : ''} selected
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedIds([])}
+                    className="text-[11px] sm:text-[12px] text-[var(--admin-accent)] hover:underline cursor-pointer ml-1 font-semibold shrink-0"
+                  >
+                    Deselect all
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-1.5 sm:gap-2 justify-end shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleBulkApprove}
+                    className="h-7 sm:h-8 px-2 sm:px-3 rounded-[4px] bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] sm:text-[12px] font-bold flex items-center gap-1 sm:gap-1.5 transition-colors cursor-pointer shadow-xs active:scale-95"
+                    title="Approve Selected"
+                  >
+                    <span className="material-symbols-outlined text-[15px] sm:text-[16px]">
+                      check_circle
+                    </span>
+                    <span className="hidden sm:inline">Approve</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleBulkReject}
+                    className="h-7 sm:h-8 px-2 sm:px-3 rounded-[4px] bg-rose-600 hover:bg-rose-500 text-white text-[11px] sm:text-[12px] font-bold flex items-center gap-1 sm:gap-1.5 transition-colors cursor-pointer shadow-xs active:scale-95"
+                    title="Reject Selected"
+                  >
+                    <span className="material-symbols-outlined text-[15px] sm:text-[16px]">
+                      cancel
+                    </span>
+                    <span className="hidden sm:inline">Reject</span>
+                  </button>
+
+                  <div className="w-[1px] h-5 sm:h-6 bg-[var(--admin-border-subtle)] mx-0.5 sm:mx-1" />
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedIds([])}
+                    className="h-7 w-7 sm:h-8 sm:w-8 rounded-[4px] text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-hover)] flex items-center justify-center transition-colors cursor-pointer"
+                    title="Clear Selection"
+                  >
+                    <span className="material-symbols-outlined text-[17px] sm:text-[18px]">
+                      close
+                    </span>
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Active Filter Chips Row */}
+        <AdminActiveFilterChips
+          activeChips={activeChips}
+          totalCount={totalCount}
+          matchCount={matchCount}
+          onClearAll={handleResetAllFilters}
+          itemName="returns"
+          className="mt-2 mb-1"
+        />
       </div>
 
       <div className="space-y-6">
@@ -1124,42 +1150,6 @@ export default function AdminReturnsHub({ hideHeader = false }) {
             </div>
           </div>
         </motion.div>
-
-        {/* Contextual Bulk Action Bar */}
-        {selectedIds.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-between p-2.5 px-4 bg-[var(--admin-surface)] rounded-[4px] border border-[var(--admin-border-strong)] shadow-xs"
-          >
-            <span className="font-bold text-[13px] text-[var(--admin-text-primary)]">
-              {selectedIds.length} return{selectedIds.length > 1 ? 's' : ''} selected
-            </span>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleBulkApprove}
-                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-bold rounded-[3px] transition-colors cursor-pointer"
-              >
-                Approve Selected
-              </button>
-              <button
-                type="button"
-                onClick={handleBulkReject}
-                className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-[12px] font-bold rounded-[3px] transition-colors cursor-pointer"
-              >
-                Reject Selected
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedIds([])}
-                className="px-2.5 py-1 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] text-[12px] font-semibold cursor-pointer"
-              >
-                Clear Selection
-              </button>
-            </div>
-          </motion.div>
-        )}
       </div>
 
       {/* ─── TABLE VIEW (Desktop / Tablet) ─── */}
@@ -1634,14 +1624,26 @@ export default function AdminReturnsHub({ hideHeader = false }) {
                   return (
                     <div
                       key={req._id}
+                      id={`return-card-${req._id}`}
                       onClick={() => navigate(getRequestDetailUrl(req))}
                       className="relative overflow-hidden rounded-[8px] p-3.5 shadow-xs border border-stone-200/90 dark:border-stone-700/80 bg-white dark:bg-stone-900 flex flex-col gap-3 cursor-pointer hover:border-stone-300 dark:hover:border-stone-600 hover:shadow-sm transition-all text-left"
                     >
-                      {/* Header: Return ID + Order Ref + Customer + Status Pill */}
+                      {/* Header: Customer Name + Status Pill, with subtle faded Return ID + Order Ref */}
                       <div className="flex justify-between items-start gap-2">
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="font-bold text-[var(--admin-text-primary)] text-[14px]">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-[var(--admin-text-primary)] text-[14px] truncate leading-tight">
+                              {customerName}
+                            </span>
+                            {isNew && (
+                              <span
+                                className="w-1.5 h-1.5 rounded-full bg-[var(--admin-accent)] animate-ping shrink-0"
+                                title="Recent return request"
+                              />
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                            <span className="font-mono text-[11px] font-medium text-[var(--admin-text-tertiary)] dark:text-stone-400">
                               #{req.returnId || req._id.substring(0, 8).toUpperCase()}
                             </span>
                             {req.orderId && (
@@ -1650,30 +1652,22 @@ export default function AdminReturnsHub({ hideHeader = false }) {
                                   e.stopPropagation();
                                   navigate(`/admin/orders/${req.orderId._id || req.orderId}`);
                                 }}
-                                className="font-mono text-[11px] text-[var(--admin-text-secondary)] font-medium hover:text-[var(--admin-accent)] hover:underline cursor-pointer"
+                                className="font-mono text-[10.5px] text-[var(--admin-text-tertiary)] hover:text-[var(--admin-accent)] hover:underline cursor-pointer"
                                 title="View Original Order"
                               >
-                                #
+                                (Order #
                                 {req.orderId.orderCode ||
                                   req.orderId.orderId ||
                                   (req.orderId._id || req.orderId).toString().substring(0, 8)}
+                                )
                               </span>
                             )}
                             {req.returnType && req.returnType !== 'return' && (
-                              <span className="text-[9.5px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:border-purple-800">
+                              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded border bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:border-purple-800 shrink-0">
                                 {req.returnType}
                               </span>
                             )}
-                            {isNew && (
-                              <span
-                                className="w-1.5 h-1.5 rounded-full bg-[var(--admin-accent)] animate-ping"
-                                title="Recent return request"
-                              />
-                            )}
                           </div>
-                          <span className="text-[12px] font-medium text-[var(--admin-text-secondary)] block mt-0.5 truncate">
-                            {customerName}
-                          </span>
                         </div>
                         <AdminStatusPill status={statusCfg.label} className="shrink-0" />
                       </div>
@@ -1758,14 +1752,6 @@ export default function AdminReturnsHub({ hideHeader = false }) {
                                 ? req.refundMethod.replace(/_/g, ' ')
                                 : 'Original Source'}
                           </span>
-                          {isRefundSettled && (
-                            <span className="inline-flex items-center gap-0.5 text-[9.5px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-[4px]">
-                              <span className="material-symbols-outlined text-[11px]">
-                                verified
-                              </span>
-                              Settled
-                            </span>
-                          )}
                         </div>
 
                         <div>
@@ -1942,8 +1928,10 @@ export default function AdminReturnsHub({ hideHeader = false }) {
                               {/* Customer Contact: Equally aligned 2-column grid matching controls sideways */}
                               <div className="grid grid-cols-2 gap-2 items-center text-[11px] text-stone-600 dark:text-stone-300 bg-stone-50 dark:bg-stone-800/50 px-2.5 py-2 rounded-[6px] border border-stone-200/60 dark:border-stone-700/60">
                                 <div className="flex items-center gap-1.5 min-w-0">
-                                  <span className="material-symbols-outlined !text-[15px] !leading-none text-stone-400 shrink-0 select-none">
-                                    call
+                                  <span className="w-4 h-4 flex items-center justify-center shrink-0 text-stone-400">
+                                    <span className="material-symbols-outlined !text-[15px] !leading-none select-none">
+                                      call
+                                    </span>
                                   </span>
                                   <a
                                     href={`tel:${customerPhone}`}
@@ -1957,7 +1945,9 @@ export default function AdminReturnsHub({ hideHeader = false }) {
                                 <div className="flex items-center gap-1.5 min-w-0">
                                   {customerPhone ? (
                                     <>
-                                      <WhatsAppIcon className="w-3.5 h-3.5 shrink-0 text-[#25D366]" />
+                                      <span className="w-4 h-4 flex items-center justify-center shrink-0">
+                                        <WhatsAppIcon className="w-3.5 h-3.5 text-[#25D366]" />
+                                      </span>
                                       <a
                                         href={`${EXTERNAL_URLS.WHATSAPP_BASE}/${customerPhone.replace(/[^0-9]/g, '')}`}
                                         target="_blank"
@@ -1969,8 +1959,10 @@ export default function AdminReturnsHub({ hideHeader = false }) {
                                     </>
                                   ) : customerEmail ? (
                                     <>
-                                      <span className="material-symbols-outlined !text-[15px] !leading-none text-stone-400 shrink-0 select-none">
-                                        mail
+                                      <span className="w-4 h-4 flex items-center justify-center shrink-0 text-stone-400">
+                                        <span className="material-symbols-outlined !text-[15px] !leading-none select-none">
+                                          mail
+                                        </span>
                                       </span>
                                       <a
                                         href={`mailto:${customerEmail}`}
@@ -1987,43 +1979,48 @@ export default function AdminReturnsHub({ hideHeader = false }) {
 
                               {/* Return Reason */}
                               {firstItem?.reason && (
-                                <div className="text-[11px] bg-amber-500/5 border border-amber-500/20 p-2 rounded-[6px] text-amber-900 dark:text-amber-300 flex items-start gap-1.5">
-                                  <span className="material-symbols-outlined text-[14px] mt-0.5 text-amber-600 shrink-0">
-                                    info
+                                <div className="text-[11px] bg-amber-500/5 border border-amber-500/20 px-2.5 py-2 rounded-[6px] text-amber-900 dark:text-amber-300 flex items-start gap-1.5">
+                                  <span className="w-4 h-4 flex items-center justify-center shrink-0 text-amber-600 mt-0.5">
+                                    <span className="material-symbols-outlined !text-[15px] !leading-none select-none">
+                                      info
+                                    </span>
                                   </span>
-                                  <div>
-                                    <span className="font-bold">Reason:</span> {firstItem.reason}
+                                  <div className="leading-snug min-w-0 flex-1">
+                                    <span className="font-bold text-amber-950 dark:text-amber-200">
+                                      Reason:
+                                    </span>{' '}
+                                    <span className="text-amber-900 dark:text-amber-300">
+                                      {firstItem.reason}
+                                    </span>
                                   </div>
                                 </div>
                               )}
 
                               {/* Pickup Address */}
-                              {(req.pickup?.address || req.pickupAddress) && (
-                                <div className="text-[11px] bg-stone-50 dark:bg-stone-800 p-2 rounded-[6px] border border-stone-200/70 dark:border-stone-700/70 flex items-start gap-1.5">
-                                  <span className="material-symbols-outlined text-[14px] mt-0.5 text-stone-400 shrink-0">
-                                    location_on
+                              {(req.pickup?.address ||
+                                req.pickupAddress ||
+                                req.orderId?.shippingAddress ||
+                                req.shippingAddress) && (
+                                <div className="text-[11px] bg-stone-50 dark:bg-stone-800/70 px-2.5 py-2 rounded-[6px] border border-stone-200/70 dark:border-stone-700/70 flex items-start gap-1.5">
+                                  <span className="w-4 h-4 flex items-center justify-center shrink-0 text-stone-400 mt-0.5">
+                                    <span className="material-symbols-outlined !text-[15px] !leading-none select-none">
+                                      location_on
+                                    </span>
                                   </span>
-                                  <div className="text-stone-700 dark:text-stone-300 leading-snug">
+                                  <div className="text-stone-700 dark:text-stone-300 leading-snug break-words min-w-0 flex-1">
                                     <span className="font-bold text-stone-900 dark:text-stone-100">
                                       Pickup Address:
                                     </span>{' '}
-                                    {req.pickup?.address?.line1 ||
-                                      req.pickup?.address?.address ||
-                                      req.pickup?.address?.city ||
-                                      'Address on file'}
-                                    {req.pickup?.address?.city
-                                      ? `, ${req.pickup.address.city}`
-                                      : ''}
-                                    {req.pickup?.address?.postalCode
-                                      ? ` - ${req.pickup.address.postalCode}`
-                                      : ''}
+                                    <span className="text-stone-700 dark:text-stone-300">
+                                      {formatPickupFullAddress(req)}
+                                    </span>
                                   </div>
                                 </div>
                               )}
 
                               {/* Return Items List (if multiple items) */}
                               {req.items?.length > 1 && (
-                                <div className="bg-stone-50 dark:bg-stone-800/60 p-2 rounded-[6px] border border-stone-200/60 dark:border-stone-700/60 flex flex-col gap-1 text-[10.5px]">
+                                <div className="bg-stone-50 dark:bg-stone-800/60 px-2.5 py-2 rounded-[6px] border border-stone-200/60 dark:border-stone-700/60 flex flex-col gap-1 text-[10.5px]">
                                   <span className="font-bold text-stone-500 uppercase tracking-wider text-[9px]">
                                     All Items ({req.items.length})
                                   </span>
@@ -2058,10 +2055,15 @@ export default function AdminReturnsHub({ hideHeader = false }) {
 
                               {/* UPI ID Info with Copy Button if present */}
                               {(req.upiId || req.refundDetails?.upiId) && (
-                                <div className="flex items-center justify-between text-[11px] bg-stone-50 dark:bg-stone-800 p-2 rounded-[6px] border border-stone-200/70 dark:border-stone-700/70">
+                                <div className="flex items-center justify-between text-[11px] bg-stone-50 dark:bg-stone-800/70 px-2.5 py-2 rounded-[6px] border border-stone-200/70 dark:border-stone-700/70">
                                   <div className="flex items-center gap-1.5 text-stone-600 dark:text-stone-300 min-w-0 truncate">
-                                    <span className="material-symbols-outlined text-[13px] text-stone-400">
-                                      payments
+                                    <span className="w-4 h-4 flex items-center justify-center shrink-0 text-stone-400">
+                                      <span className="material-symbols-outlined !text-[15px] !leading-none select-none">
+                                        payments
+                                      </span>
+                                    </span>
+                                    <span className="font-bold text-stone-900 dark:text-stone-100 shrink-0">
+                                      Refund UPI:
                                     </span>
                                     <span className="font-mono font-bold text-stone-800 dark:text-stone-200 truncate">
                                       {req.upiId || req.refundDetails?.upiId}
@@ -2075,9 +2077,9 @@ export default function AdminReturnsHub({ hideHeader = false }) {
                                       );
                                       toast.success('UPI ID copied!');
                                     }}
-                                    className="text-amber-700 dark:text-amber-400 font-bold hover:underline flex items-center gap-0.5 shrink-0 cursor-pointer"
+                                    className="text-amber-700 dark:text-amber-400 font-bold hover:underline flex items-center gap-1 shrink-0 cursor-pointer ml-2 text-[11px]"
                                   >
-                                    <span className="material-symbols-outlined text-[12px]">
+                                    <span className="material-symbols-outlined !text-[13px] !leading-none select-none">
                                       content_copy
                                     </span>
                                     Copy
@@ -2135,105 +2137,6 @@ export default function AdminReturnsHub({ hideHeader = false }) {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* ─── MOBILE FILTER APP DRAWER (Portal to document.body) ─── */}
-      {isMobile &&
-        typeof document !== 'undefined' &&
-        createPortal(
-          <AnimatePresence>
-            {showFiltersMenu && (
-              <div
-                className={`admin-section-root ${
-                  document.documentElement.classList.contains('dark') ||
-                  document.body.classList.contains('dark')
-                    ? 'dark'
-                    : ''
-                }`}
-              >
-                {/* Backdrop overlay */}
-                <motion.div
-                  key="mobile-filter-drawer-backdrop"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  onClick={() => setShowFiltersMenu(false)}
-                  className="fixed inset-0 z-[9998] bg-black/60 backdrop-blur-xs cursor-pointer"
-                />
-
-                {/* Mobile App Drawer (Bottom Sheet) */}
-                <motion.div
-                  key="mobile-filter-drawer-sheet"
-                  initial={{ y: '100%' }}
-                  animate={{ y: 0 }}
-                  exit={{ y: '100%' }}
-                  transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                  className="fixed bottom-0 inset-x-0 z-[9999] bg-[var(--admin-surface)] rounded-t-[6px] shadow-[0_-8px_30px_rgba(0,0,0,0.3)] border-t border-[var(--admin-border-strong)] flex flex-col max-h-[85vh] text-left overflow-hidden"
-                >
-                  {/* Grab Handle */}
-                  <div
-                    className="w-full flex justify-center pt-2.5 pb-1 shrink-0 cursor-pointer"
-                    onClick={() => setShowFiltersMenu(false)}
-                  >
-                    <div className="w-10 h-1 rounded-[2px] bg-[var(--admin-border-strong)] opacity-60" />
-                  </div>
-
-                  {/* Drawer Header */}
-                  <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--admin-border-subtle)] shrink-0">
-                    <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-[18px] text-[var(--admin-accent)]">
-                        tune
-                      </span>
-                      <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)]">
-                        Return Filters
-                      </h3>
-                      {activeFilterCount > 0 && (
-                        <span className="px-1.5 py-0.5 rounded-[4px] bg-[var(--admin-accent)] text-white text-[10px] font-bold">
-                          {activeFilterCount} Active
-                        </span>
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowFiltersMenu(false)}
-                      className="w-7 h-7 rounded-[4px] flex items-center justify-center hover:bg-[var(--admin-bg-subtle)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] cursor-pointer transition-colors"
-                      aria-label="Close filters"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">close</span>
-                    </button>
-                  </div>
-
-                  {/* Drawer Scrollable Content */}
-                  <div
-                    className="flex-1 overflow-y-auto px-4 py-3.5 space-y-4 touch-pan-y"
-                    style={{ WebkitOverflowScrolling: 'touch' }}
-                  >
-                    {renderFilterFields}
-                  </div>
-
-                  {/* Drawer Sticky Footer */}
-                  <div className="p-3.5 border-t border-[var(--admin-border-subtle)] bg-[var(--admin-surface-muted)] flex gap-2.5 shrink-0">
-                    <button
-                      type="button"
-                      onClick={handleResetAllFilters}
-                      className="admin-btn-outline flex-1 justify-center py-2.5 !rounded-[4px] text-[12.5px] font-semibold cursor-pointer"
-                    >
-                      Clear All
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowFiltersMenu(false)}
-                      className="admin-btn-primary flex-1 justify-center py-2.5 !rounded-[4px] text-[12.5px] font-semibold cursor-pointer"
-                    >
-                      Apply Filters
-                    </button>
-                  </div>
-                </motion.div>
-              </div>
-            )}
-          </AnimatePresence>,
-          document.body,
-        )}
     </motion.div>
   );
 }

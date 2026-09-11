@@ -81,18 +81,29 @@ export function BookingStatusTimeline({ booking, onUpdateStatus, setShowUnpaidMo
           </div>
         </div>
 
-        {/* Advance Next Phase Action */}
-        {nextPhase && (
-          <button
-            type="button"
-            onClick={() => handleAdvance(nextPhase.key)}
-            className="h-8 px-2.5 sm:px-3 rounded-[4px] bg-[var(--admin-accent)] hover:bg-[var(--admin-accent-hover)] text-white text-[11px] font-bold shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap shrink-0"
+        {/* Status Dropdown Selector */}
+        <div className="relative shrink-0 w-[145px] sm:w-[175px]">
+          <select
+            value={currentStatus}
+            onChange={(e) => handleAdvance(e.target.value)}
+            className="w-full h-8 pl-2.5 sm:pl-3 pr-7 sm:pr-8 rounded-[4px] border border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--admin-text-primary)] text-[11.5px] sm:text-[12px] font-bold shadow-2xs outline-none focus:border-[var(--admin-accent)] cursor-pointer transition-colors"
+            style={{
+              WebkitAppearance: 'none',
+              MozAppearance: 'none',
+              appearance: 'none',
+              backgroundImage: 'none',
+            }}
           >
-            <span className="hidden sm:inline">Advance to {nextPhase.title}</span>
-            <span className="sm:hidden">Next: {nextPhase.title.split(' ')[0]}</span>
-            <span className="material-symbols-outlined text-[14px] shrink-0">arrow_forward</span>
-          </button>
-        )}
+            <option value="inquiry">Inquiry</option>
+            <option value="pending_payment">Pending Payment</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="setup_in_progress">Setup In Progress</option>
+            <option value="completed">Completed</option>
+          </select>
+          <span className="material-symbols-outlined absolute right-1.5 sm:right-2 top-1/2 -translate-y-1/2 text-[18px] text-[var(--admin-text-tertiary)] pointer-events-none select-none">
+            expand_more
+          </span>
+        </div>
       </div>
 
       {/* Stepper Progress Bar */}

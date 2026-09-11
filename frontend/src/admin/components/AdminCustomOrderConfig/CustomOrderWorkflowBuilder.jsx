@@ -57,7 +57,7 @@ export function CustomOrderWorkflowBuilder({
             <button
               type="button"
               onClick={() => deleteWorkflowStatus(activeType.id, workflow.id)}
-              className="admin-btn-icon !rounded-[4px] w-8 h-8 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-error)] hover:bg-[var(--admin-error-light)] shrink-0"
+              className="w-8 h-8 rounded-[4px] text-[var(--admin-text-tertiary)] hover:text-[var(--admin-error)] hover:bg-[var(--admin-error-light)] shrink-0 flex items-center justify-center transition-colors cursor-pointer"
               title="Delete Status"
             >
               <span className="material-symbols-outlined text-[16px]">delete</span>

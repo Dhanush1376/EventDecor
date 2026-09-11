@@ -1,7 +1,5 @@
 import { X, Tag } from 'lucide-react';
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
 import {
   FilterPanel,
   Pagination,
@@ -40,10 +38,22 @@ export const ProductListingGrid = React.memo(
     pageParam,
     setSearchParams,
     searchParams,
+    commitSearch,
+    setLocalSearch,
     openQuickView,
     isNavbarHidden,
     navbarHeight,
   }) => {
+    const handleClearCoupon = () => {
+      setSearchParams((prev) => {
+        const params = new URLSearchParams(prev);
+        params.delete('coupon');
+        params.delete('collection');
+        params.delete('ids');
+        return params;
+      });
+    };
+
     return (
       <main
         id="artisan-collection"
@@ -72,15 +82,64 @@ export const ProductListingGrid = React.memo(
           </aside>
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between mb-6 lg:mb-10">
-              <div className="flex flex-col gap-1">
-                <h2 className="font-headline-md text-on-surface font-normal text-[24px] lg:text-[32px]">
-                  Shop
-                </h2>
-                <p className="font-body-md text-on-surface-variant/60 font-medium">
-                  {totalCount} unique pieces designed for you
-                </p>
+            <div className="hidden lg:flex items-center justify-between mb-6 pb-4 border-b border-outline-variant/15">
+              <div>
+                <h1 className="font-heading text-[26px] xl:text-[30px] font-bold text-on-surface">
+                  {searchParam ? (
+                    <>
+                      Results for <span className="text-primary italic">"{searchParam}"</span>
+                    </>
+                  ) : categoryParam === 'All' ? (
+                    'Shop'
+                  ) : (
+                    categoryParam
+                  )}
+                </h1>
+                <div className="flex items-center gap-2 mt-0.5 text-on-surface-variant/70 font-medium text-body-sm flex-wrap">
+                  <span>
+                    <span className="font-semibold text-on-surface">{totalCount}</span>{' '}
+                    {totalCount === 1 ? 'piece' : 'pieces'}{' '}
+                    {categoryParam !== 'All' && !searchParam
+                      ? `in ${categoryParam}`
+                      : searchParam
+                        ? categoryParam !== 'All'
+                          ? `found in ${categoryParam}`
+                          : 'found'
+                        : searchParams?.get('coupon')
+                          ? 'eligible for coupon'
+                          : 'designed for you'}
+                  </span>
+                  {searchParams?.get('coupon') && (
+                    <span className="inline-flex items-center gap-1.5 font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 px-2.5 h-[22px] rounded-full text-[11px] leading-none border border-emerald-500/25 shrink-0">
+                      <Tag
+                        className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400 shrink-0"
+                        strokeWidth={2.2}
+                      />
+                      <span className="leading-none">Coupon: {searchParams.get('coupon')}</span>
+                      <button
+                        type="button"
+                        onClick={handleClearCoupon}
+                        className="hover:opacity-75 transition-opacity cursor-pointer flex items-center justify-center p-0 ml-0.5 leading-none text-emerald-700 dark:text-emerald-400"
+                        title="Clear coupon filter"
+                      >
+                        <X className="w-2.5 h-2.5 shrink-0" strokeWidth={2.2} />
+                      </button>
+                    </span>
+                  )}
+                </div>
               </div>
+              {searchParam && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (commitSearch) commitSearch('');
+                    else if (setLocalSearch) setLocalSearch('');
+                  }}
+                  className="text-[12px] text-primary hover:underline font-semibold cursor-pointer"
+                >
+                  Clear search
+                </button>
+              )}
             </div>
 
             <div
@@ -96,29 +155,67 @@ export const ProductListingGrid = React.memo(
               navbarHeight={navbarHeight}
             />
 
-            {productsData?.correctedQuery && (
-              <div className="mb-8 px-6 py-4 bg-primary/5 text-primary rounded-[20px] border border-primary/10 text-[14px] font-medium flex items-center gap-2.5 shadow-sm">
-                <span className="material-symbols-outlined text-[20px] text-primary">
-                  lightbulb
+            {/* Unified Results & Search State Indicator */}
+            <div className="lg:hidden mb-4 px-1 flex items-center justify-between text-[12px] font-medium text-on-surface-variant/80 animate-fade-in gap-2">
+              <div className="flex items-center gap-2 flex-wrap min-w-0">
+                <span className="inline-flex items-center justify-center font-bold text-primary bg-primary/10 px-2.5 h-[22px] rounded-full text-[11px] leading-none border border-primary/15 shrink-0">
+                  {totalCount} {totalCount === 1 ? 'piece' : 'pieces'}
                 </span>
-                <span>
-                  Showing results for{' '}
-                  <Link
-                    to={`/collections?search=${encodeURIComponent(productsData.correctedQuery)}`}
-                    className="font-bold underline hover:text-primary-dark"
-                  >
-                    {productsData.correctedQuery}
-                  </Link>
-                  . Search instead for{' '}
-                  <Link
-                    to={`/collections?search=${encodeURIComponent(searchParam)}&spellcheck=false`}
-                    className="underline text-on-surface-variant/80 hover:text-on-surface"
-                  >
-                    {searchParam}
-                  </Link>
-                </span>
+
+                {searchParams?.get('coupon') && (
+                  <span className="inline-flex items-center gap-1.5 font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 px-2.5 h-[22px] rounded-full text-[11px] leading-none border border-emerald-500/25 shrink-0">
+                    <Tag
+                      className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400 shrink-0"
+                      strokeWidth={2.2}
+                    />
+                    <span className="leading-none">Coupon: {searchParams.get('coupon')}</span>
+                    <button
+                      type="button"
+                      onClick={handleClearCoupon}
+                      className="hover:opacity-75 transition-opacity cursor-pointer flex items-center justify-center p-0 ml-0.5 leading-none text-emerald-700 dark:text-emerald-400"
+                      title="Clear coupon filter"
+                    >
+                      <X className="w-2.5 h-2.5 shrink-0" strokeWidth={2.2} />
+                    </button>
+                  </span>
+                )}
+
+                {searchParam ? (
+                  <span className="truncate max-w-[210px]">
+                    for <strong className="text-on-surface font-semibold">"{searchParam}"</strong>
+                    {categoryParam !== 'All' && (
+                      <>
+                        {' '}
+                        in <strong className="text-primary font-semibold">{categoryParam}</strong>
+                      </>
+                    )}
+                  </span>
+                ) : categoryParam !== 'All' ? (
+                  <span>
+                    in <strong className="text-on-surface font-semibold">{categoryParam}</strong>
+                  </span>
+                ) : !searchParams?.get('coupon') ? (
+                  <span>handcrafted collection</span>
+                ) : null}
               </div>
-            )}
+
+              {(searchParam || searchParams?.get('coupon')) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (searchParam) {
+                      if (commitSearch) commitSearch('');
+                      else if (setLocalSearch) setLocalSearch('');
+                    } else {
+                      handleClearCoupon();
+                    }
+                  }}
+                  className="text-[11px] text-primary underline font-semibold cursor-pointer shrink-0 ml-auto"
+                >
+                  {searchParam ? 'Clear search' : 'Clear coupon'}
+                </button>
+              )}
+            </div>
 
             {visualSearch.results && (
               <div className="mb-8 p-5 bg-primary/5 border border-primary/10 rounded-[24px] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm animate-fade-in">
@@ -155,44 +252,6 @@ export const ProductListingGrid = React.memo(
                 </button>
               </div>
             )}
-
-            <AnimatePresence>
-              {searchParams?.get('coupon') && (
-                <motion.div
-                  initial={{ opacity: 0, y: -20, scale: 0.98 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -20, scale: 0.98 }}
-                  transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                  className="mb-8 px-5 py-3 sm:px-6 sm:py-4 bg-emerald-50 text-emerald-800 rounded-2xl border border-emerald-200 text-[13px] sm:text-[14px] font-medium flex items-center justify-between gap-4 shadow-sm"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Tag
-                      className="text-[18px] sm:text-[20px] text-emerald-600"
-                      strokeWidth={1.5}
-                    />
-                    <span>
-                      Showing eligible items for coupon:{' '}
-                      <strong className="font-bold">{searchParams.get('coupon')}</strong>
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setSearchParams((prev) => {
-                        const params = new URLSearchParams(prev);
-                        params.delete('coupon');
-                        params.delete('collection');
-                        params.delete('ids');
-                        return params;
-                      });
-                    }}
-                    className="p-1.5 shrink-0 hover:bg-emerald-100 text-emerald-600 hover:text-emerald-800 rounded-full transition-colors flex items-center justify-center cursor-pointer outline-none"
-                    title="Clear Filter"
-                  >
-                    <X className="text-[18px] sm:text-[20px]" strokeWidth={1.5} />
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
 
             <div id="product-results-wrapper" className="min-h-[60vh]">
               {isError ? (

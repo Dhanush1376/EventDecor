@@ -12,8 +12,13 @@ import {
   formatCurrency,
   fadeUp,
   stagger,
+  smoothScrollCardIntoView,
+  AdminFilterDrawer,
 } from '../components/AdminUIKit';
 import { isWithinPeriod } from '../utils/dateFilters';
+import { useAdminFilters } from '../components/filters/useAdminFilters';
+import { rentalFilterConfig } from '../components/filters/configs/rentalFilterConfig';
+import { AdminActiveFilterChips } from '../components/filters/AdminActiveFilterChips';
 import { EXTERNAL_URLS } from '../../config/constants';
 import { WhatsAppIcon } from '../../components/ui/WhatsAppIcon';
 import { InvoiceTemplate } from '../../components/ui';
@@ -50,11 +55,20 @@ export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' })
   const [rentals, setRentals] = useState([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState(initialFilter);
-  const [dateFilter, setDateFilter] = useState('All Time');
-  const [depositFilter, setDepositFilter] = useState('All');
   const [sortBy, setSortBy] = useState('Newest first');
   const [showFiltersMenu, setShowFiltersMenu] = useState(false);
+
+  const {
+    filteredItems: filteredRentalsBeforeSort,
+    filterState,
+    setFilterValue,
+    resetFilter,
+    resetAllFilters,
+    activeChips,
+    activeCount,
+    totalCount,
+    matchCount,
+  } = useAdminFilters(rentals, rentalFilterConfig, searchQuery);
   const [paymentModalRental, setPaymentModalRental] = useState(null);
   const [invoiceRental, setInvoiceRental] = useState(null);
   const [expandedCardIds, setExpandedCardIds] = useState(new Set());
@@ -70,8 +84,13 @@ export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' })
   const toggleExpandCard = (id) => {
     setExpandedCardIds((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      const isExpanding = !next.has(id);
+      if (isExpanding) {
+        next.add(id);
+        smoothScrollCardIntoView(`rental-card-${id}`);
+      } else {
+        next.delete(id);
+      }
       return next;
     });
   };
@@ -148,28 +167,9 @@ export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' })
     return counts;
   }, [rentals]);
 
+  // Two-stage pipeline: Sorting separated from filtering
   const filteredRentals = useMemo(() => {
-    let list = rentals.filter((r) => {
-      const matchStatus = filterStatus === 'All' || r.status === filterStatus;
-      const matchDate = isWithinPeriod(r.createdAt || r.rentalStartDate, dateFilter);
-      const matchDeposit =
-        depositFilter === 'All' ||
-        (depositFilter === 'refunded' && r.depositStatus === 'refunded') ||
-        (depositFilter === 'held' && r.depositStatus !== 'refunded');
-
-      const q = (searchQuery || '').toLowerCase().trim();
-      const matchSearch =
-        !q ||
-        r._id?.toLowerCase()?.includes(q) ||
-        r.rentalOrderId?.toLowerCase()?.includes(q) ||
-        (r.userId?.name || r.user?.name || r.shippingAddress?.name || '')
-          .toLowerCase()
-          .includes(q) ||
-        (r.userId?.phone || r.user?.phone || r.shippingAddress?.phone || '').includes(q) ||
-        r.productTitle?.toLowerCase()?.includes(q);
-
-      return matchStatus && matchDate && matchDeposit && matchSearch;
-    });
+    let list = [...filteredRentalsBeforeSort];
 
     if (sortBy === 'Newest first') {
       list.sort(
@@ -182,9 +182,9 @@ export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' })
           new Date(a.createdAt || a.rentalStartDate) - new Date(b.createdAt || b.rentalStartDate),
       );
     } else if (sortBy === 'Rental date ↑') {
-      list.sort((a, b) => new Date(a.rentalStartDate) - new Date(b.rentalStartDate));
+      list.sort((a, b) => new Date(a.rentalStartDate || 0) - new Date(b.rentalStartDate || 0));
     } else if (sortBy === 'Rental date ↓') {
-      list.sort((a, b) => new Date(b.rentalStartDate) - new Date(a.rentalStartDate));
+      list.sort((a, b) => new Date(b.rentalStartDate || 0) - new Date(a.rentalStartDate || 0));
     } else if (sortBy === 'Value ↑') {
       list.sort((a, b) => (a.totalAmount || 0) - (b.totalAmount || 0));
     } else if (sortBy === 'Value ↓') {
@@ -192,7 +192,7 @@ export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' })
     }
 
     return list;
-  }, [rentals, filterStatus, dateFilter, depositFilter, searchQuery, sortBy]);
+  }, [filteredRentalsBeforeSort, sortBy]);
 
   const rentalStats = useMemo(() => {
     let totalVolume = 0;
@@ -201,7 +201,7 @@ export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' })
     let activeRentals = 0;
 
     rentals.forEach((r) => {
-      if (!isWithinPeriod(r.createdAt || r.rentalStartDate, dateFilter)) return;
+      if (!isWithinPeriod(r.createdAt || r.rentalStartDate, filterState.timing)) return;
 
       totalVolume += r.rentalCharge || r.totalAmount || 0;
       if (r.depositStatus === 'refunded') {
@@ -215,16 +215,7 @@ export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' })
     });
 
     return { totalVolume, depositsHeld, depositsRefunded, activeRentals };
-  }, [rentals, dateFilter]);
-
-  const getActiveFilterCount = () => {
-    let count = 0;
-    if (filterStatus !== 'All') count++;
-    if (dateFilter !== 'All Time') count++;
-    if (depositFilter !== 'All') count++;
-    return count;
-  };
-  const activeCount = getActiveFilterCount();
+  }, [rentals, filterState.timing]);
 
   const goToDetail = (rentalId) => {
     _navigate(`/admin/rentals/detail/${rentalId}`);
@@ -257,17 +248,31 @@ export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' })
         state: r.shippingAddress?.state || '',
         pincode: r.shippingAddress?.pincode || '',
       },
-      items:
-        Array.isArray(r.items) && r.items.length > 0
-          ? r.items
+      items: (() => {
+        const qty = Number(r.quantity || 1);
+        const unitRentalPrice = Number(
+          r.rentalRate?.rentalPrice ??
+            r.rentalRate?.rate ??
+            (qty > 0 && r.rentalCharge
+              ? Math.round((r.rentalCharge / qty) * 100) / 100
+              : r.rentalCharge || 0),
+        );
+        return Array.isArray(r.items) && r.items.length > 0
+          ? r.items.map((it) => ({
+              ...it,
+              price: it.rentalPrice || it.price || unitRentalPrice,
+              rentalPrice: it.rentalPrice || unitRentalPrice,
+              isRental: true,
+              type: 'rental',
+            }))
           : [
               {
                 title: r.productTitle || 'Rental Item',
                 name: r.productTitle || 'Rental Item',
                 image: r.productImage || r.productImages?.[0] || r.productThumbnail,
-                quantity: r.quantity || 1,
-                price: r.rentalCharge || r.totalAmount || 0,
-                rentalPrice: r.rentalCharge || r.totalAmount || 0,
+                quantity: qty,
+                price: unitRentalPrice,
+                rentalPrice: unitRentalPrice,
                 deposit: r.securityDeposit || 0,
                 isRental: true,
                 type: 'rental',
@@ -275,7 +280,8 @@ export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' })
                 rentalEndDate: r.rentalEndDate,
                 rentalDurationDays: r.durationDays,
               },
-            ],
+            ];
+      })(),
     };
   };
 
@@ -400,130 +406,135 @@ export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' })
                 )}
               </button>
 
-              {/* Filters Dropdown Modal */}
-              <AnimatePresence>
-                {showFiltersMenu && (
-                  <>
-                    <div className="fixed inset-0 z-30" onClick={() => setShowFiltersMenu(false)} />
-                    <motion.div
-                      initial={{ opacity: 0, y: 8, scale: 0.98 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 8, scale: 0.98 }}
-                      className="absolute right-0 top-full mt-2 w-[320px] bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] shadow-xl z-40 p-4"
-                    >
-                      <div className="flex items-center justify-between pb-3 border-b border-[var(--admin-border-subtle)]">
-                        <div className="flex items-center gap-2">
-                          <span className="material-symbols-outlined text-[18px] text-[var(--admin-accent)]">
-                            tune
-                          </span>
-                          <h4 className="font-bold text-[14px] text-[var(--admin-text-primary)]">
-                            Filter Rentals
-                          </h4>
-                        </div>
-                        {activeCount > 0 && (
-                          <button
-                            onClick={() => {
-                              setFilterStatus('All');
-                              setDateFilter('All Time');
-                              setDepositFilter('All');
-                              setSortBy('Newest first');
-                            }}
-                            className="text-[11px] font-bold text-[var(--admin-accent)] hover:underline cursor-pointer"
-                          >
-                            Reset All
-                          </button>
-                        )}
-                      </div>
+              <AdminFilterDrawer
+                isOpen={showFiltersMenu}
+                onClose={() => setShowFiltersMenu(false)}
+                title="Filter Rentals"
+                icon="tune"
+                activeCount={activeCount}
+                onClearAll={() => {
+                  resetAllFilters();
+                  setSortBy('Newest first');
+                  setSearchQuery('');
+                }}
+                clearAllLabel="Reset All"
+                onApply={() => setShowFiltersMenu(false)}
+              >
+                {/* Status Filter */}
+                <div>
+                  <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                    Rental Status
+                  </label>
+                  <select
+                    value={filterState.status}
+                    onChange={(e) => setFilterValue('status', e.target.value)}
+                    className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                  >
+                    <option value="All">All Statuses ({rentals.length})</option>
+                    {allStatuses.map((s) => (
+                      <option key={s} value={s}>
+                        {s.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())} (
+                        {statusCounts[s] || 0})
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-                      <div className="space-y-4 pt-3 max-h-[60vh] overflow-y-auto custom-scrollbar">
-                        {/* Status Filter */}
-                        <div>
-                          <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
-                            Rental Status
-                          </label>
-                          <select
-                            value={filterStatus}
-                            onChange={(e) => setFilterStatus(e.target.value)}
-                            className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)]"
-                          >
-                            <option value="All">All Statuses ({rentals.length})</option>
-                            {allStatuses.map((s) => (
-                              <option key={s} value={s}>
-                                {s.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())} (
-                                {statusCounts[s] || 0})
-                              </option>
-                            ))}
-                          </select>
-                        </div>
+                {/* Event Timing Filter */}
+                <div>
+                  <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                    Event Date Period
+                  </label>
+                  <select
+                    value={filterState.timing}
+                    onChange={(e) => setFilterValue('timing', e.target.value)}
+                    className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                  >
+                    {[
+                      'All Time',
+                      'Today',
+                      'Tomorrow',
+                      'This Weekend',
+                      'Next 7 Days',
+                      'This Month',
+                      'This Year',
+                    ].map((p) => (
+                      <option key={p} value={p}>
+                        {p}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-                        {/* Date Period Filter */}
-                        <div>
-                          <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
-                            Date Period
-                          </label>
-                          <select
-                            value={dateFilter}
-                            onChange={(e) => setDateFilter(e.target.value)}
-                            className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)]"
-                          >
-                            {['All Time', 'Today', 'Last 7 Days', 'This Month', 'This Year'].map(
-                              (p) => (
-                                <option key={p} value={p}>
-                                  {p}
-                                </option>
-                              ),
-                            )}
-                          </select>
-                        </div>
+                {/* Deposit Status Filter */}
+                <div>
+                  <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                    Security Deposit
+                  </label>
+                  <select
+                    value={filterState.depositStatus}
+                    onChange={(e) => setFilterValue('depositStatus', e.target.value)}
+                    className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                  >
+                    <option value="All">All Deposits</option>
+                    <option value="held">Deposit Held (Active)</option>
+                    <option value="refunded">Deposit Refunded</option>
+                    <option value="forfeited">Deposit Forfeited</option>
+                  </select>
+                </div>
 
-                        {/* Deposit Status Filter */}
-                        <div>
-                          <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
-                            Security Deposit
-                          </label>
-                          <select
-                            value={depositFilter}
-                            onChange={(e) => setDepositFilter(e.target.value)}
-                            className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)]"
-                          >
-                            <option value="All">All Deposits</option>
-                            <option value="held">Deposit Held (Active)</option>
-                            <option value="refunded">Deposit Refunded</option>
-                          </select>
-                        </div>
+                {/* Rental Charge Range */}
+                <div>
+                  <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                    Rental Value Range (₹)
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="number"
+                      placeholder="Min ₹"
+                      value={filterState.amountRange?.min || ''}
+                      onChange={(e) =>
+                        setFilterValue('amountRange', {
+                          ...filterState.amountRange,
+                          min: e.target.value,
+                        })
+                      }
+                      className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-2.5 py-1.5 text-[12px] outline-none text-[var(--admin-text-primary)]"
+                    />
+                    <input
+                      type="number"
+                      placeholder="Max ₹"
+                      value={filterState.amountRange?.max || ''}
+                      onChange={(e) =>
+                        setFilterValue('amountRange', {
+                          ...filterState.amountRange,
+                          max: e.target.value,
+                        })
+                      }
+                      className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-2.5 py-1.5 text-[12px] outline-none text-[var(--admin-text-primary)]"
+                    />
+                  </div>
+                </div>
 
-                        {/* Sort Filter */}
-                        <div>
-                          <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
-                            Sort By
-                          </label>
-                          <select
-                            value={sortBy}
-                            onChange={(e) => setSortBy(e.target.value)}
-                            className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)]"
-                          >
-                            <option value="Newest first">Newest first</option>
-                            <option value="Oldest first">Oldest first</option>
-                            <option value="Rental date ↑">Rental date ↑</option>
-                            <option value="Rental date ↓">Rental date ↓</option>
-                            <option value="Value ↑">Total Value ↑</option>
-                            <option value="Value ↓">Total Value ↓</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      <div className="pt-3 border-t border-[var(--admin-border-subtle)] mt-4">
-                        <button
-                          onClick={() => setShowFiltersMenu(false)}
-                          className="w-full py-2 bg-[var(--admin-accent)] hover:bg-[var(--admin-accent-dark)] text-white text-[12px] font-bold rounded-[4px] transition-colors cursor-pointer"
-                        >
-                          Apply Filters
-                        </button>
-                      </div>
-                    </motion.div>
-                  </>
-                )}
-              </AnimatePresence>
+                {/* Sort Filter */}
+                <div>
+                  <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                    Sort By
+                  </label>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                  >
+                    <option value="Newest first">Newest first</option>
+                    <option value="Oldest first">Oldest first</option>
+                    <option value="Rental date ↑">Rental date ↑</option>
+                    <option value="Rental date ↓">Rental date ↓</option>
+                    <option value="Value ↑">Total Value ↑</option>
+                    <option value="Value ↓">Total Value ↓</option>
+                  </select>
+                </div>
+              </AdminFilterDrawer>
             </div>
 
             {/* Export Button */}
@@ -537,6 +548,20 @@ export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' })
             </button>
           </div>
         </motion.div>
+
+        {/* Active Filter Chips Row */}
+        <AdminActiveFilterChips
+          activeChips={activeChips}
+          totalCount={totalCount}
+          matchCount={matchCount}
+          onClearAll={() => {
+            resetAllFilters();
+            setSortBy('Newest first');
+            setSearchQuery('');
+          }}
+          itemName="rentals"
+          className="mt-2 mb-1"
+        />
       </div>
 
       {/* Real-time Rental Financial & Operations Ledger */}
@@ -632,29 +657,24 @@ export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' })
                     <tr>
                       <td colSpan={9} className="py-16 text-center">
                         <EmptyState
-                          icon={
-                            searchQuery || filterStatus !== 'All' ? 'search_off' : 'inventory_2'
-                          }
+                          icon={searchQuery || activeCount > 0 ? 'search_off' : 'inventory_2'}
                           title={
-                            searchQuery || filterStatus !== 'All'
-                              ? 'No Matches Found'
-                              : 'No Rentals Found'
+                            searchQuery || activeCount > 0 ? 'No Matches Found' : 'No Rentals Found'
                           }
                           description={
-                            searchQuery || filterStatus !== 'All'
+                            searchQuery || activeCount > 0
                               ? 'No rental orders match the search or filter criteria.'
                               : 'You have not received any rental bookings yet.'
                           }
                           action={
-                            searchQuery || filterStatus !== 'All' ? (
+                            searchQuery || activeCount > 0 ? (
                               <button
                                 onClick={() => {
-                                  setFilterStatus('All');
+                                  resetAllFilters();
                                   setSearchQuery('');
-                                  setDateFilter('All Time');
-                                  setDepositFilter('All');
+                                  setSortBy('Newest first');
                                 }}
-                                className="admin-btn admin-btn-outline"
+                                className="admin-btn admin-btn-outline cursor-pointer"
                               >
                                 Clear Filters
                               </button>
@@ -702,9 +722,9 @@ export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' })
                           onClick={() => openRentalDrawer(r)}
                         >
                           {/* Order ID & Tag */}
-                          <td className="font-semibold text-[var(--admin-text-primary)]">
+                          <td>
                             <div className="flex flex-col gap-1">
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-1.5 font-mono text-[12px] font-semibold text-[var(--admin-text-secondary)]">
                                 #
                                 {r.rentalOrderId || r._id.substring(r._id.length - 8).toUpperCase()}
                                 {isNew && (
@@ -714,7 +734,7 @@ export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' })
                                   />
                                 )}
                               </div>
-                              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded w-max bg-indigo-100 text-indigo-700">
+                              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded w-max bg-indigo-50 text-indigo-700 border border-indigo-200/70 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800">
                                 RENTAL
                               </span>
                             </div>
@@ -903,12 +923,26 @@ export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' })
               {filteredRentals.length === 0 ? (
                 <div className="py-10 text-center flex flex-col items-center justify-center bg-[var(--admin-surface)] rounded-[var(--admin-radius-lg)] border border-[var(--admin-border)]">
                   <EmptyState
-                    icon={searchQuery ? 'search_off' : 'inventory_2'}
-                    title={searchQuery ? 'No Matches Found' : 'No Rentals Found'}
+                    icon={searchQuery || activeCount > 0 ? 'search_off' : 'inventory_2'}
+                    title={searchQuery || activeCount > 0 ? 'No Matches Found' : 'No Rentals Found'}
                     description={
-                      searchQuery
-                        ? 'No rentals match your search.'
-                        : `There are no rental orders matching the "${filterStatus}" criteria.`
+                      searchQuery || activeCount > 0
+                        ? 'No rentals match your active search or filters.'
+                        : 'You have not received any rental bookings yet.'
+                    }
+                    action={
+                      searchQuery || activeCount > 0 ? (
+                        <button
+                          onClick={() => {
+                            resetAllFilters();
+                            setSearchQuery('');
+                            setSortBy('Newest first');
+                          }}
+                          className="admin-btn admin-btn-outline cursor-pointer"
+                        >
+                          Clear Filters
+                        </button>
+                      ) : undefined
                     }
                   />
                 </div>
@@ -931,32 +965,35 @@ export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' })
                   return (
                     <div
                       key={r._id}
+                      id={`rental-card-${r._id}`}
                       onClick={() => openRentalDrawer(r)}
                       className="relative overflow-hidden rounded-[4px] p-3.5 shadow-xs border border-stone-200/90 dark:border-stone-700/80 bg-white dark:bg-stone-900 flex flex-col gap-3 cursor-pointer hover:border-stone-300 dark:hover:border-stone-600 hover:shadow-sm transition-all"
                     >
-                      {/* Header: Rental ID + Tag + Customer + Status Pill */}
+                      {/* Header: Customer Name + Status Pill, with subtle faded Order ID & Rental Tag */}
                       <div className="flex justify-between items-start gap-2">
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="font-bold text-[var(--admin-text-primary)] text-[14px]">
-                              #{r.rentalOrderId || r._id.substring(r._id.length - 8).toUpperCase()}
-                            </span>
-                            <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:border-indigo-800">
-                              RENTAL
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-[var(--admin-text-primary)] text-[14px] truncate leading-tight">
+                              {r.userId?.name ||
+                                r.user?.name ||
+                                r.shippingAddress?.name ||
+                                'Customer'}
                             </span>
                             {isNew && (
                               <span
-                                className="w-1.5 h-1.5 rounded-full bg-[var(--admin-accent)] animate-ping"
+                                className="w-1.5 h-1.5 rounded-full bg-[var(--admin-accent)] animate-ping shrink-0"
                                 title="Recent rental"
                               />
                             )}
                           </div>
-                          <span className="text-[12px] font-medium text-[var(--admin-text-secondary)] block mt-0.5 truncate">
-                            {r.userId?.name ||
-                              r.user?.name ||
-                              r.shippingAddress?.name ||
-                              'Customer'}
-                          </span>
+                          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                            <span className="font-mono text-[11px] font-medium text-[var(--admin-text-tertiary)] dark:text-stone-400">
+                              #{r.rentalOrderId || r._id.substring(r._id.length - 8).toUpperCase()}
+                            </span>
+                            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded border bg-indigo-50/80 text-indigo-700 border-indigo-200/80 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800 shrink-0">
+                              RENTAL
+                            </span>
+                          </div>
                         </div>
                         <AdminStatusPill status={r.status} className="shrink-0" />
                       </div>

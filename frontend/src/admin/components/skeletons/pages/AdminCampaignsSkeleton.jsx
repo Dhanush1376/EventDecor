@@ -38,8 +38,8 @@ export function AdminCampaignsSkeleton() {
         ))}
       </div>
 
-      {/* 3. Campaigns Table Skeleton */}
-      <div className="bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)] overflow-hidden shadow-sm">
+      {/* 3. Campaigns Table Skeleton (Desktop) */}
+      <div className="hidden md:block bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)] overflow-hidden shadow-sm">
         <table className="w-full text-left">
           <thead>
             <tr className="border-b border-[var(--admin-border-subtle)] bg-[var(--admin-surface-muted)]">
@@ -96,6 +96,26 @@ export function AdminCampaignsSkeleton() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Campaigns Cards */}
+      <div className="md:hidden space-y-3">
+        {[1, 2, 3, 4].map((i) => (
+          <div
+            key={i}
+            className="rounded-[4px] p-3.5 shadow-xs border border-[var(--admin-border)] bg-[var(--admin-surface)] space-y-2.5"
+          >
+            <div className="flex items-center justify-between">
+              <SkeletonTextLine width="140px" height="14px" />
+              <SkeletonBadge width="75px" height="20px" />
+            </div>
+            <SkeletonTextLine width="100px" height="11px" />
+            <div className="flex items-center justify-between pt-2 border-t border-[var(--admin-border-subtle)]">
+              <SkeletonBadge width="65px" height="18px" />
+              <SkeletonBox width="70px" height="26px" rounded="full" />
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { m as motion } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { customOrderService } from '../../../services/domainServices';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '../../../utils/core/errorHelpers';
@@ -10,6 +10,7 @@ import { UnsavedChangesGuard } from '../UnsavedChangesGuard';
 import { EXTERNAL_URLS } from '../../../config/constants';
 import { WhatsAppIcon } from '../../../components/ui/WhatsAppIcon';
 import { formatCurrency } from '../AdminUIKit';
+import AdminCustomerProfileModal from '../AdminCustomerProfileModal';
 
 const ALL_STATUSES = [
   'Pending',
@@ -192,6 +193,24 @@ export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, refetchOr
     '',
   );
 
+  const [showCustomerModal, setShowCustomerModal] = useState(false);
+  const customerId =
+    selectedOrder.userId?._id ||
+    selectedOrder.userId?.id ||
+    (typeof selectedOrder.userId === 'string' && selectedOrder.userId) ||
+    selectedOrder.user?._id ||
+    selectedOrder.user?.id ||
+    (typeof selectedOrder.user === 'string' && selectedOrder.user);
+
+  const resolvedCustomer = customerId
+    ? {
+        _id: customerId,
+        name: selectedOrder.customerName || selectedOrder.user?.name || 'Customer',
+        phone: selectedOrder.customerPhone || selectedOrder.phone || '',
+        email: selectedOrder.customerEmail || selectedOrder.email || '',
+      }
+    : null;
+
   const eventDateStr = selectedOrder.eventDate
     ? new Date(selectedOrder.eventDate).toLocaleDateString('en-IN', {
         day: 'numeric',
@@ -250,18 +269,55 @@ export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, refetchOr
         className="fixed z-[1000] flex flex-col overflow-hidden shadow-[var(--admin-shadow-2xl)] border-[var(--admin-border)] sm:inset-y-0 sm:top-0 sm:bottom-0 sm:right-0 sm:left-auto sm:w-[560px] md:w-[600px] sm:h-full sm:max-h-none sm:rounded-none sm:border-l sm:border-t-0 bottom-0 inset-x-0 max-h-[92vh] h-auto rounded-t-[4px] border-t bg-[var(--admin-surface)] text-[var(--admin-text-primary)]"
         style={{ background: 'var(--admin-surface, #ffffff)' }}
       >
-        {/* Drawer Header (Compact single-line layout) */}
-        <div className="px-5 py-3.5 border-b border-[var(--admin-border-subtle)] flex items-center justify-between gap-2 shrink-0 bg-[var(--admin-bg-subtle)]">
-          <div className="flex items-center gap-2 min-w-0">
-            <h3 className="text-[13px] font-bold text-[var(--admin-text-primary)] whitespace-nowrap">
-              Inquiry Details
-            </h3>
-            <span className="font-mono text-[11px] font-bold text-[var(--admin-accent)]">
-              {orderCode}
-            </span>
-            <span className="hidden sm:inline-flex text-[9.5px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-[4px] border bg-[var(--admin-accent-light)] text-[var(--admin-accent)] border-[var(--admin-accent-muted)]">
-              Custom
-            </span>
+        {/* Drawer Header (Consistent with AdminReturnDetail) */}
+        <div className="px-4 sm:px-5 py-3 border-b border-[var(--admin-border-subtle)] flex items-center justify-between gap-2 shrink-0 bg-[var(--admin-surface)]">
+          <div className="flex flex-col min-w-0">
+            <div className="flex items-center gap-2">
+              <h3 className="text-[14px] sm:text-[15px] font-bold text-[var(--admin-text-primary)] tracking-tight whitespace-nowrap">
+                Custom Order Details
+              </h3>
+              <span className="text-[9.5px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-[4px] border bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800 shrink-0">
+                Custom
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 mt-1 leading-none">
+              <span
+                className="font-mono text-[11.5px] font-medium text-[var(--admin-text-secondary)] select-all"
+                title={selectedOrder._id}
+              >
+                {orderCode}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(orderCode);
+                  toast.success('Order code copied');
+                }}
+                className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 p-0.5 cursor-pointer transition-colors shrink-0"
+                title="Copy Order Code"
+              >
+                <span className="material-symbols-outlined text-[13px] block">content_copy</span>
+              </button>
+              {selectedOrder.createdAt && (
+                <>
+                  <span className="text-stone-300 dark:text-stone-600 select-none text-[11px]">
+                    •
+                  </span>
+                  <span className="text-[10.5px] font-medium text-[var(--admin-text-secondary)] flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[12px] text-[var(--admin-text-tertiary)]">
+                      schedule
+                    </span>
+                    <span>
+                      {new Date(selectedOrder.createdAt).toLocaleDateString('en-IN', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                      })}
+                    </span>
+                  </span>
+                </>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center gap-1 shrink-0">
@@ -447,26 +503,50 @@ export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, refetchOr
 
               {/* Customer & Event Profile Card */}
               <div className="admin-card !rounded-[4px] p-4 space-y-3.5">
-                <div className="flex items-start justify-between">
-                  <div>
+                <div className="flex items-start justify-between gap-2">
+                  <div
+                    onClick={() => customerId && setShowCustomerModal(true)}
+                    className={`min-w-0 ${customerId ? 'cursor-pointer group' : ''}`}
+                    title={customerId ? 'Click to view customer profile' : undefined}
+                  >
                     <p className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider">
                       Customer & Event Profile
                     </p>
-                    <h4 className="text-[14px] font-bold text-[var(--admin-text-primary)] mt-0.5">
-                      {selectedOrder.customerName || 'Customer'}
+                    <h4
+                      className={`text-[14px] font-bold text-[var(--admin-text-primary)] mt-0.5 flex items-center gap-1.5 ${customerId ? 'group-hover:text-[var(--admin-accent)] transition-colors' : ''}`}
+                    >
+                      <span>{selectedOrder.customerName || 'Customer'}</span>
+                      {customerId && (
+                        <span className="material-symbols-outlined text-[13px] text-[var(--admin-text-tertiary)] opacity-0 group-hover:opacity-100 transition-opacity">
+                          open_in_new
+                        </span>
+                      )}
                     </h4>
                   </div>
-                  {cleanPhone && (
-                    <a
-                      href={`${EXTERNAL_URLS.WHATSAPP_BASE}/${cleanPhone}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="admin-badge admin-badge-success !rounded-[4px] flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity"
-                    >
-                      <WhatsAppIcon className="w-[13px] h-[13px]" />
-                      WhatsApp
-                    </a>
-                  )}
+                  <div className="flex items-center gap-2 shrink-0">
+                    {customerId && (
+                      <button
+                        type="button"
+                        onClick={() => setShowCustomerModal(true)}
+                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-[var(--admin-accent)] hover:underline cursor-pointer"
+                        title="View Customer Profile"
+                      >
+                        <span>View Profile</span>
+                        <span className="material-symbols-outlined text-[13px]">open_in_new</span>
+                      </button>
+                    )}
+                    {cleanPhone && (
+                      <a
+                        href={`${EXTERNAL_URLS.WHATSAPP_BASE}/${cleanPhone}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="admin-badge admin-badge-success !rounded-[4px] flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity h-7"
+                      >
+                        <WhatsAppIcon className="w-[13px] h-[13px]" />
+                        WhatsApp
+                      </a>
+                    )}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-[12px] pt-3 border-t border-[var(--admin-border-subtle)]">
@@ -507,9 +587,23 @@ export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, refetchOr
                   </div>
 
                   <div>
-                    <p className="text-[var(--admin-text-tertiary)] font-medium text-[9.5px] uppercase">
-                      Location / City
-                    </p>
+                    <div className="flex items-center justify-between gap-1">
+                      <p className="text-[var(--admin-text-tertiary)] font-medium text-[9.5px] uppercase">
+                        Location / City
+                      </p>
+                      {selectedOrder.city && (
+                        <a
+                          href={`https://maps.google.com/?q=${encodeURIComponent(selectedOrder.city)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-0.5 text-[10.5px] font-semibold text-[var(--admin-accent)] hover:underline cursor-pointer"
+                          title="Open location in Google Maps"
+                        >
+                          <span className="material-symbols-outlined text-[12px]">map</span>
+                          <span>Maps</span>
+                        </a>
+                      )}
+                    </div>
                     <p className="font-bold text-[var(--admin-text-primary)] flex items-center gap-1 mt-0.5">
                       <span className="material-symbols-outlined text-[14px] text-[var(--admin-text-tertiary)]">
                         location_on
@@ -1078,6 +1172,16 @@ export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, refetchOr
         onDiscard={discardDraft}
       />
       <UnsavedChangesGuard blocker={blocker} />
+
+      {/* Customer 360 Profile Modal */}
+      <AnimatePresence>
+        {showCustomerModal && resolvedCustomer && (
+          <AdminCustomerProfileModal
+            customer={resolvedCustomer}
+            onClose={() => setShowCustomerModal(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>,
     document.body,
   );

@@ -1,26 +1,14 @@
 import React from 'react';
 import { m as motion } from 'framer-motion';
 
-const allStatuses = [
-  'Pending',
-  'Confirmed',
-  'Processing',
-  'Delivered',
-  'Settled',
-  'Cancelled',
-  'Returned',
-  'Refunded',
-];
+const allStatuses = ['Pending', 'Confirmed', 'Processing', 'Delivered', 'Cancelled'];
 
 const statusIcons = {
   Pending: 'schedule',
   Confirmed: 'thumb_up',
   Processing: 'inventory_2',
   Delivered: 'check_circle',
-  Settled: 'payments',
   Cancelled: 'cancel',
-  Returned: 'keyboard_return',
-  Refunded: 'payments',
 };
 
 const STATUS_COLORS = {
@@ -60,28 +48,40 @@ const STATUS_COLORS = {
     pulse: 'bg-emerald-500',
     progress: 'bg-emerald-500',
   },
+  Cancelled: {
+    activeBg: 'bg-rose-500',
+    activeBorder: 'border-rose-500',
+    activeText: 'text-white',
+    completedBorder: 'border-rose-500',
+    completedText: 'text-rose-600',
+    pulse: 'bg-rose-500',
+    progress: 'bg-rose-500',
+  },
 };
 
 export function OrderStatusTimeline({ order, updateOrderStatus }) {
-  const isFailed = ['Cancelled', 'Returned', 'Refunded'].includes(order.status);
+  const isFailed = order.status === 'Cancelled';
   const happyPath = ['Pending', 'Confirmed', 'Processing', 'Delivered'];
-  const currentIdx = happyPath.indexOf(order.status);
+  const effectiveStatus = ['Settled', 'Delivered'].includes(order.status)
+    ? 'Delivered'
+    : order.status;
+  const currentIdx = happyPath.indexOf(effectiveStatus);
 
   return (
-    <div className="bg-white rounded-[4px] shadow-sm border border-[var(--admin-border-subtle)] overflow-hidden">
+    <div className="bg-[var(--admin-surface)] rounded-[4px] shadow-sm border border-[var(--admin-border-subtle)] overflow-hidden">
       <div className="px-5 py-4 border-b border-[var(--admin-border-subtle)] flex items-center justify-between">
         <div className="flex flex-col">
-          <h3 className="text-[14px] font-bold text-gray-900 tracking-tight">
+          <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)] tracking-tight">
             Lifecycle Progression
           </h3>
-          <p className="text-[12px] text-gray-500 font-medium hidden sm:block mt-0.5">
+          <p className="text-[12px] text-[var(--admin-text-secondary)] font-medium hidden sm:block mt-0.5">
             Track and override the order's current stage.
           </p>
         </div>
-        {/* Status Dropdown to Update Order Status */}
+        {/* Status Dropdown to Update Order Status (4 main steps + 1 cancel step) */}
         <div className="relative w-[140px] sm:w-[155px] h-8 shrink-0">
           <select
-            value={order.status}
+            value={allStatuses.includes(order.status) ? order.status : effectiveStatus}
             onChange={(e) => updateOrderStatus(order.id, e.target.value)}
             style={{ backgroundImage: 'none' }}
             className="admin-no-arrow w-full h-8 !min-h-[32px] !max-h-[32px] !appearance-none !bg-none bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-750 border border-stone-300 dark:border-stone-600 text-stone-800 dark:text-stone-200 text-[11px] font-bold rounded-[4px] pl-2.5 pr-7 cursor-pointer shadow-2xs outline-none focus:border-amber-500 transition-colors truncate"
@@ -107,13 +107,13 @@ export function OrderStatusTimeline({ order, updateOrderStatus }) {
                 initial={{ width: 0 }}
                 animate={{ width: `${(currentIdx / (happyPath.length - 1)) * 100}%` }}
                 transition={{ duration: 0.8, ease: 'easeOut' }}
-                className={`absolute left-0 top-0 bottom-0 ${STATUS_COLORS[order.status]?.progress || 'bg-[var(--admin-accent)]'}`}
+                className={`absolute left-0 top-0 bottom-0 ${STATUS_COLORS[effectiveStatus]?.progress || 'bg-[var(--admin-accent)]'}`}
               />
             )}
           </div>
 
           {happyPath.map((step, idx) => {
-            const isActive = order.status === step;
+            const isActive = effectiveStatus === step && !isFailed;
             const isCompleted = currentIdx >= idx && !isFailed;
             const colors = STATUS_COLORS[step] || {};
 
@@ -123,8 +123,9 @@ export function OrderStatusTimeline({ order, updateOrderStatus }) {
                 className="relative z-10 flex flex-col items-center gap-2 sm:gap-3 w-16 sm:w-20 shrink-0"
               >
                 <button
+                  type="button"
                   onClick={() => updateOrderStatus(order.id, step)}
-                  className="relative group focus:outline-none"
+                  className="relative group focus:outline-none cursor-pointer"
                 >
                   {/* Pulse Effect for Active Step */}
                   {isActive && (
@@ -140,8 +141,8 @@ export function OrderStatusTimeline({ order, updateOrderStatus }) {
                       isActive
                         ? `${colors.activeBg || 'bg-[var(--admin-accent)]'} ${colors.activeBorder || 'border-[var(--admin-accent)]'} ${colors.activeText || 'text-white'}`
                         : isCompleted
-                          ? `bg-white ${colors.completedBorder || 'border-[var(--admin-accent)]'} ${colors.completedText || 'text-[var(--admin-accent)]'}`
-                          : 'bg-white border-[var(--admin-border-strong)] text-[var(--admin-text-tertiary)] group-hover:border-[var(--admin-border-strong)]'
+                          ? `bg-[var(--admin-surface)] ${colors.completedBorder || 'border-[var(--admin-accent)]'} ${colors.completedText || 'text-[var(--admin-accent)]'}`
+                          : 'bg-[var(--admin-surface)] border-[var(--admin-border-strong)] text-[var(--admin-text-tertiary)] group-hover:border-[var(--admin-border-strong)]'
                     }`}
                   >
                     {isCompleted && !isActive ? (
@@ -174,32 +175,12 @@ export function OrderStatusTimeline({ order, updateOrderStatus }) {
         </div>
       </div>
 
-      <div className="bg-gray-50 border-t border-[var(--admin-border-subtle)] px-4 sm:px-5 py-3 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-          Set Status
-        </span>
-        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-          {['Pending', 'Confirmed', 'Processing', 'Delivered', 'Cancelled'].map((s) => {
-            const isSelected = order.status === s;
-            return (
-              <button
-                key={s}
-                onClick={() => updateOrderStatus(order.id, s)}
-                className={`flex-auto sm:flex-none justify-center px-2 sm:px-3 py-1.5 rounded-[4px] text-[10px] sm:text-[11px] font-bold flex items-center gap-1 sm:gap-1.5 transition-all border whitespace-nowrap cursor-pointer ${
-                  isSelected
-                    ? 'bg-[var(--admin-accent)] text-white border-[var(--admin-accent)] shadow-sm'
-                    : 'bg-white text-[var(--admin-text-secondary)] border-[var(--admin-border)] hover:border-[var(--admin-border-strong)] hover:bg-[var(--admin-bg-subtle)] shadow-sm'
-                }`}
-              >
-                <span className="material-symbols-outlined text-[12px] sm:text-[13px]">
-                  {statusIcons[s]}
-                </span>
-                {s}
-              </button>
-            );
-          })}
+      {isFailed && (
+        <div className="mx-5 mb-4 p-2.5 rounded-[4px] bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-[12px] font-medium flex items-center gap-2">
+          <span className="material-symbols-outlined text-[16px]">cancel</span>
+          <span>This order is cancelled.</span>
         </div>
-      </div>
+      )}
     </div>
   );
 }

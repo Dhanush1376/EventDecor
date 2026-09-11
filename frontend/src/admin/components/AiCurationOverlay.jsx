@@ -1,297 +1,647 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { m as motion, AnimatePresence } from 'framer-motion';
 
 export function AiCurationOverlay({
   showAIHUD,
   setShowAIHUD,
   aiAnalysisResult,
+  setAiAnalysisResult,
   aiChatInput,
   setAiChatInput,
   handleAiChatSubmit,
   isAILearning,
   handleApplyAISpecs,
 }) {
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.innerWidth < 640 : false,
+  );
+
+  const [tagInput, setTagInput] = useState('');
+  const [materialInput, setMaterialInput] = useState('');
+  const [badgeInput, setBadgeInput] = useState('');
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Lock body scroll when overlay is open
+  useEffect(() => {
+    if (showAIHUD && aiAnalysisResult) {
+      const originalStyle = window.getComputedStyle(document.body).overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalStyle;
+      };
+    }
+  }, [showAIHUD, aiAnalysisResult]);
+
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && showAIHUD) {
+        setShowAIHUD(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showAIHUD, setShowAIHUD]);
+
+  if (!aiAnalysisResult) return null;
+
+  const updateField = (key, value) => {
+    if (!setAiAnalysisResult) return;
+    setAiAnalysisResult((prev) => {
+      if (!prev) return prev;
+      const updated = { ...prev, [key]: value };
+      if (key === 'category') updated.primary_category = value;
+      if (key === 'primary_category') updated.category = value;
+      return updated;
+    });
+  };
+
+  const removeArrayItem = (key, index) => {
+    if (!setAiAnalysisResult) return;
+    setAiAnalysisResult((prev) => {
+      if (!prev) return prev;
+      const arr = Array.isArray(prev[key]) ? [...prev[key]] : [];
+      arr.splice(index, 1);
+      return { ...prev, [key]: arr };
+    });
+  };
+
+  const addArrayItem = (key, item) => {
+    const trimmed = (item || '').trim();
+    if (!trimmed || !setAiAnalysisResult) return;
+    setAiAnalysisResult((prev) => {
+      if (!prev) return prev;
+      const arr = Array.isArray(prev[key]) ? [...prev[key]] : [];
+      if (!arr.includes(trimmed)) {
+        arr.push(trimmed);
+      }
+      return { ...prev, [key]: arr };
+    });
+  };
+
+  const allTags = [
+    ...(aiAnalysisResult.tags || []),
+    ...(aiAnalysisResult.telugu_keywords || []),
+    ...(aiAnalysisResult.search_aliases || []),
+    ...(aiAnalysisResult.event_associations || []),
+  ].filter((item, index, self) => self.indexOf(item) === index);
+
   return (
-    <>
-      {/* SaaS AI Curation HUD Overlay Modal */}
-      {showAIHUD && aiAnalysisResult && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-[var(--admin-bg-subtle)] border border-[var(--admin-accent)]/40 max-w-xl w-full rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]  relative">
-            {/* Luxury Header */}
-            <div className="bg-[var(--admin-text-primary)] p-5 text-white flex justify-between items-center border-b border-white/10">
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-white animate-pulse">
-                  auto_awesome
-                </span>
-                <div className="text-left">
-                  <h3 className="text-[13px] font-bold uppercase tracking-wider text-white">
-                    Groq Llama 4 Curation Analysis
-                  </h3>
-                  <p className="text-[11px] sm:text-[11px] sm:text-[11px] text-[var(--admin-text-tertiary)]">
-                    Rigorous 4-Stage Multimodal Craft Curation
+    <AnimatePresence>
+      {showAIHUD && (
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 pointer-events-none">
+          {/* Blurred Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => setShowAIHUD(false)}
+            className="fixed inset-0 bg-black/50 dark:bg-black/70 pointer-events-auto cursor-pointer"
+            style={{
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+            }}
+          />
+
+          {/* Modal Container: App Drawer on mobile, Centered Pop-up on laptop */}
+          <motion.div
+            initial={{
+              opacity: 0,
+              y: isMobile ? '100%' : 8,
+              scale: isMobile ? 1 : 0.98,
+            }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{
+              opacity: 0,
+              y: isMobile ? '100%' : 8,
+              scale: isMobile ? 1 : 0.98,
+            }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            className="pointer-events-auto relative z-10 bg-[var(--admin-surface)] border-t sm:border border-[var(--admin-border)] w-full sm:max-w-2xl rounded-t-[8px] sm:rounded-[4px] shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[88vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Mobile Drawer Pull Indicator */}
+            <div className="pt-2 pb-0.5 sm:hidden flex justify-center w-full shrink-0">
+              <div className="w-8 h-1 rounded-full bg-stone-300 dark:bg-stone-700" />
+            </div>
+
+            {/* Header */}
+            <div className="px-4 sm:px-5 py-3 border-b border-[var(--admin-border-subtle)] bg-[var(--admin-surface)] flex items-center justify-between gap-2 shrink-0">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-[4px] bg-[var(--admin-accent)]/10 text-[var(--admin-accent)] flex items-center justify-center shrink-0 border border-[var(--admin-accent)]/20">
+                  <span className="material-symbols-outlined text-[19px]">psychology</span>
+                </div>
+                <div className="min-w-0 text-left">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-[13.5px] sm:text-[14px] font-bold text-[var(--admin-text-primary)] tracking-tight whitespace-nowrap leading-tight">
+                      AI Curation Analysis
+                    </h3>
+                    <span className="text-[9.5px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-[4px] border bg-[var(--admin-accent)]/10 text-[var(--admin-accent)] border-[var(--admin-accent)]/30 shrink-0">
+                      Editable Curation
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[var(--admin-text-secondary)] font-medium truncate mt-0.5">
+                    Review and customize fields before applying to the product
                   </p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setShowAIHUD(false)}
-                className="text-white/60 hover:text-white transition-colors cursor-pointer"
+                className="w-8 h-8 rounded-[4px] flex items-center justify-center text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer shrink-0"
+                title="Close"
               >
-                <span className="material-symbols-outlined text-[20px]">close</span>
+                <span className="material-symbols-outlined text-[18px]">close</span>
               </button>
             </div>
 
-            {/* Scrollable Dashboard Panel */}
-            <div className="p-6 overflow-y-auto space-y-5 text-left text-[var(--admin-text-primary)]">
-              {/* Top Classification Row: Object + Confidence Score */}
-              <div className="flex items-center justify-between bg-[var(--admin-surface)] p-4 rounded-2xl border border-[var(--admin-border)] shadow-sm">
-                <div>
-                  <p className="text-[11px] sm:text-[11px] sm:text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider">
+            {/* Change Notice Bar */}
+            <div className="bg-[var(--admin-surface-muted)] px-4 sm:px-5 py-2 border-b border-[var(--admin-border-subtle)] flex items-center justify-between gap-2 shrink-0">
+              <span className="text-[11px] font-medium text-[var(--admin-text-secondary)] flex items-center gap-1.5 truncate">
+                <span className="material-symbols-outlined text-[14px] text-[var(--admin-accent)] shrink-0">
+                  edit_note
+                </span>
+                Click any field below to edit before applying
+              </span>
+              <span className="text-[9.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-[3px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 shrink-0">
+                Auto-Curated
+              </span>
+            </div>
+
+            {/* Scrollable Content Body */}
+            <div className="p-4 sm:p-5 overflow-y-auto space-y-3.5 custom-scrollbar text-left text-[var(--admin-text-primary)] flex-1">
+              {/* Classification Banner: Detected Object + Confidence */}
+              <div className="p-3 sm:p-3.5 rounded-[4px] bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[10.5px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)]">
                     Detected Object Class
-                  </p>
-                  <h4 className="text-[17px] font-bold text-[var(--admin-text-primary)] flex items-center gap-1.5 mt-0.5">
-                    <span className="material-symbols-outlined text-[var(--admin-accent)] text-[18px]">
-                      workspace_premium
-                    </span>
-                    {aiAnalysisResult.detected_object || 'Unidentified Curation'}
-                  </h4>
-                </div>
-
-                {/* Confidence circular indicator */}
-                <div className="flex flex-col items-center">
-                  <div className="relative w-14 h-14 flex items-center justify-center rounded-full bg-amber-50 border-2 border-amber-500/30 shadow-inner">
-                    <span className="text-[13px] font-extrabold text-amber-600">
-                      {aiAnalysisResult.confidence || 85}%
-                    </span>
+                  </span>
+                  <div className="flex items-center gap-1 px-2 py-0.5 rounded-[4px] bg-amber-500/10 border border-amber-500/25 text-amber-600 dark:text-amber-400 font-bold text-[11px] shrink-0">
+                    <span className="material-symbols-outlined text-[13px]">verified</span>
+                    <span>{aiAnalysisResult.confidence || 90}% Match</span>
                   </div>
-                  <p className="text-[11px] font-bold text-amber-600 uppercase tracking-widest mt-1">
-                    Confidence
-                  </p>
+                </div>
+                <div className="relative">
+                  <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[16px] text-[var(--admin-accent)] pointer-events-none">
+                    workspace_premium
+                  </span>
+                  <input
+                    type="text"
+                    value={aiAnalysisResult.detected_object || ''}
+                    onChange={(e) => updateField('detected_object', e.target.value)}
+                    placeholder="Detected object class (e.g. Coconut Decor)"
+                    className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] pl-8 pr-2.5 py-1.5 text-[13px] font-bold text-[var(--admin-text-primary)] focus:border-[var(--admin-accent)] outline-none transition-all"
+                  />
                 </div>
               </div>
 
-              {/* Titles Block */}
-              <div className="space-y-3">
-                <div className="p-3.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-xl space-y-1 shadow-sm">
-                  <span className="text-[11px] font-extrabold text-[var(--admin-text-secondary)] uppercase tracking-wider block">
-                    Generated English Title
+              {/* Title Section (English & Telugu) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* English Title */}
+                <div className="p-3 sm:p-3.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] space-y-1.5">
+                  <span className="text-[10.5px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] block">
+                    English Title
                   </span>
-                  <p className="text-[12.5px] font-bold text-[var(--admin-text-primary)]">
-                    {aiAnalysisResult.english_title}
-                  </p>
+                  <input
+                    type="text"
+                    value={aiAnalysisResult.english_title || ''}
+                    onChange={(e) => updateField('english_title', e.target.value)}
+                    placeholder="Product Title in English"
+                    className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] px-3 py-1.5 text-[12.5px] font-bold text-[var(--admin-text-primary)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] outline-none transition-all"
+                  />
                 </div>
-                <div className="p-3.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-xl space-y-1 shadow-sm">
-                  <span className="text-[11px] font-extrabold text-[var(--admin-text-secondary)] uppercase tracking-wider block">
-                    Natural Telugu Curation
+
+                {/* Telugu Title */}
+                <div className="p-3 sm:p-3.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] space-y-1.5">
+                  <span className="text-[10.5px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] block">
+                    Telugu Title (తెలుగు)
                   </span>
-                  <p className="text-[13px] font-bold text-[var(--admin-text-primary)]  TeluguScript">
-                    {aiAnalysisResult.telugu_title}
-                  </p>
+                  <input
+                    type="text"
+                    value={aiAnalysisResult.telugu_title || ''}
+                    onChange={(e) => updateField('telugu_title', e.target.value)}
+                    placeholder="తెలుగు శీర్షిక"
+                    className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] px-3 py-1.5 text-[12.5px] font-bold text-[var(--admin-text-primary)] TeluguScript focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] outline-none transition-all"
+                  />
                 </div>
               </div>
 
-              {/* Attribute Grid */}
-              <div className="grid grid-cols-2 gap-4">
-                {/* Category & Price */}
-                <div className="col-span-2 sm:col-span-1 p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl space-y-2">
-                  <span className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block">
-                    Category Mapped
+              {/* Category & Pricing */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {/* Primary Category */}
+                <div className="p-3 sm:p-3.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] space-y-1.5">
+                  <span className="text-[10.5px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] block">
+                    Category
                   </span>
-                  <div className="inline-flex items-center gap-1.5 bg-[var(--admin-surface)] text-[var(--admin-text-primary)] px-2.5 py-1 rounded-lg text-[12px] font-bold border border-[var(--admin-border)]">
-                    <span className="material-symbols-outlined text-[14px] text-[var(--admin-accent)]">
+                  <div className="relative">
+                    <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[14px] text-[var(--admin-accent)] pointer-events-none">
                       category
                     </span>
-                    {aiAnalysisResult.category || 'General Decor'}
+                    <input
+                      type="text"
+                      value={aiAnalysisResult.primary_category || aiAnalysisResult.category || ''}
+                      onChange={(e) => updateField('category', e.target.value)}
+                      placeholder="Category"
+                      className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] pl-8 pr-2.5 py-1.5 text-[12px] font-bold text-[var(--admin-text-primary)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] outline-none transition-all"
+                    />
                   </div>
                 </div>
 
-                <div className="col-span-2 sm:col-span-1 p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl space-y-2">
-                  <span className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block">
+                {/* Estimated Price */}
+                <div className="p-3 sm:p-3.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] space-y-1.5">
+                  <span className="text-[10.5px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] block">
                     Estimated Price
                   </span>
-                  <p className="text-[14px] font-bold text-[var(--admin-text-primary)]">
-                    ₹{aiAnalysisResult.price || '0'}
-                  </p>
+                  <div className="relative">
+                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[13px] font-bold text-[var(--admin-accent)] pointer-events-none">
+                      ₹
+                    </span>
+                    <input
+                      type="number"
+                      value={aiAnalysisResult.price || ''}
+                      onChange={(e) => updateField('price', e.target.value)}
+                      placeholder="0"
+                      className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] pl-6 pr-2.5 py-1.5 text-[13px] font-mono font-bold text-[var(--admin-text-primary)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] outline-none transition-all"
+                    />
+                  </div>
                 </div>
 
-                {/* Badges & Quantity */}
-                <div className="col-span-2 p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl space-y-3">
-                  <span className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block">
-                    Storefront Highlights
+                {/* Pack / Quantity */}
+                <div className="p-3 sm:p-3.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] space-y-1.5">
+                  <span className="text-[10.5px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] block">
+                    Pack Quantity
                   </span>
-                  <div className="flex flex-wrap items-center gap-3">
-                    {aiAnalysisResult.badges && aiAnalysisResult.badges.length > 0 && (
-                      <div className="flex gap-2">
-                        {aiAnalysisResult.badges.map((b, idx) => (
-                          <span
-                            key={idx}
-                            className="bg-[var(--admin-surface)] text-[var(--admin-text-primary)] border border-[var(--admin-border)] px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest shadow-sm"
-                          >
-                            {b}
-                          </span>
-                        ))}
-                      </div>
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="number"
+                      value={aiAnalysisResult.estimated_quantity || 1}
+                      onChange={(e) => updateField('estimated_quantity', Number(e.target.value))}
+                      className="w-14 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] px-2 py-1.5 text-[12px] font-bold text-[var(--admin-text-primary)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] outline-none text-center"
+                    />
+                    <input
+                      type="text"
+                      value={aiAnalysisResult.estimated_quantity_unit || 'Items'}
+                      onChange={(e) => updateField('estimated_quantity_unit', e.target.value)}
+                      placeholder="Units"
+                      className="flex-1 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] px-2.5 py-1.5 text-[12px] font-medium text-[var(--admin-text-primary)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Storefront Badges & Highlights */}
+              <div className="p-3 sm:p-3.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] space-y-2">
+                <span className="text-[10.5px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] block">
+                  Storefront Badges & Highlights
+                </span>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {(aiAnalysisResult.badges || []).map((b, idx) => (
+                    <span
+                      key={idx}
+                      className="inline-flex items-center gap-1 bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] border border-[var(--admin-border)] pl-2 pr-1 py-0.5 rounded-[4px] text-[10.5px] font-bold uppercase tracking-wider"
+                    >
+                      {b}
+                      <button
+                        type="button"
+                        onClick={() => removeArrayItem('badges', idx)}
+                        className="hover:text-red-500 transition-colors cursor-pointer p-0.5 flex items-center"
+                        title="Remove"
+                      >
+                        <span className="material-symbols-outlined text-[12px]">close</span>
+                      </button>
+                    </span>
+                  ))}
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="text"
+                      value={badgeInput}
+                      onChange={(e) => setBadgeInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          addArrayItem('badges', badgeInput);
+                          setBadgeInput('');
+                        }
+                      }}
+                      placeholder="+ Add badge"
+                      className="w-24 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] px-2 py-0.5 text-[11px] text-[var(--admin-text-primary)] focus:border-[var(--admin-accent)] outline-none"
+                    />
+                    {badgeInput.trim() && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          addArrayItem('badges', badgeInput);
+                          setBadgeInput('');
+                        }}
+                        className="admin-btn-icon !w-6 !h-6 !rounded-[3px] text-[11px]"
+                      >
+                        <span className="material-symbols-outlined text-[13px]">add</span>
+                      </button>
                     )}
-                    {aiAnalysisResult.estimated_quantity &&
-                      aiAnalysisResult.estimated_quantity > 1 && (
-                        <div className="flex items-center gap-1 bg-[var(--admin-surface)] text-[var(--admin-text-primary)] border border-[var(--admin-border)] px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest shadow-sm">
-                          <span className="material-symbols-outlined text-[13px] text-[var(--admin-accent)]">
-                            inventory_2
-                          </span>
-                          ~{aiAnalysisResult.estimated_quantity}{' '}
-                          {aiAnalysisResult.estimated_quantity_unit || 'Items'}
-                        </div>
-                      )}
                   </div>
                 </div>
+              </div>
 
-                {/* Materials Chips */}
-                <div className="col-span-2 p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl space-y-3">
-                  <span className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block">
-                    Auto-Detected Craft Materials
-                  </span>
-                  <div className="flex flex-wrap gap-2">
-                    {(aiAnalysisResult.materials || []).map((m, idx) => (
-                      <span
-                        key={idx}
-                        className="bg-[var(--admin-surface)] text-[var(--admin-text-primary)] px-3 py-1 rounded-full text-[12px] font-medium border border-[var(--admin-border)] flex items-center gap-1.5 shadow-sm"
+              {/* Craft Materials */}
+              <div className="p-3 sm:p-3.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] space-y-2">
+                <span className="text-[10.5px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] block">
+                  Detected Craft Materials
+                </span>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {(aiAnalysisResult.materials || []).map((m, idx) => (
+                    <span
+                      key={idx}
+                      className="inline-flex items-center gap-1.5 bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] pl-2 pr-1 py-0.5 rounded-[4px] text-[11.5px] font-medium border border-[var(--admin-border)]"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-[var(--admin-accent)]" />
+                      {m}
+                      <button
+                        type="button"
+                        onClick={() => removeArrayItem('materials', idx)}
+                        className="hover:text-red-500 transition-colors cursor-pointer p-0.5 flex items-center"
+                        title="Remove"
                       >
-                        <span className="w-1.5 h-1.5 rounded-full bg-[var(--admin-accent)]" />
-                        {m}
-                      </span>
-                    ))}
+                        <span className="material-symbols-outlined text-[12px]">close</span>
+                      </button>
+                    </span>
+                  ))}
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="text"
+                      value={materialInput}
+                      onChange={(e) => setMaterialInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          addArrayItem('materials', materialInput);
+                          setMaterialInput('');
+                        }
+                      }}
+                      placeholder="+ Add material"
+                      className="w-28 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] px-2 py-0.5 text-[11px] text-[var(--admin-text-primary)] focus:border-[var(--admin-accent)] outline-none"
+                    />
+                    {materialInput.trim() && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          addArrayItem('materials', materialInput);
+                          setMaterialInput('');
+                        }}
+                        className="admin-btn-icon !w-6 !h-6 !rounded-[3px] text-[11px]"
+                      >
+                        <span className="material-symbols-outlined text-[13px]">add</span>
+                      </button>
+                    )}
                   </div>
                 </div>
+              </div>
 
-                {/* Customer Note */}
-                {aiAnalysisResult.customer_note && (
-                  <div className="col-span-2 p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl space-y-3">
-                    <span className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-[15px] text-[var(--admin-accent)]">
-                        info
-                      </span>
-                      Generated Customer Note
+              {/* Customer Note */}
+              <div className="p-3 sm:p-3.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] space-y-2">
+                <div className="flex items-center gap-1.5 text-[10.5px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)]">
+                  <span className="material-symbols-outlined text-[15px] text-[var(--admin-accent)]">
+                    info
+                  </span>
+                  Customer Note / Care Instructions
+                </div>
+                <textarea
+                  rows={4}
+                  value={aiAnalysisResult.customer_note || ''}
+                  onChange={(e) => updateField('customer_note', e.target.value)}
+                  placeholder="Customer note / care instructions..."
+                  className="w-full min-h-[96px] bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] p-3 text-[12px] text-[var(--admin-text-primary)] leading-relaxed focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] outline-none transition-all resize-y custom-scrollbar"
+                />
+              </div>
+
+              {/* Personalization Section */}
+              <div className="p-3 sm:p-3.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="material-symbols-outlined text-[16px] text-[var(--admin-accent)] shrink-0">
+                      tune
                     </span>
-                    <div className="bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-xl p-3">
-                      <p className="text-[12.5px] text-[var(--admin-text-primary)] font-medium whitespace-pre-wrap leading-relaxed">
-                        {aiAnalysisResult.customer_note.replace(/\\n/g, '\n')}
-                      </p>
-                    </div>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-primary)] truncate">
+                      Customization / Personalization
+                    </span>
                   </div>
-                )}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateField(
+                        'personalization_enabled',
+                        !aiAnalysisResult.personalization_enabled,
+                      )
+                    }
+                    className={`px-3 py-1 rounded-[4px] text-[10px] font-bold uppercase tracking-wider border cursor-pointer transition-all shrink-0 ${
+                      aiAnalysisResult.personalization_enabled
+                        ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
+                        : 'bg-stone-500/10 text-stone-500 border-stone-500/20'
+                    }`}
+                  >
+                    {aiAnalysisResult.personalization_enabled ? '✓ Enabled' : 'Disabled'}
+                  </button>
+                </div>
 
-                {/* Personalization Note */}
                 {aiAnalysisResult.personalization_enabled && (
-                  <div className="col-span-2 p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block">
-                        Auto-Detected Personalization
+                  <div className="space-y-2.5 pt-2.5 border-t border-[var(--admin-border-subtle)]">
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-[var(--admin-text-secondary)] block mb-1">
+                        Field Label
                       </span>
-                      <span className="bg-[var(--admin-accent)] text-white px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 shadow-sm">
-                        <span className="material-symbols-outlined text-[11px]">check_circle</span>
-                        Enabled
-                      </span>
+                      <input
+                        type="text"
+                        value={aiAnalysisResult.personalization_label || ''}
+                        onChange={(e) => updateField('personalization_label', e.target.value)}
+                        placeholder="e.g. Customization Details"
+                        className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] px-3 py-1.5 text-[12px] font-medium text-[var(--admin-text-primary)] focus:border-[var(--admin-accent)] outline-none"
+                      />
                     </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
-                        <p className="text-[10px] text-[var(--admin-text-secondary)] font-bold uppercase tracking-wider">
-                          Label
-                        </p>
-                        <p className="text-[12.5px] text-[var(--admin-text-primary)] font-medium bg-[var(--admin-surface)] px-3 py-2 rounded-xl border border-[var(--admin-border)]">
-                          {aiAnalysisResult.personalization_label}
-                        </p>
-                      </div>
-                      <div className="space-y-1.5">
-                        <p className="text-[10px] text-[var(--admin-text-secondary)] font-bold uppercase tracking-wider">
-                          Instructions / Placeholder
-                        </p>
-                        <p className="text-[12px] text-[var(--admin-text-primary)] font-medium whitespace-pre-wrap bg-[var(--admin-surface)] px-3 py-2 rounded-xl border border-[var(--admin-border)] leading-relaxed">
-                          {aiAnalysisResult.personalization_placeholder?.replace(/\\n/g, '\n')}
-                        </p>
-                      </div>
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-[var(--admin-text-secondary)] block mb-1">
+                        Placeholder Instructions
+                      </span>
+                      <textarea
+                        rows={3}
+                        value={aiAnalysisResult.personalization_placeholder || ''}
+                        onChange={(e) => updateField('personalization_placeholder', e.target.value)}
+                        placeholder="Instructions for customer..."
+                        className="w-full min-h-[64px] bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] p-2.5 text-[11.5px] text-[var(--admin-text-primary)] focus:border-[var(--admin-accent)] outline-none resize-y leading-relaxed"
+                      />
                     </div>
                   </div>
                 )}
+              </div>
 
-                {/* Tags Generation */}
-                <div className="col-span-2 p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl space-y-3">
-                  <span className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block">
-                    SEO Collections & Search Tags
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {[
-                      ...(aiAnalysisResult.tags || []),
-                      ...(aiAnalysisResult.telugu_keywords || []),
-                      ...(aiAnalysisResult.search_aliases || []),
-                    ].map((t, idx) => (
-                      <span
-                        key={idx}
-                        className="bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] px-2.5 py-1 rounded-lg text-[11.5px] font-medium border border-[var(--admin-border)] shadow-sm"
+              {/* SEO Collections & Search Tags */}
+              <div className="p-3 sm:p-3.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] space-y-2">
+                <span className="text-[10.5px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] block">
+                  Search Tags & Keywords ({allTags.length})
+                </span>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {allTags.map((t, idx) => (
+                    <span
+                      key={idx}
+                      className="inline-flex items-center gap-1 text-[11px] font-mono text-[var(--admin-text-secondary)] bg-[var(--admin-surface-muted)] pl-2 pr-1 py-0.5 rounded-[4px] border border-[var(--admin-border)]"
+                    >
+                      #{t}
+                      <button
+                        type="button"
+                        onClick={() => removeArrayItem('tags', idx)}
+                        className="hover:text-red-500 transition-colors cursor-pointer p-0.5 flex items-center"
+                        title="Remove"
                       >
-                        #{t}
-                      </span>
-                    ))}
+                        <span className="material-symbols-outlined text-[12px]">close</span>
+                      </button>
+                    </span>
+                  ))}
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="text"
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          addArrayItem('tags', tagInput);
+                          setTagInput('');
+                        }
+                      }}
+                      placeholder="+ Add search tag"
+                      className="w-32 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] px-2 py-0.5 text-[11px] text-[var(--admin-text-primary)] focus:border-[var(--admin-accent)] outline-none"
+                    />
+                    {tagInput.trim() && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          addArrayItem('tags', tagInput);
+                          setTagInput('');
+                        }}
+                        className="admin-btn-icon !w-6 !h-6 !rounded-[3px] text-[11px]"
+                      >
+                        <span className="material-symbols-outlined text-[13px]">add</span>
+                      </button>
+                    )}
                   </div>
                 </div>
+              </div>
 
-                {/* Description & URL */}
-                <div className="col-span-2 p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl space-y-4">
-                  <div className="space-y-2">
-                    <span className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block">
-                      Premium Curation Description
+              {/* SEO Meta Title & Meta Description */}
+              <div className="p-3 sm:p-3.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] space-y-2.5">
+                <span className="text-[10.5px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] block">
+                  SEO Metadata (Google Search)
+                </span>
+                <div className="space-y-2">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-[var(--admin-text-tertiary)] block mb-1">
+                      Meta Title
                     </span>
-                    <p className="text-[13px] text-[var(--admin-text-primary)] leading-relaxed bg-[var(--admin-surface)] border border-[var(--admin-border)] p-3 rounded-xl">
-                      {aiAnalysisResult.description}
-                    </p>
+                    <input
+                      type="text"
+                      value={
+                        aiAnalysisResult.seo_title ||
+                        (aiAnalysisResult.english_title
+                          ? `${aiAnalysisResult.english_title} | Siri Arts & Crafts`
+                          : '')
+                      }
+                      onChange={(e) => updateField('seo_title', e.target.value)}
+                      placeholder="SEO Meta Title"
+                      className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] px-3 py-1.5 text-[12px] text-[var(--admin-text-primary)] focus:border-[var(--admin-accent)] outline-none"
+                    />
                   </div>
-                  <div className="space-y-2 pt-3 border-t border-[var(--admin-border)]/50">
-                    <span className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block">
-                      Generated URL Slug
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-[var(--admin-text-tertiary)] block mb-1">
+                      Meta Description (Snippet)
                     </span>
-                    <p className="text-[12px] text-[var(--admin-text-tertiary)] font-mono bg-[var(--admin-surface)] border border-[var(--admin-border)] px-3 py-1.5 rounded-lg inline-block">
-                      /{aiAnalysisResult.slug}
-                    </p>
+                    <textarea
+                      rows={2}
+                      value={
+                        aiAnalysisResult.seo_description ||
+                        (aiAnalysisResult.description
+                          ? aiAnalysisResult.description.substring(0, 155)
+                          : '')
+                      }
+                      onChange={(e) => updateField('seo_description', e.target.value)}
+                      placeholder="Search engine meta description..."
+                      className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] p-2.5 text-[11.5px] text-[var(--admin-text-primary)] focus:border-[var(--admin-accent)] outline-none resize-none leading-relaxed"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Curation Description & URL Slug */}
+              <div className="p-3 sm:p-3.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] space-y-2.5">
+                <span className="text-[10.5px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] block">
+                  Product Description & URL Slug
+                </span>
+                <textarea
+                  rows={4}
+                  value={aiAnalysisResult.description || ''}
+                  onChange={(e) => updateField('description', e.target.value)}
+                  placeholder="Detailed product narrative description..."
+                  className="w-full min-h-[85px] bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] p-3 text-[12px] text-[var(--admin-text-primary)] leading-relaxed focus:border-[var(--admin-accent)] outline-none transition-all resize-y custom-scrollbar"
+                />
+                <div className="pt-2 border-t border-[var(--admin-border-subtle)] flex items-center gap-2">
+                  <span className="text-[10.5px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] shrink-0">
+                    URL Slug:
+                  </span>
+                  <div className="flex-1 flex items-center bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] px-2.5 py-1">
+                    <span className="text-[11px] font-mono text-[var(--admin-text-tertiary)]">
+                      /
+                    </span>
+                    <input
+                      type="text"
+                      value={aiAnalysisResult.slug || ''}
+                      onChange={(e) => updateField('slug', e.target.value)}
+                      placeholder="product-slug"
+                      className="flex-1 bg-transparent border-0 outline-none text-[11px] font-mono text-[var(--admin-accent)] px-1"
+                    />
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Chat Box for AI Refinement */}
-            <div className="px-6 pb-4 pt-2">
+            <div className="px-4 sm:px-5 py-2.5 border-t border-[var(--admin-border-subtle)] bg-[var(--admin-surface)] shrink-0">
               <form
                 onSubmit={handleAiChatSubmit}
-                className="flex items-center gap-2 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-xl p-1.5 focus-within:border-[var(--admin-accent)] focus-within:ring-2 focus-within:ring-[var(--admin-accent)]/20 transition-all shadow-sm"
+                className="flex items-center gap-2 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] p-1 focus-within:border-[var(--admin-accent)] focus-within:ring-1 focus-within:ring-[var(--admin-accent)]/20 transition-all"
               >
                 <input
                   type="text"
                   value={aiChatInput}
                   onChange={(e) => setAiChatInput(e.target.value)}
                   placeholder="Ask AI to change title, category, style, etc..."
-                  className="flex-1 bg-transparent border-0 !border-none outline-none !outline-none focus:ring-0 focus:!ring-0 shadow-none text-[12.5px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] px-3 py-2"
+                  className="flex-1 bg-transparent border-0 !border-none outline-none !outline-none focus:ring-0 focus:!ring-0 shadow-none text-[12px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] px-2.5 py-1"
                   disabled={isAILearning}
                 />
                 <button
                   type="submit"
                   disabled={!aiChatInput.trim() || isAILearning}
-                  className="bg-[var(--admin-accent)] text-white px-3 py-2 rounded-lg flex items-center justify-center disabled:opacity-50 cursor-pointer hover:brightness-110 transition-all shadow-sm"
+                  className="admin-btn admin-btn-primary !rounded-[4px] !h-7 !py-0 px-2.5 flex items-center justify-center disabled:opacity-50 cursor-pointer shadow-xs text-[12px] font-bold shrink-0"
                 >
                   {isAILearning ? (
-                    <span className="material-symbols-outlined text-[18px] animate-spin">
+                    <span className="material-symbols-outlined text-[16px] animate-spin">
                       refresh
                     </span>
                   ) : (
-                    <span className="material-symbols-outlined text-[18px] pr-0.5">send</span>
+                    <span className="material-symbols-outlined text-[16px]">send</span>
                   )}
                 </button>
               </form>
             </div>
 
             {/* Footer Actions */}
-            <div className="p-4 bg-[var(--admin-bg-subtle)] border-t border-[var(--admin-border)] flex flex-col sm:flex-row gap-2.5">
+            <div className="p-3 sm:p-4 bg-[var(--admin-surface-muted)] border-t border-[var(--admin-border-subtle)] flex items-center gap-2 sm:gap-2.5 shrink-0">
               <button
                 type="button"
                 onClick={() => setShowAIHUD(false)}
-                className="w-full sm:flex-1 border border-[var(--admin-border)] text-[var(--admin-text-secondary)] py-2.5 rounded-xl text-[11px] sm:text-[11px] font-bold hover:bg-white transition-colors cursor-pointer"
+                className="admin-btn admin-btn-outline flex-1 !h-9 sm:!h-10 !py-0 px-3 sm:px-4 !rounded-[4px] text-[12px] sm:text-[13px] font-bold shadow-xs min-w-max cursor-pointer inline-flex items-center justify-center gap-1.5 box-border"
               >
                 Manual Correction / Reject
               </button>
@@ -299,17 +649,17 @@ export function AiCurationOverlay({
               <button
                 type="button"
                 onClick={handleApplyAISpecs}
-                className="w-full sm:flex-1 bg-[var(--admin-accent)] text-white py-2.5 rounded-xl text-[11px] sm:text-[11px] font-bold shadow-md hover:brightness-110 transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.985]"
+                className="admin-btn admin-btn-primary flex-1 !h-9 sm:!h-10 !py-0 px-3 sm:px-4 !rounded-[4px] text-[12px] sm:text-[13px] font-bold shadow-xs min-w-max cursor-pointer inline-flex items-center justify-center gap-1.5 box-border"
               >
-                <span className="material-symbols-outlined text-[15px]">
+                <span className="material-symbols-outlined text-[17px] leading-none">
                   published_with_changes
                 </span>
-                Apply AI Curation
+                <span>Apply AI Curation</span>
               </button>
             </div>
-          </div>
+          </motion.div>
         </div>
       )}
-    </>
+    </AnimatePresence>
   );
 }

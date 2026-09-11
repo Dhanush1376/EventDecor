@@ -33,10 +33,10 @@ export function BookingPackageCard({ booking }) {
           <span className="material-symbols-outlined text-[18px] text-[var(--admin-accent)]">
             celebration
           </span>
-          Booked Package & Experience
+          Booked Package
         </h3>
         <span className="text-[11px] font-bold text-[var(--admin-text-secondary)] bg-[var(--admin-surface-muted)] px-2.5 py-0.5 rounded-[4px] border border-[var(--admin-border-subtle)]">
-          1 Experience Package
+          1 Package
         </span>
       </div>
 
@@ -81,17 +81,17 @@ export function BookingPackageCard({ booking }) {
               )}
             </div>
 
-            {/* Schedule Pills */}
-            <div className="flex flex-wrap items-center gap-3 mt-2 text-[12px] text-[var(--admin-text-secondary)]">
-              <span className="flex items-center gap-1 font-medium bg-[var(--admin-surface-muted)] px-2 py-1 rounded-[4px] border border-[var(--admin-border-subtle)]">
-                <span className="material-symbols-outlined text-[15px] text-[var(--admin-accent)]">
+            {/* Schedule Pills & Link */}
+            <div className="flex flex-wrap items-center gap-2 mt-2 text-[12px] text-[var(--admin-text-secondary)]">
+              <span className="inline-flex items-center gap-1 font-medium bg-[var(--admin-surface-muted)] px-2 py-0.5 rounded-[4px] border border-[var(--admin-border-subtle)] text-[11.5px]">
+                <span className="material-symbols-outlined text-[14px] text-stone-400">
                   calendar_month
                 </span>
                 {eventDateFormatted}
               </span>
 
-              <span className="flex items-center gap-1 font-medium bg-[var(--admin-surface-muted)] px-2 py-1 rounded-[4px] border border-[var(--admin-border-subtle)]">
-                <span className="material-symbols-outlined text-[15px] text-[var(--admin-accent)]">
+              <span className="inline-flex items-center gap-1 font-medium bg-[var(--admin-surface-muted)] px-2 py-0.5 rounded-[4px] border border-[var(--admin-border-subtle)] text-[11.5px]">
+                <span className="material-symbols-outlined text-[14px] text-stone-400">
                   schedule
                 </span>
                 {booking.timing?.start || '08:00 AM'} - {booking.timing?.end || '02:00 PM'}
@@ -101,10 +101,11 @@ export function BookingPackageCard({ booking }) {
                 <button
                   type="button"
                   onClick={() => window.open(`/events/${eventPackage._id}`, '_blank')}
-                  className="text-[11px] font-bold text-[var(--admin-accent)] hover:underline flex items-center gap-1 cursor-pointer ml-auto"
+                  className="inline-flex items-center gap-1 text-[11px] font-bold text-[var(--admin-accent)] hover:underline cursor-pointer ml-auto"
+                  title="View showcase"
                 >
-                  <span>View Package Showcase</span>
-                  <span className="material-symbols-outlined text-[13px]">open_in_new</span>
+                  <span>Showcase</span>
+                  <span className="material-symbols-outlined text-[12px]">open_in_new</span>
                 </button>
               )}
             </div>
@@ -153,14 +154,14 @@ export function BookingPackageCard({ booking }) {
         <div className="p-3 sm:p-4 bg-[var(--admin-surface-muted)] border-t border-[var(--admin-border-subtle)] animate-fadeIn">
           <div className="flex justify-between items-center mb-2">
             <span className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider">
-              Expanded Package Setup View
+              Showcase Preview
             </span>
             <button
               type="button"
               onClick={() => setShowLargeImage(false)}
               className="text-[11px] text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] cursor-pointer"
             >
-              Collapse Image
+              Close
             </button>
           </div>
           <div className="rounded-[4px] overflow-hidden border border-[var(--admin-border)] max-h-72">
@@ -173,22 +174,15 @@ export function BookingPackageCard({ booking }) {
         </div>
       )}
 
-      {/* Customer Requests Footer (Clean quote box) */}
+      {/* Customer Requests Footer (Clean badge + text) */}
       {booking.customization?.additionalRequests && (
-        <div className="px-3 py-3 sm:px-5 sm:py-3.5 bg-[var(--admin-bg-subtle)] border-t border-[var(--admin-border-subtle)]">
-          <div className="flex items-start gap-2 text-xs">
-            <span className="material-symbols-outlined text-[16px] text-amber-600 dark:text-amber-400 mt-0.5 shrink-0">
-              draw
-            </span>
-            <div className="min-w-0">
-              <span className="font-bold text-[11px] text-[var(--admin-text-primary)] uppercase tracking-wider block">
-                Customer Arrangement Requests:
-              </span>
-              <p className="text-[12.5px] text-[var(--admin-text-secondary)] mt-0.5 leading-relaxed">
-                {booking.customization.additionalRequests}
-              </p>
-            </div>
-          </div>
+        <div className="px-3 py-2.5 sm:px-5 bg-[var(--admin-bg-subtle)] border-t border-[var(--admin-border-subtle)] flex items-start gap-2">
+          <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-[3px] bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50 shrink-0">
+            Client Request
+          </span>
+          <p className="text-[12px] text-[var(--admin-text-secondary)] leading-relaxed">
+            {booking.customization.additionalRequests}
+          </p>
         </div>
       )}
     </div>

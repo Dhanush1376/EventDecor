@@ -225,33 +225,35 @@ export function AdminDueReturns() {
                   onClick={() => goToDetail(r._id)}
                   className="bg-[var(--admin-surface)] rounded-[12px] p-4 border border-[var(--admin-border)] shadow-sm hover:border-[var(--admin-border-strong)] hover:shadow-md transition-all duration-200 cursor-pointer group text-left flex flex-col relative overflow-hidden"
                 >
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[15px] font-bold text-gray-900">
-                        #{r._id.substring(r._id.length - 8).toUpperCase()}
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div className="min-w-0 flex-1">
+                      <span className="text-[13.5px] font-bold text-gray-900 block truncate leading-tight">
+                        {r.userId?.name || r.user?.name || r.shippingAddress?.name || 'Guest'}
                       </span>
-                      <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700">
-                        RENTAL
-                      </span>
+                      <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                        <span className="text-[11px] font-mono font-medium text-gray-500">
+                          #{r._id.substring(r._id.length - 8).toUpperCase()}
+                        </span>
+                        <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
+                          RENTAL
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 shrink-0">
                       <AdminStatusPill status={dueBadge.label} variant={dueBadge.variant} />
-                      <span className="text-[11px] font-bold uppercase tracking-wider px-2 py-1 rounded bg-gray-200 text-gray-700">
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-gray-100 text-gray-700 border border-gray-200">
                         {endDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
                       </span>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-4 mb-2 text-gray-800">
-                    <span className="text-[12px] font-medium uppercase tracking-wide truncate max-w-[140px]">
-                      {r.userId?.name || r.user?.name || r.shippingAddress?.name || 'Guest'}
-                    </span>
-                    <div className="flex items-center gap-1.5 text-[12px] font-medium">
-                      <span className="material-symbols-outlined text-[15px]">call</span>
+                  <div className="flex items-center gap-1.5 text-[12px] font-medium text-gray-600 mb-2">
+                    <span className="material-symbols-outlined text-[15px]">call</span>
+                    <span>
                       {(r.userId?.phone || r.user?.phone || r.shippingAddress?.phone || 'N/A')
                         .replace('+91', '')
                         .trim()}
-                    </div>
+                    </span>
                   </div>
 
                   <div className="flex items-start gap-1.5 mb-4 text-gray-800">

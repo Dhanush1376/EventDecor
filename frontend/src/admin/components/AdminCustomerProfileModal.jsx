@@ -36,18 +36,20 @@ export default function AdminCustomerProfileModal({ customer, onClose, onDelete 
     const fetchData = async () => {
       setLoading(true);
       try {
-        if (!customer?._id) return;
+        const customerId =
+          customer?._id || customer?.id || (typeof customer === 'string' ? customer : null);
+        if (!customerId) return;
 
         const [ordersRes, timelineRes, profile360Data] = await Promise.all([
-          orderService.getAll({ user: customer._id }).catch(() => ({ data: [] })),
+          orderService.getAll({ user: customerId }).catch(() => ({ data: [] })),
           customerIntelligenceService
-            .getCustomerTimeline(customer._id, {
+            .getCustomerTimeline(customerId, {
               skip: 0,
               limit: 50,
               filter: 'all',
             })
             .catch(() => ({ data: { timeline: [] } })),
-          customerIntelligenceService.getCustomer360(customer._id).catch(() => null),
+          customerIntelligenceService.getCustomer360(customerId).catch(() => null),
         ]);
 
         const fetchedOrders = ordersRes?.data?.data || ordersRes?.data || [];
@@ -69,10 +71,18 @@ export default function AdminCustomerProfileModal({ customer, onClose, onDelete 
     fetchData();
   }, [customer]);
 
-  if (!customer) return null;
+  const customerId =
+    customer?._id || customer?.id || (typeof customer === 'string' ? customer : null);
+
+  if (!customer && !customerId) return null;
+
+  const customerName =
+    profile360?.identity?.name ||
+    customer?.name ||
+    (customer?.email ? customer.email.split('@')[0] : 'Customer');
 
   const initials =
-    customer.name
+    customerName
       ?.split(' ')
       .filter(Boolean)
       .map((n) => n[0])
@@ -81,16 +91,16 @@ export default function AdminCustomerProfileModal({ customer, onClose, onDelete 
       .toUpperCase() || 'CU';
 
   // Resolved financial & identity stats
-  const totalSpent = profile360?.overview?.totalSpent ?? customer.totalSpent ?? 0;
-  const walletBalance = profile360?.identity?.walletBalance ?? customer.walletBalance ?? 0;
-  const siriCoins = profile360?.identity?.siriCoins ?? customer.siriCoins ?? 0;
-  const loyaltyTier = profile360?.identity?.loyaltyTier ?? customer.loyaltyTier ?? 'Bronze';
-  const totalOrders = profile360?.overview?.totalOrders ?? orders.length ?? customer.orders ?? 0;
-  const phone = profile360?.identity?.phone || customer.phone || '';
-  const email = profile360?.identity?.email || customer.email || '';
-  const isVerified = profile360?.identity?.isVerified ?? customer.isVerified ?? false;
+  const totalSpent = profile360?.overview?.totalSpent ?? customer?.totalSpent ?? 0;
+  const walletBalance = profile360?.identity?.walletBalance ?? customer?.walletBalance ?? 0;
+  const siriCoins = profile360?.identity?.siriCoins ?? customer?.siriCoins ?? 0;
+  const loyaltyTier = profile360?.identity?.loyaltyTier ?? customer?.loyaltyTier ?? 'Bronze';
+  const totalOrders = profile360?.overview?.totalOrders ?? orders.length ?? customer?.orders ?? 0;
+  const phone = profile360?.identity?.phone || customer?.phone || '';
+  const email = profile360?.identity?.email || customer?.email || '';
+  const isVerified = profile360?.identity?.isVerified ?? customer?.isVerified ?? false;
 
-  const addresses = profile360?.addresses || customer.addresses || [];
+  const addresses = profile360?.addresses || customer?.addresses || [];
   const addressWithStreet = addresses.find(
     (a) => a.addressString || a.address || a.street || a.locality,
   );
@@ -108,12 +118,13 @@ export default function AdminCustomerProfileModal({ customer, onClose, onDelete 
 
   const validCity =
     primaryAddress?.city ||
-    (customer.city && !['unknown', 'unknown city'].includes(customer.city.toLowerCase())
+    (customer?.city && !['unknown', 'unknown city'].includes(customer.city.toLowerCase())
       ? customer.city
       : null);
 
-  const formattedJoinDate = customer.createdAt
-    ? new Date(customer.createdAt).toLocaleDateString('en-IN', {
+  const joinDate = customer?.createdAt || profile360?.identity?.createdAt;
+  const formattedJoinDate = joinDate
+    ? new Date(joinDate).toLocaleDateString('en-IN', {
         day: 'numeric',
         month: 'short',
         year: 'numeric',
@@ -177,7 +188,7 @@ export default function AdminCustomerProfileModal({ customer, onClose, onDelete 
                       "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
                   }}
                 >
-                  {customer.name}
+                  {customerName}
                 </h2>
                 {isVerified && (
                   <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-1.5 py-0.5 rounded-[4px] border border-emerald-200/80 dark:border-emerald-800/80 whitespace-nowrap shrink-0 !font-sans">
@@ -210,7 +221,7 @@ export default function AdminCustomerProfileModal({ customer, onClose, onDelete 
                   </span>
                   <span>{loyaltyTier} Tier</span>
                 </span>
-                {customer.segment && customer.segment !== 'New' && (
+                {customer?.segment && customer.segment !== 'New' && (
                   <span className="inline-flex items-center px-1.5 py-0.5 rounded-[4px] text-[10px] font-bold bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 border border-stone-200/80 dark:border-stone-700/80 whitespace-nowrap !font-sans">
                     {customer.segment}
                   </span>
@@ -220,6 +231,20 @@ export default function AdminCustomerProfileModal({ customer, onClose, onDelete 
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
+            {customerId && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose?.();
+                  navigate(`/admin/customers?id=${customerId}`);
+                }}
+                className="h-8 px-2.5 flex items-center gap-1 text-xs font-semibold rounded-[6px] text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-stone-100 hover:bg-stone-100 dark:hover:bg-stone-800 border border-stone-200 dark:border-stone-700 transition-all cursor-pointer shadow-xs !font-sans"
+                title="Open in Customers Directory"
+              >
+                <span className="material-symbols-outlined !text-[15px]">open_in_new</span>
+                <span className="hidden sm:inline">Directory</span>
+              </button>
+            )}
             {onDelete && (
               <button
                 onClick={() => onDelete(customer)}
@@ -497,7 +522,7 @@ export default function AdminCustomerProfileModal({ customer, onClose, onDelete 
                           key={order._id}
                           onClick={() => {
                             onClose();
-                            navigate('/admin/orders');
+                            navigate(`/admin/orders/${order._id || order.orderId}`);
                           }}
                           className="flex items-center justify-between p-3 bg-white dark:bg-[#211f1b] bg-[var(--admin-surface,#ffffff)] rounded-[6px] border border-stone-200 dark:border-stone-800 border-[var(--admin-border-subtle,#e8e4d9)] hover:border-emerald-500/50 hover:bg-emerald-50/10 dark:hover:bg-emerald-950/20 cursor-pointer transition-all active:scale-[0.99] group shadow-xs !font-sans"
                         >

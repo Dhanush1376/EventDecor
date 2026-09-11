@@ -59,21 +59,52 @@ export function computeSearchScore(
   let score = 0;
 
   // Exact matching (Weight: 4.0)
-  if (normalizedTitle === query || (normalizedTeluguTitle && normalizedTeluguTitle === query)) {
-    score += 4.0;
-  } else if (
-    normalizedTitle.includes(query) ||
-    (normalizedTeluguTitle && normalizedTeluguTitle.includes(query))
+  const queryVariants = [query];
+  if (query.includes('jewelry')) queryVariants.push(query.replace(/\bjewelry\b/g, 'jewellery'));
+  if (query.includes('jewellery')) queryVariants.push(query.replace(/\bjewellery\b/g, 'jewelry'));
+
+  if (
+    queryVariants.some(
+      (qv) => normalizedTitle === qv || (normalizedTeluguTitle && normalizedTeluguTitle === qv),
+    )
   ) {
-    score += 2.0;
+    score += 5.0;
+  } else if (
+    queryVariants.some(
+      (qv) =>
+        normalizedTitle.includes(qv) ||
+        (normalizedTeluguTitle && normalizedTeluguTitle.includes(qv)),
+    )
+  ) {
+    score += 3.0;
   }
 
-  // Prefix matching (Weight: 2.5)
+  // Prefix matching (Weight: 2.0)
   if (
-    normalizedTitle.startsWith(query) ||
-    (normalizedTeluguTitle && normalizedTeluguTitle.startsWith(query))
+    queryVariants.some(
+      (qv) =>
+        normalizedTitle.startsWith(qv) ||
+        (normalizedTeluguTitle && normalizedTeluguTitle.startsWith(qv)),
+    )
   ) {
-    score += 1.0;
+    score += 1.5;
+  }
+
+  // All query words present in title bonus (Weight: 3.5)
+  const allWordsInTitle =
+    queryWords.length > 1 &&
+    queryWords.every((w) => {
+      const candidates = [w];
+      if (w === 'jewelry') candidates.push('jewellery');
+      if (w === 'jewellery') candidates.push('jewelry');
+      if (w === 'tray') candidates.push('trays');
+      if (w === 'trays') candidates.push('tray');
+      if (w === 'bangle') candidates.push('bangles');
+      if (w === 'bangles') candidates.push('bangle');
+      return candidates.some((c) => normalizedTitle.includes(c));
+    });
+  if (allWordsInTitle) {
+    score += 3.5;
   }
 
   // N-gram overlap for partial/substring matching (Weight: 1.5)
@@ -93,12 +124,19 @@ export function computeSearchScore(
   // Word-level occurrences and fuzzy matching
   for (const word of queryWords) {
     let wordScore = 0;
+    const wordCandidates = [word];
+    if (word === 'jewelry') wordCandidates.push('jewellery');
+    else if (word === 'jewellery') wordCandidates.push('jewelry');
+    if (word === 'tray') wordCandidates.push('trays');
+    else if (word === 'trays') wordCandidates.push('tray');
+    if (word === 'bangle') wordCandidates.push('bangles');
+    else if (word === 'bangles') wordCandidates.push('bangle');
 
     // Exact word boundary matches in title
-    if (new RegExp(`\\b${word}\\b`).test(normalizedTitle)) {
-      wordScore += 1.0;
-    } else if (normalizedTitle.includes(word)) {
-      wordScore += 0.5;
+    if (wordCandidates.some((wc) => new RegExp(`\\b${wc}\\b`).test(normalizedTitle))) {
+      wordScore += 1.5;
+    } else if (wordCandidates.some((wc) => normalizedTitle.includes(wc))) {
+      wordScore += 0.8;
     } else {
       // Fuzzy matching against title words
       const titleWords = normalizedTitle.split(/\s+/);
@@ -108,15 +146,16 @@ export function computeSearchScore(
     }
 
     if (normalizedTeluguTitle) {
-      if (new RegExp(`\\b${word}\\b`).test(normalizedTeluguTitle)) wordScore += 1.0;
-      else if (normalizedTeluguTitle.includes(word)) wordScore += 0.5;
+      if (wordCandidates.some((wc) => new RegExp(`\\b${wc}\\b`).test(normalizedTeluguTitle)))
+        wordScore += 1.0;
+      else if (wordCandidates.some((wc) => normalizedTeluguTitle.includes(wc))) wordScore += 0.5;
     }
 
     // Category matching
-    if (normalizedCategory.includes(word)) wordScore += 0.8;
+    if (wordCandidates.some((wc) => normalizedCategory.includes(wc))) wordScore += 0.8;
 
     // Tag matching
-    if (normalizedTags.some((t) => t.includes(word))) wordScore += 0.5;
+    if (wordCandidates.some((wc) => normalizedTags.some((t) => t.includes(wc)))) wordScore += 0.6;
 
     // Material matching
     if (normalizedMaterials.some((m) => m.includes(word))) wordScore += 0.4;

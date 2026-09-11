@@ -1,19 +1,21 @@
 import React from 'react';
 import { SkeletonBox, SkeletonTextLine, SkeletonBadge } from '../../ui/Skeletons';
 
-export function AdminNotificationsSkeleton() {
+export function AdminNotificationsSkeleton({ hideHeader = false } = {}) {
   return (
     <div className="space-y-6 pb-12 sm:pb-8 text-left admin-section-root">
       {/* 1. Header Block */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <SkeletonTextLine width="170px" height="26px" className="mb-2" />
-          <div className="flex items-center gap-2">
-            <SkeletonBadge width="110px" height="18px" />
-            <SkeletonBadge width="75px" height="18px" />
+      {!hideHeader && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <SkeletonTextLine width="170px" height="26px" className="mb-2" />
+            <div className="flex items-center gap-2">
+              <SkeletonBadge width="110px" height="18px" />
+              <SkeletonBadge width="75px" height="18px" />
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* 2. Sticky 42px Search & Controls Bar */}
       <div className="space-y-2.5">

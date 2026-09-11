@@ -221,7 +221,7 @@ export function AdminAnalytics() {
 
   const isMobile = useMediaQuery('(max-width: 640px)');
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [selectedPeriod, setSelectedPeriod] = useState('30D'); // '7D' | '30D' | '90D' | '12M' | 'YTD' | 'ALL'
+  const [selectedPeriod, setSelectedPeriod] = useState('30D'); // '7D' | '30D' | '12M' | 'YTD' | 'ALL'
   const [salesView, setSalesView] = useState('both'); // 'revenue' | 'orders' | 'both'
   const [categoryView, setCategoryView] = useState('donut'); // 'donut' | 'bars'
 
@@ -699,7 +699,7 @@ export function AdminAnalytics() {
           <div className="flex items-center justify-end gap-1.5 sm:gap-2 w-full sm:w-auto overflow-x-auto custom-scrollbar pb-1 sm:pb-0 ml-auto">
             {/* Period Switcher (42px locked height) */}
             <div className="bg-[var(--admin-surface-muted)] p-1 rounded-[4px] border border-[var(--admin-border)] flex items-center gap-1 h-[42px] min-h-[42px] max-h-[42px] box-border shadow-2xs shrink-0">
-              {['7D', '30D', '90D', '12M', 'YTD', 'ALL'].map((period) => {
+              {['7D', '30D', '12M', 'YTD', 'ALL'].map((period) => {
                 const isSelected = selectedPeriod === period;
                 return (
                   <button

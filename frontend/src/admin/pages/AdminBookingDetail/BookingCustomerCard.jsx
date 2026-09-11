@@ -83,38 +83,40 @@ export function BookingCustomerCard({ booking }) {
                 <p className="text-[14px] font-bold text-[var(--admin-text-primary)] truncate group-hover:text-[var(--admin-accent)] transition-colors">
                   {customerName}
                 </p>
-                <span className="material-symbols-outlined text-[14px] text-[var(--admin-text-tertiary)] opacity-0 group-hover:opacity-100 transition-opacity">
+                <span className="material-symbols-outlined text-[13px] text-[var(--admin-text-tertiary)] opacity-0 group-hover:opacity-100 transition-opacity">
                   open_in_new
                 </span>
               </div>
-              <span className="text-[11px] text-[var(--admin-text-tertiary)] block mt-0.5">
-                Event Host & Contact • Click for Profile
-              </span>
             </div>
           </div>
 
-          {/* Contact Details List */}
-          <div className="space-y-2.5 pt-3 border-t border-[var(--admin-border-subtle)] text-xs">
+          {/* Contact Details Chips */}
+          <div className="space-y-1.5 pt-2.5 border-t border-[var(--admin-border-subtle)] text-xs">
             {/* Phone */}
-            <div className="flex items-center justify-between group">
-              <span className="flex items-center gap-2 text-[12px] text-[var(--admin-text-secondary)] truncate">
-                <span className="material-symbols-outlined text-[15px] text-stone-400 shrink-0">
+            <div className="flex items-center justify-between p-2 rounded-[4px] bg-[var(--admin-surface-muted)]/50 border border-[var(--admin-border-subtle)]">
+              <span className="flex items-center gap-1.5 text-[12px] font-mono text-[var(--admin-text-secondary)] truncate">
+                <span className="material-symbols-outlined text-[14px] text-stone-400 shrink-0">
                   phone
                 </span>
                 <span className="truncate">{customerPhone}</span>
               </span>
               {customerPhone && customerPhone !== 'No phone provided' && (
-                <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                <div className="flex items-center gap-1 shrink-0 ml-2">
                   <button
                     type="button"
-                    onClick={() => copyText(customerPhone, 'Phone number')}
-                    className="text-[10.5px] font-medium text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      copyText(customerPhone, 'Phone number');
+                    }}
+                    className="w-6 h-6 rounded-[3px] bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 text-stone-600 dark:text-stone-300 flex items-center justify-center transition-colors cursor-pointer"
+                    title="Copy Phone"
                   >
-                    Copy
+                    <span className="material-symbols-outlined text-[12px]">content_copy</span>
                   </button>
                   {cleanPhone && (
                     <a
                       href={`tel:${cleanPhone}`}
+                      onClick={(e) => e.stopPropagation()}
                       className="w-6 h-6 rounded-[3px] bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 text-stone-700 dark:text-stone-300 flex items-center justify-center transition-colors"
                       title="Call Client"
                     >
@@ -124,6 +126,7 @@ export function BookingCustomerCard({ booking }) {
                   {cleanPhone && (
                     <a
                       href={`${EXTERNAL_URLS.WHATSAPP_BASE}/${cleanPhone}`}
+                      onClick={(e) => e.stopPropagation()}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-6 h-6 rounded-[3px] bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 hover:bg-emerald-100 flex items-center justify-center transition-colors"
@@ -137,24 +140,29 @@ export function BookingCustomerCard({ booking }) {
             </div>
 
             {/* Email */}
-            <div className="flex items-center justify-between group">
-              <span className="flex items-center gap-2 text-[12px] text-[var(--admin-text-secondary)] truncate">
-                <span className="material-symbols-outlined text-[15px] text-stone-400 shrink-0">
+            <div className="flex items-center justify-between p-2 rounded-[4px] bg-[var(--admin-surface-muted)]/50 border border-[var(--admin-border-subtle)]">
+              <span className="flex items-center gap-1.5 text-[12px] text-[var(--admin-text-secondary)] truncate">
+                <span className="material-symbols-outlined text-[14px] text-stone-400 shrink-0">
                   mail
                 </span>
                 <span className="truncate">{customerEmail}</span>
               </span>
               {customerEmail && customerEmail !== 'No email provided' && (
-                <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                <div className="flex items-center gap-1 shrink-0 ml-2">
                   <button
                     type="button"
-                    onClick={() => copyText(customerEmail, 'Email address')}
-                    className="text-[10.5px] font-medium text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      copyText(customerEmail, 'Email address');
+                    }}
+                    className="w-6 h-6 rounded-[3px] bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 text-stone-600 dark:text-stone-300 flex items-center justify-center transition-colors cursor-pointer"
+                    title="Copy Email"
                   >
-                    Copy
+                    <span className="material-symbols-outlined text-[12px]">content_copy</span>
                   </button>
                   <a
                     href={`mailto:${customerEmail}`}
+                    onClick={(e) => e.stopPropagation()}
                     className="w-6 h-6 rounded-[3px] bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 text-stone-700 dark:text-stone-300 flex items-center justify-center transition-colors"
                     title="Send Email"
                   >

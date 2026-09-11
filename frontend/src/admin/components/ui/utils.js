@@ -44,3 +44,21 @@ export const CHART_COLORS = [
   '#9b82a3', // Mauve
   '#8a816f', // Warm Grey
 ];
+
+export function smoothScrollCardIntoView(elementOrId, bottomOffset = 95) {
+  if (typeof window === 'undefined') return;
+  setTimeout(() => {
+    const el =
+      typeof elementOrId === 'string'
+        ? document.getElementById(elementOrId) ||
+          document.querySelector(`[data-card-id="${elementOrId}"]`)
+        : elementOrId;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const visibleBottom = window.innerHeight - bottomOffset;
+    if (rect.bottom > visibleBottom) {
+      const scrollNeeded = rect.bottom - visibleBottom;
+      window.scrollBy({ top: scrollNeeded + 16, behavior: 'smooth' });
+    }
+  }, 220);
+}

@@ -114,7 +114,10 @@ export function useProductAI({
       { key: 'title', value: aiAnalysisResult.english_title },
       { key: 'teluguTitle', value: aiAnalysisResult.telugu_title },
       { key: 'slug', value: aiAnalysisResult.slug },
-      { key: 'primaryCategory', value: aiAnalysisResult.primary_category },
+      {
+        key: 'primaryCategory',
+        value: aiAnalysisResult.primary_category || aiAnalysisResult.category,
+      },
       { key: 'secondaryCategories', value: aiAnalysisResult.secondary_categories || [] },
       { key: 'material', value: (aiAnalysisResult.materials || []).join(',') },
       {
@@ -131,12 +134,21 @@ export function useProductAI({
       { key: 'badges', value: (aiAnalysisResult.badges || []).join(', ') },
       { key: 'description', value: aiAnalysisResult.description },
       { key: 'price', value: aiAnalysisResult.price ? String(aiAnalysisResult.price) : '' },
-      { key: 'seoTitle', value: aiAnalysisResult.english_title + ' | Siri Arts & Crafts' },
+      {
+        key: 'seoTitle',
+        value:
+          aiAnalysisResult.seo_title ||
+          (aiAnalysisResult.english_title
+            ? `${aiAnalysisResult.english_title} | Siri Arts & Crafts`
+            : ''),
+      },
       {
         key: 'seoDescription',
-        value: aiAnalysisResult.description
-          ? aiAnalysisResult.description.substring(0, 155) + '...'
-          : '',
+        value:
+          aiAnalysisResult.seo_description ||
+          (aiAnalysisResult.description
+            ? aiAnalysisResult.description.substring(0, 155) + '...'
+            : ''),
       },
       // Personalization config (from AI)
       { key: '_personalization', value: aiAnalysisResult.personalization_enabled },

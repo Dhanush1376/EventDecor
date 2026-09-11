@@ -183,7 +183,7 @@ const mergeSettingsWithDefaults = (fetched) => {
   return merged;
 };
 
-export function AdminSettings({ hideHeader }) {
+export function AdminSettings({ hideHeader = false }) {
   const { user: authUser, updateUser, setUser: setAuthUser } = useAuth();
   const {
     activeRole,
@@ -525,7 +525,7 @@ export function AdminSettings({ hideHeader }) {
   };
 
   if (loading || !storeSettings) {
-    return <AdminSettingsSkeleton />;
+    return <AdminSettingsSkeleton hideHeader={hideHeader} />;
   }
 
   const sectionsList = [
@@ -578,6 +578,47 @@ export function AdminSettings({ hideHeader }) {
             </div>
           }
         />
+      )}
+
+      {/* Mobile Navigation Sticky Return Bar */}
+      {mobileSectionOpen && (
+        <div className="lg:hidden sticky top-[var(--admin-topbar-height,56px)] z-20 -my-2 py-2 bg-[var(--admin-bg)]/95 backdrop-blur-md mb-4">
+          <div className="px-3 py-1.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[8px] shadow-xs flex items-center justify-between gap-3 min-h-[44px]">
+            {/* Left: Back Button */}
+            <button
+              type="button"
+              onClick={() => {
+                setMobileSectionOpen(false);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="inline-flex items-center gap-2 text-[var(--admin-text-primary)] hover:text-[var(--admin-accent)] transition-all cursor-pointer active:scale-95 group shrink-0"
+            >
+              <div className="w-7 h-7 rounded-[6px] bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] group-hover:border-[var(--admin-accent)] group-hover:bg-[var(--admin-accent)]/10 flex items-center justify-center transition-all shadow-2xs">
+                <span className="material-symbols-outlined text-[17px] text-[var(--admin-text-secondary)] group-hover:text-[var(--admin-accent)] group-hover:-translate-x-0.5 transition-all">
+                  arrow_back
+                </span>
+              </div>
+              <span className="text-[12.5px] font-bold text-[var(--admin-text-primary)] group-hover:text-[var(--admin-accent)] transition-colors">
+                All Settings
+              </span>
+            </button>
+
+            {/* Right: Active Section Info & Counter */}
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold text-[var(--admin-text-secondary)]">
+                {activeSection + 1} of {sectionsList.length}
+              </span>
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-[6px] bg-[var(--admin-accent)]/10 border border-[var(--admin-accent)]/20 text-[var(--admin-accent)] min-w-0 max-w-[140px] sm:max-w-[180px] shadow-2xs">
+                <span className="material-symbols-outlined text-[15px] shrink-0">
+                  {sectionsList[activeSection]?.icon}
+                </span>
+                <span className="text-[12px] font-bold truncate">
+                  {sectionsList[activeSection]?.title}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
@@ -669,38 +710,21 @@ export function AdminSettings({ hideHeader }) {
             mobileSectionOpen ? 'flex' : 'hidden lg:flex'
           }`}
         >
-          {/* Mobile Back Header Bar */}
-          <div className="lg:hidden sticky top-[var(--admin-topbar-height,56px)] z-20 px-4 py-2.5 border-b border-[var(--admin-border-subtle)] bg-[var(--admin-bg-subtle)] flex items-center justify-between">
-            <button
-              type="button"
-              onClick={() => {
-                setMobileSectionOpen(false);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-[4px] bg-[var(--admin-surface)] hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] font-bold text-[12px] border border-[var(--admin-border)] shadow-2xs cursor-pointer transition-all active:scale-95"
-            >
-              <span className="material-symbols-outlined text-[16px]">arrow_back</span>
-              <span>All Settings</span>
-            </button>
-            <span className="text-[11px] font-bold text-[var(--admin-text-secondary)]">
-              {activeSection + 1} of {sectionsList.length}
-            </span>
-          </div>
-
-          {/* Order Detail Header */}
+          {/* Section Detail Header */}
           <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-[var(--admin-border-subtle)] bg-[var(--admin-bg-subtle)] flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-[4px] bg-[var(--admin-surface)] border border-[var(--admin-border)] flex items-center justify-center text-[var(--admin-accent)] shadow-2xs shrink-0">
                 <span className="material-symbols-outlined text-[20px]">
-                  {sectionsList[activeSection].icon}
+                  {sectionsList[activeSection]?.icon || 'settings'}
                 </span>
               </div>
               <div>
                 <h3 className="text-[14px] sm:text-[15px] font-bold text-[var(--admin-text-primary)] leading-tight flex items-center gap-2">
-                  {sectionsList[activeSection].title}
+                  {sectionsList[activeSection]?.title || 'Settings'}
                 </h3>
                 <p className="text-[11.5px] text-[var(--admin-text-secondary)] mt-0.5">
-                  Update configuration details and rules for {sectionsList[activeSection].title}
+                  Update configuration details and rules for{' '}
+                  {sectionsList[activeSection]?.title || 'this section'}
                 </p>
               </div>
             </div>
@@ -709,7 +733,7 @@ export function AdminSettings({ hideHeader }) {
               <span className="text-[10px] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] px-2.5 py-1 rounded-[4px] font-bold uppercase tracking-wider border border-[var(--admin-border)] shadow-2xs">
                 Live Configuration
               </span>
-              {sectionsList[activeSection].id === 'whatsapp' && (
+              {sectionsList[activeSection]?.id === 'whatsapp' && (
                 <DraftStatusIndicator status={draftStatus} lastSavedAt={lastSavedAt} />
               )}
             </div>

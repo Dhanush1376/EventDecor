@@ -1,11 +1,10 @@
 import Product from '../models/Product';
 import Event from '../models/Event';
 import Gallery from '../models/Gallery';
-import UserInteraction from '../models/UserInteraction';
+import Category from '../models/Category';
 import { getCachedSeasonalContext, computeSeasonalBoost } from './recommendation/seasonalEngine';
 
 import logger from '../config/logger';
-import { MongoQueryBuilder } from '../utils/MongoQueryBuilder';
 import { TRANSLITERATION_MAP, SYNONYM_MAP } from './search/searchDictionaries';
 import {
   getQueryInteractionBoosts,
@@ -344,15 +343,15 @@ export async function searchAll(
 
     const seasonal = await getCachedSeasonalContext();
 
-    // Fetch distinct active categories for all three collections to match against predicted category
+    // Fetch distinct active categories to match against predicted category
     const [dbProductCategories, dbEventCategories, dbGalleryCategories] = await Promise.all([
-      Product.distinct('primaryCategory', { isActive: true })
+      Category.distinct('name', { isActive: true })
         .then((r) => r.map(String))
         .catch(() => [] as string[]),
-      Event.distinct('primaryCategory', { isActive: true })
+      Category.distinct('name', { isActive: true })
         .then((r) => r.map(String))
         .catch(() => [] as string[]),
-      Gallery.distinct('primaryCategory', { isActive: true })
+      Category.distinct('name', { isActive: true })
         .then((r) => r.map(String))
         .catch(() => [] as string[]),
     ]);
@@ -397,6 +396,21 @@ export async function searchAll(
     const pinnedProductIds = pins.flatMap((p) => p.pinnedProductIds);
 
     const queryWords = searchBaseQuery.split(/\s+/).filter(Boolean);
+    const wordVariants: string[] = [];
+    for (const w of queryWords) {
+      const lower = w.toLowerCase();
+      wordVariants.push(lower);
+      if (lower === 'jewelry') wordVariants.push('jewellery');
+      if (lower === 'jewellery') wordVariants.push('jewelry');
+      if (lower === 'tray') wordVariants.push('trays');
+      if (lower === 'trays') wordVariants.push('tray');
+      if (lower === 'bangle') wordVariants.push('bangles');
+      if (lower === 'bangles') wordVariants.push('bangle');
+    }
+
+    const allUniqueTerms = [...new Set([...uniqueTerms, ...queryWords, ...wordVariants])];
+    const searchRegexes = allUniqueTerms.map((t) => new RegExp(escapeRegex(t), 'i'));
+
     const queryNgrams = queryWords.flatMap((w) => {
       const res = [];
       for (let i = 1; i <= Math.min(w.length, 6); i++) res.push(w.substring(0, i));
@@ -413,8 +427,8 @@ export async function searchAll(
       entityType: { $in: entityTypesToSearch },
       $or: [
         { ngrams: { $in: queryNgrams } },
-        { tokens: { $in: uniqueTerms } },
-        { synonymTokens: { $in: uniqueTerms } },
+        { tokens: { $in: allUniqueTerms } },
+        { synonymTokens: { $in: allUniqueTerms } },
       ],
     }).lean();
 
@@ -431,39 +445,70 @@ export async function searchAll(
     const pinnedSet = new Set(pinnedProductIds.map((id) => id.toString()));
 
     if (searchProducts) {
-      const productQuery = MongoQueryBuilder.create<any>()
-        .withCategory(activeProductCategory)
-        .withPriceRange(dbMinPrice, dbMaxPrice, 'price')
-        .withTags(aiAnalysis.colors)
-        .build();
+      let activeProductCatId: any = undefined;
+      if (activeProductCategory) {
+        const foundCat = await Category.findOne({
+          $or: [
+            { name: new RegExp(`^${escapeRegex(activeProductCategory)}$`, 'i') },
+            { slug: activeProductCategory.toLowerCase() },
+          ],
+        })
+          .select('_id')
+          .lean();
+        if (foundCat) activeProductCatId = foundCat._id;
+      }
 
-      productQuery._id = { $in: matchedProductIds };
+      const productQuery: any = { isActive: true };
+      if (dbMinPrice !== undefined || dbMaxPrice !== undefined) {
+        productQuery.price = {};
+        if (dbMinPrice !== undefined) productQuery.price.$gte = dbMinPrice;
+        if (dbMaxPrice !== undefined) productQuery.price.$lte = dbMaxPrice;
+      }
+      if (aiAnalysis.colors && aiAnalysis.colors.length > 0) {
+        productQuery.tags = {
+          $in: aiAnalysis.colors.map((c) => new RegExp(escapeRegex(c), 'i')),
+        };
+      }
+
+      const textOr: any[] = [
+        { title: { $in: searchRegexes } },
+        { teluguTitle: { $in: searchRegexes } },
+        { tags: { $in: searchRegexes } },
+        { material: { $in: searchRegexes } },
+        { description: { $in: searchRegexes } },
+      ];
+      if (matchedProductIds.length > 0) {
+        textOr.push({ _id: { $in: matchedProductIds } });
+      }
+      if (activeProductCatId) {
+        textOr.push({ primaryCategory: activeProductCatId });
+        textOr.push({ secondaryCategories: activeProductCatId } as any);
+      }
+      productQuery.$or = textOr;
 
       promises.push(
-        Product.find({ ...productQuery, isActive: true })
+        Product.find(productQuery)
           .select(
             '_id title teluguTitle imageSrc primaryCategory tags price rating reviews slug description materials stockStatus discount',
           )
+          .populate('primaryCategory', 'name')
           .limit(100)
           .maxTimeMS(5000)
           .lean()
           .then((products) => {
             for (const p of products) {
+              const catName =
+                (p.primaryCategory as any)?.name || (p.primaryCategory as any)?.toString() || '';
               const searchScore = computeSearchScore(
                 p.title,
-                p.primaryCategory?.toString(),
+                catName,
                 p.tags || [],
                 normalizedQuery,
                 p.teluguTitle,
                 p.description,
                 p.material ? [p.material] : [],
               );
-              const seasonalBoost = computeSeasonalBoost(
-                p.primaryCategory?.toString(),
-                undefined,
-                p.tags,
-                seasonal,
-              );
+              const seasonalBoost = computeSeasonalBoost(catName, undefined, p.tags, seasonal);
               const popularityBoost =
                 ((p.rating || 0) / 5) * 0.3 + Math.min((p.reviews || 0) / 100, 0.2);
 
@@ -482,7 +527,7 @@ export async function searchAll(
                 id: productIdStr,
                 title: p.title,
                 type: 'product',
-                category: p.primaryCategory?.toString(),
+                category: catName,
                 image: p.imageSrc,
                 price: p.price,
                 rating: p.rating,
@@ -496,7 +541,7 @@ export async function searchAll(
                   pinBoost,
                 matchSource: getMatchSource(
                   p.title,
-                  p.primaryCategory?.toString(),
+                  catName,
                   p.tags || [],
                   normalizedQuery,
                   p.teluguTitle,
@@ -508,12 +553,38 @@ export async function searchAll(
     }
 
     if (searchEvents) {
-      const eventQuery = MongoQueryBuilder.create<any>()
-        .withCategory(activeEventCategory)
-        .withPriceRange(dbMinPrice, dbMaxPrice, 'basePrice')
-        .build();
+      let activeEventCatId: any = undefined;
+      if (activeEventCategory) {
+        const foundCat = await Category.findOne({
+          $or: [
+            { name: new RegExp(`^${escapeRegex(activeEventCategory)}$`, 'i') },
+            { slug: activeEventCategory.toLowerCase() },
+          ],
+        })
+          .select('_id')
+          .lean();
+        if (foundCat) activeEventCatId = foundCat._id;
+      }
 
-      eventQuery._id = { $in: matchedEventIds };
+      const eventQuery: any = { isActive: true };
+      if (dbMinPrice !== undefined || dbMaxPrice !== undefined) {
+        eventQuery.basePrice = {};
+        if (dbMinPrice !== undefined) eventQuery.basePrice.$gte = dbMinPrice;
+        if (dbMaxPrice !== undefined) eventQuery.basePrice.$lte = dbMaxPrice;
+      }
+
+      const eventTextOr: any[] = [
+        { title: { $in: searchRegexes } },
+        { description: { $in: searchRegexes } },
+        { features: { $in: searchRegexes } },
+      ];
+      if (matchedEventIds.length > 0) {
+        eventTextOr.push({ _id: { $in: matchedEventIds } });
+      }
+      if (activeEventCatId) {
+        eventTextOr.push({ primaryCategory: activeEventCatId });
+      }
+      eventQuery.$or = eventTextOr;
 
       promises.push(
         Event.find(eventQuery)
@@ -572,11 +643,33 @@ export async function searchAll(
     }
 
     if (searchGalleries) {
-      const galleryQuery = MongoQueryBuilder.create<any>()
-        .withCategory(activeGalleryCategory)
-        .build();
+      let activeGalleryCatId: any = undefined;
+      if (activeGalleryCategory) {
+        const foundCat = await Category.findOne({
+          $or: [
+            { name: new RegExp(`^${escapeRegex(activeGalleryCategory)}$`, 'i') },
+            { slug: activeGalleryCategory.toLowerCase() },
+          ],
+        })
+          .select('_id')
+          .lean();
+        if (foundCat) activeGalleryCatId = foundCat._id;
+      }
 
-      galleryQuery._id = { $in: matchedGalleryIds };
+      const galleryQuery: any = { isActive: true };
+      const galleryTextOr: any[] = [
+        { title: { $in: searchRegexes } },
+        { teluguTitle: { $in: searchRegexes } },
+        { tags: { $in: searchRegexes } },
+        { description: { $in: searchRegexes } },
+      ];
+      if (matchedGalleryIds.length > 0) {
+        galleryTextOr.push({ _id: { $in: matchedGalleryIds } });
+      }
+      if (activeGalleryCatId) {
+        galleryTextOr.push({ primaryCategory: activeGalleryCatId });
+      }
+      galleryQuery.$or = galleryTextOr;
 
       promises.push(
         Gallery.find(galleryQuery)
@@ -718,28 +811,29 @@ export async function searchAll(
     // Proximity and budget-aware sorting helper
     const targetBudgetMax = queryBudgetMax;
 
-    const sortItems = (arr: SearchResult[], activeSort?: string) => {
+    const sortItems = (arr: SearchResult[], activeSort?: string): SearchResult[] => {
+      const copy = [...arr];
       if (targetBudgetMax === undefined || targetBudgetMax === null) {
         if (activeSort === 'price_asc') {
-          arr.sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity));
+          copy.sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity));
         } else if (activeSort === 'price_desc') {
-          arr.sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
+          copy.sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
         } else if (activeSort === 'rating') {
-          arr.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+          copy.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
         } else {
-          arr.sort((a, b) => {
+          copy.sort((a, b) => {
             if (b.score !== a.score) return b.score - a.score;
             return (a.slug || a.id).localeCompare(b.slug || b.id);
           });
         }
-        return arr;
+        return copy;
       }
 
       // Separate into in-budget and out-of-budget
-      const inBudget = arr.filter(
+      const inBudget = copy.filter(
         (item) => item.price === undefined || item.price <= targetBudgetMax,
       );
-      const outOfBudget = arr.filter(
+      const outOfBudget = copy.filter(
         (item) => item.price !== undefined && item.price > targetBudgetMax,
       );
 
@@ -847,69 +941,7 @@ export async function searchAll(
   }
 }
 
-/**
- * Get trending search terms based on user interaction aggregation.
- */
-export async function getTrendingSearches(
-  options: { limit?: number; days?: number } = {},
-): Promise<{ query: string; count: number }[]> {
-  const limit = options.limit || 10;
-  const days = options.days || 7;
-
-  const cacheKey = `trending_${limit}_${days}`;
-  const cached = await getSearchCache<{ query: string; count: number }[]>('trending', cacheKey);
-  if (cached) return cached;
-
-  try {
-    const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-
-    const results = await UserInteraction.aggregate([
-      {
-        $match: {
-          eventType: 'search',
-          timestamp: { $gte: cutoff },
-          'metadata.searchQuery': { $exists: true, $nin: [null, ''] },
-        },
-      },
-      {
-        $group: {
-          _id: { $toLower: '$metadata.searchQuery' },
-          count: { $sum: 1 },
-        },
-      },
-      { $sort: { count: -1 } },
-      { $limit: limit * 2 },
-    ]);
-
-    const seen = new Set<string>();
-    const trending: { query: string; count: number }[] = [];
-
-    for (const r of results) {
-      const normalized = r._id.trim();
-      if (normalized.length < 2) continue;
-
-      const isDuplicate = Array.from(seen).some(
-        (existing) =>
-          existing.includes(normalized) ||
-          normalized.includes(existing) ||
-          levenshteinDistance(existing, normalized) <= 2,
-      );
-
-      if (!isDuplicate) {
-        seen.add(normalized);
-        trending.push({ query: normalized, count: r.count });
-      }
-
-      if (trending.length >= limit) break;
-    }
-
-    await setSearchCache('trending', cacheKey, trending, 15 * 60 * 1000);
-    return trending;
-  } catch (err: any) {
-    logger.error(`[SEARCH Trending] Error: ${err.message}`);
-    return [];
-  }
-}
+export { getTrendingSearches } from './search/SearchAnalyticsService';
 
 /**
  * Get related searches based on synonym matching.
@@ -972,32 +1004,6 @@ export async function getRelatedSearches(
 /**
  * Find matched field source for visual mapping in overlay.
  */
-
-/**
- * Simple Levenshtein distance for fuzzy queries.
- */
-function levenshteinDistance(a: string, b: string): number {
-  // Skip computation for very long strings to prevent event loop blocking
-  if (a.length > 50 || b.length > 50) return Math.abs(a.length - b.length);
-  const m = a.length;
-  const n = b.length;
-  const dp: number[][] = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
-
-  for (let i = 0; i <= m; i++) dp[i][0] = i;
-  for (let j = 0; j <= n; j++) dp[0][j] = j;
-
-  for (let i = 1; i <= m; i++) {
-    for (let j = 1; j <= n; j++) {
-      dp[i][j] = Math.min(
-        dp[i - 1][j] + 1,
-        dp[i][j - 1] + 1,
-        dp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1),
-      );
-    }
-  }
-
-  return dp[m][n];
-}
 
 /**
  * Helper to escape regex meta characters.

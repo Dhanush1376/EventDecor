@@ -20,6 +20,19 @@ const isValidMediaUrl = (url) => {
   return true;
 };
 
+const resolveCategoryName = (primaryCat, cat) => {
+  const p = typeof primaryCat === 'object' && primaryCat !== null ? primaryCat?.name : primaryCat;
+  const c = typeof cat === 'object' && cat !== null ? cat?.name : cat;
+  const res = p || c;
+  if (
+    !res ||
+    (typeof res === 'string' && (res.toLowerCase() === 'category' || /^[a-fA-F0-9]{24}$/.test(res)))
+  ) {
+    return 'General Decor';
+  }
+  return typeof res === 'string' ? res.replace(/-/g, ' ') : res;
+};
+
 export const ProductCard = React.memo(function ProductCard({
   id,
   _id,
@@ -129,7 +142,7 @@ export const ProductCard = React.memo(function ProductCard({
         imageSrc,
         hoverImage,
         images: availableImages,
-        category: primaryCategory?.name || category,
+        category: resolveCategoryName(primaryCategory, category),
         primaryCategory,
         secondaryCategories,
         badges,
@@ -264,7 +277,7 @@ export const ProductCard = React.memo(function ProductCard({
     >
       {/* 1. VISUAL CANVAS */}
       <div
-        className={`relative aspect-[4/5] overflow-hidden bg-[#fafafa] border border-black/5 group/canvas ${isRectangular ? 'rounded-md' : 'rounded-2xl'}`}
+        className={`relative aspect-[4/5] overflow-hidden bg-[#fafafa] border border-black/5 transition-all duration-500 ease-out group-hover:shadow-[0_16px_36px_-12px_rgba(0,0,0,0.12)] group-hover:border-black/10 group/canvas ${isRectangular ? 'rounded-md' : 'rounded-2xl'}`}
       >
         <div
           ref={scrollContainerRef}
@@ -282,7 +295,7 @@ export const ProductCard = React.memo(function ProductCard({
                   <CloudinaryImage
                     src={img}
                     alt={`${title || 'Product'} - view ${idx + 1}`}
-                    className="transition-all duration-[1.5s] ease-[cubic-bezier(0.2,1,0.2,1)] group-hover/canvas:scale-110 object-cover w-full h-full"
+                    className="transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-105 will-change-transform transform-gpu [backface-visibility:hidden] object-cover w-full h-full"
                     loading={eager && idx === 0 ? 'eager' : 'lazy'}
                     fetchPriority={eager && idx === 0 ? 'high' : 'auto'}
                     width={800}
@@ -353,7 +366,7 @@ export const ProductCard = React.memo(function ProductCard({
           <div className="absolute top-2 right-3 lg:top-3 lg:right-4 z-20 flex flex-col gap-2">
             <button
               onClick={handleWishlist}
-              className={`${compact ? 'w-7 h-7 lg:w-7 lg:h-7' : 'w-8 h-8 lg:w-8 lg:h-8'} relative min-h-0 shrink-0 aspect-square p-0 bg-white/90 backdrop-blur-xl rounded-full flex items-center justify-center shadow-sm border border-black/5 transition-all duration-300 hover:scale-110 cursor-pointer active:scale-[0.96] overflow-hidden`}
+              className={`${compact ? 'w-7 h-7 lg:w-7 lg:h-7' : 'w-8 h-8 lg:w-8 lg:h-8'} relative min-h-0 shrink-0 aspect-square p-0 bg-white/90 backdrop-blur-xl rounded-full flex items-center justify-center shadow-sm border border-black/5 transition-transform duration-300 ease-out hover:scale-110 active:scale-95 cursor-pointer overflow-hidden transform-gpu`}
               aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
             >
               <AnimatePresence>
@@ -385,11 +398,11 @@ export const ProductCard = React.memo(function ProductCard({
         )}
         {/* Badges */}
         <div className="absolute top-2 left-2 lg:top-3 lg:left-3 z-20 pointer-events-none group/badges">
-          <div className="flex flex-row -space-x-3 lg:-space-x-4 py-1 px-1 pointer-events-auto hover:space-x-1 transition-all duration-300">
+          <div className="flex flex-row -space-x-3 lg:-space-x-4 py-1 px-1 pointer-events-auto hover:space-x-1.5 transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)]">
             {itemType === 'event' ? (
               <>
                 {setupTimeHours ? (
-                  <div className="relative z-[30] w-8 h-8 lg:w-10 lg:h-10 shrink-0 bg-primary text-white rounded-full flex flex-col items-center justify-center font-label text-[8px] lg:text-[10px] uppercase font-bold shadow-lg border-2 border-white hover:scale-110 transition-transform duration-300 select-none">
+                  <div className="relative z-[30] w-8 h-8 lg:w-10 lg:h-10 shrink-0 bg-primary text-white rounded-full flex flex-col items-center justify-center font-label text-[8px] lg:text-[10px] uppercase font-bold shadow-lg border-2 border-white hover:scale-110 transition-transform duration-300 ease-out will-change-transform transform-gpu select-none">
                     <span className="leading-none">{setupTimeHours}H</span>
                     <span className="text-[5px] lg:text-[7px] tracking-tight opacity-90 uppercase mt-0.5">
                       Setup
@@ -397,7 +410,7 @@ export const ProductCard = React.memo(function ProductCard({
                   </div>
                 ) : null}
                 {inclusions && inclusions.length > 0 && (
-                  <div className="relative z-[20] w-8 h-8 lg:w-10 lg:h-10 shrink-0 bg-white/95 backdrop-blur-md text-[#1a1817] rounded-full flex flex-col items-center justify-center font-label uppercase font-bold shadow-md border-2 border-white hover:scale-110 transition-transform duration-300 select-none">
+                  <div className="relative z-[20] w-8 h-8 lg:w-10 lg:h-10 shrink-0 bg-white/95 backdrop-blur-md text-[#1a1817] rounded-full flex flex-col items-center justify-center font-label uppercase font-bold shadow-md border-2 border-white hover:scale-110 transition-transform duration-300 ease-out will-change-transform transform-gpu select-none">
                     <span className="leading-none text-[8px] lg:text-[10px]">
                       {inclusions.length}
                     </span>
@@ -410,7 +423,7 @@ export const ProductCard = React.memo(function ProductCard({
             ) : (
               <>
                 {canRent && resolvedCartType === 'rental' && (
-                  <div className="relative z-[40] w-8 h-8 lg:w-10 lg:h-10 shrink-0 bg-[#8c7335] text-white rounded-full flex flex-col items-center justify-center font-label uppercase font-bold shadow-lg border-2 border-white hover:scale-110 transition-transform duration-300 select-none">
+                  <div className="relative z-[40] w-8 h-8 lg:w-10 lg:h-10 shrink-0 bg-[#8c7335] text-white rounded-full flex flex-col items-center justify-center font-label uppercase font-bold shadow-lg border-2 border-white hover:scale-110 transition-transform duration-300 ease-out will-change-transform transform-gpu select-none">
                     <CalendarCheck
                       className="text-[10px] lg:text-[12px] leading-none mb-[1px]"
                       strokeWidth={1.5}
@@ -421,7 +434,7 @@ export const ProductCard = React.memo(function ProductCard({
                   </div>
                 )}
                 {discount && (canPurchase || itemType === 'event') && (
-                  <div className="relative z-[30] w-8 h-8 lg:w-10 lg:h-10 shrink-0 bg-[#7a5e00] text-white rounded-full flex flex-col items-center justify-center font-label uppercase font-bold shadow-lg border-2 border-white hover:scale-110 transition-transform duration-300 select-none">
+                  <div className="relative z-[30] w-8 h-8 lg:w-10 lg:h-10 shrink-0 bg-[#7a5e00] text-white rounded-full flex flex-col items-center justify-center font-label uppercase font-bold shadow-lg border-2 border-white hover:scale-110 transition-transform duration-300 ease-out will-change-transform transform-gpu select-none">
                     <span className="leading-none text-[8px] lg:text-[10px]">{discount}%</span>
                     <span className="text-[5px] lg:text-[6px] tracking-tight opacity-90 uppercase mt-0.5">
                       OFF
@@ -496,7 +509,7 @@ export const ProductCard = React.memo(function ProductCard({
                     <Component
                       key={`badge-${idx}`}
                       {...extraProps}
-                      className={`relative w-8 h-8 lg:w-10 lg:h-10 shrink-0 bg-white/95 backdrop-blur-md text-black/80 rounded-full flex flex-col items-center justify-center font-label uppercase font-bold shadow-md border-2 border-white transition-transform duration-300 select-none ${couponCode ? 'hover:scale-110 cursor-pointer hover:bg-stone-800 hover:text-white active:scale-95 z-50' : 'hover:scale-110 z-[20]'}`}
+                      className={`relative w-8 h-8 lg:w-10 lg:h-10 shrink-0 bg-white/95 backdrop-blur-md text-black/80 rounded-full flex flex-col items-center justify-center font-label uppercase font-bold shadow-md border-2 border-white transition-all duration-300 ease-out select-none will-change-transform transform-gpu ${couponCode ? 'hover:scale-110 cursor-pointer hover:bg-stone-800 hover:text-white active:scale-95 z-50' : 'hover:scale-110 z-[20]'}`}
                       style={{ zIndex: 20 - idx }}
                     >
                       {displayContent}
@@ -509,8 +522,8 @@ export const ProductCard = React.memo(function ProductCard({
         </div>
         {/* Immersive Hover Actions (Desktop Only) */}
         {!selectionMode && (
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] opacity-0 lg:group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-6 pointer-events-none lg:group-hover:pointer-events-auto">
-            <div className="space-y-2 transform translate-y-4 lg:group-hover:translate-y-0 transition-transform duration-500">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300 ease-out flex flex-col justify-end p-6 pointer-events-none lg:group-hover:pointer-events-auto">
+            <div className="space-y-2 transform translate-y-2 lg:group-hover:translate-y-0 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]">
               {itemType === 'event' ? (
                 <>
                   <button
@@ -519,7 +532,7 @@ export const ProductCard = React.memo(function ProductCard({
                       e.stopPropagation();
                       navigate(getProductRoute('event', productId));
                     }}
-                    className="w-full py-3 bg-[#e0d6b8] hover:bg-white text-[#1a1c1a] rounded-full font-label text-[10px] uppercase tracking-[0.2em] font-bold shadow-xl transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-[0.98]"
+                    className="w-full py-3 bg-[#e0d6b8] hover:bg-white text-[#1a1c1a] rounded-full font-label text-[10px] uppercase tracking-[0.2em] font-bold shadow-xl transition-all duration-200 ease-out hover:scale-[1.02] cursor-pointer flex items-center justify-center gap-2 active:scale-[0.98]"
                   >
                     <Calendar className="text-[14px]" strokeWidth={1.5} />
                     Book Setup
@@ -539,7 +552,7 @@ export const ProductCard = React.memo(function ProductCard({
                         rating,
                         imageSrc,
                         hoverImage,
-                        category: primaryCategory?.name || category,
+                        category: resolveCategoryName(primaryCategory, category),
                         primaryCategory,
                         secondaryCategories,
                         badges,
@@ -618,7 +631,7 @@ export const ProductCard = React.memo(function ProductCard({
                         rating,
                         imageSrc,
                         hoverImage,
-                        category: primaryCategory?.name || category,
+                        category: resolveCategoryName(primaryCategory, category),
                         primaryCategory,
                         secondaryCategories,
                         badges,
@@ -644,7 +657,7 @@ export const ProductCard = React.memo(function ProductCard({
                   e.stopPropagation();
                   navigate(getProductRoute('event', productId));
                 }}
-                className={`${compact ? 'w-7 h-7 lg:w-7 lg:h-7' : 'w-8 h-8 lg:w-8 lg:h-8'} min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg bg-black text-white hover:bg-stone-800 hover:text-white transition-all duration-500 cursor-pointer`}
+                className={`${compact ? 'w-7 h-7 lg:w-7 lg:h-7' : 'w-8 h-8 lg:w-8 lg:h-8'} min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg bg-black text-white hover:bg-stone-800 hover:scale-110 active:scale-95 transition-all duration-300 ease-out cursor-pointer transform-gpu`}
                 aria-label="Book setup"
               >
                 <span
@@ -657,7 +670,7 @@ export const ProductCard = React.memo(function ProductCard({
               <button
                 onClick={isOutOfStock || added ? undefined : handleAddToCart}
                 disabled={isOutOfStock || added}
-                className={`${compact ? 'w-7 h-7 lg:w-7 lg:h-7' : 'w-8 h-8 lg:w-8 lg:h-8'} min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg transition-all duration-500 ${
+                className={`${compact ? 'w-7 h-7 lg:w-7 lg:h-7' : 'w-8 h-8 lg:w-8 lg:h-8'} min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 ease-out hover:scale-110 active:scale-95 transform-gpu ${
                   isOutOfStock
                     ? 'bg-stone-300 text-stone-500 cursor-not-allowed'
                     : added
@@ -710,26 +723,12 @@ export const ProductCard = React.memo(function ProductCard({
         className={`${compact ? 'pt-1.5 pb-1 px-1.5' : 'pt-2.5 pb-2 px-3.5 lg:px-4'} flex flex-col flex-1 transition-opacity duration-500 ${hideDetails ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
       >
         <div
-          className={`flex items-center justify-between gap-2 h-4 lg:h-5 ${compact ? 'mb-1.5' : 'mb-2.5 lg:mb-3'}`}
+          className={`flex items-center justify-between gap-2 h-4 lg:h-5 ${compact ? 'mb-0.5' : 'mb-1 sm:mb-1.5'}`}
         >
           <span
             className={`text-black/50 font-label uppercase ${compact ? 'text-[8px] tracking-[0.1em]' : 'text-[9px] lg:text-[10px] tracking-[0.2em]'} font-bold truncate min-w-0 transition-colors group-hover:text-black/80 leading-none`}
           >
-            {(() => {
-              const displayCategory = primaryCategory?.name || category;
-              // Check if it's a 24-character hex string (MongoDB ObjectId)
-              if (
-                typeof displayCategory === 'string' &&
-                /^[a-fA-F0-9]{24}$/.test(displayCategory)
-              ) {
-                return 'Uncategorized';
-              }
-              return displayCategory
-                ? typeof displayCategory === 'string'
-                  ? displayCategory.replace(/-/g, ' ')
-                  : displayCategory
-                : 'Uncategorized';
-            })()}
+            {resolveCategoryName(primaryCategory, category)}
           </span>
 
           <div className="flex items-center gap-0.5 shrink-0">
@@ -745,10 +744,10 @@ export const ProductCard = React.memo(function ProductCard({
 
         <Link
           to={getProductRoute(itemType, productId)}
-          className={`group/link block ${compact ? 'mb-0.5' : 'mb-1 lg:mb-1.5'}`}
+          className={`group/link block ${compact ? 'mb-0' : 'mb-0.5'}`}
         >
           <h3
-            className={`text-black group-hover/link:text-primary transition-colors leading-tight font-medium line-clamp-1 font-serif-heading ${
+            className={`text-black group-hover/link:text-primary transition-colors leading-snug font-medium line-clamp-1 font-serif-heading ${
               compact ? 'text-[12px] lg:text-[13px]' : 'text-[13px] lg:text-[15px]'
             }`}
             style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
@@ -757,7 +756,7 @@ export const ProductCard = React.memo(function ProductCard({
           </h3>
         </Link>
 
-        <div className="mt-auto flex flex-col justify-end">
+        <div className={`${compact ? 'mt-0' : 'mt-0.5'} flex flex-col justify-end`}>
           <div className="flex items-baseline gap-1.5 flex-wrap">
             <span
               className={`font-serif-heading lining-nums font-bold text-black leading-none ${compact ? 'text-[13px] lg:text-[14px]' : 'text-[14px] lg:text-[17px]'}`}

@@ -1,5 +1,4 @@
 import React from 'react';
-import { SectionHeader } from '../AdminUIKit';
 import toast from 'react-hot-toast';
 
 export function PublisherVersionsEditor() {
@@ -19,37 +18,44 @@ export function PublisherVersionsEditor() {
   ];
 
   return (
-    <div className="bg-[var(--admin-surface)] rounded-[var(--admin-radius-xl)] border border-[var(--admin-border)] p-6 space-y-5 shadow-[var(--admin-shadow-xs)] relative overflow-hidden">
-      <SectionHeader
-        icon="history"
-        title="Version Rollback Vault"
-        description="Quickly restore previously published storefront layouts and restore visual snapshots"
-      />
-      <div className="space-y-4">
-        {versions.map((v) => (
-          <div
-            key={v.id}
-            className="p-4.5 bg-[var(--admin-surface)] rounded-md border border-[var(--admin-border)] flex items-center justify-between gap-4.5 shadow-[var(--admin-shadow-xs)] hover:border-[var(--admin-border-strong)] hover:shadow-[var(--admin-shadow-sm)] transition-all duration-300"
-          >
-            <div className="space-y-1">
-              <span className="text-[7.5px] bg-[var(--admin-accent)]/15 text-[var(--admin-accent)] font-semibold px-2.5 py-0.5 rounded-full font-mono w-fit block shadow-[var(--admin-shadow-xs)]">
-                {v.tag}
-              </span>
-              <span className="text-[12px] font-bold text-[var(--admin-text-primary)] mt-2 block leading-none">
-                {v.desc}
-              </span>
-              <span className="text-[11px] text-[var(--admin-text-tertiary)] block mt-1">
-                {v.time}
-              </span>
-            </div>
-            <button
-              onClick={() => toast.success(`Rolled back to ${v.tag}!`)}
-              className="px-4 py-2 rounded-md text-[11px] sm:text-[11px] sm:text-[11px] font-semibold border border-[var(--admin-border)] hover:border-[var(--admin-accent)] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] cursor-pointer shadow-[var(--admin-shadow-xs)] transition-all active:scale-95"
-            >
-              Restore
-            </button>
+    <div className="space-y-8">
+      <div className="p-6 md:p-8 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-md shadow-sm relative overflow-hidden group">
+        <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none transition-transform duration-700 group-hover:scale-110 group-hover:rotate-6">
+          <span className="material-symbols-outlined text-[150px]">history</span>
+        </div>
+        <div className="relative z-10 space-y-6">
+          <span className="text-[14px] sm:text-[15px] font-semibold text-[var(--admin-text-primary)] tracking-tight block border-b border-[var(--admin-border-subtle)] pb-3 mb-6">
+            1. Published Visual Snapshots
+          </span>
+
+          <div className="space-y-4">
+            {versions.map((v) => (
+              <div
+                key={v.id}
+                className="p-5 bg-[var(--admin-surface-muted)]/70 hover:bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border-subtle)] hover:border-[var(--admin-border)] flex items-center justify-between gap-4.5 shadow-2xs transition-all duration-300"
+              >
+                <div className="space-y-1.5">
+                  <span className="text-[10px] bg-[var(--admin-accent)]/15 text-[var(--admin-accent)] font-bold px-2.5 py-0.5 rounded-[4px] font-mono w-fit block border border-[var(--admin-accent)]/20 shadow-2xs">
+                    {v.tag}
+                  </span>
+                  <span className="text-[13px] font-bold text-[var(--admin-text-primary)] block leading-snug">
+                    {v.desc}
+                  </span>
+                  <span className="text-[11px] text-[var(--admin-text-tertiary)] block">
+                    {v.time}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => toast.success(`Rolled back to ${v.tag}!`)}
+                  className="h-9 px-3.5 rounded-[4px] text-[12px] font-bold border border-[var(--admin-border)] hover:border-[var(--admin-accent)] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-accent)] cursor-pointer shadow-xs transition-all active:scale-95 shrink-0"
+                >
+                  Restore
+                </button>
+              </div>
+            ))}
           </div>
-        ))}
+        </div>
       </div>
     </div>
   );

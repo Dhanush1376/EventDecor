@@ -95,6 +95,14 @@ export function RentalTimeline({ rental, fetchRentalDetail, nextAction }) {
     }
   };
 
+  const handleStatusChange = (newStatus) => {
+    if (newStatus === 'returned') {
+      setShowInspectionModal(true);
+    } else {
+      handleUpdateStatus(newStatus);
+    }
+  };
+
   const submitReturn = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -112,21 +120,35 @@ export function RentalTimeline({ rental, fetchRentalDetail, nextAction }) {
 
   return (
     <div className="bg-white dark:bg-stone-900 rounded-[4px] shadow-sm border border-[var(--admin-border-subtle)] overflow-hidden">
-      {/* Card Header with Lifecycle Progression and Current Status Chip */}
-      <div className="px-4 sm:px-5 py-3.5 border-b border-[var(--admin-border-subtle)] flex items-center justify-between bg-[var(--admin-bg-subtle)]/40">
-        <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-[18px] text-[var(--admin-accent)]">
+      {/* Card Header with Lifecycle Progression and Status Dropdown */}
+      <div className="px-4 sm:px-5 py-3.5 border-b border-[var(--admin-border-subtle)] flex items-center justify-between bg-[var(--admin-bg-subtle)]/40 gap-3">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="material-symbols-outlined text-[18px] text-[var(--admin-accent)] shrink-0">
             timeline
           </span>
-          <h3 className="text-[13.5px] font-bold text-gray-900 dark:text-stone-100 tracking-tight">
+          <h3 className="text-[13.5px] font-bold text-gray-900 dark:text-stone-100 tracking-tight truncate">
             Rental Progression
           </h3>
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className="text-[11px] font-medium text-stone-500">Status:</span>
-          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-[4px] border bg-[var(--admin-surface)] text-[var(--admin-accent)] border-[var(--admin-border)] shadow-2xs">
-            {statusLabels[rental.status] || rental.status}
-          </span>
+
+        {/* Status Dropdown to Update Rental Status */}
+        <div className="relative w-[135px] sm:w-[150px] h-8 shrink-0">
+          <select
+            value={rental.status}
+            onChange={(e) => handleStatusChange(e.target.value)}
+            disabled={isSubmitting}
+            style={{ backgroundImage: 'none' }}
+            className="admin-no-arrow w-full h-8 !min-h-[32px] !max-h-[32px] !appearance-none !bg-none bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-750 border border-stone-300 dark:border-stone-600 text-stone-800 dark:text-stone-200 text-[11px] font-bold rounded-[4px] pl-2.5 pr-7 cursor-pointer shadow-2xs outline-none focus:border-[var(--admin-accent)] transition-colors truncate disabled:opacity-50"
+          >
+            {allStatuses.map((s) => (
+              <option key={s} value={s}>
+                {statusLabels[s] || s}
+              </option>
+            ))}
+          </select>
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1.5 text-stone-500">
+            <span className="material-symbols-outlined text-[16px]">expand_more</span>
+          </div>
         </div>
       </div>
 
@@ -156,7 +178,7 @@ export function RentalTimeline({ rental, fetchRentalDetail, nextAction }) {
                 className="relative z-10 flex flex-col items-center gap-1.5 sm:gap-2 w-16 sm:w-20 shrink-0"
               >
                 <button
-                  onClick={() => handleUpdateStatus(step)}
+                  onClick={() => handleStatusChange(step)}
                   disabled={isSubmitting}
                   className="relative group focus:outline-none cursor-pointer"
                   title={`Set status to ${statusLabels[step]}`}
@@ -206,37 +228,6 @@ export function RentalTimeline({ rental, fetchRentalDetail, nextAction }) {
               </div>
             );
           })}
-        </div>
-      </div>
-
-      {/* Quick Status Update Bottom Strip */}
-      <div className="bg-[var(--admin-bg-subtle)]/40 border-t border-[var(--admin-border-subtle)] px-3.5 sm:px-5 py-2.5 sm:py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest shrink-0">
-          Set Status
-        </span>
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 w-full sm:w-auto">
-          {['pending', 'confirmed', 'active_rental', 'returned', 'completed', 'cancelled'].map(
-            (s) => {
-              const isSelected = rental.status === s;
-              return (
-                <button
-                  key={s}
-                  onClick={() => handleUpdateStatus(s)}
-                  disabled={isSubmitting}
-                  className={`h-7 sm:h-8 px-2 sm:px-2.5 rounded-[4px] text-[10.5px] font-semibold flex items-center justify-center gap-1 transition-all border whitespace-nowrap cursor-pointer disabled:opacity-50 ${
-                    isSelected
-                      ? 'bg-[var(--admin-accent)] text-white border-[var(--admin-accent)] shadow-2xs'
-                      : 'bg-white dark:bg-stone-800 text-[var(--admin-text-secondary)] border-[var(--admin-border-subtle)] hover:border-[var(--admin-border-strong)] hover:bg-[var(--admin-bg-subtle)] shadow-2xs'
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-[13px] shrink-0">
-                    {statusIcons[s]}
-                  </span>
-                  <span className="truncate">{statusLabels[s] || s}</span>
-                </button>
-              );
-            },
-          )}
         </div>
       </div>
 

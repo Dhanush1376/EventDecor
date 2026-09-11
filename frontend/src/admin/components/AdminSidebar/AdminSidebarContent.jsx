@@ -34,78 +34,57 @@ export function AdminSidebarContent({
       className="flex flex-col h-full relative z-20 min-w-0"
       style={{ background: 'var(--admin-surface)', borderRight: '1px solid var(--admin-border)' }}
     >
-      {/* Sidebar Header */}
+      {/* Sidebar Header — Logo + Search combined */}
       <div
-        className={`flex items-center ${sidebarOpen ? 'px-5' : 'px-3 justify-center'} py-4 transition-all duration-300 overflow-hidden shrink-0`}
+        className="shrink-0 transition-all duration-300"
         style={{ borderBottom: '1px solid var(--admin-border-subtle)' }}
       >
-        <button
-          onClick={() => navigate('/admin')}
-          className="flex items-center gap-3 cursor-pointer group outline-none overflow-hidden shrink-0 text-left min-h-0"
+        <div
+          className={`flex items-center ${sidebarOpen ? 'px-5 justify-start' : 'px-2 justify-center'} pt-3.5 ${sidebarOpen ? 'pb-2' : 'pb-3.5'} transition-all duration-300 overflow-hidden`}
         >
-          <SiriLogo size="32px" showSubtitle={false} className="shrink-0" />
-
-          <AnimatePresence>
-            {sidebarOpen && (
-              <motion.div
-                initial={{ opacity: 0, x: -8, width: 0 }}
-                animate={{ opacity: 1, x: 0, width: 'auto' }}
-                exit={{ opacity: 0, x: -8, width: 0 }}
-                className="flex flex-col whitespace-nowrap overflow-hidden"
-              >
-                <span className="font-bold text-[13.5px] tracking-tight text-[var(--admin-text-primary)] font-sans">
-                  Siri Arts & Crafts
-                </span>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="text-[9px] tracking-wider uppercase text-[var(--admin-text-tertiary)] font-medium">
-                    Enterprise
-                  </span>
-                  <span
-                    className="w-1 h-1 rounded-full"
-                    style={{ background: 'var(--admin-accent)' }}
-                  />
-                  <span className="text-[9px] tracking-wide text-[var(--admin-text-secondary)] font-semibold">
-                    Admin
-                  </span>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </button>
-      </div>
-
-      {/* Sidebar Search */}
-      {sidebarOpen && (
-        <div className="px-3 pt-3 pb-1.5 shrink-0">
-          <div
-            className="relative flex items-center rounded-[var(--admin-radius-md)] px-3 py-1.5 transition-all"
-            style={{
-              background: 'var(--admin-bg-subtle)',
-              border: '1px solid var(--admin-border-subtle)',
-            }}
+          <button
+            type="button"
+            onClick={() => navigate('/admin')}
+            className="flex items-center justify-center cursor-pointer group outline-none overflow-hidden shrink-0 min-h-0 transition-transform hover:scale-105 active:scale-95"
+            title="Siri Arts & Crafts Dashboard"
+            aria-label="Siri Arts & Crafts Dashboard"
           >
-            <span className="material-symbols-outlined text-[15px] text-[var(--admin-text-tertiary)] mr-2 select-none">
-              search
-            </span>
-            <input
-              type="text"
-              placeholder="Search sections..."
-              value={sidebarSearch}
-              onChange={(e) => setSidebarSearch(e.target.value)}
-              className="w-full bg-transparent border-none outline-none text-[12px] text-[var(--admin-text-primary)] placeholder:text-[var(--admin-text-placeholder)] p-0 focus:ring-0 min-h-0"
-              style={{ boxShadow: 'none' }}
-            />
-            {sidebarSearch && (
-              <button
-                onClick={() => setSidebarSearch('')}
-                className="w-5 h-5 min-h-0 flex items-center justify-center rounded-full hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-tertiary)] flex-shrink-0"
-              >
-                <span className="material-symbols-outlined text-[12px]">close</span>
-              </button>
-            )}
-          </div>
+            <SiriLogo size="44px" showSubtitle={false} className="shrink-0" />
+          </button>
         </div>
-      )}
+
+        {sidebarOpen && (
+          <div className="px-3 pb-3 shrink-0">
+            <div
+              className="relative flex items-center rounded-[var(--admin-radius-md)] px-3 py-1.5 transition-all"
+              style={{
+                background: 'var(--admin-bg-subtle)',
+                border: '1px solid var(--admin-border-subtle)',
+              }}
+            >
+              <span className="material-symbols-outlined text-[15px] text-[var(--admin-text-tertiary)] mr-2 select-none">
+                search
+              </span>
+              <input
+                type="text"
+                placeholder="Search sections..."
+                value={sidebarSearch}
+                onChange={(e) => setSidebarSearch(e.target.value)}
+                className="w-full bg-transparent border-none outline-none text-[12px] text-[var(--admin-text-primary)] placeholder:text-[var(--admin-text-placeholder)] p-0 focus:ring-0 min-h-0"
+                style={{ boxShadow: 'none' }}
+              />
+              {sidebarSearch && (
+                <button
+                  onClick={() => setSidebarSearch('')}
+                  className="w-5 h-5 min-h-0 flex items-center justify-center rounded-full hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-tertiary)] flex-shrink-0"
+                >
+                  <span className="material-symbols-outlined text-[12px]">close</span>
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Navigation */}
       <nav

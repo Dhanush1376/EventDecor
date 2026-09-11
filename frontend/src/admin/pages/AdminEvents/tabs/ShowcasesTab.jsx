@@ -9,6 +9,7 @@ import {
   StatusBadge,
   EmptyState,
   AdminToggle,
+  AdminFilterDrawer,
 } from '../../../components/AdminUIKit';
 import { handleImageError } from '../../../../utils/media/imageUtils';
 import { useConfirm } from '../../../../context/ConfirmProvider';
@@ -149,328 +150,295 @@ export function ShowcasesTab({
     >
       {/* Search & Actions Bar: Sticky below top navbar matching Orders page style */}
       <div className="sticky top-[var(--admin-topbar-height,56px)] z-20 -my-2 py-2.5 bg-[var(--admin-bg)]/95 backdrop-blur-md mb-5">
-        <motion.div variants={fadeUp} className="flex flex-row items-center gap-2 w-full">
-          {/* Search Bar - Height exactly matches Actions (42px) */}
-          <div className="relative flex-1 min-w-0 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] flex items-center px-2.5 sm:px-3 h-[42px] min-h-[42px] max-h-[42px]">
-            <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] shrink-0">
-              search
-            </span>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by title or category..."
-              className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-full min-w-0"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                className="text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] cursor-pointer p-1 flex items-center justify-center"
-              >
-                <span className="material-symbols-outlined text-[16px]">close</span>
-              </button>
-            )}
-          </div>
-
-          {/* Action Controls Group */}
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {/* Filters Button & Popover */}
-            <div className="relative shrink-0">
-              <button
-                type="button"
-                onClick={() => setShowFiltersMenu(!showFiltersMenu)}
-                className={`h-[42px] min-h-[42px] max-h-[42px] px-2.5 sm:px-3.5 flex items-center justify-center gap-1.5 rounded-[4px] border transition-colors shrink-0 cursor-pointer ${
-                  showFiltersMenu || activeFiltersCount > 0
-                    ? 'bg-[var(--admin-accent)] text-white border-transparent shadow-xs'
-                    : 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] border-[var(--admin-border)] hover:border-[var(--admin-border-strong)]'
-                }`}
-                title="Showcase Filters"
-              >
-                <span className="material-symbols-outlined text-[18px]">tune</span>
-                <span className="font-semibold text-[13px] hidden sm:inline">
-                  {activeFiltersCount > 0 ? `${activeFiltersCount} Filters` : 'Filters'}
-                </span>
-                {activeFiltersCount > 0 && (
-                  <span className="min-w-[16px] h-4 px-1 rounded-full bg-white text-[var(--admin-accent)] text-[10px] font-bold flex items-center justify-center">
-                    {activeFiltersCount}
-                  </span>
-                )}
-              </button>
-
-              <AnimatePresence>
-                {showFiltersMenu && (
-                  <>
-                    <div
-                      onClick={() => setShowFiltersMenu(false)}
-                      className="fixed inset-0 z-[120] bg-black/30 sm:bg-transparent"
-                    />
-
-                    <motion.div
-                      initial={isMobile ? { y: '100%' } : { opacity: 0, y: -8, scale: 0.98 }}
-                      animate={isMobile ? { y: 0 } : { opacity: 1, y: 0, scale: 1 }}
-                      exit={isMobile ? { y: '100%' } : { opacity: 0, y: -8, scale: 0.98 }}
-                      transition={{ duration: 0.15 }}
-                      className="fixed sm:absolute bottom-0 inset-x-0 sm:top-full sm:bottom-auto sm:right-0 sm:left-auto z-[130] sm:mt-2 w-full sm:w-[320px] bg-[var(--admin-surface)] rounded-t-[8px] sm:rounded-[4px] shadow-2xl border border-[var(--admin-border-strong)] flex flex-col p-5 sm:p-4 text-left"
-                    >
-                      <div className="flex justify-between items-center mb-4 sm:mb-3">
-                        <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)] flex items-center gap-2">
-                          <span className="material-symbols-outlined text-[18px]">filter_list</span>
-                          Showcase Filters
-                        </h3>
-                        <button
-                          type="button"
-                          onClick={() => setShowFiltersMenu(false)}
-                          className="sm:hidden admin-btn-icon hover:bg-[var(--admin-bg-subtle)] !rounded-[4px] p-1"
-                        >
-                          <span className="material-symbols-outlined text-[20px]">close</span>
-                        </button>
-                      </div>
-
-                      <div className="space-y-4 max-h-[60vh] overflow-y-auto scrollbar-hide">
-                        {/* Category Filter */}
-                        <div>
-                          <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
-                            Category
-                          </label>
-                          <select
-                            value={selectedCategory}
-                            onChange={(e) => setSelectedCategory(e.target.value)}
-                            className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
-                          >
-                            <option value="All">All Categories</option>
-                            {categories
-                              .filter((c) => c !== 'All')
-                              .map((c) => (
-                                <option key={c} value={c}>
-                                  {formatCategoryName(c)}
-                                </option>
-                              ))}
-                          </select>
-                        </div>
-
-                        {/* Status Filter */}
-                        <div>
-                          <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
-                            Status
-                          </label>
-                          <select
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                            className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
-                          >
-                            <option value="All">All Statuses</option>
-                            <option value="Active">Active Only</option>
-                            <option value="Hidden">Hidden Only</option>
-                          </select>
-                        </div>
-
-                        {/* Sort By Filter */}
-                        <div>
-                          <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
-                            Sort By
-                          </label>
-                          <select
-                            value={sortBy}
-                            onChange={(e) => setSortBy(e.target.value)}
-                            className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
-                          >
-                            <option value="newest">Newest Added</option>
-                            <option value="price-asc">Price: Low to High</option>
-                            <option value="price-desc">Price: High to Low</option>
-                            <option value="title-asc">Title: A to Z</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      <div className="mt-4 pt-4 border-t border-[var(--admin-border-subtle)] flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedCategory('All');
-                            setStatusFilter('All');
-                            setSortBy('newest');
-                          }}
-                          className="admin-btn-outline flex-1 justify-center py-2.5 !rounded-[4px] text-[13px]"
-                        >
-                          Clear All
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setShowFiltersMenu(false)}
-                          className="admin-btn-primary flex-1 justify-center py-2.5 !rounded-[4px] text-[13px]"
-                        >
-                          Apply Filters
-                        </button>
-                      </div>
-                    </motion.div>
-                  </>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* Quick Select All in Grid view (Desktop/tablet only) */}
-            {viewMode === 'grid' && filteredShowcases.length > 0 && (
-              <button
-                type="button"
-                onClick={toggleSelectAll}
-                className={`h-[42px] min-h-[42px] max-h-[42px] px-2.5 sm:px-3 rounded-[4px] border text-[12px] sm:text-[13px] font-semibold hidden md:flex items-center justify-center gap-1.5 transition-all cursor-pointer shrink-0 ${
-                  selectedShowcases.length > 0
-                    ? 'bg-[var(--admin-accent)]/10 text-[var(--admin-accent)] border-[var(--admin-accent)]/40'
-                    : 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] border-[var(--admin-border)] hover:text-[var(--admin-text-primary)]'
-                }`}
-                title={
-                  selectedShowcases.length === filteredShowcases.length
-                    ? 'Deselect All'
-                    : 'Select All Showcases'
-                }
-              >
-                <span className="material-symbols-outlined text-[18px]">
-                  {selectedShowcases.length === filteredShowcases.length &&
-                  filteredShowcases.length > 0
-                    ? 'check_box'
-                    : selectedShowcases.length > 0
-                      ? 'indeterminate_check_box'
-                      : 'check_box_outline_blank'}
-                </span>
-                <span>
-                  {selectedShowcases.length === filteredShowcases.length
-                    ? 'Deselect All'
-                    : 'Select All'}
-                </span>
-              </button>
-            )}
-
-            {/* View Mode Switcher Box */}
-            <div className="flex items-center gap-1 shrink-0 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] p-1 h-[42px] min-h-[42px] max-h-[42px] box-border">
-              <button
-                type="button"
-                onClick={() => setViewMode('table')}
-                className={`h-[32px] w-[32px] min-h-[32px] min-w-[32px] max-h-[32px] max-w-[32px] rounded-[3px] box-border flex items-center justify-center transition-all cursor-pointer ${
-                  viewMode === 'table'
-                    ? 'bg-white dark:bg-stone-800 text-[var(--admin-accent)] shadow-xs font-bold'
-                    : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
-                }`}
-                title="Table View"
-              >
-                <span className="material-symbols-outlined text-[18px] leading-none">
-                  view_list
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('grid')}
-                className={`h-[32px] w-[32px] min-h-[32px] min-w-[32px] max-h-[32px] max-w-[32px] rounded-[3px] box-border flex items-center justify-center transition-all cursor-pointer ${
-                  viewMode === 'grid'
-                    ? 'bg-white dark:bg-stone-800 text-[var(--admin-accent)] shadow-xs font-bold'
-                    : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
-                }`}
-                title="Cards / Grid View"
-              >
-                <span className="material-symbols-outlined text-[18px] leading-none">
-                  grid_view
-                </span>
-              </button>
-            </div>
-
-            {/* Add Showcase Action Button */}
-            <button
-              type="button"
-              onClick={() => navigate('/admin/showcases/add')}
-              className="h-[42px] min-h-[42px] max-h-[42px] px-3 sm:px-3.5 bg-[var(--admin-accent)] hover:opacity-95 text-white rounded-[4px] flex items-center justify-center cursor-pointer transition-all active:scale-95 shadow-xs shrink-0 gap-1.5 font-semibold text-[13px]"
-              title="Add Showcase"
-            >
-              <span className="material-symbols-outlined text-[18px]">add</span>
-              <span className="hidden sm:inline">Add Showcase</span>
-            </button>
-          </div>
-        </motion.div>
-      </div>
-
-      {/* Redesigned Dedicated Bulk Selection Bar */}
-      <AnimatePresence>
-        {selectedShowcases.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.98 }}
-            transition={{ duration: 0.2 }}
-            className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 px-4 py-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border-strong)] rounded-[var(--admin-radius-lg)] shadow-sm"
-          >
-            {/* Left: Checkbox & Count */}
-            <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                checked={
-                  selectedShowcases.length === filteredShowcases.length &&
-                  filteredShowcases.length > 0
-                }
-                onChange={toggleSelectAll}
-                className="w-4 h-4 rounded-[4px] border-[var(--admin-border-strong)] accent-[var(--admin-accent)] cursor-pointer shrink-0"
-                title={
-                  selectedShowcases.length === filteredShowcases.length
-                    ? 'Deselect all'
-                    : 'Select all'
-                }
-              />
-              <span className="text-[13px] font-bold text-[var(--admin-text-primary)] flex items-center gap-1.5">
-                <span className="inline-flex items-center justify-center min-w-[22px] h-[22px] px-1.5 rounded-full bg-[var(--admin-accent)]/15 text-[var(--admin-accent)] text-[12px] font-extrabold">
-                  {selectedShowcases.length}
-                </span>
-                <span>showcase{selectedShowcases.length > 1 ? 's' : ''} selected</span>
+        <div className="relative w-full">
+          <motion.div variants={fadeUp} className="flex flex-row items-center gap-2 w-full">
+            {/* Search Bar - Height exactly matches Actions (42px) */}
+            <div className="relative flex-1 min-w-0 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] flex items-center px-2.5 sm:px-3 h-[42px] min-h-[42px] max-h-[42px]">
+              <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] shrink-0">
+                search
               </span>
-
-              {selectedShowcases.length < filteredShowcases.length ? (
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by title or category..."
+                className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-full min-w-0"
+              />
+              {searchQuery && (
                 <button
                   type="button"
-                  onClick={toggleSelectAll}
-                  className="text-[12px] font-semibold text-[var(--admin-accent)] hover:underline cursor-pointer ml-1"
+                  onClick={() => setSearchQuery('')}
+                  className="text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] cursor-pointer p-1 flex items-center justify-center"
                 >
-                  Select all {filteredShowcases.length}
+                  <span className="material-symbols-outlined text-[16px]">close</span>
                 </button>
-              ) : (
-                <span className="text-[11px] font-medium text-[var(--admin-text-tertiary)] ml-1">
-                  (All {filteredShowcases.length} selected)
-                </span>
               )}
             </div>
 
-            {/* Right: Actions */}
-            <div className="flex items-center gap-2 justify-end">
+            {/* Action Controls Group */}
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+              {/* Filters Button & Popover */}
+              <div className="relative shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setShowFiltersMenu(!showFiltersMenu)}
+                  className={`h-[42px] min-h-[42px] max-h-[42px] px-2.5 sm:px-3.5 flex items-center justify-center gap-1.5 rounded-[4px] border transition-colors shrink-0 cursor-pointer ${
+                    showFiltersMenu || activeFiltersCount > 0
+                      ? 'bg-[var(--admin-accent)] text-white border-transparent shadow-xs'
+                      : 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] border-[var(--admin-border)] hover:border-[var(--admin-border-strong)]'
+                  }`}
+                  title="Showcase Filters"
+                >
+                  <span className="material-symbols-outlined text-[18px]">tune</span>
+                  <span className="font-semibold text-[13px] hidden sm:inline">
+                    {activeFiltersCount > 0 ? `${activeFiltersCount} Filters` : 'Filters'}
+                  </span>
+                  {activeFiltersCount > 0 && (
+                    <span className="min-w-[16px] h-4 px-1 rounded-full bg-white text-[var(--admin-accent)] text-[10px] font-bold flex items-center justify-center">
+                      {activeFiltersCount}
+                    </span>
+                  )}
+                </button>
+
+                <AdminFilterDrawer
+                  isOpen={showFiltersMenu}
+                  onClose={() => setShowFiltersMenu(false)}
+                  title="Showcase Filters"
+                  icon="filter_list"
+                  activeCount={activeFiltersCount}
+                  onClearAll={() => {
+                    setSelectedCategory('All');
+                    setStatusFilter('All');
+                    setSortBy('newest');
+                  }}
+                  clearAllLabel="Clear All"
+                  onApply={() => setShowFiltersMenu(false)}
+                >
+                  {/* Category Filter */}
+                  <div>
+                    <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                      Category
+                    </label>
+                    <select
+                      value={selectedCategory}
+                      onChange={(e) => setSelectedCategory(e.target.value)}
+                      className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                    >
+                      <option value="All">All Categories</option>
+                      {categories
+                        .filter((c) => c !== 'All')
+                        .map((c) => (
+                          <option key={c} value={c}>
+                            {formatCategoryName(c)}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+
+                  {/* Status Filter */}
+                  <div>
+                    <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                      Status
+                    </label>
+                    <select
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                    >
+                      <option value="All">All Statuses</option>
+                      <option value="Active">Active Only</option>
+                      <option value="Hidden">Hidden Only</option>
+                    </select>
+                  </div>
+
+                  {/* Sort By Filter */}
+                  <div>
+                    <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                      Sort By
+                    </label>
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                    >
+                      <option value="newest">Newest Added</option>
+                      <option value="price-asc">Price: Low to High</option>
+                      <option value="price-desc">Price: High to Low</option>
+                      <option value="title-asc">Title: A to Z</option>
+                    </select>
+                  </div>
+                </AdminFilterDrawer>
+              </div>
+
+              {/* Quick Select All in Grid view (Desktop/tablet only) */}
+              {viewMode === 'grid' && filteredShowcases.length > 0 && (
+                <button
+                  type="button"
+                  onClick={toggleSelectAll}
+                  className={`h-[42px] min-h-[42px] max-h-[42px] px-2.5 sm:px-3 rounded-[4px] border text-[12px] sm:text-[13px] font-semibold hidden md:flex items-center justify-center gap-1.5 transition-all cursor-pointer shrink-0 ${
+                    selectedShowcases.length > 0
+                      ? 'bg-[var(--admin-accent)]/10 text-[var(--admin-accent)] border-[var(--admin-accent)]/40'
+                      : 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] border-[var(--admin-border)] hover:text-[var(--admin-text-primary)]'
+                  }`}
+                  title={
+                    selectedShowcases.length === filteredShowcases.length
+                      ? 'Deselect All'
+                      : 'Select All Showcases'
+                  }
+                >
+                  <span className="material-symbols-outlined text-[18px]">
+                    {selectedShowcases.length === filteredShowcases.length &&
+                    filteredShowcases.length > 0
+                      ? 'check_box'
+                      : selectedShowcases.length > 0
+                        ? 'indeterminate_check_box'
+                        : 'check_box_outline_blank'}
+                  </span>
+                  <span>
+                    {selectedShowcases.length === filteredShowcases.length
+                      ? 'Deselect All'
+                      : 'Select All'}
+                  </span>
+                </button>
+              )}
+
+              {/* View Mode Switcher Box */}
+              <div className="flex items-center gap-1 shrink-0 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] p-1 h-[42px] min-h-[42px] max-h-[42px] box-border">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('table')}
+                  className={`h-[32px] w-[32px] min-h-[32px] min-w-[32px] max-h-[32px] max-w-[32px] rounded-[3px] box-border flex items-center justify-center transition-all cursor-pointer ${
+                    viewMode === 'table'
+                      ? 'bg-white dark:bg-stone-800 text-[var(--admin-accent)] shadow-xs font-bold'
+                      : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
+                  }`}
+                  title="Table View"
+                >
+                  <span className="material-symbols-outlined text-[18px] leading-none">
+                    view_list
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('grid')}
+                  className={`h-[32px] w-[32px] min-h-[32px] min-w-[32px] max-h-[32px] max-w-[32px] rounded-[3px] box-border flex items-center justify-center transition-all cursor-pointer ${
+                    viewMode === 'grid'
+                      ? 'bg-white dark:bg-stone-800 text-[var(--admin-accent)] shadow-xs font-bold'
+                      : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
+                  }`}
+                  title="Cards / Grid View"
+                >
+                  <span className="material-symbols-outlined text-[18px] leading-none">
+                    grid_view
+                  </span>
+                </button>
+              </div>
+
+              {/* Add Showcase Action Button */}
               <button
                 type="button"
-                onClick={handleBulkDeactivate}
-                className="h-8.5 px-3 rounded-[var(--admin-radius-sm)] bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-[12px] font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
-                title="Deactivate selected showcases"
+                onClick={() => navigate('/admin/showcases/add')}
+                className="h-[42px] min-h-[42px] max-h-[42px] px-3 sm:px-3.5 bg-[var(--admin-accent)] hover:opacity-95 text-white rounded-[4px] flex items-center justify-center cursor-pointer transition-all active:scale-95 shadow-xs shrink-0 gap-1.5 font-semibold text-[13px]"
+                title="Add Showcase"
               >
-                <span className="material-symbols-outlined text-[16px]">block</span>
-                <span>Deactivate</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleBulkDelete}
-                className="h-8.5 px-3 rounded-[var(--admin-radius-sm)] bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/60 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-[12px] font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
-                title="Delete selected showcases"
-              >
-                <span className="material-symbols-outlined text-[16px]">delete</span>
-                <span>Delete</span>
-              </button>
-
-              <div className="w-[1px] h-6 bg-[var(--admin-border-subtle)] mx-1" />
-
-              <button
-                type="button"
-                onClick={() => setSelectedShowcases([])}
-                className="h-8.5 w-8.5 rounded-[var(--admin-radius-sm)] text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-hover)] flex items-center justify-center transition-colors cursor-pointer"
-                title="Clear Selection"
-              >
-                <span className="material-symbols-outlined text-[18px]">close</span>
+                <span className="material-symbols-outlined text-[18px]">add</span>
+                <span className="hidden sm:inline">Add Showcase</span>
               </button>
             </div>
           </motion.div>
-        )}
-      </AnimatePresence>
+
+          {/* Dedicated Bulk Selection Bar - Overlaps entire searchbar in-place */}
+          <AnimatePresence>
+            {selectedShowcases.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: -4, scale: 0.99 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -4, scale: 0.99 }}
+                transition={{ duration: 0.15 }}
+                className="absolute inset-0 z-30 flex flex-row items-center justify-between gap-2 sm:gap-3 px-3 sm:px-4 bg-[var(--admin-surface)] border border-[var(--admin-border-strong)] rounded-[4px] shadow-sm h-[42px] min-h-[42px] max-h-[42px] box-border"
+              >
+                {/* Left: Checkbox & Count */}
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                  <input
+                    type="checkbox"
+                    checked={
+                      selectedShowcases.length === filteredShowcases.length &&
+                      filteredShowcases.length > 0
+                    }
+                    onChange={toggleSelectAll}
+                    className="w-4 h-4 rounded-[4px] border-[var(--admin-border-strong)] accent-[var(--admin-accent)] cursor-pointer shrink-0"
+                    title={
+                      selectedShowcases.length === filteredShowcases.length
+                        ? 'Deselect all'
+                        : 'Select all'
+                    }
+                  />
+                  <span className="text-[12px] sm:text-[13px] font-bold text-[var(--admin-text-primary)] flex items-center gap-1 sm:gap-1.5 whitespace-nowrap">
+                    <span className="inline-flex items-center justify-center min-w-[20px] h-[20px] px-1 rounded-full bg-[var(--admin-accent)]/15 text-[var(--admin-accent)] text-[11px] font-extrabold">
+                      {selectedShowcases.length}
+                    </span>
+                    <span className="hidden xs:inline">selected</span>
+                  </span>
+
+                  {selectedShowcases.length < filteredShowcases.length ? (
+                    <button
+                      type="button"
+                      onClick={toggleSelectAll}
+                      className="text-[11px] sm:text-[12px] font-semibold text-[var(--admin-accent)] hover:underline cursor-pointer ml-0.5 sm:ml-1 truncate"
+                    >
+                      Select all {filteredShowcases.length}
+                    </button>
+                  ) : (
+                    <span className="text-[10px] sm:text-[11px] font-medium text-[var(--admin-text-tertiary)] ml-0.5 sm:ml-1 hidden sm:inline">
+                      (All {filteredShowcases.length})
+                    </span>
+                  )}
+                </div>
+
+                {/* Right: Actions */}
+                <div className="flex items-center gap-1 sm:gap-2 justify-end shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleBulkDeactivate}
+                    className="h-7 sm:h-8 px-2 sm:px-2.5 rounded-[4px] bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-[11px] sm:text-[12px] font-bold flex items-center gap-1 sm:gap-1.5 transition-colors cursor-pointer shadow-xs"
+                    title="Deactivate selected showcases"
+                  >
+                    <span className="material-symbols-outlined text-[15px] sm:text-[16px]">
+                      block
+                    </span>
+                    <span className="hidden sm:inline">Deactivate</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleBulkDelete}
+                    className="h-7 sm:h-8 px-2 sm:px-2.5 rounded-[4px] bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/60 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-[11px] sm:text-[12px] font-bold flex items-center gap-1 sm:gap-1.5 transition-colors cursor-pointer shadow-xs"
+                    title="Delete selected showcases"
+                  >
+                    <span className="material-symbols-outlined text-[15px] sm:text-[16px]">
+                      delete
+                    </span>
+                    <span className="hidden sm:inline">Delete</span>
+                  </button>
+
+                  <div className="w-[1px] h-5 sm:h-6 bg-[var(--admin-border-subtle)] mx-0.5 sm:mx-1" />
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedShowcases([])}
+                    className="h-7 w-7 sm:h-8 sm:w-8 rounded-[4px] text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-hover)] flex items-center justify-center transition-colors cursor-pointer"
+                    title="Clear Selection"
+                  >
+                    <span className="material-symbols-outlined text-[17px] sm:text-[18px]">
+                      close
+                    </span>
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
 
       {/* Main View Area */}
       <AnimatePresence mode="wait">

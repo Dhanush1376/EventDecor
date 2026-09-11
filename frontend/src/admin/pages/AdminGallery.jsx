@@ -1,5 +1,5 @@
 import { m as motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { galleryService, productService } from '../../services/domainServices';
 import storeSettingsService from '../../services/api/storeSettingsService';
@@ -8,14 +8,9 @@ import toast from 'react-hot-toast';
 import { useAdmin } from '../context/AdminContext';
 import { useConfirm } from '../../context/ConfirmProvider';
 import { getErrorMessage } from '../../utils/core/errorHelpers';
-import {
-  PageHeader,
-  EmptyState,
-  AdminSkeleton,
-  FilterBar,
-  fadeUp,
-  stagger,
-} from '../components/AdminUIKit';
+import { PageHeader, EmptyState, AdminSkeleton, fadeUp, stagger } from '../components/AdminUIKit';
+import { AdminFilterDrawer } from '../components/ui/AdminFilterDrawer';
+import { AdminActiveFilterChips, AdminFilterEmptyState } from '../components/filters';
 
 export function AdminGallery() {
   const navigate = useNavigate();
@@ -23,6 +18,7 @@ export function AdminGallery() {
   const [categories, setCategories] = useState(['All']);
   const [filter, setFilter] = useState('All');
   const [typeFilter, setTypeFilter] = useState('All');
+  const [showFiltersMenu, setShowFiltersMenu] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const confirm = useConfirm();
   const [_showUpload, setShowUpload] = useState(false);
@@ -241,6 +237,33 @@ export function AdminGallery() {
     }
   };
 
+  const activeChips = useMemo(() => {
+    const chips = [];
+    if (typeFilter !== 'All') {
+      chips.push({
+        key: 'type',
+        label: `Type: ${typeFilter === 'inspiration' ? 'Inspirations' : 'Real Events'}`,
+        onRemove: () => setTypeFilter('All'),
+      });
+    }
+    if (filter !== 'All') {
+      chips.push({
+        key: 'category',
+        label: `Category: ${filter}`,
+        onRemove: () => setFilter('All'),
+      });
+    }
+    return chips;
+  }, [typeFilter, filter]);
+
+  const resetAllFilters = () => {
+    setFilter('All');
+    setTypeFilter('All');
+    setSearchQuery('');
+  };
+
+  const activeCount = (filter !== 'All' ? 1 : 0) + (typeFilter !== 'All' ? 1 : 0);
+
   return (
     <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6">
       {/* ─── Page Header ─── */}
@@ -265,32 +288,12 @@ export function AdminGallery() {
             </div>
           )
         }
-      >
-        <div className="flex items-center gap-2 sm:gap-3">
-          <button
-            type="button"
-            onClick={() => setShowSettingsModal(true)}
-            className="h-[38px] px-3.5 rounded-[4px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-border-subtle)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] border border-[var(--admin-border)] font-semibold text-[13px] flex items-center justify-center cursor-pointer transition-all active:scale-95 gap-1.5 shrink-0"
-          >
-            <span className="material-symbols-outlined text-[16px]">settings</span>
-            <span>Settings</span>
-            <span className="text-[10px]">▾</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate('/admin/gallery/add')}
-            className="h-[38px] px-4 rounded-[4px] bg-[var(--admin-accent)] hover:opacity-95 text-white text-[13px] font-bold inline-flex items-center gap-2 shadow-xs cursor-pointer transition-all active:scale-95 shrink-0"
-          >
-            <span className="material-symbols-outlined text-[18px]">add_photo_alternate</span>
-            <span>Add Item</span>
-          </button>
-        </div>
-      </PageHeader>
+      />
 
-      {/* ─── Sticky 42px Search, Type & Category Toolbar ─── */}
-      <div className="sticky top-[var(--admin-topbar-height,56px)] z-20 -my-2 py-2.5 bg-[var(--admin-bg)]/95 backdrop-blur-md space-y-2.5">
-        <motion.div variants={fadeUp} className="flex flex-row items-center gap-2 w-full">
-          {/* Search Bar - 42px height matching Orders standard */}
+      {/* ─── Sticky 42px Search, Filters & Actions Toolbar (Single Line) ─── */}
+      <div className="sticky top-[var(--admin-topbar-height,56px)] z-20 -my-2 py-2.5 bg-[var(--admin-bg)]/95 backdrop-blur-md space-y-2">
+        <motion.div variants={fadeUp} className="flex items-center gap-2 w-full box-border">
+          {/* 1. Search Bar */}
           <div className="relative flex-1 min-w-0 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] flex items-center px-2.5 sm:px-3 h-[42px] min-h-[42px] max-h-[42px]">
             <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] shrink-0">
               search
@@ -300,7 +303,7 @@ export function AdminGallery() {
               placeholder="Search by title, event, tags..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-full min-w-0"
+              className="bg-transparent border-none outline-none w-full text-[12.5px] sm:text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-full min-w-0"
             />
             {searchQuery && (
               <button
@@ -314,38 +317,152 @@ export function AdminGallery() {
             )}
           </div>
 
-          {/* Type Segmented Pill Switcher - 42px container with 32px pills */}
-          <div className="flex items-center gap-1 p-1 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] shrink-0 h-[42px] min-h-[42px] max-h-[42px] box-border">
-            {[
-              { id: 'All', label: 'All Items' },
-              { id: 'inspiration', label: 'Inspirations' },
-              { id: 'real-event', label: 'Real Events' },
-            ].map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => setTypeFilter(t.id)}
-                className={`h-[32px] min-h-[32px] max-h-[32px] px-3 sm:px-3.5 rounded-[3px] text-[12px] sm:text-[13px] font-bold transition-all whitespace-nowrap cursor-pointer box-border flex items-center justify-center leading-none ${
-                  typeFilter === t.id
-                    ? 'bg-white dark:bg-stone-800 text-[var(--admin-accent)] shadow-xs font-bold'
-                    : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
-                }`}
-              >
-                {t.label}
-              </button>
-            ))}
+          {/* 2. Filters Button & AdminFilterDrawer */}
+          <div className="relative shrink-0">
+            <button
+              type="button"
+              onClick={() => setShowFiltersMenu(!showFiltersMenu)}
+              className={`h-[42px] min-h-[42px] max-h-[42px] px-2.5 sm:px-3.5 flex items-center justify-center gap-1.5 rounded-[4px] border transition-colors shrink-0 cursor-pointer ${
+                showFiltersMenu || activeCount > 0
+                  ? 'bg-[var(--admin-accent)] text-white border-transparent shadow-sm'
+                  : 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] border-[var(--admin-border)] hover:border-[var(--admin-border-strong)]'
+              }`}
+              title="Gallery Filters"
+            >
+              <span className="material-symbols-outlined text-[18px]">tune</span>
+              <span className="font-semibold text-[13px] hidden sm:inline">
+                {activeCount > 0 ? `${activeCount} Filters` : 'Filters'}
+              </span>
+              {activeCount > 0 && (
+                <span className="min-w-[16px] h-4 px-1 rounded-full bg-white text-[var(--admin-accent)] text-[10px] font-bold flex items-center justify-center">
+                  {activeCount}
+                </span>
+              )}
+            </button>
+
+            <AdminFilterDrawer
+              isOpen={showFiltersMenu}
+              onClose={() => setShowFiltersMenu(false)}
+              title="Gallery Filters"
+              icon="filter_list"
+              activeCount={activeCount}
+              widthClass="w-[320px] sm:w-[380px]"
+              onClearAll={() => {
+                setFilter('All');
+                setTypeFilter('All');
+              }}
+              onApply={() => setShowFiltersMenu(false)}
+            >
+              {/* Filter Section 1: Item Type */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider block">
+                  Item Type
+                </label>
+                <div className="grid grid-cols-3 gap-1 p-1 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)]">
+                  {[
+                    { id: 'All', label: 'All Items' },
+                    { id: 'inspiration', label: 'Inspirations' },
+                    { id: 'real-event', label: 'Real Events' },
+                  ].map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setTypeFilter(t.id)}
+                      className={`py-1.5 px-1.5 rounded-[3px] text-[11px] sm:text-[11.5px] font-bold transition-all text-center cursor-pointer whitespace-nowrap leading-none ${
+                        typeFilter === t.id
+                          ? 'bg-white dark:bg-stone-800 text-[var(--admin-accent)] shadow-xs border border-black/5 dark:border-white/5'
+                          : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
+                      }`}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Filter Section 2: Categories */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider block">
+                    Category ({categories.length})
+                  </label>
+                  {filter !== 'All' && (
+                    <button
+                      type="button"
+                      onClick={() => setFilter('All')}
+                      className="text-[10.5px] font-semibold text-[var(--admin-accent)] hover:underline cursor-pointer"
+                    >
+                      Reset Category
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-[240px] overflow-y-auto custom-scrollbar pr-1">
+                  {categories.map((cat) => {
+                    const isSelected = filter === cat;
+                    const count = items.filter((item) =>
+                      cat === 'All' ? true : item.category === cat,
+                    ).length;
+                    return (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => setFilter(cat)}
+                        className={`flex items-center justify-between px-2.5 py-1.5 rounded-[4px] border text-[11.5px] font-semibold text-left transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-[var(--admin-accent)]/10 text-[var(--admin-accent)] border-[var(--admin-accent)] font-bold'
+                            : 'bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] border-[var(--admin-border)] hover:border-[var(--admin-border-strong)]'
+                        }`}
+                      >
+                        <span className="truncate">{cat}</span>
+                        <span
+                          className={`text-[9.5px] px-1.5 py-0.5 rounded-full font-bold ml-1 shrink-0 ${
+                            isSelected
+                              ? 'bg-[var(--admin-accent)] text-white'
+                              : 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-tertiary)]'
+                          }`}
+                        >
+                          {count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </AdminFilterDrawer>
+          </div>
+
+          {/* 3. Action Buttons: Settings & Add Item */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => setShowSettingsModal(true)}
+              className="h-[42px] min-h-[42px] max-h-[42px] px-2.5 sm:px-3 rounded-[4px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-border-subtle)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] border border-[var(--admin-border)] font-semibold text-[12.5px] sm:text-[13px] flex items-center justify-center cursor-pointer transition-all active:scale-95 gap-1.5 shrink-0 shadow-2xs"
+              title="Gallery Settings"
+            >
+              <span className="material-symbols-outlined text-[17px]">settings</span>
+              <span className="hidden md:inline">Settings</span>
+              <span className="text-[10px]">▾</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/admin/gallery/add')}
+              className="h-[42px] min-h-[42px] max-h-[42px] px-3 sm:px-4 rounded-[4px] bg-[var(--admin-accent)] hover:opacity-95 text-white text-[12.5px] sm:text-[13px] font-bold inline-flex items-center gap-1.5 shadow-xs cursor-pointer transition-all active:scale-95 shrink-0 whitespace-nowrap"
+              title="Add New Gallery Item"
+            >
+              <span className="material-symbols-outlined text-[18px]">add_photo_alternate</span>
+              <span>Add Item</span>
+            </button>
           </div>
         </motion.div>
 
-        {/* Category Filter Bar */}
-        <div className="flex items-center justify-between gap-3 overflow-hidden">
-          <div className="flex-1 min-w-0">
-            <FilterBar filters={categories} value={filter} onChange={setFilter} />
-          </div>
-          <span className="text-[12px] font-medium text-[var(--admin-text-tertiary)] shrink-0 hidden sm:block">
-            Showing {filtered.length} of {items.length} items
-          </span>
-        </div>
+        {/* Unified Active Filter Chips Row */}
+        <AdminActiveFilterChips
+          activeChips={activeChips}
+          onClearAll={resetAllFilters}
+          totalMatches={filtered.length}
+          totalItems={items.length}
+          itemName="gallery items"
+        />
       </div>
 
       {/* ─── Gallery Grid ─── */}
@@ -472,24 +589,21 @@ export function AdminGallery() {
       </motion.div>
 
       {/* ─── Empty State ─── */}
-      {!isLoading && filtered.length === 0 && (
-        <EmptyState
-          icon="search_off"
-          title="No Items Found"
-          description="No gallery items match your current filters or search."
-          action={
-            <button
-              onClick={() => {
-                setFilter('All');
-                setTypeFilter('All');
-              }}
-              className="admin-btn admin-btn-outline admin-btn-sm"
-            >
-              Reset Filters
-            </button>
-          }
-        />
-      )}
+      {!isLoading &&
+        filtered.length === 0 &&
+        (items.length > 0 ? (
+          <AdminFilterEmptyState
+            title="No Items Found"
+            message="No gallery items match your current filters or search."
+            onReset={resetAllFilters}
+          />
+        ) : (
+          <EmptyState
+            icon="photo_library"
+            title="Gallery is Empty"
+            description="Start curating your storefront inspiration gallery."
+          />
+        ))}
 
       {/* ─── Category Management Modal ─── */}
       <AnimatePresence>

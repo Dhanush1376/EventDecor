@@ -64,6 +64,14 @@ const parseNotificationContent = (notification) => {
       .trim();
   }
 
+  // Clean raw IDs from message text if present (e.g. booking SR-BK-2026-..., #6aa031fca..., order 6aa031fca...)
+  message = message
+    .replace(/\b(exchange|return)\s+request\s+[A-Za-z0-9_-]+\s+/gi, '$1 request ')
+    .replace(/\border\s+(#[A-Za-z0-9_-]+|[A-Za-z0-9_-]{8,})\s+/gi, 'order ')
+    .replace(/\bbooking\s+(#[A-Za-z0-9_-]+|[A-Za-z0-9_-]{8,})\s+/gi, 'booking ')
+    .replace(/#[0-9a-fA-F]{10,24}/gi, '')
+    .trim();
+
   // Format snake_case statuses if present
   if (title.includes('Status Update') || title.includes('Status Updated')) {
     const statusMatch =
@@ -292,18 +300,14 @@ export function NotificationsSection() {
 
                   {/* Content */}
                   <div className="flex-1 min-w-0 flex flex-col justify-center min-h-[40px]">
-                    <div className="flex justify-between items-start mb-1.5 gap-3 w-full">
-                      <div className="flex-1 flex items-center gap-2 min-w-0">
+                    <div className="flex items-start justify-between gap-2.5 mb-1.5 w-full min-w-0">
+                      <div className="flex-1 min-w-0 overflow-hidden">
                         <h4
-                          className={`text-[12px] lg:text-[13px] truncate shrink-0 ${!notification.read ? 'text-[#1a1a1a] font-bold' : 'text-[#1a1a1a] font-medium'}`}
+                          className={`text-[12px] lg:text-[13px] truncate min-w-0 ${!notification.read ? 'text-[#1a1a1a] font-bold' : 'text-[#1a1a1a] font-medium'}`}
+                          title={notification.title}
                         >
                           {notification.title}
                         </h4>
-                        {notification.metadata?.entityId && (
-                          <span className="text-[9px] px-1.5 py-0.5 bg-black/5 rounded text-black/60 font-bold tracking-widest truncate shrink min-w-0">
-                            {notification.metadata.entityId}
-                          </span>
-                        )}
                       </div>
                       <span className="text-[9px] uppercase tracking-widest text-on-surface-variant/50 whitespace-nowrap flex items-center gap-1 shrink-0 font-medium pt-0.5">
                         <Clock className="w-3 h-3" strokeWidth={1.5} />

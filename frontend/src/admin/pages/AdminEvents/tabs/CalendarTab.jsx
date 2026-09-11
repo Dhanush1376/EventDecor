@@ -200,11 +200,11 @@ export function CalendarTab({ bookings = [], showcases = [], onMonthSummaryChang
           {/* Controls: Month Stepper + Today + Status Dropdown strictly in 1 line */}
           <div className="flex items-center gap-1.5 flex-nowrap shrink-0">
             {/* Month Stepper Buttons */}
-            <div className="flex items-center bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] p-0.5 h-[32px] sm:h-[34px] box-border shrink-0">
+            <div className="flex items-center bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] p-0.5 min-h-0 h-[32px] sm:h-[34px] max-h-[32px] sm:max-h-[34px] box-border shrink-0">
               <button
                 type="button"
                 onClick={prevMonth}
-                className="w-[24px] h-[24px] min-w-[24px] min-h-[24px] rounded-[3px] box-border flex items-center justify-center text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface)] transition-colors cursor-pointer"
+                className="min-h-0 w-[24px] h-[24px] min-w-[24px] max-h-[24px] rounded-[3px] box-border flex items-center justify-center text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface)] transition-colors cursor-pointer"
                 title="Previous Month"
               >
                 <span className="material-symbols-outlined text-[15px]">chevron_left</span>
@@ -217,7 +217,7 @@ export function CalendarTab({ bookings = [], showcases = [], onMonthSummaryChang
               <button
                 type="button"
                 onClick={nextMonth}
-                className="w-[24px] h-[24px] min-w-[24px] min-h-[24px] rounded-[3px] box-border flex items-center justify-center text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface)] transition-colors cursor-pointer"
+                className="min-h-0 w-[24px] h-[24px] min-w-[24px] max-h-[24px] rounded-[3px] box-border flex items-center justify-center text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface)] transition-colors cursor-pointer"
                 title="Next Month"
               >
                 <span className="material-symbols-outlined text-[15px]">chevron_right</span>
@@ -228,18 +228,18 @@ export function CalendarTab({ bookings = [], showcases = [], onMonthSummaryChang
             <button
               type="button"
               onClick={goToToday}
-              className="h-[32px] sm:h-[34px] px-2.5 rounded-[4px] border border-[var(--admin-border)] bg-[var(--admin-surface)] hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] text-[11.5px] sm:text-[12px] font-bold transition-colors cursor-pointer shadow-2xs shrink-0 whitespace-nowrap"
+              className="min-h-0 h-[32px] sm:h-[34px] max-h-[32px] sm:max-h-[34px] box-border inline-flex items-center justify-center px-2.5 sm:px-3 rounded-[4px] border border-[var(--admin-border)] bg-[var(--admin-surface)] hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] text-[11.5px] sm:text-[12px] font-bold leading-none transition-colors cursor-pointer shadow-2xs shrink-0 whitespace-nowrap"
             >
               Today
             </button>
 
             {/* Status Filter Select (Compact, strictly 1 line, single custom arrow) */}
-            <div className="relative shrink-0">
+            <div className="relative shrink-0 flex items-center h-[32px] sm:h-[34px] min-h-0 max-h-[32px] sm:max-h-[34px]">
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 style={{ backgroundImage: 'none' }}
-                className="admin-no-arrow h-[32px] sm:h-[34px] pl-2 pr-6 rounded-[4px] border border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--admin-text-primary)] text-[11.5px] sm:text-[12px] font-bold outline-none cursor-pointer shadow-2xs !appearance-none !bg-none whitespace-nowrap"
+                className="admin-no-arrow min-h-0 h-[32px] sm:h-[34px] max-h-[32px] sm:max-h-[34px] box-border pl-2 pr-6 rounded-[4px] border border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--admin-text-primary)] text-[11.5px] sm:text-[12px] font-bold outline-none cursor-pointer shadow-2xs !appearance-none !bg-none whitespace-nowrap leading-none"
               >
                 <option value="all">All Statuses</option>
                 <option value="confirmed">Confirmed</option>

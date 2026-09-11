@@ -6,6 +6,7 @@ import { useAdminSecurity } from '../hooks/useAdminSecurity';
 import { recycleBinApi } from '../services/recycleBinService';
 import { PageHeader, EmptyState, fadeUp, stagger } from '../components/AdminUIKit';
 import { AdminRecycleBinSkeleton } from '../components/skeletons/pages/AdminRecycleBinSkeleton';
+import { AdminActiveFilterChips, AdminFilterEmptyState } from '../components/filters';
 import toast from 'react-hot-toast';
 
 const ENTITY_TYPE_CONFIG = {
@@ -168,6 +169,40 @@ export default function AdminRecycleBin() {
 
   const totalPages = Math.ceil(totalCount / limit) || 1;
 
+  // Normalized active chips for unified filter display
+  const activeChips = useMemo(() => {
+    const chips = [];
+    if (filters.entityType && filters.entityType !== 'all') {
+      const label = ENTITY_TYPE_CONFIG[filters.entityType]?.label || filters.entityType;
+      chips.push({
+        key: 'entityType',
+        label: `Type: ${label}`,
+        onRemove: () => handleFilterChange('entityType', 'all'),
+      });
+    }
+    if (filters.timeRange) {
+      const labels = {
+        today: 'Deleted: Today',
+        '7days': 'Deleted: Last 7 Days',
+        expiring_soon: 'Retention: Expiring Soon (≤3d)',
+        expired: 'Retention: Expired',
+      };
+      chips.push({
+        key: 'timeRange',
+        label: labels[filters.timeRange] || `Retention: ${filters.timeRange}`,
+        onRemove: () => handleFilterChange('timeRange', ''),
+      });
+    }
+    return chips;
+  }, [filters.entityType, filters.timeRange]);
+
+  const resetAllFilters = () => {
+    setSearchInput('');
+    handleSearchChange({ target: { value: '' } });
+    handleFilterChange('entityType', 'all');
+    handleFilterChange('timeRange', '');
+  };
+
   // Render initial skeleton
   if (loading && items.length === 0) {
     return <AdminRecycleBinSkeleton />;
@@ -206,204 +241,222 @@ export default function AdminRecycleBin() {
 
       {/* ── 2. Sticky 42px Toolbar with Search & Controls ── */}
       <div className="sticky top-[var(--admin-topbar-height,56px)] z-20 -my-2 py-2.5 bg-[var(--admin-bg)]/95 backdrop-blur-md">
-        <motion.div variants={fadeUp} className="flex flex-row items-center gap-2 w-full">
-          {/* Unified Search & Action Bar */}
-          <form
-            onSubmit={onSearchSubmit}
-            className="relative flex-1 min-w-0 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] flex items-center pl-3 pr-1.5 h-[42px] min-h-[42px] max-h-[42px] shadow-2xs"
-          >
-            <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] shrink-0">
-              search
-            </span>
-            <input
-              type="text"
-              placeholder="Search deleted records by name, ID, or user..."
-              value={searchInput}
-              onChange={(e) => {
-                setSearchInput(e.target.value);
-                handleSearchChange(e);
-              }}
-              className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2.5 h-full min-w-0"
-            />
-            {searchInput && (
-              <button
-                type="button"
-                onClick={handleClearSearch}
-                className="text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] cursor-pointer p-1 flex items-center justify-center shrink-0 mr-1"
-                title="Clear search"
-              >
-                <span className="material-symbols-outlined text-[16px]">close</span>
-              </button>
-            )}
+        <div className="relative w-full">
+          <motion.div variants={fadeUp} className="flex flex-row items-center gap-2 w-full">
+            {/* Unified Search & Action Bar */}
+            <form
+              onSubmit={onSearchSubmit}
+              className="relative flex-1 min-w-0 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] flex items-center pl-3 pr-1.5 h-[42px] min-h-[42px] max-h-[42px] shadow-2xs"
+            >
+              <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] shrink-0">
+                search
+              </span>
+              <input
+                type="text"
+                placeholder="Search deleted records by name, ID, or user..."
+                value={searchInput}
+                onChange={(e) => {
+                  setSearchInput(e.target.value);
+                  handleSearchChange(e);
+                }}
+                className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2.5 h-full min-w-0"
+              />
+              {searchInput && (
+                <button
+                  type="button"
+                  onClick={handleClearSearch}
+                  className="text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] cursor-pointer p-1 flex items-center justify-center shrink-0 mr-1"
+                  title="Clear search"
+                >
+                  <span className="material-symbols-outlined text-[16px]">close</span>
+                </button>
+              )}
 
-            {/* Embedded Action Controls */}
-            <div className="flex items-center gap-0.5 pl-1.5 border-l border-[var(--admin-border)] shrink-0">
-              {/* Export CSV */}
-              <button
-                type="button"
-                onClick={handleExport}
-                disabled={isExporting}
-                className="w-8 h-8 rounded-[3px] hover:bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] flex items-center justify-center cursor-pointer transition-colors shrink-0 disabled:opacity-40"
-                title="Export Audit Logs as CSV"
-              >
-                {isExporting ? (
-                  <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <span className="material-symbols-outlined text-[17px]">download</span>
+              {/* Embedded Action Controls */}
+              <div className="flex items-center gap-0.5 pl-1.5 border-l border-[var(--admin-border)] shrink-0">
+                {/* Export CSV */}
+                <button
+                  type="button"
+                  onClick={handleExport}
+                  disabled={isExporting}
+                  className="w-8 h-8 rounded-[3px] hover:bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] flex items-center justify-center cursor-pointer transition-colors shrink-0 disabled:opacity-40"
+                  title="Export Audit Logs as CSV"
+                >
+                  {isExporting ? (
+                    <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <span className="material-symbols-outlined text-[17px]">download</span>
+                  )}
+                </button>
+
+                {/* Empty Bin (Owner Only) */}
+                {isOwner && (
+                  <button
+                    type="button"
+                    onClick={() => setEmptyBinModal(true)}
+                    disabled={items.length === 0}
+                    className="w-8 h-8 rounded-[3px] hover:bg-rose-100 dark:hover:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center cursor-pointer transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                    title="Permanently empty recycle bin"
+                  >
+                    <span className="material-symbols-outlined text-[17px]">delete_forever</span>
+                  </button>
                 )}
-              </button>
 
-              {/* Empty Bin (Owner Only) */}
-              {isOwner && (
+                {/* Refresh */}
                 <button
                   type="button"
-                  onClick={() => setEmptyBinModal(true)}
-                  disabled={items.length === 0}
-                  className="w-8 h-8 rounded-[3px] hover:bg-rose-100 dark:hover:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center cursor-pointer transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
-                  title="Permanently empty recycle bin"
+                  onClick={refresh}
+                  className="w-8 h-8 rounded-[3px] hover:bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] flex items-center justify-center cursor-pointer transition-colors shrink-0"
+                  title="Refresh Data"
                 >
-                  <span className="material-symbols-outlined text-[17px]">delete_forever</span>
+                  <span className="material-symbols-outlined text-[17px]">refresh</span>
                 </button>
-              )}
+              </div>
+            </form>
 
-              {/* Refresh */}
-              <button
-                type="button"
-                onClick={refresh}
-                className="w-8 h-8 rounded-[3px] hover:bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] flex items-center justify-center cursor-pointer transition-colors shrink-0"
-                title="Refresh Data"
-              >
-                <span className="material-symbols-outlined text-[17px]">refresh</span>
-              </button>
-            </div>
-          </form>
-
-          {/* Filter Dropdowns Group */}
-          <div className="flex items-center gap-2 shrink-0">
-            {/* Entity Type Filter Select */}
-            <div className="relative flex items-stretch shrink-0">
-              <select
-                className="bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] text-[12px] font-bold text-[var(--admin-text-primary)] focus:outline-none cursor-pointer transition-all pl-2.5 pr-7 h-[42px] min-h-[42px] max-h-[42px] appearance-none min-w-[125px] max-w-[145px] truncate shadow-2xs"
-                value={filters.entityType}
-                onChange={(e) => handleFilterChange('entityType', e.target.value)}
-              >
-                <option value="all">All Entity Types</option>
-                <option value="Product">Products</option>
-                <option value="Category">Categories</option>
-                <option value="Order">Orders</option>
-                <option value="User">Customers</option>
-                <option value="Review">Reviews</option>
-                <option value="Gallery">Gallery</option>
-              </select>
-              <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[16px] text-[var(--admin-text-tertiary)] pointer-events-none">
-                expand_more
-              </span>
-            </div>
-
-            {/* Time / Retention Range Filter */}
-            <div className="relative flex items-stretch shrink-0">
-              <select
-                className="bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] text-[12px] font-bold text-[var(--admin-text-primary)] focus:outline-none cursor-pointer transition-all pl-2.5 pr-7 h-[42px] min-h-[42px] max-h-[42px] appearance-none min-w-[130px] max-w-[155px] truncate shadow-2xs"
-                value={filters.timeRange}
-                onChange={(e) => handleFilterChange('timeRange', e.target.value)}
-              >
-                <option value="">Any Retention Time</option>
-                <option value="today">Deleted Today</option>
-                <option value="7days">Last 7 Days</option>
-                <option value="expiring_soon">Expiring Soon (≤3d)</option>
-                <option value="expired">Expired</option>
-              </select>
-              <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[16px] text-[var(--admin-text-tertiary)] pointer-events-none">
-                expand_more
-              </span>
-            </div>
-          </div>
-        </motion.div>
-      </div>
-
-      {/* ── 4. Floating / Sticky Bulk Action Bar ── */}
-      <AnimatePresence>
-        {selectedIds.size > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.15 }}
-            className="flex items-center justify-between bg-stone-900 text-stone-100 dark:bg-stone-800 dark:text-stone-100 px-4 py-3 rounded-[6px] shadow-lg border border-stone-700/60"
-          >
-            <div className="flex items-center gap-3">
-              <span className="w-6 h-6 rounded-full bg-stone-700 flex items-center justify-center text-[12px] font-bold text-amber-400">
-                {selectedIds.size}
-              </span>
-              <span className="text-[12.5px] font-bold">
-                {selectedIds.size} {selectedIds.size === 1 ? 'item' : 'items'} selected
-              </span>
-              <button
-                type="button"
-                onClick={() => selectAll([])}
-                className="text-[11px] text-stone-400 hover:text-stone-200 underline cursor-pointer"
-              >
-                Deselect all
-              </button>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={bulkRestore}
-                className="h-8 px-3 rounded-[4px] bg-emerald-600 hover:bg-emerald-500 text-white text-[12px] font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm active:scale-95"
-              >
-                <span className="material-symbols-outlined text-[16px]">restore</span>
-                <span>Restore Selected</span>
-              </button>
-
-              {isSuperAdmin && (
-                <button
-                  type="button"
-                  onClick={bulkPermanentDelete}
-                  className="h-8 px-3 rounded-[4px] bg-rose-600 hover:bg-rose-500 text-white text-[12px] font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm active:scale-95"
+            {/* Filter Dropdowns Group */}
+            <div className="flex items-center gap-2 shrink-0">
+              {/* Entity Type Filter Select */}
+              <div className="relative flex items-stretch shrink-0">
+                <select
+                  className="bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] text-[12px] font-bold text-[var(--admin-text-primary)] focus:outline-none cursor-pointer transition-all pl-2.5 pr-7 h-[42px] min-h-[42px] max-h-[42px] appearance-none min-w-[125px] max-w-[145px] truncate shadow-2xs"
+                  value={filters.entityType}
+                  onChange={(e) => handleFilterChange('entityType', e.target.value)}
                 >
-                  <span className="material-symbols-outlined text-[16px]">delete_forever</span>
-                  <span>Delete Selected</span>
-                </button>
-              )}
+                  <option value="all">All Entity Types</option>
+                  <option value="Product">Products</option>
+                  <option value="Category">Categories</option>
+                  <option value="Order">Orders</option>
+                  <option value="User">Customers</option>
+                  <option value="Review">Reviews</option>
+                  <option value="Gallery">Gallery</option>
+                </select>
+                <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[16px] text-[var(--admin-text-tertiary)] pointer-events-none">
+                  expand_more
+                </span>
+              </div>
+
+              {/* Time / Retention Range Filter */}
+              <div className="relative flex items-stretch shrink-0">
+                <select
+                  className="bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] text-[12px] font-bold text-[var(--admin-text-primary)] focus:outline-none cursor-pointer transition-all pl-2.5 pr-7 h-[42px] min-h-[42px] max-h-[42px] appearance-none min-w-[130px] max-w-[155px] truncate shadow-2xs"
+                  value={filters.timeRange}
+                  onChange={(e) => handleFilterChange('timeRange', e.target.value)}
+                >
+                  <option value="">Any Retention Time</option>
+                  <option value="today">Deleted Today</option>
+                  <option value="7days">Last 7 Days</option>
+                  <option value="expiring_soon">Expiring Soon (≤3d)</option>
+                  <option value="expired">Expired</option>
+                </select>
+                <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[16px] text-[var(--admin-text-tertiary)] pointer-events-none">
+                  expand_more
+                </span>
+              </div>
             </div>
           </motion.div>
-        )}
-      </AnimatePresence>
+
+          {/* ── Dedicated Bulk Action Bar - Overlaps entire searchbar in-place ── */}
+          <AnimatePresence>
+            {selectedIds.size > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: -4, scale: 0.99 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -4, scale: 0.99 }}
+                transition={{ duration: 0.15 }}
+                className="absolute inset-0 z-30 flex flex-row items-center justify-between gap-2 sm:gap-3 px-3 sm:px-4 bg-[var(--admin-surface)] border border-[var(--admin-border-strong)] rounded-[4px] shadow-sm h-[42px] min-h-[42px] max-h-[42px] box-border"
+              >
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                  <span className="w-5 h-5 rounded-full bg-[var(--admin-accent)]/15 flex items-center justify-center text-[11px] font-extrabold text-[var(--admin-accent)] shrink-0">
+                    {selectedIds.size}
+                  </span>
+                  <span className="text-[12px] sm:text-[13px] font-bold text-[var(--admin-text-primary)] truncate">
+                    {selectedIds.size}{' '}
+                    <span className="hidden xs:inline">
+                      {selectedIds.size === 1 ? 'item' : 'items'}
+                    </span>{' '}
+                    selected
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => selectAll([])}
+                    className="text-[11px] sm:text-[12px] text-[var(--admin-accent)] hover:underline cursor-pointer ml-1 font-semibold shrink-0"
+                  >
+                    Deselect all
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-1.5 sm:gap-2 justify-end shrink-0">
+                  <button
+                    type="button"
+                    onClick={bulkRestore}
+                    className="h-7 sm:h-8 px-2 sm:px-3 rounded-[4px] bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] sm:text-[12px] font-bold flex items-center gap-1 sm:gap-1.5 transition-colors cursor-pointer shadow-xs active:scale-95"
+                    title="Restore Selected"
+                  >
+                    <span className="material-symbols-outlined text-[15px] sm:text-[16px]">
+                      restore
+                    </span>
+                    <span className="hidden sm:inline">Restore Selected</span>
+                  </button>
+
+                  {isSuperAdmin && (
+                    <button
+                      type="button"
+                      onClick={bulkPermanentDelete}
+                      className="h-7 sm:h-8 px-2 sm:px-3 rounded-[4px] bg-rose-600 hover:bg-rose-500 text-white text-[11px] sm:text-[12px] font-bold flex items-center gap-1 sm:gap-1.5 transition-colors cursor-pointer shadow-xs active:scale-95"
+                      title="Permanently Delete Selected"
+                    >
+                      <span className="material-symbols-outlined text-[15px] sm:text-[16px]">
+                        delete_forever
+                      </span>
+                      <span className="hidden sm:inline">Delete Selected</span>
+                    </button>
+                  )}
+
+                  <div className="w-[1px] h-5 sm:h-6 bg-[var(--admin-border-subtle)] mx-0.5 sm:mx-1" />
+
+                  <button
+                    type="button"
+                    onClick={() => selectAll([])}
+                    className="h-7 w-7 sm:h-8 sm:w-8 rounded-[4px] text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-hover)] flex items-center justify-center transition-colors cursor-pointer"
+                    title="Clear Selection"
+                  >
+                    <span className="material-symbols-outlined text-[17px] sm:text-[18px]">
+                      close
+                    </span>
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Unified Active Filter Chips Row */}
+        <AdminActiveFilterChips
+          activeChips={activeChips}
+          onClearAll={resetAllFilters}
+          totalMatches={totalCount}
+          totalItems={stats?.totalItems || totalCount}
+          itemName="deleted records"
+        />
+      </div>
 
       {/* ── 5. Main Content: Desktop Table & Mobile Cards ── */}
       <motion.div variants={fadeUp}>
         {items.length === 0 ? (
-          <EmptyState
-            icon={filters.search || filters.entityType !== 'all' ? 'search_off' : 'delete_sweep'}
-            title={
-              filters.search || filters.entityType !== 'all'
-                ? 'No Matching Deleted Records'
-                : 'Recycle Bin is Completely Empty'
-            }
-            description={
-              filters.search || filters.entityType !== 'all'
-                ? 'No deleted records matched your current query or filters. Try resetting the filters.'
-                : 'Everything is in order! When products, orders, or categories are soft-deleted, they will appear here.'
-            }
-            action={
-              (filters.search || filters.entityType !== 'all' || filters.timeRange) && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSearchInput('');
-                    handleSearchChange({ target: { value: '' } });
-                    handleFilterChange('entityType', 'all');
-                    handleFilterChange('timeRange', '');
-                  }}
-                  className="admin-btn admin-btn-outline text-[12px]"
-                >
-                  Reset Filters
-                </button>
-              )
-            }
-          />
+          filters.search || filters.entityType !== 'all' || filters.timeRange ? (
+            <AdminFilterEmptyState
+              title="No Matching Deleted Records"
+              message="No deleted records matched your current query or filters."
+              onReset={resetAllFilters}
+            />
+          ) : (
+            <EmptyState
+              icon="delete_sweep"
+              title="Recycle Bin is Completely Empty"
+              description="Everything is in order! When products, orders, or categories are soft-deleted, they will appear here."
+            />
+          )
         ) : (
           <>
             {/* Desktop Table View (≥ md screen) */}

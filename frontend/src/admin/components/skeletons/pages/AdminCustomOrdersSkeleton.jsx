@@ -1,7 +1,7 @@
 import React from 'react';
 import { AdminSkeleton, SkeletonHeader, SkeletonToolbar } from '../../ui/Skeletons';
 
-export function AdminCustomOrdersSkeleton() {
+export function AdminCustomOrdersSkeleton({ hideHeader = false } = {}) {
   return (
     <div
       className="space-y-6 pb-8 admin-animate-in max-w-[1440px] mx-auto w-full"
@@ -9,7 +9,7 @@ export function AdminCustomOrdersSkeleton() {
       aria-label="Loading custom orders"
     >
       {/* Header */}
-      <SkeletonHeader titleWidth="w-48" subtitleWidth="w-80" hasAction={false} />
+      {!hideHeader && <SkeletonHeader titleWidth="w-48" subtitleWidth="w-80" hasAction={false} />}
 
       {/* 4 Inquiries KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">

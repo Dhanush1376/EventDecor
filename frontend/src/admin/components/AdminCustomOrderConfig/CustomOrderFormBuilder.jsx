@@ -51,8 +51,9 @@ export function CustomOrderFormBuilder({
               className="bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] shadow-xs overflow-hidden list-none"
             >
               {/* Step Header */}
-              <div className="bg-[var(--admin-surface-muted)] p-3 border-b border-[var(--admin-border-subtle)] flex items-center justify-between cursor-grab active:cursor-grabbing gap-2">
-                <div className="flex items-center gap-2.5 flex-1 min-w-0">
+              <div className="bg-[var(--admin-surface-muted)] p-3 border-b border-[var(--admin-border-subtle)] flex flex-col sm:flex-row sm:items-center justify-between cursor-grab active:cursor-grabbing gap-2 sm:gap-2.5">
+                {/* Step Title & Drag Handle (and Mobile Delete) */}
+                <div className="flex items-center gap-2 flex-1 min-w-0 w-full sm:w-auto">
                   <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] shrink-0">
                     drag_indicator
                   </span>
@@ -62,26 +63,40 @@ export function CustomOrderFormBuilder({
                   <input
                     value={step.title}
                     onChange={(e) => updateStep(activeType.id, step.id, { title: e.target.value })}
-                    className="bg-[var(--admin-surface)] border border-[var(--admin-border)] px-2.5 h-8 rounded-[4px] font-bold text-[13px] text-[var(--admin-text-primary)] w-1/3 focus:border-[var(--admin-accent)] outline-none transition-colors"
+                    className="bg-[var(--admin-surface)] border border-[var(--admin-border)] px-2.5 h-8 rounded-[4px] font-bold text-[13px] text-[var(--admin-text-primary)] flex-1 sm:w-56 md:w-64 sm:flex-none focus:border-[var(--admin-accent)] outline-none transition-colors"
                     placeholder="Step title"
                   />
+                  {/* Mobile Delete Step Button */}
+                  <button
+                    type="button"
+                    onClick={() => deleteStep(activeType.id, step.id)}
+                    className="sm:!hidden flex w-8 h-8 rounded-[4px] text-[var(--admin-text-tertiary)] hover:text-[var(--admin-error)] hover:bg-[var(--admin-error-light)] shrink-0 items-center justify-center transition-colors cursor-pointer ml-auto"
+                    title="Delete Step"
+                  >
+                    <span className="material-symbols-outlined text-[17px]">delete</span>
+                  </button>
+                </div>
+
+                {/* Step Description & Desktop Delete */}
+                <div className="flex items-center gap-2 flex-1 min-w-0 w-full sm:w-auto pl-7.5 sm:pl-0">
                   <input
                     value={step.description || ''}
                     onChange={(e) =>
                       updateStep(activeType.id, step.id, { description: e.target.value })
                     }
                     placeholder="Optional step description or helper guidance"
-                    className="bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] px-2.5 h-8 rounded-[4px] text-[11px] outline-none text-[var(--admin-text-secondary)] flex-1 min-w-0"
+                    className="bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] px-2.5 h-8 rounded-[4px] text-[11px] outline-none text-[var(--admin-text-secondary)] flex-1 min-w-0 focus:border-[var(--admin-accent)] transition-colors"
                   />
+                  {/* Desktop Delete Step Button */}
+                  <button
+                    type="button"
+                    onClick={() => deleteStep(activeType.id, step.id)}
+                    className="!hidden sm:!flex w-8 h-8 rounded-[4px] text-[var(--admin-text-tertiary)] hover:text-[var(--admin-error)] hover:bg-[var(--admin-error-light)] shrink-0 items-center justify-center transition-colors cursor-pointer"
+                    title="Delete Step"
+                  >
+                    <span className="material-symbols-outlined text-[17px]">delete</span>
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => deleteStep(activeType.id, step.id)}
-                  className="admin-btn-icon !rounded-[4px] w-8 h-8 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-error)] hover:bg-[var(--admin-error-light)] shrink-0"
-                  title="Delete Step"
-                >
-                  <span className="material-symbols-outlined text-[17px]">delete</span>
-                </button>
               </div>
 
               {/* Step Fields Container */}
@@ -113,13 +128,13 @@ export function CustomOrderFormBuilder({
                                 })
                               }
                               placeholder="Field Label (e.g. Date Required)"
-                              className="bg-[var(--admin-surface)] border border-[var(--admin-border)] px-2.5 h-8 rounded-[4px] text-[12px] font-medium outline-none flex-1 min-w-0 text-[var(--admin-text-primary)] focus:border-[var(--admin-accent)]"
+                              className="bg-[var(--admin-surface)] border border-[var(--admin-border)] px-2.5 h-8 rounded-[4px] text-[12px] font-medium outline-none flex-1 min-w-0 text-[var(--admin-text-primary)] focus:border-[var(--admin-accent)] transition-colors"
                             />
                             {/* Mobile Delete Button */}
                             <button
                               type="button"
                               onClick={() => deleteField(activeType.id, step.id, field.id)}
-                              className="sm:hidden admin-btn-icon !rounded-[4px] w-7 h-7 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-error)] hover:bg-[var(--admin-error-light)] shrink-0 flex items-center justify-center"
+                              className="sm:!hidden flex w-7 h-7 rounded-[4px] text-[var(--admin-text-tertiary)] hover:text-[var(--admin-error)] hover:bg-[var(--admin-error-light)] shrink-0 items-center justify-center transition-colors cursor-pointer"
                               title="Remove Field"
                             >
                               <span className="material-symbols-outlined text-[15px]">close</span>
@@ -127,47 +142,49 @@ export function CustomOrderFormBuilder({
                           </div>
 
                           {/* Right / Controls: Type Select + Required Checkbox + Desktop Delete */}
-                          <div className="flex items-center gap-2.5 pl-6 sm:pl-0 shrink-0">
-                            <select
-                              value={field.type}
-                              onChange={(e) =>
-                                updateField(activeType.id, step.id, field.id, {
-                                  type: e.target.value,
-                                })
-                              }
-                              className="bg-[var(--admin-surface)] border border-[var(--admin-border)] px-2 h-8 rounded-[4px] text-[11.5px] font-medium text-[var(--admin-text-primary)] outline-none cursor-pointer w-38 shrink-0 focus:border-[var(--admin-accent)]"
-                            >
-                              <option value="text">Short Text</option>
-                              <option value="textarea">Long Text</option>
-                              <option value="dropdown">Dropdown Select</option>
-                              <option value="radio">Radio Buttons</option>
-                              <option value="checkbox">Single Checkbox</option>
-                              <option value="multiselect">Multi-Select Tags</option>
-                              <option value="file">File / Image Upload</option>
-                              <option value="date">Date Picker</option>
-                              <option value="number">Number</option>
-                              <option value="whatsapp_chat">WhatsApp Chat</option>
-                            </select>
-
-                            <label className="flex items-center gap-1.5 text-[11px] font-medium text-[var(--admin-text-secondary)] cursor-pointer shrink-0 select-none">
-                              <input
-                                type="checkbox"
-                                checked={field.required}
+                          <div className="flex items-center justify-between sm:justify-start gap-2.5 pl-6.5 sm:pl-0 shrink-0">
+                            <div className="flex items-center gap-2.5 flex-1 sm:flex-initial">
+                              <select
+                                value={field.type}
                                 onChange={(e) =>
                                   updateField(activeType.id, step.id, field.id, {
-                                    required: e.target.checked,
+                                    type: e.target.value,
                                   })
                                 }
-                                className="accent-[var(--admin-accent)] rounded-[2px] w-3.5 h-3.5"
-                              />
-                              <span>Required</span>
-                            </label>
+                                className="bg-[var(--admin-surface)] border border-[var(--admin-border)] px-2 h-8 rounded-[4px] text-[11.5px] font-medium text-[var(--admin-text-primary)] outline-none cursor-pointer w-38 shrink-0 focus:border-[var(--admin-accent)] transition-colors"
+                              >
+                                <option value="text">Short Text</option>
+                                <option value="textarea">Long Text</option>
+                                <option value="dropdown">Dropdown Select</option>
+                                <option value="radio">Radio Buttons</option>
+                                <option value="checkbox">Single Checkbox</option>
+                                <option value="multiselect">Multi-Select Tags</option>
+                                <option value="file">File / Image Upload</option>
+                                <option value="date">Date Picker</option>
+                                <option value="number">Number</option>
+                                <option value="whatsapp_chat">WhatsApp Chat</option>
+                              </select>
+
+                              <label className="flex items-center gap-1.5 text-[11px] font-medium text-[var(--admin-text-secondary)] cursor-pointer shrink-0 select-none">
+                                <input
+                                  type="checkbox"
+                                  checked={field.required}
+                                  onChange={(e) =>
+                                    updateField(activeType.id, step.id, field.id, {
+                                      required: e.target.checked,
+                                    })
+                                  }
+                                  className="accent-[var(--admin-accent)] rounded-[2px] w-3.5 h-3.5"
+                                />
+                                <span>Required</span>
+                              </label>
+                            </div>
 
                             {/* Desktop Delete Button */}
                             <button
                               type="button"
                               onClick={() => deleteField(activeType.id, step.id, field.id)}
-                              className="hidden sm:flex admin-btn-icon !rounded-[4px] w-7 h-7 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-error)] hover:bg-[var(--admin-error-light)] shrink-0 items-center justify-center"
+                              className="!hidden sm:!flex w-7 h-7 rounded-[4px] text-[var(--admin-text-tertiary)] hover:text-[var(--admin-error)] hover:bg-[var(--admin-error-light)] shrink-0 items-center justify-center transition-colors cursor-pointer"
                               title="Remove Field"
                             >
                               <span className="material-symbols-outlined text-[15px]">close</span>
@@ -177,7 +194,7 @@ export function CustomOrderFormBuilder({
 
                         {/* Options builder for dropdown/multiselect/radio */}
                         {['dropdown', 'multiselect', 'radio'].includes(field.type) && (
-                          <div className="ml-7 p-3 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border-subtle)] space-y-1.5">
+                          <div className="ml-6.5 sm:ml-7 p-3 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border-subtle)] space-y-1.5">
                             <p className="text-[9.5px] uppercase font-bold text-[var(--admin-text-tertiary)] tracking-wider">
                               Options (Comma separated)
                             </p>
@@ -201,7 +218,7 @@ export function CustomOrderFormBuilder({
 
                         {/* Options builder for whatsapp_chat */}
                         {field.type === 'whatsapp_chat' && (
-                          <div className="ml-7 p-3 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border-subtle)] space-y-2">
+                          <div className="ml-6.5 sm:ml-7 p-3 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border-subtle)] space-y-2">
                             <div>
                               <p className="text-[9.5px] uppercase font-bold text-[var(--admin-text-tertiary)] tracking-wider mb-1">
                                 WhatsApp Number (with country code, e.g. 919866006648)

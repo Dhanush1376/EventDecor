@@ -8,6 +8,8 @@ import {
   AdminStatusDropdown,
   formatCurrency,
   fadeUp,
+  smoothScrollCardIntoView,
+  AdminFilterDrawer,
 } from '../../../components/AdminUIKit';
 import { ManualPaymentModal } from '../../../components/ui/ManualPaymentModal';
 import { bookingService } from '../../../../services/domainServices';
@@ -120,8 +122,13 @@ export function BookingsTab({
   const toggleExpandCard = (id) => {
     setExpandedCardIds((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      const isExpanding = !next.has(id);
+      if (isExpanding) {
+        next.add(id);
+        smoothScrollCardIntoView(`booking-card-${id}`);
+      } else {
+        next.delete(id);
+      }
       return next;
     });
   };
@@ -309,133 +316,93 @@ export function BookingsTab({
                     )}
                   </button>
 
-                  <AnimatePresence>
-                    {showFiltersMenu && (
-                      <>
-                        <div
-                          onClick={() => setShowFiltersMenu(false)}
-                          className="fixed inset-0 z-[120] bg-black/30 sm:bg-transparent"
-                        />
+                  <AdminFilterDrawer
+                    isOpen={showFiltersMenu}
+                    onClose={() => setShowFiltersMenu(false)}
+                    title="Booking Filters"
+                    icon="filter_list"
+                    activeCount={activeFiltersCount}
+                    onClearAll={() => {
+                      setUrgencyFilter('all');
+                      setPaymentFilter('all');
+                      setBookingStatusFilter('all');
+                      setSortBy('newest');
+                    }}
+                    clearAllLabel="Clear All"
+                    onApply={() => setShowFiltersMenu(false)}
+                  >
+                    {/* Urgency */}
+                    <div>
+                      <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                        Event Urgency / Timeline
+                      </label>
+                      <select
+                        value={urgencyFilter}
+                        onChange={(e) => setUrgencyFilter(e.target.value)}
+                        className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)]"
+                      >
+                        <option value="all">All Urgencies</option>
+                        <option value="critical">Critical (≤ 7 Days)</option>
+                        <option value="high">High (8-30 Days)</option>
+                        <option value="normal">Normal (&gt; 30 Days)</option>
+                        <option value="past">Past Events</option>
+                      </select>
+                    </div>
 
-                        <motion.div
-                          initial={isMobile ? { y: '100%' } : { opacity: 0, y: -8, scale: 0.98 }}
-                          animate={isMobile ? { y: 0 } : { opacity: 1, y: 0, scale: 1 }}
-                          exit={isMobile ? { y: '100%' } : { opacity: 0, y: -8, scale: 0.98 }}
-                          transition={{ duration: 0.15 }}
-                          className="fixed sm:absolute bottom-0 inset-x-0 sm:top-full sm:bottom-auto sm:right-0 sm:left-auto z-[130] sm:mt-2 w-full sm:w-[320px] bg-[var(--admin-surface)] rounded-t-[8px] sm:rounded-[4px] shadow-2xl border border-[var(--admin-border-strong)] flex flex-col p-5 sm:p-4 text-left"
-                        >
-                          <div className="flex justify-between items-center mb-4 sm:mb-3">
-                            <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)] flex items-center gap-2">
-                              <span className="material-symbols-outlined text-[18px]">
-                                filter_list
-                              </span>
-                              Booking Filters
-                            </h3>
-                            <button
-                              onClick={() => setShowFiltersMenu(false)}
-                              className="sm:hidden admin-btn-icon hover:bg-[var(--admin-bg-subtle)] !rounded-[4px] p-1"
-                            >
-                              <span className="material-symbols-outlined text-[20px]">close</span>
-                            </button>
-                          </div>
+                    {/* Payment Filter */}
+                    <div>
+                      <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                        Payment Status
+                      </label>
+                      <select
+                        value={paymentFilter}
+                        onChange={(e) => setPaymentFilter(e.target.value)}
+                        className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)]"
+                      >
+                        <option value="all">All Payments</option>
+                        <option value="paid">Paid in Full</option>
+                        <option value="partial">Partially Paid</option>
+                        <option value="unpaid">Unpaid</option>
+                      </select>
+                    </div>
 
-                          <div className="space-y-4 max-h-[60vh] overflow-y-auto scrollbar-hide">
-                            {/* Urgency */}
-                            <div>
-                              <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
-                                Event Urgency / Timeline
-                              </label>
-                              <select
-                                value={urgencyFilter}
-                                onChange={(e) => setUrgencyFilter(e.target.value)}
-                                className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)]"
-                              >
-                                <option value="all">All Urgencies</option>
-                                <option value="critical">Critical (≤ 7 Days)</option>
-                                <option value="high">High (8-30 Days)</option>
-                                <option value="normal">Normal (&gt; 30 Days)</option>
-                                <option value="past">Past Events</option>
-                              </select>
-                            </div>
+                    {/* Booking Status Filter */}
+                    <div>
+                      <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                        Booking Status
+                      </label>
+                      <select
+                        value={bookingStatusFilter}
+                        onChange={(e) => setBookingStatusFilter(e.target.value)}
+                        className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)]"
+                      >
+                        <option value="all">All Statuses</option>
+                        <option value="pending_payment">Pending Payment</option>
+                        <option value="confirmed">Confirmed</option>
+                        <option value="team_assigned">Team Assigned</option>
+                        <option value="setup_in_progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                      </select>
+                    </div>
 
-                            {/* Payment Filter */}
-                            <div>
-                              <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
-                                Payment Status
-                              </label>
-                              <select
-                                value={paymentFilter}
-                                onChange={(e) => setPaymentFilter(e.target.value)}
-                                className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)]"
-                              >
-                                <option value="all">All Payments</option>
-                                <option value="paid">Paid in Full</option>
-                                <option value="partial">Partially Paid</option>
-                                <option value="unpaid">Unpaid</option>
-                              </select>
-                            </div>
-
-                            {/* Booking Status Filter */}
-                            <div>
-                              <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
-                                Booking Status
-                              </label>
-                              <select
-                                value={bookingStatusFilter}
-                                onChange={(e) => setBookingStatusFilter(e.target.value)}
-                                className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)]"
-                              >
-                                <option value="all">All Statuses</option>
-                                <option value="pending_payment">Pending Payment</option>
-                                <option value="confirmed">Confirmed</option>
-                                <option value="team_assigned">Team Assigned</option>
-                                <option value="setup_in_progress">In Progress</option>
-                                <option value="completed">Completed</option>
-                                <option value="cancelled">Cancelled</option>
-                              </select>
-                            </div>
-
-                            {/* Sort By */}
-                            <div>
-                              <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
-                                Sort By
-                              </label>
-                              <select
-                                value={sortBy}
-                                onChange={(e) => setSortBy(e.target.value)}
-                                className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)]"
-                              >
-                                <option value="newest">Newest Added</option>
-                                <option value="upcoming">Upcoming Event Date</option>
-                                <option value="highest_val">Contract Value: High to Low</option>
-                                <option value="lowest_val">Contract Value: Low to High</option>
-                              </select>
-                            </div>
-                          </div>
-
-                          <div className="mt-4 pt-4 border-t border-[var(--admin-border-subtle)] flex gap-2">
-                            <button
-                              onClick={() => {
-                                setUrgencyFilter('all');
-                                setPaymentFilter('all');
-                                setBookingStatusFilter('all');
-                                setSortBy('newest');
-                              }}
-                              className="admin-btn-outline flex-1 justify-center py-2.5 !rounded-[4px] text-[13px]"
-                            >
-                              Clear All
-                            </button>
-                            <button
-                              onClick={() => setShowFiltersMenu(false)}
-                              className="admin-btn-primary flex-1 justify-center py-2.5 !rounded-[4px] text-[13px]"
-                            >
-                              Apply Filters
-                            </button>
-                          </div>
-                        </motion.div>
-                      </>
-                    )}
-                  </AnimatePresence>
+                    {/* Sort By */}
+                    <div>
+                      <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                        Sort By
+                      </label>
+                      <select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
+                        className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)]"
+                      >
+                        <option value="newest">Newest Added</option>
+                        <option value="upcoming">Upcoming Event Date</option>
+                        <option value="highest_val">Contract Value: High to Low</option>
+                        <option value="lowest_val">Contract Value: Low to High</option>
+                      </select>
+                    </div>
+                  </AdminFilterDrawer>
                 </div>
 
                 {/* View Mode Toggle (Table / Cards) */}
@@ -583,36 +550,39 @@ export function BookingsTab({
                   return (
                     <div
                       key={bId}
+                      id={`booking-card-${bId}`}
                       onClick={() => navigate(`/admin/events/${bId}`)}
                       className="relative overflow-hidden rounded-[8px] p-3.5 shadow-xs border border-stone-200/90 dark:border-stone-700/80 bg-white dark:bg-stone-900 flex flex-col gap-3 cursor-pointer hover:border-stone-300 dark:hover:border-stone-600 hover:shadow-sm transition-all"
                     >
-                      {/* Header: Booking Code + Badges + Customer + Status Pill */}
+                      {/* Header: Customer + Status Pill, with subtle faded Booking Code */}
                       <div className="flex justify-between items-start gap-2">
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="font-bold text-[var(--admin-text-primary)] text-[14px]">
-                              {bookingCode}
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-[var(--admin-text-primary)] text-[14px] truncate leading-tight">
+                              {b.user?.name || 'Anonymous Client'}
                             </span>
-                            {b.eventType && (
-                              <span className="text-[9.5px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:border-purple-800">
-                                {b.eventType}
-                              </span>
-                            )}
                             {isCritical && (
-                              <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 uppercase">
+                              <span className="text-[9px] font-extrabold px-1.5 py-0.2 rounded bg-rose-50 text-rose-700 border border-rose-200 uppercase shrink-0">
                                 ≤{diffDays}d
                               </span>
                             )}
                             {isNew && (
                               <span
-                                className="w-1.5 h-1.5 rounded-full bg-[var(--admin-accent)] animate-ping"
+                                className="w-1.5 h-1.5 rounded-full bg-[var(--admin-accent)] animate-ping shrink-0"
                                 title="Recent booking"
                               />
                             )}
                           </div>
-                          <span className="text-[12px] font-medium text-[var(--admin-text-secondary)] block mt-0.5 truncate">
-                            {b.user?.name || 'Anonymous Client'}
-                          </span>
+                          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                            <span className="font-mono text-[11px] font-medium text-[var(--admin-text-tertiary)] dark:text-stone-400">
+                              #{bookingCode}
+                            </span>
+                            {b.eventType && (
+                              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded border bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:border-purple-800 shrink-0">
+                                {b.eventType}
+                              </span>
+                            )}
+                          </div>
                         </div>
                         <AdminStatusPill status={b.status} className="shrink-0" />
                       </div>

@@ -65,7 +65,7 @@ const formatNotificationTime = (timestamp, timeFallback) => {
   });
 };
 
-export function AdminNotifications({ hideHeader }) {
+export function AdminNotifications({ hideHeader = false }) {
   const {
     notifications,
     unreadNotifications: unreadCount,
@@ -134,7 +134,7 @@ export function AdminNotifications({ hideHeader }) {
   }, [notifications, unreadCount]);
 
   if (dataLoading) {
-    return <AdminNotificationsSkeleton />;
+    return <AdminNotificationsSkeleton hideHeader={hideHeader} />;
   }
 
   return (

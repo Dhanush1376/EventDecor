@@ -1,21 +1,23 @@
 import React from 'react';
 import { SkeletonBox, SkeletonTextLine, SkeletonBadge } from '../../ui/Skeletons';
 
-export function AdminSettingsSkeleton() {
+export function AdminSettingsSkeleton({ hideHeader = false } = {}) {
   return (
     <div className="space-y-6 text-left admin-section-root">
       {/* 1. Page Header with Title and Search Input */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <SkeletonTextLine width="130px" height="26px" className="mb-2" />
-          <SkeletonTextLine width="200px" height="13px" />
-        </div>
+      {!hideHeader && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <SkeletonTextLine width="130px" height="26px" className="mb-2" />
+            <SkeletonTextLine width="200px" height="13px" />
+          </div>
 
-        <div className="w-full sm:w-[320px] bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] flex items-center px-3 h-[38px]">
-          <SkeletonBox width="16px" height="16px" rounded="full" className="shrink-0" />
-          <SkeletonTextLine width="160px" height="13px" className="ml-2" />
+          <div className="w-full sm:w-[320px] bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] flex items-center px-3 h-[38px]">
+            <SkeletonBox width="16px" height="16px" rounded="full" className="shrink-0" />
+            <SkeletonTextLine width="160px" height="13px" className="ml-2" />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* 2. 2-Column Split: Settings Menu on Left, Panel on Right */}
       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6 items-start">

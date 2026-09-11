@@ -10,7 +10,8 @@ export function useProductListingState() {
   const visualSearch = useVisualSearch();
   const navigate = useNavigate();
 
-  const categoryParam = searchParams.get('category') || searchParams.get('collection') || 'All';
+  const categoryParam = searchParams.get('category') || 'All';
+  const collectionParam = searchParams.get('collection') || undefined;
   const searchParam = searchParams.get('search') || '';
   const pageParam = parseInt(searchParams.get('page') || '1', 10);
   const idsParam = searchParams.get('ids') || undefined;
@@ -61,7 +62,7 @@ export function useProductListingState() {
   }, [localSearch, searchParam, setSearchParams]);
 
   const commitSearch = useCallback(
-    (query) => {
+    (query, extraParams = {}) => {
       const q = typeof query === 'string' ? query : localSearch;
       setLocalSearch(q);
       setSearchParams(
@@ -70,6 +71,15 @@ export function useProductListingState() {
           if (q) next.set('search', q);
           else next.delete('search');
           next.delete('page');
+          if (extraParams && typeof extraParams === 'object') {
+            Object.entries(extraParams).forEach(([key, val]) => {
+              if (val === undefined || val === null) {
+                next.delete(key);
+              } else {
+                next.set(key, String(val));
+              }
+            });
+          }
           return next;
         },
         { replace: true },
@@ -90,6 +100,7 @@ export function useProductListingState() {
     limit: 100,
     search: searchParam,
     category: categoryParam !== 'All' ? categoryParam : undefined,
+    collection: collectionParam,
     ids: idsParam,
     coupon: couponParam,
     sort: sortMap[sortBy] || 'newest',

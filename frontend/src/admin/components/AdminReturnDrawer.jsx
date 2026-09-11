@@ -599,25 +599,51 @@ export function AdminReturnDrawer({
                       {customerEmail || 'N/A'}
                     </span>
                   </div>
-                  {selectedReturn.pickupAddress && (
-                    <div className="sm:col-span-2 bg-[var(--admin-surface-muted)] p-2.5 rounded-[4px] border border-[var(--admin-border-subtle)]">
-                      <span className="text-[10.5px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider block mb-1">
-                        Reverse Pickup Address
-                      </span>
-                      <p className="text-[12px] text-[var(--admin-text-secondary)] leading-relaxed">
-                        {[
-                          selectedReturn.pickupAddress.street ||
-                            selectedReturn.pickupAddress.addressLine1,
-                          selectedReturn.pickupAddress.city,
-                          selectedReturn.pickupAddress.state,
-                          selectedReturn.pickupAddress.pincode ||
-                            selectedReturn.pickupAddress.zipCode,
-                        ]
-                          .filter(Boolean)
-                          .join(', ') || 'Address on file with order'}
-                      </p>
-                    </div>
-                  )}
+                  {(selectedReturn.pickup?.address || selectedReturn.pickupAddress) &&
+                    (() => {
+                      const addr = selectedReturn.pickup?.address || selectedReturn.pickupAddress;
+                      const street =
+                        typeof addr === 'string'
+                          ? addr
+                          : addr.address || addr.street || addr.line1 || addr.addressLine1 || '';
+                      const line2 =
+                        typeof addr === 'object' ? addr.line2 || addr.addressLine2 || '' : '';
+                      const locality =
+                        typeof addr === 'object' ? addr.locality || addr.area || '' : '';
+                      const landmark =
+                        typeof addr === 'object' && addr.landmark ? `Near ${addr.landmark}` : '';
+                      const city = typeof addr === 'object' ? addr.city || '' : '';
+                      const state = typeof addr === 'object' ? addr.state || '' : '';
+                      const pin =
+                        typeof addr === 'object'
+                          ? addr.pincode || addr.postalCode || addr.zipCode || ''
+                          : '';
+
+                      const fullAddr =
+                        typeof addr === 'string'
+                          ? addr
+                          : [
+                              street,
+                              line2,
+                              locality,
+                              landmark,
+                              city,
+                              state ? (pin ? `${state} - ${pin}` : state) : pin,
+                            ]
+                              .filter(Boolean)
+                              .join(', ') || 'Address on file with order';
+
+                      return (
+                        <div className="sm:col-span-2 bg-[var(--admin-surface-muted)] p-2.5 rounded-[4px] border border-[var(--admin-border-subtle)]">
+                          <span className="text-[10.5px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider block mb-1">
+                            Reverse Pickup Address
+                          </span>
+                          <p className="text-[12px] text-[var(--admin-text-secondary)] leading-relaxed">
+                            {fullAddr}
+                          </p>
+                        </div>
+                      );
+                    })()}
                 </div>
               </div>
 

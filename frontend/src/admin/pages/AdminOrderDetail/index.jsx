@@ -10,7 +10,7 @@ import { OrderStatusTimeline } from './OrderStatusTimeline';
 import { OrderSettlement } from './OrderSettlement';
 import { OrderItems } from './OrderItems';
 import { OrderShipping } from './OrderShipping';
-import { OrderRentalActions } from './OrderRentalActions';
+import { OrderRentalActions, OrderCancelCard } from './OrderRentalActions';
 import { OrderReturnCard } from './OrderReturnCard';
 import { useOrderScanner } from './hooks/useOrderScanner';
 
@@ -151,6 +151,9 @@ export function AdminOrderDetail() {
                 collectedAmount={collectedAmount}
                 setCollectedAmount={setCollectedAmount}
               />
+
+              {/* Cancel Order (Danger Zone) - Placed at the very last */}
+              <OrderCancelCard order={order} updateOrderStatus={updateOrderStatus} />
             </div>
           </div>
         </div>

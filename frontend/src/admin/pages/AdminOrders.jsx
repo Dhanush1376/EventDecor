@@ -11,11 +11,13 @@ import {
   formatCurrency,
   fadeUp,
   stagger,
+  AdminFilterDrawer,
 } from '../components/AdminUIKit';
 import { SkeletonList } from '../components/ui/Skeletons';
 import { AdminOrdersTable } from '../components/AdminOrdersTable';
 import { AdminOrdersKanban } from '../components/AdminOrdersKanban';
 import { AdminOrderDrawer } from '../components/AdminOrderDrawer';
+import { AdminActiveFilterChips } from '../components/filters/AdminActiveFilterChips';
 import { useOrderFilters, allStatuses, statusIcons } from '../hooks/useOrderFilters';
 
 const slideDrawer = {
@@ -39,10 +41,6 @@ export function AdminOrders({ hideHeader = false }) {
   const {
     viewMode,
     setViewMode,
-    filterStatus,
-    setFilterStatus,
-    filterOrderType,
-    setFilterOrderType,
     selectedOrder,
     setSelectedOrder,
     isDrawerOpen,
@@ -52,24 +50,18 @@ export function AdminOrders({ hideHeader = false }) {
     statusCounts,
     handleExportCSV,
     openOrderDrawer,
-    dateFilter,
-    setDateFilter,
-    customDateRange,
-    setCustomDateRange,
-    paymentFilter,
-    setPaymentFilter,
-    deliveryDateFilter,
-    setDeliveryDateFilter,
-    customDeliveryRange,
-    setCustomDeliveryRange,
-    orderValueRange,
-    setOrderValueRange,
-    attentionFilter,
-    setAttentionFilter,
     sortBy,
     setSortBy,
     savedView,
-    setSavedView,
+    handleSavedViewChange,
+    filterState,
+    setFilterValue,
+    resetFilter,
+    resetAllFilters,
+    activeChips,
+    activeCount,
+    totalCount,
+    matchCount,
   } = useOrderFilters(orders, searchQuery);
 
   const [showFiltersMenu, setShowFiltersMenu] = useState(false);
@@ -82,43 +74,6 @@ export function AdminOrders({ hideHeader = false }) {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
-  const handleSavedViewChange = (e) => {
-    const view = e.target.value;
-    setSavedView(view);
-
-    // Reset defaults first
-    setFilterStatus('All Statuses');
-    setDateFilter('All Time');
-    setPaymentFilter('All');
-    setDeliveryDateFilter('All Time');
-    setAttentionFilter('All');
-
-    if (view === "Today's Deliveries") {
-      setDeliveryDateFilter('Today');
-      setFilterStatus('Processing');
-    } else if (view === "Tomorrow's Deliveries") {
-      setDeliveryDateFilter('Tomorrow');
-      setFilterStatus('Processing');
-    } else if (view === 'Needs Attention') {
-      setAttentionFilter('Needs Attention');
-    } else if (view === 'Processing') {
-      setFilterStatus('Processing');
-    }
-  };
-
-  const getActiveFilterCount = () => {
-    let count = 0;
-    if (filterStatus !== 'All Statuses') count++;
-    if (dateFilter !== 'All Time') count++;
-    if (paymentFilter !== 'All') count++;
-    if (deliveryDateFilter !== 'All Time') count++;
-    if (attentionFilter !== 'All') count++;
-    if (orderValueRange.min !== '' || orderValueRange.max !== '') count++;
-    return count;
-  };
-
-  const activeCount = getActiveFilterCount();
 
   // Capture physical barcode scanner keyboard inputs
   useEffect(() => {
@@ -140,33 +95,28 @@ export function AdminOrders({ hideHeader = false }) {
 
       if (e.key === 'Enter') {
         if (buffer.length >= 3) {
-          const scannedCode = buffer.trim().toUpperCase();
+          e.preventDefault();
+          const scanned = buffer.trim();
           buffer = '';
 
-          const matchedOrder = orders.find((o) => {
-            const cleanId = o.id.toUpperCase();
-            const cleanAWB = (o.trackingNumber || '').toUpperCase();
-            const customBarcode = `SR-${o.id.substring(o.id.length - 8).toUpperCase()}-IN`;
-            const invoiceNum = (o.invoiceNumber || '').toUpperCase();
-            return (
-              scannedCode === cleanId ||
-              scannedCode === cleanAWB ||
-              scannedCode === customBarcode ||
-              scannedCode === invoiceNum ||
-              scannedCode.includes(cleanId.substring(0, 8))
-            );
-          });
+          // Look up scanned order
+          const matched = orders.find(
+            (o) =>
+              o.id?.toLowerCase() === scanned.toLowerCase() ||
+              o.orderCode?.toLowerCase() === scanned.toLowerCase() ||
+              o._id?.toLowerCase() === scanned.toLowerCase(),
+          );
 
-          if (matchedOrder) {
+          if (matched) {
             playSuccessBeep();
-            toast.success(
-              `Order Found! Opening Full Details for #${matchedOrder.id.substring(matchedOrder.id.length - 8).toUpperCase()}`,
-            );
-            navigate(`/admin/orders/${matchedOrder.id}`);
+            toast.success(`Scanned: #${matched.orderCode || matched.id}`);
+            openOrderDrawer(matched);
           } else {
             playErrorBeep();
-            toast.error(`Scan mismatch! Code "${scannedCode}" not found in orders list.`);
+            toast.error(`Order not found: ${scanned}`);
           }
+        } else {
+          buffer = '';
         }
         return;
       }
@@ -178,62 +128,71 @@ export function AdminOrders({ hideHeader = false }) {
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [orders, navigate]);
+  }, [orders, openOrderDrawer]);
 
   // Derive selected order data from orders list dynamically
   const selectedOrderData = selectedOrder ? orders.find((o) => o.id === selectedOrder.id) : null;
-
-  // Notes draft removed
 
   return (
     <motion.div
       initial="hidden"
       animate="show"
       variants={stagger}
-      className="space-y-6 pb-12 sm:pb-8"
+      className="space-y-4 sm:space-y-6 pb-28 sm:pb-8"
     >
+      {/* Page Title and Live Indicators Header */}
       {!hideHeader && (
         <PageHeader
-          title="Orders"
+          title="Orders & Shipments"
           subtitle={
             dataLoading ? (
-              <span>Loading orders summary...</span>
+              <span>Loading orders...</span>
             ) : (
-              <div className="flex flex-wrap items-center gap-1.5 text-[13px]">
+              <div className="flex flex-wrap items-center gap-1.5 text-[12.5px] sm:text-[13px]">
                 <span className="font-semibold text-[var(--admin-text-primary)]">
                   {orders.length} Total Orders
                 </span>
                 <span className="inline-flex items-center gap-1 font-semibold text-amber-600 dark:text-amber-400">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                  {statusCounts?.Pending || 0} Pending
+                  {
+                    orders.filter((o) => (o.status || '').toLowerCase() === 'processing').length
+                  }{' '}
+                  Processing
                 </span>
-                {(statusCounts?.Delivered || 0) > 0 && (
-                  <>
-                    <span className="inline-flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                      {statusCounts.Delivered} Delivered
-                    </span>
-                  </>
-                )}
+                <span className="inline-flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  {orders.filter((o) => (o.status || '').toLowerCase() === 'delivered').length}{' '}
+                  Delivered
+                </span>
               </div>
             )
+          }
+          actions={
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-semibold text-[var(--admin-text-tertiary)] flex items-center gap-1">
+                <span className="material-symbols-outlined text-[16px] text-emerald-600">
+                  barcode_scanner
+                </span>
+                <span className="hidden sm:inline">Barcode Scanner Ready</span>
+              </span>
+            </div>
           }
         />
       )}
 
-      {/* Search & Actions Bar: Sticky below top navbar */}
-      <div className="sticky top-[var(--admin-topbar-height,56px)] z-20 -my-2 py-2.5 bg-[var(--admin-bg)]/95 backdrop-blur-md">
+      {/* ─── STICKY SEARCH & ACTIONS BAR (Sticky below top navbar) ─── */}
+      <div className="sticky top-[var(--admin-topbar-height,56px)] z-20 -my-2 py-2.5 bg-[var(--admin-bg)]/95 backdrop-blur-md mb-3 sm:mb-5">
         <motion.div variants={fadeUp} className="flex flex-row items-center gap-2 w-full">
-          {/* Search Bar - Height exactly matches FilterBar/Actions (42px) */}
+          {/* Search Bar */}
           <div className="relative flex-1 min-w-0 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] flex items-center px-2.5 sm:px-3 h-[42px] min-h-[42px] max-h-[42px]">
             <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] shrink-0">
               search
             </span>
             <input
               type="text"
-              value={searchQuery || ''}
+              value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search orders..."
+              placeholder="Search by Order ID, Customer, Phone, or Item..."
               className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-full min-w-0"
             />
             {searchQuery && (
@@ -247,9 +206,9 @@ export function AdminOrders({ hideHeader = false }) {
             )}
           </div>
 
-          {/* Action Controls Group (no overflow clipping so dropdowns open on laptop) */}
+          {/* Action Controls Group */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {/* Filters Button */}
+            {/* Filters Button & Drawer */}
             <div className="relative shrink-0">
               <button
                 onClick={() => setShowFiltersMenu(!showFiltersMenu)}
@@ -271,218 +230,176 @@ export function AdminOrders({ hideHeader = false }) {
                 )}
               </button>
 
-              <AnimatePresence>
-                {showFiltersMenu && (
-                  <>
-                    <div
-                      onClick={() => setShowFiltersMenu(false)}
-                      className="fixed inset-0 z-[120] bg-black/30 sm:bg-transparent"
-                    />
+              <AdminFilterDrawer
+                isOpen={showFiltersMenu}
+                onClose={() => setShowFiltersMenu(false)}
+                title="Filter Orders"
+                icon="tune"
+                activeCount={activeCount}
+                onClearAll={resetAllFilters}
+                clearAllLabel="Reset"
+                onApply={() => setShowFiltersMenu(false)}
+              >
+                {/* 1. Fulfillment Status */}
+                <div>
+                  <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                    Fulfillment Status
+                  </label>
+                  <select
+                    value={filterState.fulfillmentStatus}
+                    onChange={(e) => setFilterValue('fulfillmentStatus', e.target.value)}
+                    className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                  >
+                    <option value="All Statuses">All Fulfillment Statuses</option>
+                    <option value="Pending">Pending Confirmation</option>
+                    <option value="Confirmed">Confirmed</option>
+                    <option value="Processing">Processing / In Production</option>
+                    <option value="Delivered">Delivered</option>
+                    <option value="Cancelled">Cancelled</option>
+                  </select>
+                </div>
 
-                    <motion.div
-                      initial={isMobile ? { y: '100%' } : { opacity: 0, y: -8, scale: 0.98 }}
-                      animate={isMobile ? { y: 0 } : { opacity: 1, y: 0, scale: 1 }}
-                      exit={isMobile ? { y: '100%' } : { opacity: 0, y: -8, scale: 0.98 }}
-                      transition={{ duration: 0.15 }}
-                      className="fixed sm:absolute bottom-0 inset-x-0 sm:top-full sm:bottom-auto sm:right-0 sm:left-auto z-[130] sm:mt-2 w-full sm:w-[320px] bg-[var(--admin-surface)] rounded-t-[8px] sm:rounded-[4px] shadow-2xl border border-[var(--admin-border-strong)] flex flex-col p-5 sm:p-4 text-left"
+                {/* 3. Event / Delivery Timing (Strictly on Delivery Date) */}
+                <div>
+                  <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                    Event / Delivery Schedule
+                  </label>
+                  <select
+                    value={filterState.deliveryEventTiming}
+                    onChange={(e) => setFilterValue('deliveryEventTiming', e.target.value)}
+                    className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                  >
+                    <option value="All Time">Any Delivery Date</option>
+                    <option value="Today">Delivering Today</option>
+                    <option value="Tomorrow">Delivering Tomorrow</option>
+                    <option value="This Weekend">This Weekend (Sat/Sun Events)</option>
+                    <option value="Next 7 Days">Next 7 Days</option>
+                    <option value="This Month">This Month</option>
+                  </select>
+                </div>
+
+                {/* 4. Placement Date (Strictly on Created Date) */}
+                <div>
+                  <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                    Date Placed (Booking Created)
+                  </label>
+                  <select
+                    value={filterState.placementDate}
+                    onChange={(e) => setFilterValue('placementDate', e.target.value)}
+                    className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                  >
+                    <option value="All Time">All Time</option>
+                    <option value="Today">Placed Today</option>
+                    <option value="Yesterday">Placed Yesterday</option>
+                    <option value="Last 7 Days">Last 7 Days</option>
+                    <option value="Last 30 Days">Last 30 Days</option>
+                    <option value="This Month">This Month</option>
+                  </select>
+                </div>
+
+                {/* 5. Payment Method & Status */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                      Payment Method
+                    </label>
+                    <select
+                      value={filterState.paymentMethod}
+                      onChange={(e) => setFilterValue('paymentMethod', e.target.value)}
+                      className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-2.5 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
                     >
-                      <div className="flex justify-between items-center mb-4 sm:mb-3">
-                        <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)] flex items-center gap-2">
-                          <span className="material-symbols-outlined text-[18px]">filter_list</span>
-                          Order Filters
-                        </h3>
-                        <button
-                          onClick={() => setShowFiltersMenu(false)}
-                          className="sm:hidden admin-btn-icon hover:bg-[var(--admin-bg-subtle)] !rounded-[4px] p-1"
-                        >
-                          <span className="material-symbols-outlined text-[20px]">close</span>
-                        </button>
-                      </div>
+                      <option value="All">All Methods</option>
+                      <option value="cod">Cash on Delivery</option>
+                      <option value="online">Prepaid Online</option>
+                    </select>
+                  </div>
 
-                      <div className="space-y-5 max-h-[60vh] overflow-y-auto scrollbar-hide">
-                        {/* Core Filters */}
-                        <div className="space-y-4 pt-2">
-                          {/* Saved Views */}
-                          <div>
-                            <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-2 block">
-                              Saved Views (Quick Filters)
-                            </label>
-                            <select
-                              value={savedView}
-                              onChange={handleSavedViewChange}
-                              className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-accent)]"
-                            >
-                              <option value="All Orders">View: All Orders</option>
-                              <option value="Today's Deliveries">Today's Deliveries</option>
-                              <option value="Tomorrow's Deliveries">Tomorrow's Deliveries</option>
-                              <option value="Needs Attention">Needs Attention</option>
-                              <option value="Processing">Processing</option>
-                            </select>
-                          </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                      Payment Status
+                    </label>
+                    <select
+                      value={filterState.paymentStatus}
+                      onChange={(e) => setFilterValue('paymentStatus', e.target.value)}
+                      className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-2.5 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                    >
+                      <option value="All">All Statuses</option>
+                      <option value="paid">Paid / Settled</option>
+                      <option value="pending">Pending</option>
+                      <option value="failed">Failed</option>
+                      <option value="refunded">Refunded</option>
+                    </select>
+                  </div>
+                </div>
 
-                          {/* Sort */}
-                          <div>
-                            <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-2 block">
-                              Sort By
-                            </label>
-                            <select
-                              value={sortBy}
-                              onChange={(e) => setSortBy(e.target.value)}
-                              className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] outline-none"
-                            >
-                              <option value="Newest first">Newest first</option>
-                              <option value="Oldest first">Oldest first</option>
-                              <option value="Delivery date ↑">Delivery date ↑</option>
-                              <option value="Delivery date ↓">Delivery date ↓</option>
-                              <option value="Order value ↑">Order value ↑</option>
-                              <option value="Order value ↓">Order value ↓</option>
-                            </select>
-                          </div>
+                {/* 6. Order Value Range (₹) */}
+                <div>
+                  <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                    Order Value Range (₹)
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="number"
+                      placeholder="Min ₹"
+                      value={filterState.orderValue?.min ?? ''}
+                      onChange={(e) =>
+                        setFilterValue('orderValue', {
+                          ...filterState.orderValue,
+                          min: e.target.value,
+                        })
+                      }
+                      className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-2.5 py-1.5 text-[12px] outline-none text-[var(--admin-text-primary)]"
+                    />
+                    <input
+                      type="number"
+                      placeholder="Max ₹"
+                      value={filterState.orderValue?.max ?? ''}
+                      onChange={(e) =>
+                        setFilterValue('orderValue', {
+                          ...filterState.orderValue,
+                          max: e.target.value,
+                        })
+                      }
+                      className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-2.5 py-1.5 text-[12px] outline-none text-[var(--admin-text-primary)]"
+                    />
+                  </div>
+                </div>
 
-                          {/* Order Type */}
-                          <div>
-                            <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-2 block">
-                              Order Type
-                            </label>
-                            <select
-                              value={filterStatus}
-                              onChange={(e) => setFilterStatus(e.target.value)}
-                              className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] outline-none"
-                            >
-                              <option value="All Statuses">All Types</option>
-                              <option value="purchase">Purchase Orders</option>
-                              <option value="rental">Rental Bookings</option>
-                              <option value="custom">Custom Requests</option>
-                            </select>
-                          </div>
+                {/* 7. Operational Flags */}
+                <div>
+                  <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                    Operational Flags
+                  </label>
+                  <select
+                    value={filterState.attention}
+                    onChange={(e) => setFilterValue('attention', e.target.value)}
+                    className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                  >
+                    <option value="All">All Orders</option>
+                    <option value="Needs Attention">Needs Attention (Delayed / Hold)</option>
+                    <option value="On Hold">On Hold Only</option>
+                  </select>
+                </div>
 
-                          {/* Date Range */}
-                          <div>
-                            <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-2 block">
-                              Date Range
-                            </label>
-                            <select
-                              value={dateFilter}
-                              onChange={(e) => setDateFilter(e.target.value)}
-                              className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] outline-none"
-                            >
-                              <option value="All Time">All Time</option>
-                              <option value="Today">Today</option>
-                              <option value="Last 7 Days">Last 7 Days</option>
-                              <option value="Last 30 Days">Last 30 Days</option>
-                              <option value="This Month">This Month</option>
-                              <option value="Custom">Custom Range...</option>
-                            </select>
-                          </div>
-
-                          {dateFilter === 'Custom' && (
-                            <div className="grid grid-cols-2 gap-2 pt-1">
-                              <input
-                                type="date"
-                                value={customDateRange.from}
-                                onChange={(e) =>
-                                  setCustomDateRange((prev) => ({
-                                    ...prev,
-                                    from: e.target.value,
-                                  }))
-                                }
-                                className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-2 py-1.5 text-[11px] outline-none"
-                              />
-                              <input
-                                type="date"
-                                value={customDateRange.to}
-                                onChange={(e) =>
-                                  setCustomDateRange((prev) => ({
-                                    ...prev,
-                                    to: e.target.value,
-                                  }))
-                                }
-                                className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-2 py-1.5 text-[11px] outline-none"
-                              />
-                            </div>
-                          )}
-
-                          {/* Order Value Range */}
-                          <div>
-                            <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-2 block">
-                              Order Value (₹)
-                            </label>
-                            <div className="grid grid-cols-2 gap-2">
-                              <input
-                                type="number"
-                                placeholder="Min ₹"
-                                value={orderValueRange.min}
-                                onChange={(e) =>
-                                  setOrderValueRange((prev) => ({
-                                    ...prev,
-                                    min: e.target.value,
-                                  }))
-                                }
-                                className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-2.5 py-1.5 text-[12px] outline-none"
-                              />
-                              <input
-                                type="number"
-                                placeholder="Max ₹"
-                                value={orderValueRange.max}
-                                onChange={(e) =>
-                                  setOrderValueRange((prev) => ({
-                                    ...prev,
-                                    max: e.target.value,
-                                  }))
-                                }
-                                className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-2.5 py-1.5 text-[12px] outline-none"
-                              />
-                            </div>
-                          </div>
-
-                          {/* Payment */}
-                          <div>
-                            <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-2 block">
-                              Payment Status
-                            </label>
-                            <select
-                              value={paymentFilter}
-                              onChange={(e) => setPaymentFilter(e.target.value)}
-                              className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] outline-none"
-                            >
-                              <option value="All">All</option>
-                              <option value="Paid">Paid</option>
-                              <option value="Pending">Pending</option>
-                              <option value="Failed">Failed</option>
-                              <option value="Refunded">Refunded</option>
-                              <option value="Partially Refunded">Partially Refunded</option>
-                            </select>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="mt-4 pt-4 border-t border-[var(--admin-border-subtle)] flex gap-2">
-                        <button
-                          onClick={() => {
-                            setFilterStatus('All Statuses');
-                            setDateFilter('All Time');
-                            setPaymentFilter('All');
-                            setOrderValueRange({ min: '', max: '' });
-                            setAttentionFilter('All');
-                            setCustomDateRange({ from: '', to: '' });
-                            setSavedView('All Orders');
-                            setSortBy('Newest first');
-                          }}
-                          className="admin-btn-outline flex-1 justify-center py-2.5 !rounded-[4px] text-[13px]"
-                        >
-                          Clear All
-                        </button>
-                        <button
-                          onClick={() => setShowFiltersMenu(false)}
-                          className="admin-btn-primary flex-1 justify-center py-2.5 !rounded-[4px] text-[13px]"
-                        >
-                          Apply Filters
-                        </button>
-                      </div>
-                    </motion.div>
-                  </>
-                )}
-              </AnimatePresence>
+                {/* 8. Sort Order */}
+                <div>
+                  <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                    Sort Order
+                  </label>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                  >
+                    <option value="Newest first">Newest first</option>
+                    <option value="Oldest first">Oldest first</option>
+                    <option value="Delivery date ↑">Delivery date ↑</option>
+                    <option value="Delivery date ↓">Delivery date ↓</option>
+                    <option value="Order value ↑">Order value ↑</option>
+                    <option value="Order value ↓">Order value ↓</option>
+                  </select>
+                </div>
+              </AdminFilterDrawer>
             </div>
 
             {/* View Mode Toggle (Table / Kanban) */}
@@ -526,6 +443,16 @@ export function AdminOrders({ hideHeader = false }) {
             </button>
           </div>
         </motion.div>
+
+        {/* Active Filter Chips Row */}
+        <AdminActiveFilterChips
+          activeChips={activeChips}
+          totalCount={totalCount}
+          matchCount={matchCount}
+          onClearAll={resetAllFilters}
+          itemName="orders"
+          className="mt-2 mb-1"
+        />
       </div>
 
       <div className="space-y-6">
@@ -619,8 +546,9 @@ export function AdminOrders({ hideHeader = false }) {
               <AdminOrdersTable
                 filteredOrders={filteredOrders}
                 searchQuery={searchQuery}
-                filterStatus={filterStatus}
-                setFilterStatus={setFilterStatus}
+                filterStatus={filterState.status}
+                setFilterStatus={(val) => setFilterValue('status', val)}
+                onResetFilters={resetAllFilters}
                 openOrderDrawer={openOrderDrawer}
                 navigate={navigate}
                 updateOrderStatus={updateOrderStatus}

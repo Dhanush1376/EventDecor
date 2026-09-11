@@ -157,23 +157,70 @@ export function getSpellCorrectedQuery(query: string): { corrected: string; conf
   const words = query.toLowerCase().trim().split(/\s+/);
   let overallConfidence = 0;
 
-  // Build vocabulary from all known keys in dictionaries
-  const vocabulary = new Set([
-    ...Object.keys(TRANSLITERATION_MAP),
-    ...Object.keys(SYNONYM_MAP),
-    ...Object.keys(CATEGORY_KEYWORDS),
-  ]);
+  // Build comprehensive vocabulary from all known keys, values, and tokens in dictionaries
+  const vocabulary = new Set<string>();
 
+  const addTermToVocab = (term: string) => {
+    if (!term) return;
+    const lower = term.toLowerCase().trim();
+    if (!lower) return;
+    vocabulary.add(lower);
+
+    // Also tokenize multi-word phrases and add individual tokens
+    const tokens = lower.split(/[\s,_\-&/]+/);
+    tokens.forEach((t) => {
+      const clean = t.replace(/[^a-z0-9]/gi, '').trim();
+      if (clean.length >= 2) {
+        vocabulary.add(clean);
+        // Add singular/plural forms so valid words aren't treated as typos
+        if (clean.endsWith('s') && clean.length > 3) {
+          vocabulary.add(clean.slice(0, -1));
+        } else {
+          vocabulary.add(clean + 's');
+        }
+      }
+    });
+  };
+
+  // Add all transliterations
+  Object.entries(TRANSLITERATION_MAP).forEach(([key, values]) => {
+    addTermToVocab(key);
+    values.forEach(addTermToVocab);
+  });
+
+  // Add all synonyms
+  Object.entries(SYNONYM_MAP).forEach(([key, values]) => {
+    addTermToVocab(key);
+    values.forEach(addTermToVocab);
+  });
+
+  // Add all category keywords and names
+  Object.entries(CATEGORY_KEYWORDS).forEach(([catName, keywords]) => {
+    addTermToVocab(catName);
+    keywords.forEach(addTermToVocab);
+  });
+
+  // Add event knowledge graph terms
   Object.values(EVENT_KNOWLEDGE_GRAPH).forEach((g) => {
-    g.aliases.forEach((a) => vocabulary.add(a));
-    g.searchTerms.forEach((s) => vocabulary.add(s));
+    g.aliases.forEach(addTermToVocab);
+    g.searchTerms.forEach(addTermToVocab);
   });
 
   const vocabArray = Array.from(vocabulary);
-  const correctedWords = [];
+  const correctedWords: string[] = [];
 
   for (const word of words) {
-    if (vocabulary.has(word) || word.length < 3) {
+    const cleanWord = word.replace(/[^a-z0-9]/gi, '');
+
+    // If exact match, short word, or valid singular/plural match, keep word unchanged
+    if (
+      vocabulary.has(word) ||
+      vocabulary.has(cleanWord) ||
+      (cleanWord.endsWith('s') && vocabulary.has(cleanWord.slice(0, -1))) ||
+      (cleanWord.endsWith('es') && vocabulary.has(cleanWord.slice(0, -2))) ||
+      vocabulary.has(cleanWord + 's') ||
+      cleanWord.length < 3
+    ) {
       correctedWords.push(word);
       overallConfidence += 1;
       continue;
@@ -183,14 +230,25 @@ export function getSpellCorrectedQuery(query: string): { corrected: string; conf
     let maxSimilarity = 0;
 
     for (const vWord of vocabArray) {
-      const sim = levenshteinSimilarity(word, vWord);
+      // Never treat a plural/singular variation as a typo
+      if (
+        vWord === cleanWord + 's' ||
+        vWord === cleanWord + 'es' ||
+        cleanWord === vWord + 's' ||
+        cleanWord === vWord + 'es'
+      ) {
+        continue;
+      }
+
+      const sim = levenshteinSimilarity(cleanWord, vWord);
       if (sim > maxSimilarity) {
         maxSimilarity = sim;
         bestMatch = vWord;
       }
     }
 
-    if (maxSimilarity > 0.7) {
+    // Require high similarity (> 0.78) for spelling correction
+    if (maxSimilarity > 0.78 && bestMatch.length >= 3) {
       correctedWords.push(bestMatch);
       overallConfidence += maxSimilarity;
     } else {
@@ -201,35 +259,62 @@ export function getSpellCorrectedQuery(query: string): { corrected: string; conf
 
   const corrected = correctedWords.join(' ');
   return {
-    corrected: corrected !== query ? corrected : query,
-    confidence: overallConfidence / words.length,
+    corrected: corrected.toLowerCase() !== query.toLowerCase() ? corrected : query,
+    confidence: overallConfidence / (words.length || 1),
   };
 }
 
 export function predictCategories(query: string): string[] {
-  const words = query.toLowerCase().split(/\s+/);
+  const normalizedQuery = query.toLowerCase().trim();
+  if (!normalizedQuery) return [];
+  const words = normalizedQuery.split(/\s+/).filter((w) => w.length > 1);
   const scores = new Map<string, number>();
+  const genericWords = new Set([
+    'ceremony',
+    'decor',
+    'set',
+    'item',
+    'function',
+    'traditional',
+    'style',
+  ]);
 
   for (const [category, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
     let score = 0;
+
+    // Full phrase match bonus
+    for (const keyword of keywords) {
+      if (normalizedQuery === keyword) {
+        score += 10;
+      } else if (normalizedQuery.includes(keyword) && keyword.length >= 4) {
+        score += 6;
+      }
+    }
+
     for (const word of words) {
       const singular = getSingularForm(word);
       for (const keyword of keywords) {
-        if (keyword === word || keyword === singular) score += 3;
-        else if (
-          keyword.includes(word) ||
-          word.includes(keyword) ||
-          keyword.includes(singular) ||
-          singular.includes(keyword)
-        )
-          score += 1;
+        if (keyword === word || keyword === singular) {
+          score += genericWords.has(word) ? 1 : 4;
+        } else if (!genericWords.has(word) && !genericWords.has(singular)) {
+          if (
+            (word.length >= 4 && keyword.includes(word)) ||
+            (singular.length >= 4 && keyword.includes(singular))
+          ) {
+            score += 1.5;
+          }
+        }
       }
     }
-    if (score > 0) scores.set(category, (scores.get(category) || 0) + score);
+    if (score >= 2) scores.set(category, (scores.get(category) || 0) + score);
   }
 
   for (const [eventName, data] of Object.entries(EVENT_KNOWLEDGE_GRAPH)) {
     let score = 0;
+    if (normalizedQuery.includes(eventName.toLowerCase())) {
+      score += 8;
+    }
+
     for (const word of words) {
       const singular = getSingularForm(word);
       if (
@@ -237,22 +322,26 @@ export function predictCategories(query: string): string[] {
         data.aliases.includes(singular) ||
         data.teluguAliases.includes(word) ||
         data.teluguAliases.includes(singular)
-      )
-        score += 4;
-      else if (
-        data.aliases.some(
-          (a) =>
-            a.includes(word) || word.includes(a) || a.includes(singular) || singular.includes(a),
-        )
-      )
-        score += 2;
+      ) {
+        score += genericWords.has(word) ? 1 : 4;
+      } else if (!genericWords.has(word) && !genericWords.has(singular)) {
+        if (
+          data.aliases.some(
+            (a) =>
+              (word.length >= 4 && a.includes(word)) ||
+              (singular.length >= 4 && a.includes(singular)),
+          )
+        ) {
+          score += 1.5;
+        }
+      }
     }
-    if (score > 0) scores.set(eventName, (scores.get(eventName) || 0) + score);
+    if (score >= 2) scores.set(eventName, (scores.get(eventName) || 0) + score);
   }
 
   return Array.from(scores.entries())
     .sort((a, b) => b[1] - a[1])
-    .map(([cat]) => cat)
+    .map(([cat]) => cat.replace(/([a-z])([A-Z])/g, '$1 $2').trim())
     .slice(0, 3);
 }
 

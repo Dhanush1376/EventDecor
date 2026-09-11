@@ -455,6 +455,69 @@ export function GalleryInner() {
           </aside>
 
           <div className="flex-1 min-w-0">
+            {/* Desktop Contextual Header */}
+            <div className="hidden lg:flex items-center justify-between mb-6 pb-4 border-b border-outline-variant/15">
+              <div>
+                <h1 className="font-heading text-[26px] xl:text-[30px] font-bold text-on-surface">
+                  {searchQuery ? (
+                    <>
+                      Inspirations for <span className="text-primary italic">"{searchQuery}"</span>
+                    </>
+                  ) : activeCategory === 'All' ? (
+                    'Design Inspirations & Celebrations'
+                  ) : (
+                    `${activeCategory} Inspirations`
+                  )}
+                </h1>
+                <p className="font-body-sm text-on-surface-variant/70 font-medium mt-0.5">
+                  <span className="font-semibold text-on-surface">{filteredItems.length}</span>{' '}
+                  {filteredItems.length === 1 ? 'work' : 'works'}{' '}
+                  {activeCategory !== 'All' && !searchQuery
+                    ? `in ${activeCategory}`
+                    : searchQuery
+                      ? activeCategory !== 'All'
+                        ? `found in ${activeCategory}`
+                        : 'found'
+                      : 'in our curated portfolio'}
+                </p>
+              </div>
+            </div>
+
+            {/* Mobile Results Count Indicator */}
+            <div className="lg:hidden mb-4 px-1 flex items-center justify-between text-[12px] font-medium text-on-surface-variant/80 animate-fade-in">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="inline-flex items-center justify-center font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full text-[11px] border border-primary/15">
+                  {filteredItems.length} {filteredItems.length === 1 ? 'work' : 'works'}
+                </span>
+                {searchQuery ? (
+                  <span className="truncate max-w-[210px]">
+                    for <strong className="text-on-surface font-semibold">"{searchQuery}"</strong>
+                    {activeCategory !== 'All' && (
+                      <>
+                        {' '}
+                        in <strong className="text-primary font-semibold">{activeCategory}</strong>
+                      </>
+                    )}
+                  </span>
+                ) : activeCategory !== 'All' ? (
+                  <span>
+                    in <strong className="text-on-surface font-semibold">{activeCategory}</strong>
+                  </span>
+                ) : (
+                  <span>curated works</span>
+                )}
+              </div>
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery && setSearchQuery('')}
+                  className="text-[11px] text-primary underline font-semibold cursor-pointer shrink-0"
+                >
+                  Clear search
+                </button>
+              )}
+            </div>
+
             {isLoading ? (
               <div className="columns-2 md:columns-3 lg:columns-4 xl:columns-4 gap-1.5 lg:gap-2 space-y-1.5 lg:space-y-2">
                 {[

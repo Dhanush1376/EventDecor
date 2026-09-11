@@ -77,24 +77,29 @@ export function AdminOrdersKanban({
                       onClick={() => openOrderDrawer(o)}
                       className={`${getCardColorClass(o.status, o.cardState)} rounded-sm p-4 border-2 shadow-sm hover:border-gray-500 hover:shadow-md transition-all duration-200 cursor-pointer group text-left flex flex-col relative overflow-hidden`}
                     >
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-[15px] font-bold text-gray-900">
-                            #{o.id.substring(o.id.length - 8).toUpperCase()}
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="min-w-0 flex-1">
+                          <span className="text-[13.5px] font-bold text-gray-900 block truncate leading-tight">
+                            {o.customer || 'Customer'}
                           </span>
-                          {o.orderType && o.orderType !== 'purchase' && (
-                            <span
-                              className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border ${
-                                o.orderType === 'rental'
-                                  ? 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:border-indigo-800'
-                                  : 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:border-purple-800'
-                              }`}
-                            >
-                              {o.orderType}
+                          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                            <span className="text-[11px] font-mono font-medium text-gray-500">
+                              #{o.orderCode || o.id.substring(o.id.length - 8).toUpperCase()}
                             </span>
-                          )}
+                            {o.orderType && o.orderType !== 'purchase' && (
+                              <span
+                                className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded border ${
+                                  o.orderType === 'rental'
+                                    ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                                    : 'bg-purple-50 text-purple-700 border-purple-200'
+                                }`}
+                              >
+                                {o.orderType}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        <div className="relative inline-block">
+                        <div className="relative inline-block shrink-0">
                           <select
                             value={o.status}
                             onChange={(e) => {
@@ -128,15 +133,12 @@ export function AdminOrdersKanban({
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-4 mb-2 text-gray-800">
-                        <span className="text-[12px] font-medium uppercase tracking-wide truncate max-w-[140px]">
-                          {o.customer}
-                        </span>
-                        <div className="flex items-center gap-1.5 text-[12px] font-medium">
-                          <span className="material-symbols-outlined text-[15px]">call</span>
+                      {o.phone && (
+                        <div className="flex items-center gap-1.5 mb-2 text-gray-600 text-[11.5px] font-medium">
+                          <span className="material-symbols-outlined text-[14px]">call</span>
                           {o.phone.replace('+91', '').trim()}
                         </div>
-                      </div>
+                      )}
 
                       <div className="flex items-start gap-1.5 mb-4 text-gray-800">
                         <span className="material-symbols-outlined text-[15px] mt-0.5 shrink-0">

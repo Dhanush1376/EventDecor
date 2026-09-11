@@ -117,7 +117,7 @@ export function ProductReviewStep({ formData, setFormData }) {
                 Category
               </span>
               <span className="font-bold text-[var(--admin-text-primary)] sm:text-right">
-                {formData.category || 'Unassigned'}
+                {formData.primaryCategory || formData.category || 'Unassigned'}
               </span>
             </div>
             <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)] pb-2 gap-1">

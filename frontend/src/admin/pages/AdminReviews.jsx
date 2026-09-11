@@ -1,7 +1,6 @@
 import { m as motion, AnimatePresence } from 'framer-motion';
 import {
   PageHeader,
-  AdminStatusPill,
   AdminReviewsSkeleton,
   AdminReviewCardsSkeleton,
 } from '../components/AdminUIKit';
@@ -17,6 +16,32 @@ import logger from '../../utils/core/logger';
 const fadeUp = {
   hidden: { opacity: 0, y: 4 },
   show: { opacity: 1, y: 0, transition: { duration: 0.18, ease: [0.16, 1, 0.3, 1] } },
+};
+
+const getReviewStatusBadge = (status) => {
+  const s = (status || '').toLowerCase();
+  if (s === 'approved') {
+    return {
+      classes:
+        'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400',
+      dot: 'bg-emerald-500',
+      label: 'APPROVED',
+    };
+  }
+  if (s === 'rejected') {
+    return {
+      classes:
+        'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-400',
+      dot: 'bg-rose-500',
+      label: 'REJECTED',
+    };
+  }
+  return {
+    classes:
+      'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400',
+    dot: 'bg-amber-500 animate-pulse',
+    label: 'PENDING',
+  };
 };
 
 export function AdminReviews() {
@@ -428,16 +453,26 @@ export function AdminReviews() {
                     </div>
 
                     {/* Status & Gold Star Rating Badge at Right End */}
-                    <div className="flex items-center gap-2 shrink-0">
-                      <AdminStatusPill status={status} />
-                      <div className="flex items-center gap-1 px-2 py-0.5 rounded-[4px] bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 text-[11px] font-extrabold shadow-3xs">
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {(() => {
+                        const sBadge = getReviewStatusBadge(status);
+                        return (
+                          <div
+                            className={`h-[25px] flex items-center gap-1 px-2 rounded-[4px] border text-[11px] font-extrabold shadow-3xs tracking-wider leading-none ${sBadge.classes}`}
+                          >
+                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${sBadge.dot}`} />
+                            <span className="leading-none">{sBadge.label}</span>
+                          </div>
+                        );
+                      })()}
+                      <div className="h-[25px] flex items-center gap-1 px-2 rounded-[4px] bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 text-[11px] font-extrabold shadow-3xs leading-none">
                         <span
-                          className="material-symbols-outlined text-[13px] font-black"
+                          className="material-symbols-outlined text-[13px] font-black leading-none"
                           style={{ fontVariationSettings: "'FILL' 1" }}
                         >
                           star
                         </span>
-                        <span>{Number(rating).toFixed(1)}</span>
+                        <span className="leading-none">{Number(rating).toFixed(1)}</span>
                       </div>
                     </div>
                   </div>

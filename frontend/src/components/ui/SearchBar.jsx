@@ -19,13 +19,13 @@ export function SearchBar({
     onChangeRef.current = onChange;
   }, [onChange]);
 
-  // Sync internal state with external prop (for clear/reset)
+  // Sync internal state with external prop (for clear/reset/external change)
   useEffect(() => {
-    if (value !== localValue && (!isFocused.current || value === '')) {
+    if (value !== lastEmittedValue.current) {
       setLocalValue(value);
       lastEmittedValue.current = value;
     }
-  }, [value, localValue]);
+  }, [value]);
 
   const handleInputChange = (e) => {
     const newValue = e.target.value;

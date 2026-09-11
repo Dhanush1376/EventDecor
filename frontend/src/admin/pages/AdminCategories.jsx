@@ -11,9 +11,13 @@ import {
   SkeletonTable,
   fadeUp,
   stagger,
+  AdminFilterDrawer,
 } from '../components/AdminUIKit';
 import { useConfirm } from '../../context/ConfirmProvider';
 import { CategoryModalDrawer } from '../components/categories/CategoryModalDrawer';
+import { useAdminFilters } from '../components/filters/useAdminFilters';
+import { categoryFilterConfig } from '../components/filters/configs/categoryFilterConfig';
+import { AdminActiveFilterChips } from '../components/filters/AdminActiveFilterChips';
 
 export function AdminCategories() {
   const navigate = useNavigate();
@@ -23,11 +27,21 @@ export function AdminCategories() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategories, setSelectedCategories] = useState([]);
-  const [typeFilter, setTypeFilter] = useState('All');
-  const [statusFilter, setStatusFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('name-asc');
   const [showFiltersMenu, setShowFiltersMenu] = useState(false);
+
+  const {
+    filteredItems: filteredCategoriesBeforeSort,
+    filterState,
+    setFilterValue,
+    resetFilter,
+    resetAllFilters,
+    activeChips,
+    activeCount,
+    totalCount,
+    matchCount,
+  } = useAdminFilters(categories, categoryFilterConfig, searchQuery);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [isBulkDeactivating, setIsBulkDeactivating] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
@@ -183,37 +197,20 @@ export function AdminCategories() {
     }
   };
 
-  const activeFiltersCount = useMemo(() => {
-    let count = 0;
-    if (statusFilter !== 'All') count++;
-    if (sortBy !== 'name-asc') count++;
-    return count;
-  }, [statusFilter, sortBy]);
+  const activeFiltersCount = activeCount;
 
+  // Two-stage pipeline: Sorting separated from filtering
   const filteredCategories = useMemo(() => {
-    return categories
-      .filter((c) => {
-        if (typeFilter !== 'All' && c.type !== typeFilter) return false;
-        if (statusFilter === 'active' && c.isActive === false) return false;
-        if (statusFilter === 'inactive' && c.isActive !== false) return false;
-        if (searchQuery.trim()) {
-          const q = searchQuery.toLowerCase().trim();
-          const nameMatch = c.name?.toLowerCase().includes(q);
-          const slugMatch = c.slug?.toLowerCase().includes(q);
-          const typeMatch = c.type?.toLowerCase().includes(q);
-          const descMatch = c.description?.toLowerCase().includes(q);
-          if (!nameMatch && !slugMatch && !typeMatch && !descMatch) return false;
-        }
-        return true;
-      })
-      .sort((a, b) => {
-        if (sortBy === 'name-asc') return (a.name || '').localeCompare(b.name || '');
-        if (sortBy === 'name-desc') return (b.name || '').localeCompare(a.name || '');
-        if (sortBy === 'newest') return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
-        if (sortBy === 'oldest') return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
-        return 0;
-      });
-  }, [categories, typeFilter, statusFilter, searchQuery, sortBy]);
+    let result = [...filteredCategoriesBeforeSort];
+    result.sort((a, b) => {
+      if (sortBy === 'name-asc') return (a.name || '').localeCompare(b.name || '');
+      if (sortBy === 'name-desc') return (b.name || '').localeCompare(a.name || '');
+      if (sortBy === 'newest') return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+      if (sortBy === 'oldest') return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
+      return 0;
+    });
+    return result;
+  }, [filteredCategoriesBeforeSort, sortBy]);
 
   const getScopeBadge = (type) => {
     switch (type) {
@@ -249,16 +246,16 @@ export function AdminCategories() {
       initial="hidden"
       animate="show"
       variants={stagger}
-      className="space-y-6 pb-12 sm:pb-8"
+      className="space-y-4 sm:space-y-6 pb-28 sm:pb-8"
     >
-      {/* Header: Title and Live Badges (no bulky button in header) */}
+      {/* Header: Title and Live Badges */}
       <PageHeader
         title="Manage Categories"
         subtitle={
           loading ? (
             <span>Loading categories...</span>
           ) : (
-            <div className="flex flex-wrap items-center gap-1.5 text-[13px]">
+            <div className="flex flex-wrap items-center gap-1.5 text-[12.5px] sm:text-[13px]">
               <span className="font-semibold text-[var(--admin-text-primary)]">
                 {categories.length} Total Categories
               </span>
@@ -277,44 +274,43 @@ export function AdminCategories() {
         }
       />
 
-      {/* Sticky 42px Search & Controls Bar - exactly like Orders / Products / Showcase */}
-      <div className="sticky top-[var(--admin-topbar-height,56px)] z-20 -my-2 py-2.5 bg-[var(--admin-bg)]/95 backdrop-blur-md mb-5">
-        <motion.div variants={fadeUp} className="flex flex-row items-center gap-2 w-full">
-          {/* Search Bar - 42px height matching toolbar */}
-          <div className="relative flex-1 min-w-0 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] flex items-center px-2.5 sm:px-3 h-[42px] min-h-[42px] max-h-[42px]">
-            <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] shrink-0">
-              search
-            </span>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search categories by name, slug, or scope..."
-              className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-full min-w-0"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                className="text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] cursor-pointer p-1 flex items-center justify-center shrink-0"
-                title="Clear search"
-              >
-                <span className="material-symbols-outlined text-[16px]">close</span>
-              </button>
-            )}
-          </div>
+      {/* Sticky Search & Controls Bar */}
+      <div className="sticky top-[var(--admin-topbar-height,56px)] z-20 -my-2 py-2.5 bg-[var(--admin-bg)]/95 backdrop-blur-md mb-3 sm:mb-5">
+        <div className="relative w-full">
+          <motion.div variants={fadeUp} className="flex flex-row items-center gap-2 w-full">
+            {/* Search Bar */}
+            <div className="relative flex-1 min-w-0 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] flex items-center px-2.5 sm:px-3 h-[42px] min-h-[42px] max-h-[42px]">
+              <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] shrink-0">
+                search
+              </span>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search categories..."
+                className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-full min-w-0"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] cursor-pointer p-1 flex items-center justify-center shrink-0"
+                  title="Clear search"
+                >
+                  <span className="material-symbols-outlined text-[16px]">close</span>
+                </button>
+              )}
+            </div>
 
-          {/* Controls Group */}
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {/* Scope Segmented Pill Switcher (desktop & tablet) */}
+            {/* Desktop Scope Segmented Pill Switcher */}
             <div className="hidden sm:flex items-center gap-1 p-1 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] h-[42px] min-h-[42px] max-h-[42px] box-border">
               {['All', 'product', 'gallery', 'event'].map((t) => (
                 <button
                   key={t}
                   type="button"
-                  onClick={() => setTypeFilter(t)}
+                  onClick={() => setFilterValue('type', t)}
                   className={`h-[32px] min-h-[32px] max-h-[32px] px-2.5 sm:px-3 rounded-[3px] text-[12px] font-semibold cursor-pointer transition-all capitalize whitespace-nowrap flex items-center justify-center box-border ${
-                    typeFilter === t
+                    (filterState.type || 'All') === t
                       ? 'bg-white dark:bg-stone-800 text-[var(--admin-accent)] shadow-xs font-bold'
                       : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
                   }`}
@@ -324,7 +320,7 @@ export function AdminCategories() {
               ))}
             </div>
 
-            {/* Filters Button & Popover */}
+            {/* Filters Button */}
             <div className="relative shrink-0">
               <button
                 type="button"
@@ -347,112 +343,103 @@ export function AdminCategories() {
                 )}
               </button>
 
-              <AnimatePresence>
-                {showFiltersMenu && (
-                  <>
-                    <div
-                      onClick={() => setShowFiltersMenu(false)}
-                      className="fixed inset-0 z-[120] bg-black/30 sm:bg-transparent"
-                    />
+              <AdminFilterDrawer
+                isOpen={showFiltersMenu}
+                onClose={() => setShowFiltersMenu(false)}
+                title="Filter Categories"
+                icon="tune"
+                activeCount={activeFiltersCount}
+                onClearAll={() => {
+                  resetAllFilters();
+                  setSortBy('name-asc');
+                  setSearchQuery('');
+                }}
+                clearAllLabel="Reset"
+                onApply={() => setShowFiltersMenu(false)}
+              >
+                {/* Type Scope */}
+                <div className="block sm:hidden">
+                  <label className="text-[11px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                    Type Scope
+                  </label>
+                  <select
+                    value={filterState.type}
+                    onChange={(e) => setFilterValue('type', e.target.value)}
+                    className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                  >
+                    <option value="All">All Types</option>
+                    <option value="product">Product</option>
+                    <option value="gallery">Gallery</option>
+                    <option value="event">Event</option>
+                  </select>
+                </div>
 
-                    <motion.div
-                      initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                      transition={{ duration: 0.15 }}
-                      className="fixed sm:absolute inset-x-4 bottom-4 sm:inset-x-auto sm:bottom-auto sm:right-0 sm:top-[calc(100%+8px)] w-auto sm:w-72 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[8px] shadow-2xl p-4 z-[130] space-y-4"
-                    >
-                      <div className="flex items-center justify-between pb-2 border-b border-[var(--admin-border)]">
-                        <span className="font-bold text-[13px] text-[var(--admin-text-primary)] flex items-center gap-1.5">
-                          <span className="material-symbols-outlined text-[18px] text-[var(--admin-accent)]">
-                            tune
-                          </span>
-                          Filter Categories
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setShowFiltersMenu(false)}
-                          className="text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] p-1 cursor-pointer"
-                        >
-                          <span className="material-symbols-outlined text-[18px]">close</span>
-                        </button>
-                      </div>
+                {/* Status Filter */}
+                <div>
+                  <label className="text-[11px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                    Status
+                  </label>
+                  <select
+                    value={filterState.status}
+                    onChange={(e) => setFilterValue('status', e.target.value)}
+                    className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                  >
+                    <option value="All">All Statuses</option>
+                    <option value="active">Active Only</option>
+                    <option value="inactive">Inactive Only</option>
+                  </select>
+                </div>
 
-                      {/* Type Scope (visible for small screens where desktop pill bar is hidden) */}
-                      <div className="block sm:hidden">
-                        <label className="text-[11px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
-                          Type Scope
-                        </label>
-                        <select
-                          value={typeFilter}
-                          onChange={(e) => setTypeFilter(e.target.value)}
-                          className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
-                        >
-                          <option value="All">All Types</option>
-                          <option value="product">Product</option>
-                          <option value="gallery">Gallery</option>
-                          <option value="event">Event</option>
-                        </select>
-                      </div>
+                {/* Products Count Coverage */}
+                <div>
+                  <label className="text-[11px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                    Catalog Coverage
+                  </label>
+                  <select
+                    value={filterState.inventoryCoverage}
+                    onChange={(e) => setFilterValue('inventoryCoverage', e.target.value)}
+                    className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                  >
+                    <option value="All">All Categories</option>
+                    <option value="has_products">Has Products (&gt;0)</option>
+                    <option value="empty">Empty Categories (0 Products)</option>
+                    <option value="heavy">High Volume (20+ Products)</option>
+                  </select>
+                </div>
 
-                      {/* Status Filter */}
-                      <div>
-                        <label className="text-[11px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
-                          Status
-                        </label>
-                        <select
-                          value={statusFilter}
-                          onChange={(e) => setStatusFilter(e.target.value)}
-                          className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
-                        >
-                          <option value="All">All Statuses</option>
-                          <option value="active">Active Only</option>
-                          <option value="inactive">Inactive Only</option>
-                        </select>
-                      </div>
+                {/* Storefront Featured */}
+                <div>
+                  <label className="text-[11px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                    Storefront Visibility
+                  </label>
+                  <select
+                    value={filterState.featured}
+                    onChange={(e) => setFilterValue('featured', e.target.value)}
+                    className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                  >
+                    <option value="All">All Visibility</option>
+                    <option value="featured">Featured / Navbar Shown</option>
+                    <option value="standard">Standard Catalog Only</option>
+                  </select>
+                </div>
 
-                      {/* Sort By */}
-                      <div>
-                        <label className="text-[11px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
-                          Sort By
-                        </label>
-                        <select
-                          value={sortBy}
-                          onChange={(e) => setSortBy(e.target.value)}
-                          className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
-                        >
-                          <option value="name-asc">Name (A → Z)</option>
-                          <option value="name-desc">Name (Z → A)</option>
-                          <option value="newest">Newest First</option>
-                          <option value="oldest">Oldest First</option>
-                        </select>
-                      </div>
-
-                      <div className="pt-2 border-t border-[var(--admin-border)] flex items-center justify-between gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setTypeFilter('All');
-                            setStatusFilter('All');
-                            setSortBy('name-asc');
-                            setSearchQuery('');
-                          }}
-                          className="text-[11px] font-semibold text-[var(--admin-text-tertiary)] hover:text-rose-500 transition-colors cursor-pointer"
-                        >
-                          Reset
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setShowFiltersMenu(false)}
-                          className="admin-btn-primary px-4 py-2 !rounded-[4px] text-[12px]"
-                        >
-                          Apply Filters
-                        </button>
-                      </div>
-                    </motion.div>
-                  </>
-                )}
-              </AnimatePresence>
+                {/* Sort By */}
+                <div>
+                  <label className="text-[11px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                    Sort By
+                  </label>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                  >
+                    <option value="name-asc">Name (A → Z)</option>
+                    <option value="name-desc">Name (Z → A)</option>
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                  </select>
+                </div>
+              </AdminFilterDrawer>
             </div>
 
             {/* Add Category Button */}
@@ -465,92 +452,106 @@ export function AdminCategories() {
               <span className="material-symbols-outlined text-[18px]">add</span>
               <span className="hidden sm:inline">Add Category</span>
             </button>
-          </div>
-        </motion.div>
-      </div>
-
-      {/* Redesigned Dedicated Bulk Selection Bar */}
-      <AnimatePresence>
-        {selectedCategories.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.98 }}
-            transition={{ duration: 0.2 }}
-            className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 px-4 py-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border-strong)] rounded-[var(--admin-radius-lg)] shadow-sm mb-6"
-          >
-            {/* Left: Checkbox & Count */}
-            <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                checked={
-                  selectedCategories.length === filteredCategories.length &&
-                  filteredCategories.length > 0
-                }
-                onChange={toggleSelectAll}
-                className="w-4 h-4 rounded-[4px] border-[var(--admin-border-strong)] accent-[var(--admin-accent)] cursor-pointer shrink-0"
-                title={
-                  selectedCategories.length === filteredCategories.length
-                    ? 'Deselect all'
-                    : 'Select all'
-                }
-              />
-              <span className="text-[13px] font-bold text-[var(--admin-text-primary)] flex items-center gap-1.5">
-                <span className="inline-flex items-center justify-center min-w-[22px] h-[22px] px-1.5 rounded-full bg-[var(--admin-accent)]/15 text-[var(--admin-accent)] text-[12px] font-extrabold">
-                  {selectedCategories.length}
-                </span>
-                <span>categor{selectedCategories.length > 1 ? 'ies' : 'y'} selected</span>
-              </span>
-
-              {selectedCategories.length < filteredCategories.length && (
-                <button
-                  type="button"
-                  onClick={toggleSelectAll}
-                  className="text-[12px] font-semibold text-[var(--admin-accent)] hover:underline cursor-pointer ml-1"
-                >
-                  Select all {filteredCategories.length}
-                </button>
-              )}
-            </div>
-
-            {/* Right: Actions */}
-            <div className="flex items-center gap-2 justify-end">
-              <button
-                type="button"
-                onClick={handleBulkDeactivate}
-                disabled={isBulkDeactivating}
-                className="h-8.5 px-3 rounded-[var(--admin-radius-sm)] bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-[12px] font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs disabled:opacity-50"
-                title="Deactivate selected categories"
-              >
-                <span className="material-symbols-outlined text-[16px]">block</span>
-                <span>Deactivate</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleBulkDelete}
-                disabled={isBulkDeleting}
-                className="h-8.5 px-3 rounded-[var(--admin-radius-sm)] bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/60 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-[12px] font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs disabled:opacity-50"
-                title="Delete selected categories"
-              >
-                <span className="material-symbols-outlined text-[16px]">delete</span>
-                <span>Delete</span>
-              </button>
-
-              <div className="w-[1px] h-6 bg-[var(--admin-border-subtle)] mx-1" />
-
-              <button
-                type="button"
-                onClick={() => setSelectedCategories([])}
-                className="h-8.5 w-8.5 rounded-[var(--admin-radius-sm)] text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-hover)] flex items-center justify-center transition-colors cursor-pointer"
-                title="Clear Selection"
-              >
-                <span className="material-symbols-outlined text-[18px]">close</span>
-              </button>
-            </div>
           </motion.div>
-        )}
-      </AnimatePresence>
+
+          {/* In-Place Overlapping Bulk Selection Bar */}
+          <AnimatePresence>
+            {selectedCategories.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: -4, scale: 0.99 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -4, scale: 0.99 }}
+                transition={{ duration: 0.15 }}
+                className="absolute inset-0 z-30 flex flex-row items-center justify-between gap-2 sm:gap-3 px-3 sm:px-4 bg-[var(--admin-surface)] border border-[var(--admin-border-strong)] rounded-[4px] shadow-sm h-[42px] min-h-[42px] max-h-[42px] box-border"
+              >
+                {/* Left: Checkbox & Count */}
+                <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+                  <input
+                    type="checkbox"
+                    checked={
+                      selectedCategories.length === filteredCategories.length &&
+                      filteredCategories.length > 0
+                    }
+                    onChange={toggleSelectAll}
+                    className="w-4 h-4 rounded-[3px] border-[var(--admin-border-strong)] accent-[var(--admin-accent)] cursor-pointer shrink-0"
+                    title={
+                      selectedCategories.length === filteredCategories.length
+                        ? 'Deselect all'
+                        : 'Select all'
+                    }
+                  />
+                  <span className="text-[12.5px] font-bold text-[var(--admin-text-primary)] flex items-center gap-1.5 shrink-0">
+                    <span className="inline-flex items-center justify-center min-w-[20px] h-[20px] px-1 rounded-full bg-[var(--admin-accent)]/15 text-[var(--admin-accent)] text-[11px] font-extrabold">
+                      {selectedCategories.length}
+                    </span>
+                    <span>selected</span>
+                  </span>
+
+                  {selectedCategories.length < filteredCategories.length && (
+                    <button
+                      type="button"
+                      onClick={toggleSelectAll}
+                      className="text-[12px] font-semibold text-[var(--admin-accent)] hover:underline cursor-pointer truncate hidden md:inline"
+                    >
+                      Select all ({filteredCategories.length})
+                    </button>
+                  )}
+                </div>
+
+                {/* Right: Actions */}
+                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleBulkDeactivate}
+                    disabled={isBulkDeactivating}
+                    className="h-8 px-2.5 sm:px-3 rounded-[3px] bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60 hover:bg-amber-100 text-[11.5px] font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs disabled:opacity-50"
+                    title="Deactivate selected"
+                  >
+                    <span className="material-symbols-outlined text-[15px]">block</span>
+                    <span className="hidden sm:inline">Deactivate</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleBulkDelete}
+                    disabled={isBulkDeleting}
+                    className="h-8 px-2.5 sm:px-3 rounded-[3px] bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/60 hover:bg-rose-100 text-[11.5px] font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs disabled:opacity-50"
+                    title="Delete selected"
+                  >
+                    <span className="material-symbols-outlined text-[15px]">delete</span>
+                    <span className="hidden sm:inline">Delete</span>
+                  </button>
+
+                  <div className="w-[1px] h-5 bg-[var(--admin-border-subtle)] mx-0.5" />
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCategories([])}
+                    className="h-8 w-8 rounded-[3px] text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-muted)] flex items-center justify-center transition-colors cursor-pointer"
+                    title="Clear Selection"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">close</span>
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Active Filter Chips Row */}
+        <AdminActiveFilterChips
+          activeChips={activeChips}
+          totalCount={totalCount}
+          matchCount={matchCount}
+          onClearAll={() => {
+            resetAllFilters();
+            setSortBy('name-asc');
+            setSearchQuery('');
+          }}
+          itemName="categories"
+          className="mt-2 mb-1"
+        />
+      </div>
 
       {/* Main Content */}
       <AnimatePresence mode="wait">
@@ -565,31 +566,22 @@ export function AdminCategories() {
             className="admin-card py-16 flex justify-center"
           >
             <EmptyState
-              icon={
-                searchQuery || typeFilter !== 'All' || statusFilter !== 'All'
-                  ? 'search_off'
-                  : 'category'
-              }
-              title={
-                searchQuery || typeFilter !== 'All' || statusFilter !== 'All'
-                  ? 'No Categories Found'
-                  : 'No Categories Yet'
-              }
+              icon={searchQuery || activeCount > 0 ? 'search_off' : 'category'}
+              title={searchQuery || activeCount > 0 ? 'No Categories Found' : 'No Categories Yet'}
               description={
-                searchQuery || typeFilter !== 'All' || statusFilter !== 'All'
+                searchQuery || activeCount > 0
                   ? 'No categories match the selected search or filter criteria.'
                   : 'Create your first category to organize products and content across the storefront.'
               }
               action={
-                searchQuery || typeFilter !== 'All' || statusFilter !== 'All' ? (
+                searchQuery || activeCount > 0 ? (
                   <button
                     onClick={() => {
-                      setTypeFilter('All');
-                      setStatusFilter('All');
+                      resetAllFilters();
                       setSearchQuery('');
                       setSortBy('name-asc');
                     }}
-                    className="admin-btn admin-btn-outline"
+                    className="admin-btn admin-btn-outline cursor-pointer"
                   >
                     Clear Filters
                   </button>
@@ -603,147 +595,260 @@ export function AdminCategories() {
             />
           </motion.div>
         ) : (
-          <motion.div
-            key="table"
-            variants={fadeUp}
-            className="admin-card p-0 overflow-hidden shadow-xs"
-          >
-            <div className="overflow-x-auto">
-              <table className="admin-table w-full min-w-[700px]">
-                <thead>
-                  <tr>
-                    <th className="w-12 text-center pl-4">
-                      <input
-                        type="checkbox"
-                        checked={
-                          filteredCategories.length > 0 &&
-                          selectedCategories.length === filteredCategories.length
-                        }
-                        onChange={toggleSelectAll}
-                        className="w-4 h-4 rounded-[4px] border-[var(--admin-border-strong)] accent-[var(--admin-accent)] cursor-pointer"
-                        title={
-                          selectedCategories.length === filteredCategories.length
-                            ? 'Deselect all'
-                            : 'Select all'
-                        }
-                      />
-                    </th>
-                    <th>Category Name</th>
-                    <th>Slug / URL Path</th>
-                    <th className="text-center min-w-[130px]">Type Scope</th>
-                    <th className="text-center min-w-[120px]">Status</th>
-                    <th className="text-right pr-6 min-w-[100px]">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredCategories.map((cat) => {
-                    const isSelected = selectedCategories.includes(cat._id);
-                    const scope = getScopeBadge(cat.type);
+          <motion.div key="content" variants={fadeUp} className="space-y-4">
+            {/* Mobile Category Cards View (< md screens) */}
+            <div className="md:hidden space-y-2.5">
+              {filteredCategories.map((cat) => {
+                const isSelected = selectedCategories.includes(cat._id);
+                const scope = getScopeBadge(cat.type);
 
-                    return (
-                      <tr
-                        key={cat._id}
-                        className={`admin-table-row-clickable group transition-colors ${
-                          isSelected ? 'bg-[var(--admin-accent)]/5' : ''
-                        }`}
-                        onClick={() => handleOpenEdit(cat)}
-                      >
-                        {/* Checkbox */}
-                        <td className="w-12 text-center pl-4" onClick={(e) => e.stopPropagation()}>
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => toggleSelect(cat._id)}
-                            className="w-4 h-4 rounded-[4px] border-[var(--admin-border-strong)] accent-[var(--admin-accent)] cursor-pointer"
-                          />
-                        </td>
-
-                        {/* Name with Scope Icon */}
-                        <td>
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-[4px] bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] flex items-center justify-center text-[var(--admin-text-secondary)] shrink-0">
-                              <span className="material-symbols-outlined text-[18px]">
-                                {scope.icon}
-                              </span>
-                            </div>
-                            <div className="min-w-0">
-                              <p className="font-bold text-[13px] text-[var(--admin-text-primary)] group-hover:text-[var(--admin-accent)] transition-colors truncate">
-                                {cat.name}
-                              </p>
-                              {cat.description && (
-                                <p className="text-[11px] text-[var(--admin-text-tertiary)] truncate max-w-[280px]">
-                                  {cat.description}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* Slug */}
-                        <td>
-                          <span className="font-mono text-[11px] px-2 py-0.5 rounded-[3px] bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] text-[var(--admin-text-secondary)]">
+                return (
+                  <div
+                    key={cat._id}
+                    className={`bg-[var(--admin-surface)] rounded-[4px] border p-3.5 shadow-xs transition-all flex flex-col gap-2.5 ${
+                      isSelected
+                        ? 'border-[var(--admin-accent)] ring-1 ring-[var(--admin-accent)]/30 bg-[var(--admin-accent)]/[0.02]'
+                        : 'border-[var(--admin-border)] hover:border-[var(--admin-border-strong)]'
+                    }`}
+                  >
+                    {/* Header: Checkbox + Icon + Name & Slug + Active Toggle */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleSelect(cat._id)}
+                          className="w-4 h-4 mt-1 rounded-[3px] border-[var(--admin-border-strong)] accent-[var(--admin-accent)] cursor-pointer shrink-0"
+                        />
+                        <div
+                          onClick={() => handleOpenEdit(cat)}
+                          className="w-9 h-9 rounded-[4px] bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] flex items-center justify-center text-[var(--admin-text-secondary)] shrink-0 cursor-pointer"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">
+                            {scope.icon}
+                          </span>
+                        </div>
+                        <div
+                          className="min-w-0 flex-1 cursor-pointer"
+                          onClick={() => handleOpenEdit(cat)}
+                        >
+                          <h4 className="font-bold text-[14px] text-[var(--admin-text-primary)] hover:text-[var(--admin-accent)] transition-colors truncate leading-tight">
+                            {cat.name}
+                          </h4>
+                          <span className="font-mono text-[11px] text-[var(--admin-text-tertiary)] block truncate mt-0.5">
                             /{cat.slug}
                           </span>
-                        </td>
+                        </div>
+                      </div>
 
-                        {/* Type Scope */}
-                        <td className="text-center">
-                          <span
-                            className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-[4px] border uppercase tracking-wider ${scope.cls}`}
+                      {/* Status Toggle on Right */}
+                      <div
+                        className="flex items-center gap-1.5 shrink-0 pt-0.5"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <span
+                          className={`text-[10.5px] font-bold ${
+                            cat.isActive !== false
+                              ? 'text-emerald-600 dark:text-emerald-400'
+                              : 'text-stone-400 dark:text-stone-500'
+                          }`}
+                        >
+                          {cat.isActive !== false ? 'Active' : 'Inactive'}
+                        </span>
+                        <AdminToggle
+                          size="sm"
+                          checked={cat.isActive !== false}
+                          onChange={() => handleToggleActive(cat._id, cat.isActive !== false)}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Description if present */}
+                    {cat.description && (
+                      <p className="text-[11.5px] text-[var(--admin-text-secondary)] line-clamp-2 leading-relaxed pl-6.5">
+                        {cat.description}
+                      </p>
+                    )}
+
+                    {/* Footer: Scope Badge + Action Buttons */}
+                    <div className="flex items-center justify-between gap-2 pt-2 border-t border-[var(--admin-border-subtle)]">
+                      <span
+                        className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-[4px] border uppercase tracking-wider ${scope.cls}`}
+                      >
+                        <span className="material-symbols-outlined text-[12px] leading-none">
+                          {scope.icon}
+                        </span>
+                        <span>{scope.label}</span>
+                      </span>
+
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEdit(cat)}
+                          className="h-7.5 px-2.5 rounded-[3px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] border border-[var(--admin-border)] text-[var(--admin-text-primary)] text-[11.5px] font-bold flex items-center gap-1 transition-all active:scale-95 cursor-pointer shadow-2xs"
+                        >
+                          <span className="material-symbols-outlined text-[14px]">edit</span>
+                          <span>Edit</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(cat._id)}
+                          className="h-7.5 w-7.5 rounded-[3px] bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/20 flex items-center justify-center transition-all active:scale-95 cursor-pointer shadow-2xs"
+                          title="Delete Category"
+                        >
+                          <span className="material-symbols-outlined text-[14px]">delete</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop Table View (>= md screens) */}
+            <div className="hidden md:block admin-card p-0 overflow-hidden shadow-xs">
+              <div className="overflow-x-auto">
+                <table className="admin-table w-full min-w-[700px]">
+                  <thead>
+                    <tr>
+                      <th className="w-12 text-center pl-4">
+                        <input
+                          type="checkbox"
+                          checked={
+                            filteredCategories.length > 0 &&
+                            selectedCategories.length === filteredCategories.length
+                          }
+                          onChange={toggleSelectAll}
+                          className="w-4 h-4 rounded-[4px] border-[var(--admin-border-strong)] accent-[var(--admin-accent)] cursor-pointer"
+                          title={
+                            selectedCategories.length === filteredCategories.length
+                              ? 'Deselect all'
+                              : 'Select all'
+                          }
+                        />
+                      </th>
+                      <th>Category Name</th>
+                      <th>Slug / URL Path</th>
+                      <th className="text-center min-w-[130px]">Type Scope</th>
+                      <th className="text-center min-w-[120px]">Status</th>
+                      <th className="text-right pr-6 min-w-[100px]">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredCategories.map((cat) => {
+                      const isSelected = selectedCategories.includes(cat._id);
+                      const scope = getScopeBadge(cat.type);
+
+                      return (
+                        <tr
+                          key={cat._id}
+                          className={`admin-table-row-clickable group transition-colors ${
+                            isSelected ? 'bg-[var(--admin-accent)]/5' : ''
+                          }`}
+                          onClick={() => handleOpenEdit(cat)}
+                        >
+                          {/* Checkbox */}
+                          <td
+                            className="w-12 text-center pl-4"
+                            onClick={(e) => e.stopPropagation()}
                           >
-                            <span className="material-symbols-outlined text-[13px] leading-none">
-                              {scope.icon}
-                            </span>
-                            <span>{scope.label}</span>
-                          </span>
-                        </td>
-
-                        {/* Status Toggle & Badge */}
-                        <td className="text-center" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex items-center justify-center gap-2">
-                            <span
-                              className={`text-[11px] font-bold ${
-                                cat.isActive !== false
-                                  ? 'text-emerald-600 dark:text-emerald-400'
-                                  : 'text-stone-400 dark:text-stone-500'
-                              }`}
-                            >
-                              {cat.isActive !== false ? 'Active' : 'Inactive'}
-                            </span>
-                            <AdminToggle
-                              size="sm"
-                              checked={cat.isActive !== false}
-                              onChange={() => handleToggleActive(cat._id, cat.isActive !== false)}
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => toggleSelect(cat._id)}
+                              className="w-4 h-4 rounded-[4px] border-[var(--admin-border-strong)] accent-[var(--admin-accent)] cursor-pointer"
                             />
-                          </div>
-                        </td>
+                          </td>
 
-                        {/* Actions */}
-                        <td className="text-right pr-6" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex items-center justify-end gap-1.5">
-                            <button
-                              type="button"
-                              onClick={() => handleOpenEdit(cat)}
-                              className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]"
-                              title="Edit Category"
+                          {/* Name with Scope Icon */}
+                          <td>
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-[4px] bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] flex items-center justify-center text-[var(--admin-text-secondary)] shrink-0">
+                                <span className="material-symbols-outlined text-[18px]">
+                                  {scope.icon}
+                                </span>
+                              </div>
+                              <div className="min-w-0">
+                                <p className="font-bold text-[13px] text-[var(--admin-text-primary)] group-hover:text-[var(--admin-accent)] transition-colors truncate">
+                                  {cat.name}
+                                </p>
+                                {cat.description && (
+                                  <p className="text-[11px] text-[var(--admin-text-tertiary)] truncate max-w-[280px]">
+                                    {cat.description}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Slug */}
+                          <td>
+                            <span className="font-mono text-[11px] px-2 py-0.5 rounded-[3px] bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] text-[var(--admin-text-secondary)]">
+                              /{cat.slug}
+                            </span>
+                          </td>
+
+                          {/* Type Scope */}
+                          <td className="text-center">
+                            <span
+                              className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-[4px] border uppercase tracking-wider ${scope.cls}`}
                             >
-                              <span className="material-symbols-outlined text-[16px]">edit</span>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDelete(cat._id)}
-                              className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-secondary)] hover:text-rose-600 hover:bg-rose-500/10"
-                              title="Delete Category"
-                            >
-                              <span className="material-symbols-outlined text-[16px]">delete</span>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                              <span className="material-symbols-outlined text-[13px] leading-none">
+                                {scope.icon}
+                              </span>
+                              <span>{scope.label}</span>
+                            </span>
+                          </td>
+
+                          {/* Status Toggle & Badge */}
+                          <td className="text-center" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center justify-center gap-2">
+                              <span
+                                className={`text-[11px] font-bold ${
+                                  cat.isActive !== false
+                                    ? 'text-emerald-600 dark:text-emerald-400'
+                                    : 'text-stone-400 dark:text-stone-500'
+                                }`}
+                              >
+                                {cat.isActive !== false ? 'Active' : 'Inactive'}
+                              </span>
+                              <AdminToggle
+                                size="sm"
+                                checked={cat.isActive !== false}
+                                onChange={() => handleToggleActive(cat._id, cat.isActive !== false)}
+                              />
+                            </div>
+                          </td>
+
+                          {/* Actions */}
+                          <td className="text-right pr-6" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => handleOpenEdit(cat)}
+                                className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]"
+                                title="Edit Category"
+                              >
+                                <span className="material-symbols-outlined text-[16px]">edit</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDelete(cat._id)}
+                                className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-secondary)] hover:text-rose-600 hover:bg-rose-500/10"
+                                title="Delete Category"
+                              >
+                                <span className="material-symbols-outlined text-[16px]">
+                                  delete
+                                </span>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </motion.div>
         )}

@@ -1,5 +1,11 @@
 import { m as motion, AnimatePresence } from 'framer-motion';
-import { AdminCustomOrdersSkeleton, PageHeader, fadeUp, stagger } from '../components/AdminUIKit';
+import {
+  AdminCustomOrdersSkeleton,
+  PageHeader,
+  fadeUp,
+  stagger,
+  AdminFilterDrawer,
+} from '../components/AdminUIKit';
 import { AdminCustomOrderConfig } from '../components/AdminCustomOrderConfig';
 import { useEffect, useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -12,6 +18,15 @@ import { InquiriesMetrics } from '../components/inquiries/InquiriesMetrics';
 import { InquiriesTable } from '../components/inquiries/InquiriesTable';
 import { InquiryDetailDrawer } from '../components/inquiries/InquiryDetailDrawer';
 
+import {
+  useAdminFilters,
+  AdminActiveFilterChips,
+  AdminFilterSection,
+  AdminRangeFilter,
+  AdminFilterEmptyState,
+} from '../components/filters';
+import { inquiryFilterConfig } from '../components/filters/configs';
+
 export function AdminInquiries({ hideHeader = false }) {
   const { searchQuery, setSearchQuery } = useAdmin();
   const queryClient = useQueryClient();
@@ -19,20 +34,11 @@ export function AdminInquiries({ hideHeader = false }) {
   // Workspace tabs: 'active' (Inquiries Pipeline), 'config' (Storefront Form Config)
   const [currentWorkspace, setCurrentWorkspace] = useState('active');
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [formConfigActions, setFormConfigActions] = useState(null);
 
-  // ─── PAGINATION & FILTERS ───
-  const [page, setPage] = useState(1);
-  const limit = 999999;
-  const [statusFilter, setStatusFilter] = useState('All');
+  // Sorting & Drawer State (Strictly separated from filter predicates)
   const [sortBy, setSortBy] = useState('Newest first');
-  const [typeFilter, setTypeFilter] = useState('All');
-  const [priorityFilter, setPriorityFilter] = useState('All');
   const [showFiltersMenu, setShowFiltersMenu] = useState(false);
-
-  // Reset page when filters change
-  useEffect(() => {
-    setPage(1);
-  }, [searchQuery, statusFilter, typeFilter, priorityFilter, sortBy]);
 
   // ─── DYNAMIC FORM OPTIONS ───
   const [cmsConfig, setCmsConfig] = useState(null);
@@ -51,27 +57,32 @@ export function AdminInquiries({ hideHeader = false }) {
     isLoading: loading,
     refetch,
   } = useQuery({
-    queryKey: ['adminCustomOrders', page, limit, statusFilter, searchQuery],
+    queryKey: ['adminCustomOrders'],
     queryFn: () =>
       customOrderService.adminGetAll({
-        page,
-        limit,
-        status: statusFilter === 'All' ? undefined : statusFilter,
-        search: searchQuery,
+        limit: 999999,
         archived: 'false',
       }),
-    keepPreviousData: true,
   });
 
   const rawOrders = useMemo(() => ordersData?.data?.items || ordersData?.items || [], [ordersData]);
-  const totalPages = ordersData?.data?.totalPages || ordersData?.totalPages || 1;
-  const totalItems = ordersData?.data?.total || ordersData?.total || 0;
 
   const { data: _configRes } = useQuery({
     queryKey: ['adminCustomOrderConfig'],
     queryFn: () => customOrderService.getConfig(),
     onSuccess: (res) => setCmsConfig(res?.success ? res.data : res),
   });
+
+  // ─── UNIFIED FILTER ENGINE ───
+  const {
+    filterState,
+    setFilter,
+    resetFilter: _resetFilter,
+    resetAllFilters,
+    activeChips,
+    activeFilterCount,
+    filteredItems: filteredOrders,
+  } = useAdminFilters(rawOrders, inquiryFilterConfig, searchQuery);
 
   const handleUpdatePriority = async (id, newPriority) => {
     try {
@@ -86,25 +97,10 @@ export function AdminInquiries({ hideHeader = false }) {
     }
   };
 
-  // ─── CLIENT-SIDE FILTER & SORT PIPELINE ───
-  const filteredAndSortedOrders = useMemo(() => {
-    let result = [...rawOrders];
+  // ─── SEPARATED MEMOIZED SORT PIPELINE ───
+  const sortedOrders = useMemo(() => {
+    const result = [...filteredOrders];
 
-    // Filter by Type
-    if (typeFilter !== 'All') {
-      result = result.filter(
-        (o) => (o.customOrderType || '').toLowerCase() === typeFilter.toLowerCase(),
-      );
-    }
-
-    // Filter by Priority
-    if (priorityFilter !== 'All') {
-      result = result.filter(
-        (o) => (o.priority || 'low').toLowerCase() === priorityFilter.toLowerCase(),
-      );
-    }
-
-    // Sort
     result.sort((a, b) => {
       if (sortBy === 'Newest first') {
         return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
@@ -128,16 +124,7 @@ export function AdminInquiries({ hideHeader = false }) {
     });
 
     return result;
-  }, [rawOrders, typeFilter, priorityFilter, sortBy]);
-
-  // Active filter count for badge
-  const activeCount = useMemo(() => {
-    let count = 0;
-    if (typeFilter !== 'All') count++;
-    if (priorityFilter !== 'All') count++;
-    if (sortBy !== 'Newest first') count++;
-    return count;
-  }, [typeFilter, priorityFilter, sortBy]);
+  }, [filteredOrders, sortBy]);
 
   // ─── EXPORT TO CSV ───
   const handleExportCSV = () => {
@@ -160,7 +147,7 @@ export function AdminInquiries({ hideHeader = false }) {
       'Created At',
     ];
 
-    const rows = filteredAndSortedOrders.map((o) => [
+    const rows = sortedOrders.map((o) => [
       `"${o.customOrderNumber || o._id}"`,
       `"${(o.customerName || '').replace(/"/g, '""')}"`,
       `"${o.customerPhone || o.phone || ''}"`,
@@ -202,7 +189,7 @@ export function AdminInquiries({ hideHeader = false }) {
   }, [rawOrders]);
 
   if (loading) {
-    return <AdminCustomOrdersSkeleton />;
+    return <AdminCustomOrdersSkeleton hideHeader={hideHeader} />;
   }
 
   return (
@@ -244,7 +231,42 @@ export function AdminInquiries({ hideHeader = false }) {
 
       {/* Sticky Search & Actions Bar: Exactly 42px Standard (Identical to Orders & Rentals) */}
       <div className="sticky top-[var(--admin-topbar-height,56px)] z-20 -my-2 py-2.5 bg-[var(--admin-bg)]/95 backdrop-blur-md">
-        <motion.div variants={fadeUp} className="flex flex-row items-center gap-2 w-full">
+        {/* Mobile Workspace Toggle: Positioned above the search bar on mobile */}
+        <div className="sm:hidden flex items-center gap-1 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] p-0.5 mb-2 w-full">
+          <button
+            type="button"
+            onClick={() => setCurrentWorkspace('active')}
+            className={`flex-1 py-1.5 px-2 rounded-[3px] text-[11.5px] font-semibold transition-all text-center flex items-center justify-center gap-1.5 ${
+              currentWorkspace === 'active'
+                ? 'bg-white dark:bg-stone-800 text-[var(--admin-accent)] shadow-xs'
+                : 'text-[var(--admin-text-secondary)]'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[15px]">receipt_long</span>
+            <span>Inquiries</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setCurrentWorkspace('config')}
+            className={`flex-1 py-1.5 px-2 rounded-[3px] text-[11.5px] font-semibold transition-all text-center flex items-center justify-center gap-1.5 ${
+              currentWorkspace === 'config'
+                ? 'bg-white dark:bg-stone-800 text-[var(--admin-accent)] shadow-xs'
+                : 'text-[var(--admin-text-secondary)]'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[15px]">edit_note</span>
+            <span>Form Builder</span>
+          </button>
+        </div>
+
+        {/* Search & Actions Bar:
+            - On Mobile: only shown when in 'active' (Inquiries) workspace (hidden when in Form Builder)
+            - On Desktop: always shown
+        */}
+        <motion.div
+          variants={fadeUp}
+          className={`${currentWorkspace === 'config' ? 'hidden sm:flex' : 'flex'} flex-row items-center gap-2 w-full`}
+        >
           {/* Search Bar */}
           <div className="relative flex-1 min-w-0 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] flex items-center px-2.5 sm:px-3 h-[42px] min-h-[42px] max-h-[42px]">
             <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] shrink-0">
@@ -305,7 +327,7 @@ export function AdminInquiries({ hideHeader = false }) {
               <button
                 onClick={() => setShowFiltersMenu(!showFiltersMenu)}
                 className={`h-[42px] min-h-[42px] max-h-[42px] px-2.5 sm:px-3.5 flex items-center justify-center gap-1.5 rounded-[4px] border transition-colors shrink-0 cursor-pointer ${
-                  showFiltersMenu || activeCount > 0
+                  showFiltersMenu || activeFilterCount > 0
                     ? 'bg-[var(--admin-accent)] text-white border-transparent shadow-sm'
                     : 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] border-[var(--admin-border)] hover:border-[var(--admin-border-strong)]'
                 }`}
@@ -313,109 +335,119 @@ export function AdminInquiries({ hideHeader = false }) {
               >
                 <span className="material-symbols-outlined text-[18px]">tune</span>
                 <span className="font-semibold text-[13px] hidden sm:inline">
-                  {activeCount > 0 ? `${activeCount} Filters` : 'Filters'}
+                  {activeFilterCount > 0 ? `${activeFilterCount} Filters` : 'Filters'}
                 </span>
-                {activeCount > 0 && (
+                {activeFilterCount > 0 && (
                   <span className="w-4 h-4 rounded-full bg-white text-[var(--admin-accent)] text-[10px] font-bold flex items-center justify-center">
-                    {activeCount}
+                    {activeFilterCount}
                   </span>
                 )}
               </button>
 
-              <AnimatePresence>
-                {showFiltersMenu && (
-                  <>
-                    <div className="fixed inset-0 z-30" onClick={() => setShowFiltersMenu(false)} />
-                    <motion.div
-                      initial={{ opacity: 0, y: 8, scale: 0.98 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 8, scale: 0.98 }}
-                      className="absolute right-0 top-full mt-2 w-[300px] bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] shadow-xl z-40 p-4 text-left"
-                    >
-                      <div className="flex items-center justify-between pb-3 border-b border-[var(--admin-border-subtle)]">
-                        <span className="text-[12px] font-bold text-[var(--admin-text-primary)] flex items-center gap-1.5">
-                          <span className="material-symbols-outlined text-[16px]">filter_list</span>
-                          Inquiry Filters
-                        </span>
-                        <button
-                          onClick={() => {
-                            setTypeFilter('All');
-                            setPriorityFilter('All');
-                            setSortBy('Newest first');
-                          }}
-                          className="text-[11px] text-[var(--admin-accent)] hover:underline cursor-pointer"
-                        >
-                          Reset
-                        </button>
-                      </div>
+              <AdminFilterDrawer
+                isOpen={showFiltersMenu}
+                onClose={() => setShowFiltersMenu(false)}
+                title="Filter Inquiries"
+                icon="tune"
+                activeCount={activeFilterCount}
+                onClearAll={resetAllFilters}
+                clearAllLabel="Reset"
+                onApply={() => setShowFiltersMenu(false)}
+              >
+                {/* Sort By (Separated from filter state) */}
+                <AdminFilterSection title="Sort Order">
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                  >
+                    <option value="Newest first">Newest first</option>
+                    <option value="Oldest first">Oldest first</option>
+                    <option value="Event date ↑">Event date (Soonest first)</option>
+                    <option value="Event date ↓">Event date (Latest first)</option>
+                    <option value="Quote value ↑">Quote value (Low to High)</option>
+                    <option value="Quote value ↓">Quote value (High to Low)</option>
+                  </select>
+                </AdminFilterSection>
 
-                      <div className="py-3 space-y-3.5">
-                        {/* Sort By */}
-                        <div>
-                          <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
-                            Sort By
-                          </label>
-                          <select
-                            value={sortBy}
-                            onChange={(e) => setSortBy(e.target.value)}
-                            className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
-                          >
-                            <option value="Newest first">Newest first</option>
-                            <option value="Oldest first">Oldest first</option>
-                            <option value="Event date ↑">Event date ↑</option>
-                            <option value="Event date ↓">Event date ↓</option>
-                            <option value="Quote value ↑">Quote value ↑</option>
-                            <option value="Quote value ↓">Quote value ↓</option>
-                          </select>
-                        </div>
+                {/* Pipeline Stage */}
+                <AdminFilterSection title="Pipeline Stage">
+                  <select
+                    value={filterState.status || 'All'}
+                    onChange={(e) => setFilter('status', e.target.value)}
+                    className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                  >
+                    <option value="All">All Stages</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Reviewing">Reviewing</option>
+                    <option value="Quote Sent">Quote Sent</option>
+                    <option value="Approved">Approved</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Ready">Ready</option>
+                    <option value="Delivered">Delivered</option>
+                    <option value="Cancelled">Cancelled</option>
+                  </select>
+                </AdminFilterSection>
 
-                        {/* Inquiry Type */}
-                        <div>
-                          <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
-                            Inquiry Type
-                          </label>
-                          <select
-                            value={typeFilter}
-                            onChange={(e) => setTypeFilter(e.target.value)}
-                            className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
-                          >
-                            <option value="All">All Types</option>
-                            <option value="product">Product Customization</option>
-                            <option value="event">Event Setup</option>
-                            <option value="custom">Bespoke Design</option>
-                          </select>
-                        </div>
+                {/* Decor Type */}
+                <AdminFilterSection title="Decor / Order Type">
+                  <select
+                    value={filterState.type || 'All'}
+                    onChange={(e) => setFilter('type', e.target.value)}
+                    className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                  >
+                    <option value="All">All Types</option>
+                    <option value="product">Product Customization</option>
+                    <option value="event">Event Setup</option>
+                    <option value="custom">Bespoke Design</option>
+                  </select>
+                </AdminFilterSection>
 
-                        {/* Priority */}
-                        <div>
-                          <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
-                            Priority Level
-                          </label>
-                          <select
-                            value={priorityFilter}
-                            onChange={(e) => setPriorityFilter(e.target.value)}
-                            className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
-                          >
-                            <option value="All">All Priorities</option>
-                            <option value="high">High Priority</option>
-                            <option value="medium">Medium Priority</option>
-                            <option value="low">Low Priority</option>
-                          </select>
-                        </div>
-                      </div>
+                {/* Priority */}
+                <AdminFilterSection title="Priority Level">
+                  <select
+                    value={filterState.priority || 'All'}
+                    onChange={(e) => setFilter('priority', e.target.value)}
+                    className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                  >
+                    <option value="All">All Priorities</option>
+                    <option value="high">High Priority</option>
+                    <option value="medium">Medium Priority</option>
+                    <option value="low">Low Priority</option>
+                  </select>
+                </AdminFilterSection>
 
-                      <div className="pt-3 border-t border-[var(--admin-border-subtle)]">
-                        <button
-                          onClick={() => setShowFiltersMenu(false)}
-                          className="w-full py-2 bg-[var(--admin-accent)] hover:bg-[var(--admin-accent-dark)] text-white text-[12px] font-bold rounded-[4px] transition-colors cursor-pointer"
-                        >
-                          Apply Filters
-                        </button>
-                      </div>
-                    </motion.div>
-                  </>
-                )}
-              </AnimatePresence>
+                {/* Event Proximity */}
+                <AdminFilterSection title="Event Proximity">
+                  <select
+                    value={filterState.proximity || 'All'}
+                    onChange={(e) => setFilter('proximity', e.target.value)}
+                    className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                  >
+                    <option value="All">All Timelines</option>
+                    <option value="urgent">Urgent (&lt;7 Days)</option>
+                    <option value="this_month">This Month (8–30 Days)</option>
+                    <option value="future">Future (&gt;30 Days)</option>
+                  </select>
+                </AdminFilterSection>
+
+                {/* Budget Range */}
+                <AdminFilterSection title="Quotation / Budget Range">
+                  <AdminRangeFilter
+                    minValue={filterState.budgetRange?.min ?? ''}
+                    maxValue={filterState.budgetRange?.max ?? ''}
+                    onMinChange={(v) =>
+                      setFilter('budgetRange', { ...filterState.budgetRange, min: v })
+                    }
+                    onMaxChange={(v) =>
+                      setFilter('budgetRange', { ...filterState.budgetRange, max: v })
+                    }
+                    minPlaceholder="Min ₹"
+                    maxPlaceholder="Max ₹"
+                    prefix="₹"
+                  />
+                </AdminFilterSection>
+              </AdminFilterDrawer>
             </div>
 
             {/* Export Button */}
@@ -430,33 +462,16 @@ export function AdminInquiries({ hideHeader = false }) {
           </div>
         </motion.div>
 
-        {/* Mobile Workspace Toggle */}
-        <div className="sm:hidden flex items-center gap-1 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] p-0.5 mt-2 w-full">
-          <button
-            type="button"
-            onClick={() => setCurrentWorkspace('active')}
-            className={`flex-1 py-1 px-2 rounded-[3px] text-[11px] font-semibold transition-all text-center flex items-center justify-center gap-1.5 ${
-              currentWorkspace === 'active'
-                ? 'bg-white dark:bg-stone-800 text-[var(--admin-accent)] shadow-xs'
-                : 'text-[var(--admin-text-secondary)]'
-            }`}
-          >
-            <span className="material-symbols-outlined text-[14px]">receipt_long</span>
-            <span>Inquiries</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setCurrentWorkspace('config')}
-            className={`flex-1 py-1 px-2 rounded-[3px] text-[11px] font-semibold transition-all text-center flex items-center justify-center gap-1.5 ${
-              currentWorkspace === 'config'
-                ? 'bg-white dark:bg-stone-800 text-[var(--admin-accent)] shadow-xs'
-                : 'text-[var(--admin-text-secondary)]'
-            }`}
-          >
-            <span className="material-symbols-outlined text-[14px]">edit_note</span>
-            <span>Form Builder</span>
-          </button>
-        </div>
+        {/* Unified Active Filter Chips Row */}
+        {currentWorkspace === 'active' && (
+          <AdminActiveFilterChips
+            activeChips={activeChips}
+            onClearAll={resetAllFilters}
+            totalMatches={filteredOrders.length}
+            totalItems={rawOrders.length}
+            itemName="inquiries"
+          />
+        )}
       </div>
 
       <div className="space-y-6">
@@ -465,18 +480,26 @@ export function AdminInquiries({ hideHeader = false }) {
           <div className="space-y-6">
             <InquiriesMetrics stats={stats} />
 
-            <InquiriesTable
-              orders={filteredAndSortedOrders}
-              statusFilter={statusFilter}
-              setStatusFilter={setStatusFilter}
-              setSelectedOrder={setSelectedOrder}
-              handleUpdatePriority={handleUpdatePriority}
-              refetchOrders={refetch}
-              page={page}
-              setPage={setPage}
-              totalPages={totalPages}
-              totalItems={totalItems}
-            />
+            {rawOrders.length > 0 && filteredOrders.length === 0 ? (
+              <AdminFilterEmptyState
+                title="No matching inquiries"
+                message="No inquiries match your current filter and search criteria."
+                onReset={resetAllFilters}
+              />
+            ) : (
+              <InquiriesTable
+                orders={sortedOrders}
+                statusFilter={filterState.status || 'All'}
+                setStatusFilter={(s) => setFilter('status', s)}
+                setSelectedOrder={setSelectedOrder}
+                handleUpdatePriority={handleUpdatePriority}
+                refetchOrders={refetch}
+                page={1}
+                setPage={() => {}}
+                totalPages={1}
+                totalItems={filteredOrders.length}
+              />
+            )}
 
             <InquiryDetailDrawer
               selectedOrder={selectedOrder}
@@ -488,9 +511,13 @@ export function AdminInquiries({ hideHeader = false }) {
         )}
 
         {/* ─── WORKSPACE: STOREFRONT FORM CONFIG ─── */}
-        {currentWorkspace === 'config' && (
-          <AdminCustomOrderConfig cmsConfig={cmsConfig} setCmsConfig={setCmsConfig} />
-        )}
+        <div className={currentWorkspace === 'config' ? 'block' : 'hidden'}>
+          <AdminCustomOrderConfig
+            cmsConfig={cmsConfig}
+            setCmsConfig={setCmsConfig}
+            onActionsChange={setFormConfigActions}
+          />
+        </div>
       </div>
     </motion.div>
   );

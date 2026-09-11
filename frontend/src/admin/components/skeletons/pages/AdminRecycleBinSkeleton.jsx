@@ -29,8 +29,8 @@ export function AdminRecycleBinSkeleton() {
         </div>
       </div>
 
-      {/* 3. Deleted Items Table */}
-      <div className="admin-card p-0 overflow-hidden border border-[var(--admin-border)] shadow-xs rounded-[4px]">
+      {/* 3. Deleted Items Table (Desktop) */}
+      <div className="hidden md:block admin-card p-0 overflow-hidden border border-[var(--admin-border)] shadow-xs rounded-[4px]">
         <table className="admin-table w-full text-left">
           <thead>
             <tr className="border-b border-[var(--admin-border-subtle)] bg-[var(--admin-surface-muted)]">
@@ -89,6 +89,34 @@ export function AdminRecycleBinSkeleton() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Deleted Items Cards */}
+      <div className="md:hidden space-y-3">
+        {[1, 2, 3, 4].map((i) => (
+          <div
+            key={i}
+            className="rounded-[4px] p-3.5 shadow-xs border border-[var(--admin-border)] bg-[var(--admin-surface)] space-y-2.5"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <SkeletonBox width="36px" height="36px" rounded="sm" className="shrink-0" />
+                <div className="space-y-1">
+                  <SkeletonTextLine width="130px" height="13px" />
+                  <SkeletonTextLine width="80px" height="10px" />
+                </div>
+              </div>
+              <SkeletonBadge width="60px" height="18px" />
+            </div>
+            <div className="flex items-center justify-between pt-2 border-t border-[var(--admin-border-subtle)]">
+              <SkeletonTextLine width="90px" height="11px" />
+              <div className="flex items-center gap-1.5">
+                <SkeletonBox width="60px" height="26px" rounded="sm" />
+                <SkeletonBox width="26px" height="26px" rounded="sm" />
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

@@ -44,27 +44,69 @@ export function SkeletonChart({ className = '', height = '280px' }) {
 }
 
 export function SkeletonTable({ rows = 5, cols = 4, className = '' }) {
+  const mobileCount = Math.min(rows, 6);
+
   return (
-    <div className={`admin-card overflow-hidden ${className}`}>
-      <div className="p-4 border-b border-[var(--admin-border-subtle)] bg-[var(--admin-bg-subtle)]">
-        <div className="flex gap-4">
-          {Array.from({ length: cols }).map((_, i) => (
-            <AdminSkeleton key={i} className="h-3 rounded flex-1 max-w-[120px]" />
-          ))}
-        </div>
-      </div>
-      {Array.from({ length: rows }).map((_, r) => (
-        <div key={r} className="p-4 border-b border-[var(--admin-border-subtle)] last:border-b-0">
-          <div className="flex gap-4 items-center">
+    <div className={className}>
+      {/* Desktop Table View Skeleton */}
+      <div className="hidden md:block admin-card overflow-hidden">
+        <div className="p-4 border-b border-[var(--admin-border-subtle)] bg-[var(--admin-bg-subtle)]">
+          <div className="flex gap-4">
             {Array.from({ length: cols }).map((_, i) => (
-              <AdminSkeleton
-                key={i}
-                className={`h-4 rounded flex-1 ${i === 0 ? 'max-w-[100px]' : i === cols - 1 ? 'max-w-[80px]' : ''}`}
-              />
+              <AdminSkeleton key={i} className="h-3 rounded flex-1 max-w-[120px]" />
             ))}
           </div>
         </div>
-      ))}
+        {Array.from({ length: rows }).map((_, r) => (
+          <div key={r} className="p-4 border-b border-[var(--admin-border-subtle)] last:border-b-0">
+            <div className="flex gap-4 items-center">
+              {Array.from({ length: cols }).map((_, i) => (
+                <AdminSkeleton
+                  key={i}
+                  className={`h-4 rounded flex-1 ${i === 0 ? 'max-w-[100px]' : i === cols - 1 ? 'max-w-[80px]' : ''}`}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Mobile Card List Skeleton */}
+      <div className="md:hidden flex flex-col gap-3">
+        {Array.from({ length: mobileCount }).map((_, r) => (
+          <div
+            key={r}
+            className="admin-card p-3.5 rounded-[4px] border border-[var(--admin-border)] shadow-xs bg-[var(--admin-surface)] flex flex-col gap-3"
+          >
+            {/* Header: ID / Title + Badge */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 flex-1">
+                <AdminSkeleton className="w-24 h-4 rounded" />
+                <AdminSkeleton className="w-12 h-3.5 rounded-[4px]" />
+              </div>
+              <AdminSkeleton className="w-16 h-5 rounded-full shrink-0" />
+            </div>
+
+            {/* Middle: Item / Info Block */}
+            <div className="bg-[var(--admin-bg-subtle)] p-2.5 rounded-[4px] border border-[var(--admin-border-subtle)] flex items-center gap-3">
+              <AdminSkeleton className="w-11 h-11 rounded-[4px] shrink-0" />
+              <div className="flex-1 space-y-1.5 min-w-0">
+                <AdminSkeleton className="w-3/4 h-3.5 rounded" />
+                <AdminSkeleton className="w-1/2 h-3 rounded" />
+              </div>
+            </div>
+
+            {/* Footer: Value / Metric + Action */}
+            <div className="flex items-center justify-between pt-1 border-t border-[var(--admin-border-subtle)]">
+              <div className="space-y-1">
+                <AdminSkeleton className="w-16 h-4 rounded" />
+                <AdminSkeleton className="w-20 h-2.5 rounded" />
+              </div>
+              <AdminSkeleton className="w-20 h-7 rounded-[4px] shrink-0" />
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -386,7 +428,7 @@ export function SkeletonToolbar({
           <AdminSkeleton className="w-1/3 h-3.5 rounded" />
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          {hasFilters && <SkeletonButton width="w-24 sm:w-28" />}
+          {hasFilters && <SkeletonButton width="w-10 sm:w-28" />}
           {hasExport && <SkeletonButton width="w-10 sm:w-28" />}
           {hasSecondary && <SkeletonButton width="w-10 sm:w-24" />}
         </div>

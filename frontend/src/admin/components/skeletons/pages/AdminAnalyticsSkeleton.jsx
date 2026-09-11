@@ -20,7 +20,7 @@ export function AdminAnalyticsSkeleton() {
         </div>
         <div className="flex items-center gap-2 overflow-x-auto">
           <div className="bg-[var(--admin-surface-muted)] p-1 rounded-[4px] border border-[var(--admin-border)] flex items-center gap-1 h-[42px]">
-            {['7D', '30D', '90D', '12M', 'ALL'].map((p) => (
+            {['7D', '30D', '12M', 'YTD', 'ALL'].map((p) => (
               <AdminSkeleton key={p} className="w-10 h-7 rounded-[3px]" />
             ))}
           </div>

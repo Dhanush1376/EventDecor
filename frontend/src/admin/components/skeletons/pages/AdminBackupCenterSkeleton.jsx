@@ -86,48 +86,70 @@ export function AdminBackupCenterSkeleton() {
           <SkeletonBadge width="65px" height="20px" />
         </div>
 
-        <table className="admin-table w-full text-left">
-          <thead>
-            <tr className="border-b border-[var(--admin-border-subtle)] bg-[var(--admin-surface-muted)]">
-              <th className="py-3 px-4">
-                <SkeletonTextLine width="90px" height="11px" />
-              </th>
-              <th className="py-3 px-4">
-                <SkeletonTextLine width="60px" height="11px" />
-              </th>
-              <th className="py-3 px-4">
-                <SkeletonTextLine width="75px" height="11px" />
-              </th>
-              <th className="py-3 px-4">
-                <SkeletonTextLine width="80px" height="11px" />
-              </th>
-              <th className="py-3 px-4 text-right">
-                <SkeletonTextLine width="50px" height="11px" className="ml-auto" />
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[var(--admin-border-subtle)]">
-            {[1, 2, 3, 4].map((i) => (
-              <tr key={i}>
-                <td className="py-3.5 px-4">
-                  <SkeletonTextLine width="140px" height="13px" />
-                </td>
-                <td className="py-3.5 px-4">
-                  <SkeletonBadge width="60px" height="18px" />
-                </td>
-                <td className="py-3.5 px-4">
-                  <SkeletonTextLine width="70px" height="13px" />
-                </td>
-                <td className="py-3.5 px-4">
-                  <SkeletonBadge width="75px" height="20px" />
-                </td>
-                <td className="py-3.5 px-4 text-right">
-                  <SkeletonBox width="65px" height="26px" rounded="sm" className="ml-auto" />
-                </td>
+        {/* Desktop Table View */}
+        <div className="hidden md:block">
+          <table className="admin-table w-full text-left">
+            <thead>
+              <tr className="border-b border-[var(--admin-border-subtle)] bg-[var(--admin-surface-muted)]">
+                <th className="py-3 px-4">
+                  <SkeletonTextLine width="90px" height="11px" />
+                </th>
+                <th className="py-3 px-4">
+                  <SkeletonTextLine width="60px" height="11px" />
+                </th>
+                <th className="py-3 px-4">
+                  <SkeletonTextLine width="75px" height="11px" />
+                </th>
+                <th className="py-3 px-4">
+                  <SkeletonTextLine width="80px" height="11px" />
+                </th>
+                <th className="py-3 px-4 text-right">
+                  <SkeletonTextLine width="50px" height="11px" className="ml-auto" />
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-[var(--admin-border-subtle)]">
+              {[1, 2, 3, 4].map((i) => (
+                <tr key={i}>
+                  <td className="py-3.5 px-4">
+                    <SkeletonTextLine width="140px" height="13px" />
+                  </td>
+                  <td className="py-3.5 px-4">
+                    <SkeletonBadge width="60px" height="18px" />
+                  </td>
+                  <td className="py-3.5 px-4">
+                    <SkeletonTextLine width="70px" height="13px" />
+                  </td>
+                  <td className="py-3.5 px-4">
+                    <SkeletonBadge width="75px" height="20px" />
+                  </td>
+                  <td className="py-3.5 px-4 text-right">
+                    <SkeletonBox width="65px" height="26px" rounded="sm" className="ml-auto" />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Mobile Cards View */}
+        <div className="md:hidden p-3 space-y-3">
+          {[1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className="rounded-[4px] p-3.5 shadow-xs border border-[var(--admin-border-subtle)] bg-[var(--admin-surface)] space-y-2"
+            >
+              <div className="flex items-center justify-between">
+                <SkeletonTextLine width="130px" height="13px" />
+                <SkeletonBadge width="60px" height="18px" />
+              </div>
+              <div className="flex items-center justify-between pt-1 border-t border-[var(--admin-border-subtle)]">
+                <SkeletonTextLine width="80px" height="11px" />
+                <SkeletonBadge width="70px" height="18px" />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

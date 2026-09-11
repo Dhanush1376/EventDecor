@@ -36,7 +36,7 @@ export function BookingFinancialsCard({ booking, onOpenPaymentModal, onDeletePay
           <span className="material-symbols-outlined text-[18px] text-[var(--admin-accent)]">
             account_balance
           </span>
-          Financials & Settlement
+          Financials
         </h3>
         <span
           className={`text-[10px] px-2 py-0.5 rounded-[4px] font-bold uppercase tracking-wider border shadow-2xs ${
@@ -51,18 +51,18 @@ export function BookingFinancialsCard({ booking, onOpenPaymentModal, onDeletePay
         </span>
       </div>
 
-      <div className="p-4 sm:p-5 space-y-4">
+      <div className="p-4 sm:p-5 space-y-3.5">
         {/* Bill Summary Breakdown */}
         <div className="space-y-2 text-xs">
-          <div className="flex justify-between items-center text-[13px]">
-            <span className="text-[var(--admin-text-secondary)]">Rental / Base Package</span>
+          <div className="flex justify-between items-center text-[12.5px]">
+            <span className="text-[var(--admin-text-secondary)]">Base Package</span>
             <span className="font-semibold text-[var(--admin-text-primary)] font-mono">
               ₹{rentalFee.toLocaleString('en-IN')}
             </span>
           </div>
 
           {(setupCharges > 0 || transportCharges > 0) && (
-            <div className="flex justify-between items-center text-[13px]">
+            <div className="flex justify-between items-center text-[12.5px]">
               <span className="text-[var(--admin-text-secondary)]">Setup & Transport</span>
               <span className="font-semibold text-[var(--admin-text-primary)] font-mono">
                 ₹{(setupCharges + transportCharges).toLocaleString('en-IN')}
@@ -71,8 +71,8 @@ export function BookingFinancialsCard({ booking, onOpenPaymentModal, onDeletePay
           )}
 
           {addOns > 0 && (
-            <div className="flex justify-between items-center text-[13px]">
-              <span className="text-[var(--admin-text-secondary)]">Add-On Elements</span>
+            <div className="flex justify-between items-center text-[12.5px]">
+              <span className="text-[var(--admin-text-secondary)]">Add-Ons</span>
               <span className="font-semibold text-[var(--admin-text-primary)] font-mono">
                 ₹{addOns.toLocaleString('en-IN')}
               </span>
@@ -80,7 +80,7 @@ export function BookingFinancialsCard({ booking, onOpenPaymentModal, onDeletePay
           )}
 
           {travelExpense > 0 && (
-            <div className="flex justify-between items-center text-[13px]">
+            <div className="flex justify-between items-center text-[12.5px]">
               <span className="text-[var(--admin-text-secondary)]">Travel Expenses</span>
               <span className="font-semibold text-[var(--admin-text-primary)] font-mono">
                 ₹{travelExpense.toLocaleString('en-IN')}
@@ -88,26 +88,26 @@ export function BookingFinancialsCard({ booking, onOpenPaymentModal, onDeletePay
             </div>
           )}
 
-          <div className="flex justify-between items-center pt-2 border-t border-[var(--admin-border-subtle)] text-[14px]">
-            <span className="font-bold text-[var(--admin-text-primary)]">Total Event Price</span>
-            <span className="font-extrabold text-[var(--admin-text-primary)] font-mono text-[15px]">
+          <div className="flex justify-between items-center pt-2 border-t border-[var(--admin-border-subtle)] text-[13.5px]">
+            <span className="font-bold text-[var(--admin-text-primary)]">Total Price</span>
+            <span className="font-extrabold text-[var(--admin-text-primary)] font-mono text-[14.5px]">
               ₹{totalPrice.toLocaleString('en-IN')}
             </span>
           </div>
 
           {depositAmount > 0 && (
             <div className="flex justify-between items-center text-[12px] text-stone-500 dark:text-stone-400">
-              <span>Required Security Deposit</span>
+              <span>Security Deposit</span>
               <span className="font-mono font-medium">
                 ₹{depositAmount.toLocaleString('en-IN')}
               </span>
             </div>
           )}
 
-          <div className="flex justify-between items-center text-[13px] pt-1 border-t border-[var(--admin-border-subtle)]">
+          <div className="flex justify-between items-center text-[12.5px] pt-1 border-t border-[var(--admin-border-subtle)]">
             <span className="text-emerald-700 dark:text-emerald-400 font-medium flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-              Amount Paid
+              Paid
             </span>
             <span className="font-bold text-emerald-700 dark:text-emerald-400 font-mono">
               ₹{totalPaid.toLocaleString('en-IN')}
@@ -115,37 +115,39 @@ export function BookingFinancialsCard({ booking, onOpenPaymentModal, onDeletePay
           </div>
         </div>
 
-        {/* Highlighted Balance Due Banner (Matches Modal & Order Design) */}
-        <div className="flex justify-between items-center px-3.5 py-2.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/40 rounded-[4px] shadow-2xs">
-          <span className="font-bold text-[12.5px] text-amber-900 dark:text-amber-200">
-            Pending Balance Due
+        {/* Highlighted Balance Due Banner */}
+        <div className="flex justify-between items-center px-3.5 py-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/40 rounded-[4px] shadow-2xs">
+          <span className="font-bold text-[12px] text-amber-900 dark:text-amber-200">
+            Balance Due
           </span>
-          <span className="font-extrabold text-amber-700 dark:text-amber-400 font-mono text-[16px]">
+          <span className="font-extrabold text-amber-700 dark:text-amber-400 font-mono text-[15px]">
             ₹{balanceDue.toLocaleString('en-IN')}
           </span>
         </div>
 
         {/* Payment History Ledger */}
-        <div className="pt-3 border-t border-[var(--admin-border-subtle)] space-y-2">
+        <div className="pt-2.5 border-t border-[var(--admin-border-subtle)] space-y-2">
           <div className="flex items-center justify-between">
-            <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block">
-              Payment Ledger
-            </label>
-            <span className="text-[11px] text-[var(--admin-text-tertiary)]">
-              {successfulPayments.length} Record{successfulPayments.length === 1 ? '' : 's'}
-            </span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10.5px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider">
+                Payments
+              </span>
+              <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-[var(--admin-surface-muted)] text-[var(--admin-text-tertiary)] border border-[var(--admin-border-subtle)]">
+                {successfulPayments.length}
+              </span>
+            </div>
           </div>
 
           {booking.payments && booking.payments.length > 0 ? (
-            <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
+            <div className="space-y-1.5 max-h-48 overflow-y-auto custom-scrollbar">
               {booking.payments.map((payment, idx) => (
                 <div
                   key={idx}
-                  className="bg-[var(--admin-surface-muted)] dark:bg-[#1f1e1b] border border-[var(--admin-border-subtle)] rounded-[4px] p-2.5 text-[11px] space-y-1"
+                  className="bg-[var(--admin-surface-muted)] dark:bg-[#1f1e1b] border border-[var(--admin-border-subtle)] rounded-[4px] p-2 text-[11px] space-y-1"
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold font-mono text-emerald-700 dark:text-emerald-400 text-[13px]">
+                      <span className="font-bold font-mono text-emerald-700 dark:text-emerald-400 text-[12.5px]">
                         ₹{(payment.amount || 0).toLocaleString('en-IN')}
                       </span>
                       <span className="text-[10px] text-[var(--admin-text-tertiary)]">
@@ -165,7 +167,7 @@ export function BookingFinancialsCard({ booking, onOpenPaymentModal, onDeletePay
                         className="text-stone-400 hover:text-red-600 transition-colors p-0.5 cursor-pointer"
                         title="Delete Payment Record"
                       >
-                        <span className="material-symbols-outlined text-[15px]">delete</span>
+                        <span className="material-symbols-outlined text-[14px]">delete</span>
                       </button>
                     )}
                   </div>
@@ -173,7 +175,7 @@ export function BookingFinancialsCard({ booking, onOpenPaymentModal, onDeletePay
                   <div className="flex justify-between items-center text-[10.5px] text-[var(--admin-text-secondary)]">
                     <span className="uppercase font-semibold">
                       {payment.paymentMethod || 'razorpay'} &bull;{' '}
-                      {payment.source === 'manual' ? 'Manual Counter' : 'Online Gateway'}
+                      {payment.source === 'manual' ? 'Counter' : 'Online'}
                     </span>
                     {payment.recordedBy && (
                       <span className="text-[var(--admin-text-tertiary)] italic">
@@ -194,23 +196,23 @@ export function BookingFinancialsCard({ booking, onOpenPaymentModal, onDeletePay
               ))}
             </div>
           ) : (
-            <p className="text-[11.5px] text-[var(--admin-text-tertiary)] italic p-2.5 bg-[var(--admin-surface-muted)] rounded-[4px] text-center">
-              No payments registered yet.
+            <p className="text-[11px] text-[var(--admin-text-tertiary)] italic py-1 text-center">
+              No payments recorded
             </p>
           )}
         </div>
 
-        {/* Record Payment Button (Standardized) */}
+        {/* Record Payment Button */}
         {balanceDue > 0 && (
           <button
             type="button"
             onClick={onOpenPaymentModal}
-            className="w-full h-10 rounded-[4px] bg-[var(--admin-surface)] hover:bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] text-[var(--admin-text-primary)] text-[12.5px] font-bold shadow-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
+            className="w-full h-9 rounded-[4px] bg-[var(--admin-surface)] hover:bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] text-[var(--admin-text-primary)] text-[12px] font-bold shadow-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
           >
-            <span className="material-symbols-outlined text-[17px] text-[var(--admin-accent)]">
+            <span className="material-symbols-outlined text-[16px] text-[var(--admin-accent)]">
               payments
             </span>
-            <span>Record Manual Payment</span>
+            <span>Record Payment</span>
           </button>
         )}
       </div>

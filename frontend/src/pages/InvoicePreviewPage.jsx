@@ -88,29 +88,159 @@ const sampleExtremeOrder = {
   totalAmount: 23444,
 };
 
+const sampleBalajiOrder = {
+  _id: '68bc449129031022',
+  orderId: '68bc449129031022',
+  invoiceNumber: 'INV-2026-000045',
+  invoice: {
+    number: 'INV-2026-000045',
+    issuedAt: new Date('2026-09-10'),
+  },
+  createdAt: new Date('2026-09-10'),
+  paymentMethod: 'UPI',
+  customer: 'Balaji Atmakuri',
+  shippingAddress: {
+    name: 'Balaji Atmakuri',
+    email: 'sakhisoaps@gmail.com',
+    phone: '9324546303',
+    address: 'Chiheru Khusropur Link Road, Law gate, Phagwara Tahsil, Punjab',
+    pincode: '144411',
+  },
+  store: {
+    displayName: 'Siri Arts & Crafts',
+    legalCompanyName: 'Premium Studio & Handicrafts',
+    gstin: '29AAAES9284D1ZX',
+    addressLine1: '#28-1-92, South Street, ONGOLE-523001,',
+    addressLine2: 'Prakasam District, Andhra Pradesh',
+    city: 'India',
+  },
+  items: [
+    {
+      title: 'Handmade Decorative Clay Diya Set',
+      quantity: 2,
+      price: 650,
+    },
+  ],
+  subtotal: 1300,
+  shippingFee: 0,
+  tax: {
+    taxableAmount: 1101.69,
+    cgst: 99.15,
+    sgst: 99.15,
+    totalTax: 198.31,
+    grandTotal: 1300,
+    currencySymbol: '₹',
+  },
+  totalAmount: 1300,
+};
+
+const sampleRentalBangleOrder = {
+  _id: '68bc88888888888888',
+  rentalOrderId: 'RNT-2026-000088',
+  orderId: 'RNT-2026-000088',
+  orderType: 'rental',
+  isPureRental: true,
+  productTitle: 'Bangle Ceremony Tray',
+  quantity: 2,
+  durationDays: 5,
+  rentalStartDate: new Date('2026-09-11'),
+  rentalEndDate: new Date('2026-09-16'),
+  rentalRate: {
+    rentalPrice: 799,
+    rentalDurationDays: 5,
+  },
+  rentalCharge: 1598,
+  securityDeposit: 1200,
+  deliveryCharge: 0,
+  tax: 243.76,
+  totalAmount: 1895,
+  paymentMethod: 'UPI',
+  customer: 'Balaji Atmakuri',
+  shippingAddress: {
+    name: 'Balaji Atmakuri',
+    email: 'sakhisoaps@gmail.com',
+    phone: '9876543210',
+    address: 'Chiheru Khusropur Link Road, Law gate, Phagwara Tahsil, Punjab',
+    pincode: '144411',
+  },
+  store: {
+    displayName: 'Siri Arts & Crafts',
+    legalCompanyName: 'Premium Studio & Handicrafts',
+    gstin: '29AAAES9284D1ZX',
+    addressLine1: '#28-1-92, South Street, ONGOLE-523001,',
+    addressLine2: 'Prakasam District, Andhra Pradesh',
+    city: 'India',
+  },
+  items: [
+    {
+      title: 'Bangle Ceremony Tray',
+      quantity: 2,
+      price: 1598, // Purchase/retail price passed by backend or order
+      rentalPrice: 799,
+      isRental: true,
+      type: 'rental',
+      rentalDurationDays: 5,
+    },
+  ],
+  taxSnap: {
+    taxableAmount: 1354.24,
+    cgst: 121.88,
+    sgst: 121.88,
+    totalTax: 243.76,
+    grandTotal: 1895,
+    subtotal: 1598,
+    currencySymbol: '₹',
+  },
+};
+
 export default function InvoicePreviewPage() {
-  const [useExtreme, setUseExtreme] = useState(false);
+  const [activeTab, setActiveTab] = useState('rental'); // 'rental' | 'balaji' | 'reference' | 'extreme'
   const [showModal, setShowModal] = useState(false);
-  const currentOrder = useExtreme ? sampleExtremeOrder : sampleReferenceOrder;
+  const currentOrder =
+    activeTab === 'rental'
+      ? sampleRentalBangleOrder
+      : activeTab === 'balaji'
+        ? sampleBalajiOrder
+        : activeTab === 'extreme'
+          ? sampleExtremeOrder
+          : sampleReferenceOrder;
 
   return (
     <div className="min-h-screen bg-neutral-100 py-6 px-2 sm:px-4 flex flex-col items-center">
       {/* Test Controls */}
       <div className="mb-4 flex items-center gap-3 bg-white p-2.5 rounded-full shadow-sm border border-neutral-200 flex-wrap justify-center">
         <button
-          id="btn-reference"
-          onClick={() => setUseExtreme(false)}
+          id="btn-rental"
+          onClick={() => setActiveTab('rental')}
           className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-            !useExtreme ? 'bg-black text-white' : 'bg-gray-100 text-gray-700'
+            activeTab === 'rental' ? 'bg-black text-white' : 'bg-gray-100 text-gray-700'
+          }`}
+        >
+          Rental Bangle Tray
+        </button>
+        <button
+          id="btn-balaji"
+          onClick={() => setActiveTab('balaji')}
+          className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+            activeTab === 'balaji' ? 'bg-black text-white' : 'bg-gray-100 text-gray-700'
+          }`}
+        >
+          Balaji Order
+        </button>
+        <button
+          id="btn-reference"
+          onClick={() => setActiveTab('reference')}
+          className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+            activeTab === 'reference' ? 'bg-black text-white' : 'bg-gray-100 text-gray-700'
           }`}
         >
           Reference Order
         </button>
         <button
           id="btn-extreme"
-          onClick={() => setUseExtreme(true)}
+          onClick={() => setActiveTab('extreme')}
           className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-            useExtreme ? 'bg-black text-white' : 'bg-gray-100 text-gray-700'
+            activeTab === 'extreme' ? 'bg-black text-white' : 'bg-gray-100 text-gray-700'
           }`}
         >
           Extreme Data

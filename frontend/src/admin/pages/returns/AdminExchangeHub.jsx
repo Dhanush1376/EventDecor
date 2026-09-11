@@ -9,10 +9,15 @@ import {
   EmptyState,
   SkeletonTable,
   AdminStatusPill,
+  AdminFilterDrawer,
   fadeUp,
   stagger,
+  smoothScrollCardIntoView,
 } from '../../components/AdminUIKit';
 import { isWithinPeriod } from '../../utils/dateFilters';
+import { useAdminFilters } from '../../components/filters/useAdminFilters';
+import { exchangeFilterConfig } from '../../components/filters/configs/exchangeFilterConfig';
+import { AdminActiveFilterChips } from '../../components/filters/AdminActiveFilterChips';
 
 import { useConfirm } from '../../../context/ConfirmProvider';
 import { useReturnManagement } from '../../hooks/useReturnManagement';
@@ -174,12 +179,19 @@ export default function AdminExchangeHub({ hideHeader = false }) {
   // View & Advanced Filter States (Matches AdminOrders)
   const [viewMode, setViewMode] = useState('table'); // 'table' | 'kanban'
   const [showFiltersMenu, setShowFiltersMenu] = useState(false);
-  const [savedView, setSavedView] = useState('All Exchanges');
   const [sortBy, setSortBy] = useState('Newest first');
-  const [statusFilter, setStatusFilter] = useState('All');
-  const [diffFilter, setDiffFilter] = useState('All'); // 'All' | 'zero' | 'collect' | 'refund'
-  const [dateFilter, setDateFilter] = useState('All Time');
-  const [customDateRange, setCustomDateRange] = useState({ from: '', to: '' });
+
+  const {
+    filteredItems: filteredExchangesBeforeSort,
+    filterState,
+    setFilterValue,
+    resetFilter,
+    resetAllFilters,
+    activeChips,
+    activeCount,
+    totalCount,
+    matchCount,
+  } = useAdminFilters(exchanges, exchangeFilterConfig, searchTerm);
   const [isMobile, setIsMobile] = useState(() =>
     typeof window !== 'undefined' ? window.innerWidth < 640 : false,
   );
@@ -193,54 +205,47 @@ export default function AdminExchangeHub({ hideHeader = false }) {
   const toggleExpandCard = (id) => {
     setExpandedCardIds((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      const isExpanding = !next.has(id);
+      if (isExpanding) {
+        next.add(id);
+        smoothScrollCardIntoView(`exchange-card-${id}`);
+      } else {
+        next.delete(id);
+      }
       return next;
     });
   };
 
   const handleSavedViewChange = (e) => {
     const view = e.target.value;
-    setSavedView(view);
+    setFilterValue('savedView', view);
     if (view === 'All Exchanges') {
-      setStatusFilter('All');
-      setDiffFilter('All');
+      setFilterValue('status', 'All');
+      setFilterValue('diff', 'All');
     } else if (view === 'Needs Attention') {
-      setStatusFilter('under_review');
-      setDiffFilter('All');
+      setFilterValue('status', 'under_review');
+      setFilterValue('diff', 'All');
     } else if (view === 'Pending Pickups') {
-      setStatusFilter('pickups');
-      setDiffFilter('All');
+      setFilterValue('status', 'pickups');
+      setFilterValue('diff', 'All');
     } else if (view === 'Replacement Dispatched') {
-      setStatusFilter('dispatched');
-      setDiffFilter('All');
+      setFilterValue('status', 'dispatched');
+      setFilterValue('diff', 'All');
     } else if (view === 'Payment Required') {
-      setStatusFilter('All');
-      setDiffFilter('collect');
+      setFilterValue('status', 'All');
+      setFilterValue('diff', 'collect');
     } else if (view === 'Completed') {
-      setStatusFilter('completed');
-      setDiffFilter('All');
+      setFilterValue('status', 'completed');
+      setFilterValue('diff', 'All');
     }
   };
 
   const handleResetAllFilters = () => {
-    setSavedView('All Exchanges');
+    resetAllFilters();
     setSortBy('Newest first');
-    setStatusFilter('All');
-    setDiffFilter('All');
-    setDateFilter('All Time');
-    setCustomDateRange({ from: '', to: '' });
   };
 
-  const activeFilterCount = useMemo(() => {
-    let count = 0;
-    if (savedView !== 'All Exchanges') count++;
-    if (sortBy !== 'Newest first') count++;
-    if (statusFilter !== 'All') count++;
-    if (diffFilter !== 'All') count++;
-    if (dateFilter !== 'All Time') count++;
-    return count;
-  }, [savedView, sortBy, statusFilter, diffFilter, dateFilter]);
+  const activeFilterCount = activeCount;
 
   const fetchExchanges = async () => {
     try {
@@ -644,125 +649,10 @@ export default function AdminExchangeHub({ hideHeader = false }) {
     toast.success('Exchanges exported successfully');
   };
 
+  // Separated Sorting Pipeline
   const filteredExchanges = useMemo(() => {
-    let result = [...exchanges];
+    let result = [...filteredExchangesBeforeSort];
 
-    // Search query
-    if (searchTerm && searchTerm.trim() !== '') {
-      const search = searchTerm.toLowerCase().trim();
-      result = result.filter((ex) => {
-        const idMatch = (ex.exchangeId || ex._id || '').toLowerCase().includes(search);
-        const orderMatch = (
-          ex.orderId?.orderCode ||
-          ex.orderId?.orderId ||
-          (ex.orderId?._id || ex.orderId)?.toString() ||
-          ''
-        )
-          .toLowerCase()
-          .includes(search);
-        const customerMatch = (
-          ex.returnRequestId?.userId?.name ||
-          ex.userId?.name ||
-          ex.customerName ||
-          ''
-        )
-          .toLowerCase()
-          .includes(search);
-        const phoneMatch = (ex.returnRequestId?.userId?.phone || ex.userId?.phone || '')
-          .toLowerCase()
-          .includes(search);
-        const origTitleMatch = (ex.originalItem?.title || '').toLowerCase().includes(search);
-        const replTitleMatch = (ex.replacementItem?.title || '').toLowerCase().includes(search);
-
-        return (
-          idMatch || orderMatch || customerMatch || phoneMatch || origTitleMatch || replTitleMatch
-        );
-      });
-    }
-
-    // Saved View Filter
-    if (savedView === 'Needs Attention') {
-      result = result.filter(isExchangeUnderReview);
-    } else if (savedView === 'Pending Pickups') {
-      result = result.filter((ex) =>
-        ['approved', 'return_courier_assigned', 'return_picked_up', 'return_in_transit'].includes(
-          ex.returnRequestId?.status || ex.status,
-        ),
-      );
-    } else if (savedView === 'Replacement Dispatched') {
-      result = result.filter((ex) =>
-        ['shipped', 'out_for_delivery'].includes(ex.replacementStatus),
-      );
-    } else if (savedView === 'Payment Required') {
-      result = result.filter(
-        (ex) =>
-          ex.differenceAction === 'collect_payment' &&
-          Number(ex.priceDifference) > 0 &&
-          ex.paymentStatus !== 'payment_paid',
-      );
-    } else if (savedView === 'Completed') {
-      result = result.filter(
-        (ex) =>
-          ex.replacementStatus === 'delivered' ||
-          ['completed', 'refund_completed'].includes(ex.returnRequestId?.status || ex.status),
-      );
-    }
-
-    // Status Lifecycle Filter
-    if (statusFilter !== 'All') {
-      if (statusFilter === 'under_review') {
-        result = result.filter(isExchangeUnderReview);
-      } else if (statusFilter === 'pickups') {
-        result = result.filter((ex) =>
-          ['approved', 'return_courier_assigned', 'return_picked_up', 'return_in_transit'].includes(
-            ex.returnRequestId?.status || ex.status,
-          ),
-        );
-      } else if (statusFilter === 'qc') {
-        result = result.filter((ex) =>
-          ['return_received', 'inspection_started', 'inspection_completed'].includes(
-            ex.returnRequestId?.status || ex.status,
-          ),
-        );
-      } else if (statusFilter === 'dispatched') {
-        result = result.filter((ex) =>
-          ['shipped', 'out_for_delivery'].includes(ex.replacementStatus),
-        );
-      } else if (statusFilter === 'completed') {
-        result = result.filter(
-          (ex) =>
-            ex.replacementStatus === 'delivered' ||
-            ['completed', 'refund_completed'].includes(ex.returnRequestId?.status || ex.status),
-        );
-      } else if (statusFilter === 'rejected') {
-        result = result.filter((ex) => (ex.returnRequestId?.status || ex.status) === 'rejected');
-      } else {
-        result = result.filter((ex) => (ex.returnRequestId?.status || ex.status) === statusFilter);
-      }
-    }
-
-    // Difference Filter
-    if (diffFilter !== 'All') {
-      if (diffFilter === 'zero') {
-        result = result.filter((ex) => Number(ex.priceDifference || 0) === 0);
-      } else if (diffFilter === 'collect') {
-        result = result.filter(
-          (ex) => ex.differenceAction === 'collect_payment' || Number(ex.priceDifference || 0) > 0,
-        );
-      } else if (diffFilter === 'refund') {
-        result = result.filter(
-          (ex) =>
-            ex.differenceAction === 'refund_difference' || Number(ex.priceDifference || 0) < 0,
-        );
-      }
-    }
-
-    // Date Filter
-    if (dateFilter !== 'All Time') {
-      result = result.filter((ex) => isWithinPeriod(ex.createdAt, dateFilter, customDateRange));
-    }
-
-    // Sort
     result.sort((a, b) => {
       if (sortBy === 'Newest first') {
         return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
@@ -780,16 +670,7 @@ export default function AdminExchangeHub({ hideHeader = false }) {
     });
 
     return result;
-  }, [
-    exchanges,
-    searchTerm,
-    savedView,
-    statusFilter,
-    diffFilter,
-    dateFilter,
-    customDateRange,
-    sortBy,
-  ]);
+  }, [filteredExchangesBeforeSort, sortBy]);
 
   const stats = dashboardStats?.stats || {};
 
@@ -973,182 +854,139 @@ export default function AdminExchangeHub({ hideHeader = false }) {
                 )}
               </button>
 
-              {/* Filters Dropdown Modal */}
-              <AnimatePresence>
-                {showFiltersMenu && (
-                  <>
-                    <div
-                      onClick={() => setShowFiltersMenu(false)}
-                      className="fixed inset-0 z-[120] bg-black/30 sm:bg-transparent"
-                    />
-
-                    <motion.div
-                      initial={isMobile ? { y: '100%' } : { opacity: 0, y: -8, scale: 0.98 }}
-                      animate={isMobile ? { y: 0 } : { opacity: 1, y: 0, scale: 1 }}
-                      exit={isMobile ? { y: '100%' } : { opacity: 0, y: -8, scale: 0.98 }}
-                      transition={{ duration: 0.15 }}
-                      className="fixed sm:absolute bottom-0 inset-x-0 sm:top-full sm:bottom-auto sm:right-0 sm:left-auto z-[130] sm:mt-2 w-full sm:w-[320px] bg-[var(--admin-surface)] rounded-t-[8px] sm:rounded-[4px] shadow-2xl border border-[var(--admin-border-strong)] flex flex-col p-5 sm:p-4 text-left"
+              {/* Filters Drawer / Dropdown */}
+              <AdminFilterDrawer
+                isOpen={showFiltersMenu}
+                onClose={() => setShowFiltersMenu(false)}
+                title="Exchange Filters"
+                icon="tune"
+                activeCount={activeFilterCount}
+                onClearAll={handleResetAllFilters}
+                clearAllLabel="Clear All"
+                onApply={() => setShowFiltersMenu(false)}
+              >
+                <div className="space-y-4">
+                  {/* Saved Views */}
+                  <div>
+                    <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-2 block">
+                      Saved Views
+                    </label>
+                    <select
+                      value={filterState.savedView}
+                      onChange={handleSavedViewChange}
+                      className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-accent)] cursor-pointer"
                     >
-                      <div className="flex justify-between items-center mb-4 sm:mb-3">
-                        <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)] flex items-center gap-2">
-                          <span className="material-symbols-outlined text-[18px]">tune</span>
-                          Exchange Filters
-                        </h3>
-                        <button
-                          type="button"
-                          onClick={() => setShowFiltersMenu(false)}
-                          className="sm:hidden p-1 hover:bg-[var(--admin-border-subtle)] rounded-[4px]"
-                        >
-                          <span className="material-symbols-outlined text-[20px]">close</span>
-                        </button>
-                      </div>
+                      <option value="All Exchanges">View: All Exchanges</option>
+                      <option value="Needs Attention">Needs Action / Under Review</option>
+                      <option value="Pending Pickups">Pending Return Pickups</option>
+                      <option value="Replacement Dispatched">Replacement Dispatched</option>
+                      <option value="Payment Required">Customer Payment Required</option>
+                      <option value="Completed">Completed & Settled</option>
+                    </select>
+                  </div>
 
-                      <div className="space-y-4 max-h-[60vh] overflow-y-auto scrollbar-hide pr-0.5">
-                        {/* Saved Views */}
-                        <div>
-                          <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-2 block">
-                            Saved Views
-                          </label>
-                          <select
-                            value={savedView}
-                            onChange={handleSavedViewChange}
-                            className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-accent)]"
-                          >
-                            <option value="All Exchanges">View: All Exchanges</option>
-                            <option value="Needs Attention">Needs Action / Under Review</option>
-                            <option value="Pending Pickups">Pending Return Pickups</option>
-                            <option value="Replacement Dispatched">Replacement Dispatched</option>
-                            <option value="Payment Required">Customer Payment Required</option>
-                            <option value="Completed">Completed & Settled</option>
-                          </select>
-                        </div>
+                  {/* Sort */}
+                  <div>
+                    <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-2 block">
+                      Sort By
+                    </label>
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] outline-none cursor-pointer"
+                    >
+                      <option value="Newest first">Newest first</option>
+                      <option value="Oldest first">Oldest first</option>
+                      <option value="Price Difference: High to Low">Difference: High to Low</option>
+                      <option value="Price Difference: Low to High">Difference: Low to High</option>
+                    </select>
+                  </div>
 
-                        {/* Sort */}
-                        <div>
-                          <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-2 block">
-                            Sort By
-                          </label>
-                          <select
-                            value={sortBy}
-                            onChange={(e) => setSortBy(e.target.value)}
-                            className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] outline-none"
-                          >
-                            <option value="Newest first">Newest first</option>
-                            <option value="Oldest first">Oldest first</option>
-                            <option value="Price Difference: High to Low">
-                              Difference: High to Low
-                            </option>
-                            <option value="Price Difference: Low to High">
-                              Difference: Low to High
-                            </option>
-                          </select>
-                        </div>
+                  {/* Status Filter */}
+                  <div>
+                    <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-2 block">
+                      Status Lifecycle
+                    </label>
+                    <select
+                      value={filterState.status}
+                      onChange={(e) => setFilterValue('status', e.target.value)}
+                      className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] outline-none cursor-pointer"
+                    >
+                      <option value="All">All Statuses</option>
+                      <option value="under_review">Under Review</option>
+                      <option value="approved">Approved</option>
+                      <option value="pickups">Pickup In Transit</option>
+                      <option value="qc">QC / Warehouse Received</option>
+                      <option value="dispatched">Replacement Dispatched</option>
+                      <option value="completed">Completed</option>
+                      <option value="rejected">Rejected</option>
+                    </select>
+                  </div>
 
-                        {/* Status Filter */}
-                        <div>
-                          <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-2 block">
-                            Status Lifecycle
-                          </label>
-                          <select
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                            className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] outline-none"
-                          >
-                            <option value="All">All Statuses</option>
-                            <option value="under_review">Under Review</option>
-                            <option value="approved">Approved</option>
-                            <option value="pickups">Pickup In Transit</option>
-                            <option value="qc">QC / Warehouse Received</option>
-                            <option value="dispatched">Replacement Dispatched</option>
-                            <option value="completed">Completed</option>
-                            <option value="rejected">Rejected</option>
-                          </select>
-                        </div>
+                  {/* Price Difference Filter */}
+                  <div>
+                    <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-2 block">
+                      Price Difference
+                    </label>
+                    <select
+                      value={filterState.diff}
+                      onChange={(e) => setFilterValue('diff', e.target.value)}
+                      className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] outline-none cursor-pointer"
+                    >
+                      <option value="All">All Amounts</option>
+                      <option value="zero">Even Swap (₹0 Diff)</option>
+                      <option value="collect">Customer Collect Due (+)</option>
+                      <option value="refund">Refund to Customer Due (-)</option>
+                    </select>
+                  </div>
 
-                        {/* Price Difference Filter */}
-                        <div>
-                          <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-2 block">
-                            Price Difference
-                          </label>
-                          <select
-                            value={diffFilter}
-                            onChange={(e) => setDiffFilter(e.target.value)}
-                            className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] outline-none"
-                          >
-                            <option value="All">All Amounts</option>
-                            <option value="zero">Even Swap (₹0 Diff)</option>
-                            <option value="collect">Customer Collect Due (+)</option>
-                            <option value="refund">Refund to Customer Due (-)</option>
-                          </select>
-                        </div>
+                  {/* Date Filter */}
+                  <div>
+                    <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-2 block">
+                      Creation Date
+                    </label>
+                    <select
+                      value={filterState.date}
+                      onChange={(e) => setFilterValue('date', e.target.value)}
+                      className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] outline-none cursor-pointer"
+                    >
+                      <option value="All Time">All Time</option>
+                      <option value="Today">Today</option>
+                      <option value="Last 7 Days">Last 7 Days</option>
+                      <option value="Last 30 Days">Last 30 Days</option>
+                      <option value="This Month">This Month</option>
+                      <option value="Custom">Custom Range...</option>
+                    </select>
+                  </div>
 
-                        {/* Date Filter */}
-                        <div>
-                          <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-2 block">
-                            Creation Date
-                          </label>
-                          <select
-                            value={dateFilter}
-                            onChange={(e) => setDateFilter(e.target.value)}
-                            className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] outline-none"
-                          >
-                            <option value="All Time">All Time</option>
-                            <option value="Today">Today</option>
-                            <option value="Last 7 Days">Last 7 Days</option>
-                            <option value="Last 30 Days">Last 30 Days</option>
-                            <option value="This Month">This Month</option>
-                            <option value="Custom">Custom Range...</option>
-                          </select>
-                        </div>
-
-                        {dateFilter === 'Custom' && (
-                          <div className="grid grid-cols-2 gap-2 pt-1">
-                            <input
-                              type="date"
-                              value={customDateRange.from}
-                              onChange={(e) =>
-                                setCustomDateRange((prev) => ({
-                                  ...prev,
-                                  from: e.target.value,
-                                }))
-                              }
-                              className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-2 py-1.5 text-[11px] outline-none"
-                            />
-                            <input
-                              type="date"
-                              value={customDateRange.to}
-                              onChange={(e) =>
-                                setCustomDateRange((prev) => ({
-                                  ...prev,
-                                  to: e.target.value,
-                                }))
-                              }
-                              className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-2 py-1.5 text-[11px] outline-none"
-                            />
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="mt-4 pt-3 border-t border-[var(--admin-border-subtle)] flex gap-2">
-                        <button
-                          type="button"
-                          onClick={handleResetAllFilters}
-                          className="admin-btn-outline flex-1 justify-center py-2.5 !rounded-[4px] text-[13px]"
-                        >
-                          Clear All
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setShowFiltersMenu(false)}
-                          className="admin-btn-primary flex-1 justify-center py-2.5 !rounded-[4px] text-[13px]"
-                        >
-                          Apply Filters
-                        </button>
-                      </div>
-                    </motion.div>
-                  </>
-                )}
-              </AnimatePresence>
+                  {filterState.date === 'Custom' && (
+                    <div className="grid grid-cols-2 gap-2 pt-1">
+                      <input
+                        type="date"
+                        value={filterState.customDateRange?.from || ''}
+                        onChange={(e) =>
+                          setFilterValue('customDateRange', {
+                            ...filterState.customDateRange,
+                            from: e.target.value,
+                          })
+                        }
+                        className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-2 py-1.5 text-[11px] outline-none text-[var(--admin-text-primary)]"
+                      />
+                      <input
+                        type="date"
+                        value={filterState.customDateRange?.to || ''}
+                        onChange={(e) =>
+                          setFilterValue('customDateRange', {
+                            ...filterState.customDateRange,
+                            to: e.target.value,
+                          })
+                        }
+                        className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-2 py-1.5 text-[11px] outline-none text-[var(--admin-text-primary)]"
+                      />
+                    </div>
+                  )}
+                </div>
+              </AdminFilterDrawer>
             </div>
 
             {/* View Mode Toggle (Table / Kanban) - Hidden on Mobile */}
@@ -1210,6 +1048,16 @@ export default function AdminExchangeHub({ hideHeader = false }) {
             </button>
           </div>
         </motion.div>
+
+        {/* Active Filter Chips Row */}
+        <AdminActiveFilterChips
+          activeChips={activeChips}
+          totalCount={totalCount}
+          matchCount={matchCount}
+          onClearAll={handleResetAllFilters}
+          itemName="exchanges"
+          className="mt-2 mb-1"
+        />
       </div>
 
       {/* ─── REAL-TIME OPERATIONS LEDGER (Matches Orders COD/Operations Ledger) ─── */}
@@ -1674,30 +1522,32 @@ export default function AdminExchangeHub({ hideHeader = false }) {
             return (
               <div
                 key={ex._id}
+                id={`exchange-card-${ex._id}`}
                 onClick={() => {
                   const requestId = ex.returnRequestId?._id || ex.returnRequestId || ex._id;
                   if (requestId) navigate(`/admin/exchanges/requests/${requestId}`);
                 }}
                 className="relative overflow-hidden rounded-[8px] p-3.5 shadow-xs border border-stone-200/90 dark:border-stone-700/80 bg-white dark:bg-stone-900 flex flex-col gap-3 cursor-pointer hover:border-stone-300 dark:hover:border-stone-600 hover:shadow-sm transition-all"
               >
-                {/* Header: EXC ID + Order + Status Pill */}
+                {/* Header: Customer Name + Status Pill, with subtle faded EXC ID + Order */}
                 <div className="flex justify-between items-start gap-2">
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="font-bold text-[var(--admin-text-primary)] text-[14px]">
-                        {ex.exchangeId || ex._id.substring(0, 8)}
+                    <span className="font-bold text-[var(--admin-text-primary)] text-[14px] block truncate leading-tight">
+                      {ex.returnRequestId?.userId?.name || ex.userId?.name || 'Customer'}
+                    </span>
+                    <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                      <span className="font-mono text-[11px] font-medium text-[var(--admin-text-tertiary)] dark:text-stone-400">
+                        #{ex.exchangeId || ex._id.substring(0, 8)}
                       </span>
-                      <span className="font-mono text-[11px] text-[var(--admin-text-secondary)] font-medium">
-                        #
+                      <span className="font-mono text-[10.5px] text-[var(--admin-text-tertiary)]">
+                        (Order #
                         {ex.orderId?.orderCode ||
                           ex.orderId?.orderId ||
                           (ex.orderId?._id || ex.orderId)?.toString().substring(0, 8) ||
                           'Order'}
+                        )
                       </span>
                     </div>
-                    <span className="text-[12px] font-medium text-[var(--admin-text-secondary)] block mt-0.5 truncate">
-                      {ex.returnRequestId?.userId?.name || ex.userId?.name || 'Customer'}
-                    </span>
                   </div>
                   <AdminStatusPill
                     status={getExchangeStatusLabel(

@@ -31,7 +31,11 @@ export class MongoQueryBuilder<_T> {
    */
   public withCategory(category?: string | null): this {
     if (category && category.toLowerCase() !== 'all') {
-      this.query.category = new RegExp(this.escapeRegex(category), 'i') as any;
+      this.query.$or = this.query.$or || [];
+      this.query.$or.push(
+        { category: new RegExp(this.escapeRegex(category), 'i') },
+        { primaryCategory: category },
+      );
     }
     return this;
   }

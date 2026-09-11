@@ -108,20 +108,38 @@ export function AdminRentalDetail() {
         state: r.shippingAddress?.state || '',
         pincode: r.shippingAddress?.pincode || '',
       },
-      items:
-        Array.isArray(r.items) && r.items.length > 0
-          ? r.items
+      items: (() => {
+        const qty = Number(r.quantity || 1);
+        const unitRentalPrice = Number(
+          r.rentalRate?.rentalPrice ??
+            r.rentalRate?.rate ??
+            (qty > 0 && r.rentalCharge
+              ? Math.round((r.rentalCharge / qty) * 100) / 100
+              : r.rentalCharge || 0),
+        );
+        return Array.isArray(r.items) && r.items.length > 0
+          ? r.items.map((it) => ({
+              ...it,
+              price: it.rentalPrice || it.price || unitRentalPrice,
+              rentalPrice: it.rentalPrice || unitRentalPrice,
+              isRental: true,
+              type: 'rental',
+            }))
           : [
               {
+                title: r.productTitle || 'Rented Item',
                 name: r.productTitle || 'Rented Item',
-                price: r.rentalCharge || r.totalAmount || 0,
-                quantity: r.quantity || 1,
+                price: unitRentalPrice,
+                rentalPrice: unitRentalPrice,
+                quantity: qty,
                 image: r.productImage || r.productImages?.[0] || r.productThumbnail || '',
                 deposit: r.securityDeposit || 0,
                 durationDays: r.durationDays,
+                isRental: true,
                 type: 'rental',
               },
-            ],
+            ];
+      })(),
     };
   };
 

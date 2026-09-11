@@ -137,10 +137,12 @@ export function useAdminOrders({
             }),
           );
           logAdminAction('UPDATE_ORDER', `Updated Order ID ${orderId} to status: ${newStatus}`);
-          toast.success(`Order status updated to ${newStatus}`);
+          toast.success(`Order status updated to ${newStatus}`, { id: `order-status-${orderId}` });
         }
       } catch (err) {
-        toast.error(err.response?.data?.message || err.message || 'Failed to update order status');
+        toast.error(err.response?.data?.message || err.message || 'Failed to update order status', {
+          id: `order-status-${orderId}`,
+        });
       } finally {
         if (setGlobalActionLoading) setGlobalActionLoading(false);
       }

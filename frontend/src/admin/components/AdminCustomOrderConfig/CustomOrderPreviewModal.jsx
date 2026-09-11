@@ -82,7 +82,7 @@ export function CustomOrderPreviewModal({
               <button
                 type="button"
                 onClick={() => setShowPreviewModal(false)}
-                className="admin-btn-icon !rounded-[4px] w-8 h-8 text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]"
+                className="w-8 h-8 rounded-[4px] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] flex items-center justify-center transition-colors cursor-pointer"
                 title="Close Preview"
               >
                 <span className="material-symbols-outlined text-[20px]">close</span>

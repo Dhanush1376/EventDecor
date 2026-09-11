@@ -106,17 +106,72 @@ export function AdminPolicies() {
     (p) => p.status === 'published' || p.status === 'active' || p.isActive,
   ).length;
 
+  const handleToggleStatus = async (policy, e) => {
+    if (e) e.stopPropagation();
+    const newStatus = policy.status === 'published' ? 'draft' : 'published';
+    const isActivating = newStatus === 'published';
+
+    // Optimistic UI update
+    setPolicies((prev) =>
+      prev.map((p) => (p._id === policy._id ? { ...p, status: newStatus } : p)),
+    );
+
+    try {
+      await policyService.update(policy._id, {
+        ...policy,
+        status: newStatus,
+      });
+      toast.success(isActivating ? 'Policy activated' : 'Policy deactivated');
+    } catch (error) {
+      // Revert on failure
+      setPolicies((prev) =>
+        prev.map((p) => (p._id === policy._id ? { ...p, status: policy.status } : p)),
+      );
+      toast.error(
+        getErrorMessage(error, `Failed to ${isActivating ? 'activate' : 'deactivate'} policy`),
+      );
+    }
+  };
+
   const columns = [
-    { key: 'title', label: 'Policy Title' },
-    { key: 'slug', label: 'Slug / URL' },
+    {
+      key: 'title',
+      label: 'Policy Title',
+      headerClass: 'text-left',
+      cellClass: 'text-left font-medium text-[var(--admin-text-primary)]',
+      render: (val, row) => {
+        const isPublished = row.status === 'published';
+        return (
+          <div className="flex items-center gap-2">
+            <span>{val}</span>
+            {!isPublished && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-[3px] bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60 font-semibold tracking-wide shrink-0 sm:hidden">
+                Draft
+              </span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      key: 'slug',
+      label: 'Slug / URL',
+      headerClass: 'hidden md:table-cell text-left',
+      cellClass:
+        'hidden md:table-cell text-left font-mono text-[12px] text-[var(--admin-text-secondary)]',
+    },
     {
       key: 'status',
       label: 'Status',
+      headerClass: 'hidden sm:table-cell text-left',
+      cellClass: 'hidden sm:table-cell text-left',
       render: (val) => <StatusBadge status={val} />,
     },
     {
       key: 'updatedAt',
       label: 'Last Updated',
+      headerClass: 'hidden lg:table-cell text-left',
+      cellClass: 'hidden lg:table-cell text-left text-[12px] text-[var(--admin-text-tertiary)]',
       render: (val) =>
         new Date(val).toLocaleString('en-US', {
           month: 'numeric',
@@ -130,24 +185,46 @@ export function AdminPolicies() {
     {
       key: 'actions',
       label: 'Actions',
-      render: (_, row) => (
-        <div className="flex gap-3">
-          <button
-            onClick={() => handleOpenEdit(row)}
-            className="text-[var(--admin-accent)] hover:text-[var(--admin-accent-hover)] transition-colors cursor-pointer bg-transparent border-none p-1 rounded hover:bg-[var(--admin-accent)]/10 flex items-center justify-center"
-            title="Edit Policy"
-          >
-            <span className="material-symbols-outlined text-[18px]">edit</span>
-          </button>
-          <button
-            onClick={() => handleDelete(row._id)}
-            className="text-[var(--admin-error)] hover:text-red-700 transition-colors cursor-pointer bg-transparent border-none p-1 rounded hover:bg-[var(--admin-error)]/10 flex items-center justify-center"
-            title="Delete Policy"
-          >
-            <span className="material-symbols-outlined text-[18px]">delete</span>
-          </button>
-        </div>
-      ),
+      headerClass: 'text-right w-[110px] sm:w-[125px]',
+      cellClass: 'text-right w-[110px] sm:w-[125px]',
+      render: (_, row) => {
+        const isPublished = row.status === 'published';
+        return (
+          <div className="flex items-center justify-end gap-1 sm:gap-1.5">
+            <button
+              type="button"
+              onClick={(e) => handleToggleStatus(row, e)}
+              className={`transition-colors cursor-pointer bg-transparent border-none p-1.5 rounded flex items-center justify-center ${
+                isPublished
+                  ? 'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10'
+                  : 'text-stone-400 hover:text-stone-600 hover:bg-stone-500/10'
+              }`}
+              title={isPublished ? 'Active • Click to Deactivate' : 'Draft • Click to Activate'}
+              aria-label={isPublished ? 'Deactivate Policy' : 'Activate Policy'}
+            >
+              <span className="material-symbols-outlined text-[20px]">
+                {isPublished ? 'toggle_on' : 'toggle_off'}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleOpenEdit(row)}
+              className="text-[var(--admin-accent)] hover:text-[var(--admin-accent-hover)] transition-colors cursor-pointer bg-transparent border-none p-1.5 rounded hover:bg-[var(--admin-accent)]/10 flex items-center justify-center"
+              title="Edit Policy"
+            >
+              <span className="material-symbols-outlined text-[18px]">edit</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleDelete(row._id)}
+              className="text-[var(--admin-error)] hover:text-red-700 transition-colors cursor-pointer bg-transparent border-none p-1.5 rounded hover:bg-[var(--admin-error)]/10 flex items-center justify-center"
+              title="Delete Policy"
+            >
+              <span className="material-symbols-outlined text-[18px]">delete</span>
+            </button>
+          </div>
+        );
+      },
     },
   ];
 
@@ -212,7 +289,7 @@ export function AdminPolicies() {
         </motion.div>
       </div>
 
-      <motion.div variants={fadeUp} className="admin-card p-6 overflow-hidden">
+      <motion.div variants={fadeUp} className="admin-card p-3.5 sm:p-6 overflow-hidden">
         {loading ? (
           <SkeletonTable cols={4} rows={4} className="border-0 shadow-none bg-transparent" />
         ) : filteredPolicies.length === 0 ? (
@@ -225,12 +302,14 @@ export function AdminPolicies() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="admin-table w-full min-w-[600px]">
+          <div className="w-full overflow-x-auto">
+            <table className="admin-table w-full">
               <thead>
                 <tr>
                   {columns.map((c, i) => (
-                    <th key={i}>{c.label}</th>
+                    <th key={i} className={`px-3 sm:px-4 py-2.5 sm:py-3.5 ${c.headerClass || ''}`}>
+                      {c.label}
+                    </th>
                   ))}
                 </tr>
               </thead>
@@ -242,7 +321,11 @@ export function AdminPolicies() {
                     onClick={() => handleOpenEdit(row)}
                   >
                     {columns.map((c, i) => (
-                      <td key={i} onClick={(e) => c.key === 'actions' && e.stopPropagation()}>
+                      <td
+                        key={i}
+                        className={`px-3 sm:px-4 py-3 sm:py-3.5 ${c.cellClass || ''}`}
+                        onClick={(e) => c.key === 'actions' && e.stopPropagation()}
+                      >
                         {c.render ? c.render(row[c.key], row) : row[c.key]}
                       </td>
                     ))}

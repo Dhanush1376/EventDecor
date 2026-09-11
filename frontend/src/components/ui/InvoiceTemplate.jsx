@@ -1,5 +1,6 @@
 import { X } from 'lucide-react';
 import { useState, useRef, useEffect, Suspense, lazy } from 'react';
+import toast from 'react-hot-toast';
 import { CANONICAL_INVOICE } from './invoiceTokens';
 
 const QRCodeCanvas = lazy(() => import('qrcode.react').then((m) => ({ default: m.QRCodeCanvas })));
@@ -62,7 +63,42 @@ export function InvoiceTemplate({ order, user = {}, onClose, isAdmin = false }) 
   if (!order) return null;
 
   // ─── Order Items & Category Segregation ───────────────────────────
-  const rawItems = Array.isArray(order.items) && order.items.length > 0 ? order.items : [];
+  const rawItems =
+    Array.isArray(order.items) && order.items.length > 0
+      ? order.items
+      : order.productTitle || order.rentalOrderId || order.orderType === 'rental'
+        ? [
+            {
+              title: order.productTitle || 'Rental Item',
+              name: order.productTitle || 'Rental Item',
+              quantity: Number(order.quantity || 1),
+              rentalPrice:
+                order.rentalRate?.rentalPrice ??
+                order.rentalRate?.rate ??
+                (order.rentalCharge && order.quantity
+                  ? order.rentalCharge / order.quantity
+                  : order.rentalCharge || 0),
+              price:
+                order.rentalRate?.rentalPrice ??
+                order.rentalRate?.rate ??
+                (order.rentalCharge && order.quantity
+                  ? order.rentalCharge / order.quantity
+                  : order.rentalCharge || 0),
+              isRental: true,
+              type: 'rental',
+              rentalStartDate: order.rentalStartDate,
+              rentalEndDate: order.rentalEndDate,
+              rentalDurationDays: order.durationDays || order.rentalRate?.rentalDurationDays,
+              deposit: order.securityDeposit || 0,
+            },
+          ]
+        : [];
+
+  const isExplicitRentalOrder =
+    Boolean(order.rentalOrderId) ||
+    order.orderType === 'rental' ||
+    order.isPureRental === true ||
+    (order.isRental === true && !order.isMixed && order.orderKind !== 'mixed');
 
   const checkItemRental = (item) => {
     if (!item) return false;
@@ -70,7 +106,7 @@ export function InvoiceTemplate({ order, user = {}, onClose, isAdmin = false }) 
     if (item.rentalInfo && (item.rentalInfo.startDate || item.rentalInfo.durationDays)) return true;
     if (item.rentalStartDate || item.rentalEndDate) return true;
     if (item.rentalDurationDays) return true;
-    if (order.orderType === 'rental' && item.type !== 'purchase') return true;
+    if (isExplicitRentalOrder && item.type !== 'purchase') return true;
     return false;
   };
 
@@ -84,13 +120,76 @@ export function InvoiceTemplate({ order, user = {}, onClose, isAdmin = false }) 
 
   const isPureRental =
     !isMixed &&
-    ((rentalItemsRaw.length > 0 && purchaseItemsRaw.length === 0) ||
-      Boolean(order.rentalOrderId) ||
+    (isExplicitRentalOrder ||
+      (rentalItemsRaw.length > 0 && purchaseItemsRaw.length === 0) ||
       (order.orderType === 'rental' && purchaseItemsRaw.length === 0) ||
       order.isPureRental === true ||
       (order.isRental === true && purchaseItemsRaw.length === 0));
 
   const isPurePurchase = !isMixed && !isPureRental;
+
+  const resolveItemPrice = (item, itemIsRental) => {
+    const qty = Number(item.quantity || item.qty || 1) || 1;
+
+    if (itemIsRental) {
+      // 1. Explicit rental rate or rental price from pricing structure (take rental price over purchase price)
+      const candidatePrices = [
+        item.rentalRate?.rentalPrice,
+        item.rentalRate?.rate,
+        item.rentalPricing?.rentalPrice,
+        item.rentalPrice,
+        item.rentalFee,
+        item.rentalCost,
+      ].filter((p) => typeof p === 'number' && !isNaN(p) && p > 0);
+
+      if (candidatePrices.length > 0) {
+        return candidatePrices[0];
+      }
+
+      // 2. If item has rentalCharge field
+      if (typeof item.rentalCharge === 'number' && item.rentalCharge > 0) {
+        return item.rentalCharge / qty;
+      }
+
+      // 3. If pure rental order with known order.rentalRate
+      if (
+        (order.rentalRate?.rentalPrice || order.rentalRate?.rate) &&
+        (rawItems.length === 1 || isPureRental)
+      ) {
+        return Number(order.rentalRate?.rentalPrice ?? order.rentalRate?.rate);
+      }
+
+      // 4. If pure rental order with known order.rentalCharge
+      if (order.rentalCharge && (rawItems.length === 1 || isPureRental)) {
+        const totalRentalCharge = Number(order.rentalCharge);
+        // If item.price was mistakenly set to the total rentalCharge or purchase price
+        if (Number(item.price) === totalRentalCharge && qty > 1) {
+          return totalRentalCharge / qty;
+        }
+        if (Number(item.price) * qty > totalRentalCharge && totalRentalCharge > 0) {
+          return totalRentalCharge / qty;
+        }
+      }
+
+      // 5. Fallback: if item.price is present
+      if (Number(item.price) > 0) {
+        if (
+          isPureRental &&
+          order.rentalCharge &&
+          Number(item.price) === Number(order.rentalCharge) &&
+          qty > 1
+        ) {
+          return Number(order.rentalCharge) / qty;
+        }
+        return Number(item.price);
+      }
+
+      return 0;
+    }
+
+    // Purchase item: standard unit price
+    return Number(item.price) || Number(item.unitPrice) || 0;
+  };
 
   // ─── Read from immutable snapshots ─────────────────────────────────
   const invoiceSnap = order.invoice || {};
@@ -182,11 +281,13 @@ export function InvoiceTemplate({ order, user = {}, onClose, isAdmin = false }) 
     rawItems.length > 0
       ? rawItems.map((item) => {
           const itemIsRental = checkItemRental(item);
+          const resolvedPrice = resolveItemPrice(item, itemIsRental);
           return {
             ...item,
             title: item.title || item.name || (itemIsRental ? 'Event Rental Item' : 'Product'),
             quantity: item.quantity || item.qty || 1,
-            price: Number(item.price) || Number(item.rentalPrice) || 0,
+            price: resolvedPrice,
+            rentalPrice: resolvedPrice,
             isRental: itemIsRental,
             type: itemIsRental ? 'rental' : 'purchase',
             rentalDurationDays:
@@ -293,65 +394,118 @@ export function InvoiceTemplate({ order, user = {}, onClose, isAdmin = false }) 
   // ─── Unscaled PDF Capture ─────────────────────────────────────────
   const handleDownload = async () => {
     setIsDownloading(true);
+    let clone = null;
     try {
       const element = printRef.current;
       if (!element) throw new Error('Invoice element not found');
 
       // Create an offscreen clone to capture the unscaled canonical 540px invoice
-      const clone = element.cloneNode(true);
+      clone = element.cloneNode(true);
       clone.id = 'invoice-pdf-capture-clone';
       clone.style.width = '540px';
       clone.style.minWidth = '540px';
       clone.style.maxWidth = '540px';
+      clone.style.boxSizing = 'border-box';
       clone.style.transform = 'none';
       clone.style.position = 'fixed';
       clone.style.left = '-9999px';
       clone.style.top = '0';
+      clone.style.opacity = '1';
+      clone.style.visibility = 'visible';
+      clone.style.pointerEvents = 'none';
       clone.style.zIndex = '-9999';
       clone.style.backgroundColor = '#ffffff';
+      clone.style.color = '#000000';
       clone.style.fontFamily = CANONICAL_INVOICE.FONT_FAMILY;
       document.body.appendChild(clone);
 
-      // Copy canvas bitmaps (QR code and Barcode) from original into clone
+      // Copy canvas bitmaps (QR code and Barcode) from original into clone as static images
       const origCanvases = element.querySelectorAll('canvas');
       const cloneCanvases = clone.querySelectorAll('canvas');
       origCanvases.forEach((orig, idx) => {
         const dest = cloneCanvases[idx];
-        if (dest) {
-          dest.width = orig.width;
-          dest.height = orig.height;
-          const destCtx = dest.getContext('2d');
-          if (destCtx) {
-            destCtx.drawImage(orig, 0, 0);
+        if (dest && orig.width > 0 && orig.height > 0) {
+          try {
+            const dataUrl = orig.toDataURL('image/png');
+            const img = document.createElement('img');
+            img.src = dataUrl;
+            img.width = orig.width;
+            img.height = orig.height;
+            img.style.width = `${dest.offsetWidth || dest.width || orig.offsetWidth || 68}px`;
+            img.style.height = `${dest.offsetHeight || dest.height || orig.offsetHeight || 68}px`;
+            img.style.display = 'block';
+            img.className = dest.className;
+            if (dest.parentNode) {
+              dest.parentNode.replaceChild(img, dest);
+            }
+          } catch (_e) {
+            dest.width = orig.width;
+            dest.height = orig.height;
+            const destCtx = dest.getContext('2d');
+            if (destCtx) {
+              destCtx.drawImage(orig, 0, 0);
+            }
           }
         }
       });
 
-      await new Promise((r) => setTimeout(r, 60));
+      // Ensure web fonts are completely resolved before rendering
+      if (document.fonts && document.fonts.ready) {
+        try {
+          await document.fonts.ready;
+        } catch (_e) {
+          // ignore font readiness errors
+        }
+      }
+      await new Promise((r) => setTimeout(r, 100));
 
       const html2canvasModule = await import('html2canvas');
       const html2canvas = html2canvasModule.default || html2canvasModule;
       const { jsPDF } = await import('jspdf');
 
+      const cloneHeight = Math.max(
+        Math.ceil(clone.getBoundingClientRect().height) + 4,
+        clone.offsetHeight,
+        clone.scrollHeight,
+        element.offsetHeight,
+        720,
+      );
+
       const canvas = await html2canvas(clone, {
-        scale: 3, // 540 * 3 = 1620px (crystal sharp)
+        scale: 3.5, // 540 * 3.5 = 1890px (~260-300 DPI high-definition print quality)
         useCORS: true,
+        allowTaint: true,
         backgroundColor: '#ffffff',
         width: 540,
-        windowWidth: 1200,
+        height: cloneHeight,
+        logging: false,
+        imageTimeout: 0,
       });
 
-      document.body.removeChild(clone);
+      if (clone && clone.parentNode) {
+        clone.parentNode.removeChild(clone);
+        clone = null;
+      }
 
-      const imgData = canvas.toDataURL('image/jpeg', 1.0);
+      // Use lossless PNG to avoid compression artifacts around text and barcodes
+      const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
 
       // Fit gracefully onto single A4 page (210mm x 297mm)
-      const margin = 12;
+      const margin = 10;
       const pdfWidth = pdf.internal.pageSize.getWidth() - margin * 2;
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-      pdf.addImage(imgData, 'JPEG', margin, margin, pdfWidth, Math.min(pdfHeight, 273));
+      pdf.addImage(
+        imgData,
+        'PNG',
+        margin,
+        margin,
+        pdfWidth,
+        Math.min(pdfHeight, 277),
+        undefined,
+        'FAST',
+      );
 
       // Build authoritative clean filename
       const rawNum = isPureRental ? displayInvoiceNumber : invoiceNumber;
@@ -368,27 +522,59 @@ export function InvoiceTemplate({ order, user = {}, onClose, isAdmin = false }) 
           ? `Combined_Invoice_${cleanNum}.pdf`
           : `Invoice_${cleanNum}.pdf`;
 
-      // Use an explicitly attached anchor with Blob to guarantee Edge/Chrome
-      // honors link.download rather than saving raw blob UUIDs without extensions
-      const pdfBlob = pdf.output('blob');
-      const blobUrl = URL.createObjectURL(pdfBlob);
-      const downloadLink = document.createElement('a');
-      downloadLink.href = blobUrl;
-      downloadLink.download = filename;
-      downloadLink.style.display = 'none';
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
+      const isIOS =
+        typeof navigator !== 'undefined' &&
+        (/iPad|iPhone|iPod/.test(navigator.userAgent) ||
+          (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
 
-      setTimeout(() => {
-        if (downloadLink.parentNode) {
-          downloadLink.parentNode.removeChild(downloadLink);
+      if (isIOS) {
+        // iOS Safari does not support <a download> with blob URLs.
+        // Opening the blob in a new tab allows native iOS viewing and "Share / Save to Files"
+        const pdfBlob = pdf.output('blob');
+        const blobUrl = URL.createObjectURL(pdfBlob);
+        const win = window.open(blobUrl, '_blank');
+        if (!win) {
+          const downloadLink = document.createElement('a');
+          downloadLink.href = blobUrl;
+          downloadLink.download = filename;
+          downloadLink.target = '_blank';
+          document.body.appendChild(downloadLink);
+          downloadLink.click();
+          setTimeout(() => {
+            if (downloadLink.parentNode) downloadLink.parentNode.removeChild(downloadLink);
+          }, 3000);
         }
-        URL.revokeObjectURL(blobUrl);
-      }, 250);
+      } else {
+        try {
+          pdf.save(filename);
+        } catch (_saveErr) {
+          const pdfBlob = pdf.output('blob');
+          const blobUrl = URL.createObjectURL(pdfBlob);
+          const downloadLink = document.createElement('a');
+          downloadLink.href = blobUrl;
+          downloadLink.download = filename;
+          downloadLink.style.display = 'none';
+          document.body.appendChild(downloadLink);
+          downloadLink.click();
+          setTimeout(() => {
+            if (downloadLink.parentNode) {
+              downloadLink.parentNode.removeChild(downloadLink);
+            }
+            URL.revokeObjectURL(blobUrl);
+          }, 5000);
+        }
+      }
+
+      toast.success('Invoice downloaded successfully');
     } catch (err) {
       console.error('Invoice download failed', err);
+      toast.error('Failed to generate PDF. Please try again.');
+    } finally {
+      if (clone && clone.parentNode) {
+        clone.parentNode.removeChild(clone);
+      }
+      setIsDownloading(false);
     }
-    setIsDownloading(false);
   };
 
   const INVOICE_FONT = CANONICAL_INVOICE.FONT_FAMILY;
@@ -541,39 +727,51 @@ export function InvoiceTemplate({ order, user = {}, onClose, isAdmin = false }) 
               {/* Billed To & Shipped To Cards: ALWAYS SIDE-BY-SIDE */}
               <div className="grid grid-cols-2 gap-3 mb-3.5">
                 {/* Billed To Card */}
-                <div className={`bg-[#f9fafb] p-3 ${cardRadiusClass} border border-[#f3f4f6]`}>
+                <div
+                  className={`bg-[#f9fafb] p-3 ${cardRadiusClass} border border-[#f3f4f6] flex flex-col justify-start`}
+                >
                   <h3
                     className="font-bold text-[#6b7280] uppercase tracking-wider text-[8.5px] pb-1 mb-1.5 border-b border-[#e5e7eb]"
                     style={{ fontFamily: INVOICE_FONT }}
                   >
                     BILLED TO:
                   </h3>
-                  <p className="font-bold text-[#111827] text-[11.5px] truncate">{customerName}</p>
+                  <p className="font-bold text-[#111827] text-[11.5px] leading-normal break-words pt-0.5">
+                    {customerName}
+                  </p>
                   {customerEmail && (
-                    <p className="text-[#4b5563] text-[9.5px] break-all leading-tight mt-0.5">
+                    <p className="text-[#4b5563] text-[9.5px] break-all leading-normal mt-1">
                       {customerEmail}
                     </p>
                   )}
                   {customerPhone && (
-                    <p className="text-[#4b5563] text-[9.5px] mt-0.5">{customerPhone}</p>
+                    <p className="text-[#4b5563] text-[9.5px] leading-normal mt-0.5">
+                      {customerPhone}
+                    </p>
                   )}
                 </div>
 
                 {/* Shipped To Card */}
-                <div className={`bg-[#f9fafb] p-3 ${cardRadiusClass} border border-[#f3f4f6]`}>
+                <div
+                  className={`bg-[#f9fafb] p-3 ${cardRadiusClass} border border-[#f3f4f6] flex flex-col justify-start`}
+                >
                   <h3
                     className="font-bold text-[#6b7280] uppercase tracking-wider text-[8.5px] pb-1 mb-1.5 border-b border-[#e5e7eb]"
                     style={{ fontFamily: INVOICE_FONT }}
                   >
                     SHIPPED TO:
                   </h3>
-                  <p className="font-bold text-[#111827] text-[11.5px] truncate">{customerName}</p>
-                  <p className="text-[#4b5563] text-[9.5px] leading-tight mt-0.5 line-clamp-2">
+                  <p className="font-bold text-[#111827] text-[11.5px] leading-normal break-words pt-0.5">
+                    {customerName}
+                  </p>
+                  <p className="text-[#4b5563] text-[9.5px] leading-relaxed mt-1 break-words">
                     {addressLine1}
                     {addressLine2 ? `, ${addressLine2}` : ''}
                   </p>
                   {pin && (
-                    <span className="text-black font-bold text-[10.5px] block mt-0.5">{pin}</span>
+                    <span className="text-black font-bold text-[10.5px] block mt-1 tracking-wide">
+                      {pin}
+                    </span>
                   )}
                 </div>
               </div>

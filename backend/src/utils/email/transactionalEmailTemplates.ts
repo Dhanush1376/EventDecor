@@ -453,11 +453,7 @@ export const buildOrderConfirmationAdminEmail = (order: any) => {
 
 export const buildOrderStatusChangeEmail = (order: any, oldStatus: string, newStatus: string) => {
   const primaryItem = getPrimaryEntityName(order.items) || 'Order';
-  const displayRef =
-    order.invoice?.number ||
-    order.invoiceNumber ||
-    order.orderUuid ||
-    (order._id ? `ORD-${String(order._id).slice(-8).toUpperCase()}` : '');
+  const invoiceNumber = order.invoiceNumber || order.invoice?.number;
 
   const preheader = `The status of your ${primaryItem} has been updated to ${newStatus}.`;
   const headingText = `Your ${escapeHtml(primaryItem)} is now ${escapeHtml(newStatus)}`;
@@ -471,10 +467,7 @@ export const buildOrderStatusChangeEmail = (order: any, oldStatus: string, newSt
       { label: 'Product / Item', value: `<strong>${escapeHtml(primaryItem)}</strong>` },
       { label: 'Previous Status', value: escapeHtml(oldStatus) },
       { label: 'New Status', value: `<strong>${escapeHtml(newStatus)}</strong>` },
-      ...(order.invoiceNumber
-        ? [{ label: 'Invoice No', value: escapeHtml(order.invoiceNumber) }]
-        : []),
-      ...(displayRef ? [{ label: 'Reference No', value: escapeHtml(displayRef) }] : []),
+      ...(invoiceNumber ? [{ label: 'Invoice No', value: escapeHtml(invoiceNumber) }] : []),
     ])}
     
     <h3 style="margin-top: 32px; color: #111827;">Order Summary</h3>

@@ -59,6 +59,19 @@ export const isWithinPeriod = (dateInput, period, customRange = null) => {
       endOfWeek.setDate(startOfWeek.getDate() + 6); // Saturday
       return compareDate >= startOfWeek && compareDate <= endOfWeek;
     }
+    case 'this weekend': {
+      const currentDay = today.getDay(); // 0 is Sunday, 6 is Saturday
+      const sat = new Date(today);
+      const sun = new Date(today);
+      if (currentDay === 0) {
+        sat.setDate(today.getDate() - 1);
+        sun.setDate(today.getDate());
+      } else {
+        sat.setDate(today.getDate() + (6 - currentDay));
+        sun.setDate(today.getDate() + (7 - currentDay));
+      }
+      return compareDate >= sat && compareDate <= sun;
+    }
     case 'this month': {
       return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
     }

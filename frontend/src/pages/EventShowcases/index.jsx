@@ -139,13 +139,31 @@ export function EventShowcases() {
           </aside>
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between mb-6 lg:mb-10">
-              <div className="flex flex-col gap-1">
-                <h2 className="font-headline-md text-on-surface font-normal text-[24px] lg:text-[32px]">
-                  Event Design Packages
-                </h2>
-                <p className="font-body-md text-on-surface-variant/60 font-medium">
-                  {totalCount} unique pieces designed for you
+            {/* Desktop Contextual Header */}
+            <div className="hidden lg:flex items-center justify-between mb-6 pb-4 border-b border-outline-variant/15">
+              <div>
+                <h1 className="font-heading text-[26px] xl:text-[30px] font-bold text-on-surface">
+                  {searchQuery ? (
+                    <>
+                      Event Packages for{' '}
+                      <span className="text-primary italic">"{searchQuery}"</span>
+                    </>
+                  ) : activeCategory === 'All' ? (
+                    'All Event Packages'
+                  ) : (
+                    `${activeCategory} Event Packages`
+                  )}
+                </h1>
+                <p className="font-body-sm text-on-surface-variant/70 font-medium mt-0.5">
+                  <span className="font-semibold text-on-surface">{totalCount}</span>{' '}
+                  {totalCount === 1 ? 'package' : 'packages'}{' '}
+                  {activeCategory !== 'All' && !searchQuery
+                    ? `in ${activeCategory}`
+                    : searchQuery
+                      ? activeCategory !== 'All'
+                        ? `found in ${activeCategory}`
+                        : 'found'
+                      : 'available for booking'}
                 </p>
               </div>
             </div>
@@ -186,6 +204,41 @@ export function EventShowcases() {
               isNavbarHidden={isNavbarHidden}
               navbarHeight={navbarHeight}
             />
+
+            {/* Mobile Results Count Indicator */}
+            <div className="lg:hidden mb-4 px-1 flex items-center justify-between text-[12px] font-medium text-on-surface-variant/80 animate-fade-in">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="inline-flex items-center justify-center font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full text-[11px] border border-primary/15">
+                  {totalCount} {totalCount === 1 ? 'package' : 'packages'}
+                </span>
+                {searchQuery ? (
+                  <span className="truncate max-w-[210px]">
+                    for <strong className="text-on-surface font-semibold">"{searchQuery}"</strong>
+                    {activeCategory !== 'All' && (
+                      <>
+                        {' '}
+                        in <strong className="text-primary font-semibold">{activeCategory}</strong>
+                      </>
+                    )}
+                  </span>
+                ) : activeCategory !== 'All' ? (
+                  <span>
+                    in <strong className="text-on-surface font-semibold">{activeCategory}</strong>
+                  </span>
+                ) : (
+                  <span>event designs</span>
+                )}
+              </div>
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery && setSearchQuery('')}
+                  className="text-[11px] text-primary underline font-semibold cursor-pointer shrink-0"
+                >
+                  Clear search
+                </button>
+              )}
+            </div>
 
             {loading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-3 sm:gap-6 lg:gap-8 gap-y-8 sm:gap-y-12">

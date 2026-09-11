@@ -8,8 +8,9 @@ import { CustomOrderConfigHeader } from './CustomOrderConfigHeader';
 import { CustomOrderTypeTabs } from './CustomOrderTypeTabs';
 import { CustomOrderFormBuilder } from './CustomOrderFormBuilder';
 import { CustomOrderTypeSettings } from './CustomOrderTypeSettings';
+import { AdminFormBuilderSkeleton } from './AdminFormBuilderSkeleton';
 
-export function AdminCustomOrderConfig() {
+export function AdminCustomOrderConfig({ onActionsChange }) {
   const [config, setConfig] = useState({ types: [] });
   const [loading, setLoading] = useState(true);
   const [savingDraft, setSavingDraft] = useState(false);
@@ -17,6 +18,11 @@ export function AdminCustomOrderConfig() {
   const confirm = useConfirm();
 
   const [activeTypeTab, setActiveTypeTab] = useState(null);
+
+  const configRef = React.useRef(config);
+  useEffect(() => {
+    configRef.current = config;
+  }, [config]);
 
   useEffect(() => {
     fetchConfig();
@@ -49,7 +55,7 @@ export function AdminCustomOrderConfig() {
   const handleSaveDraft = async () => {
     try {
       setSavingDraft(true);
-      const res = await customOrderService.saveConfigDraft(config);
+      const res = await customOrderService.saveConfigDraft(configRef.current);
       if (res.success) {
         toast.success('Draft saved successfully!');
         setConfig(res.data);
@@ -72,7 +78,7 @@ export function AdminCustomOrderConfig() {
       return;
     try {
       setPublishing(true);
-      const res = await customOrderService.updateConfig(config);
+      const res = await customOrderService.updateConfig(configRef.current);
       if (res.success) {
         toast.success('Version published successfully!');
         setConfig(res.data);
@@ -83,6 +89,19 @@ export function AdminCustomOrderConfig() {
       setPublishing(false);
     }
   };
+
+  useEffect(() => {
+    if (onActionsChange) {
+      onActionsChange({
+        handleSaveDraft,
+        handlePublish,
+        savingDraft,
+        publishing,
+        loading,
+        config,
+      });
+    }
+  }, [savingDraft, publishing, loading, config.status, config.version]);
 
   // --- Step & Field Management ---
   const updateType = (typeId, updates) => {
@@ -238,8 +257,7 @@ export function AdminCustomOrderConfig() {
     }));
   };
 
-  if (loading)
-    return <div className="p-10 text-center animate-pulse">Loading Enterprise Form Builder...</div>;
+  if (loading) return <AdminFormBuilderSkeleton />;
 
   const activeType = config.types?.find((t) => t.id === activeTypeTab);
 
@@ -285,4 +303,5 @@ export function AdminCustomOrderConfig() {
   );
 }
 
+export { AdminFormBuilderSkeleton };
 export default AdminCustomOrderConfig;

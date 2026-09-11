@@ -51,3 +51,4 @@ export { AdminExecutiveDashboardSkeleton } from './AdminExecutiveDashboardSkelet
 export { AdminMaintenanceConsoleSkeleton } from './AdminMaintenanceConsoleSkeleton';
 export { AdminBackupCenterSkeleton } from './AdminBackupCenterSkeleton';
 export { AdminRecommendationAnalyticsSkeleton } from './AdminRecommendationAnalyticsSkeleton';
+export { AdminFormBuilderSkeleton } from '../../AdminCustomOrderConfig/AdminFormBuilderSkeleton';

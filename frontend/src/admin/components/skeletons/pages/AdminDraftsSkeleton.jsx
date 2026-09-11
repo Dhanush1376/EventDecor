@@ -35,49 +35,70 @@ export function AdminDraftsSkeleton() {
           </div>
         </div>
 
-        {/* Drafts Table */}
-        <table className="admin-table w-full text-left">
-          <thead>
-            <tr className="border-b border-[var(--admin-border-subtle)] bg-[var(--admin-surface)]">
-              <th className="py-3 px-4">
-                <SkeletonTextLine width="90px" height="11px" />
-              </th>
-              <th className="py-3 px-4">
-                <SkeletonTextLine width="60px" height="11px" />
-              </th>
-              <th className="py-3 px-4">
-                <SkeletonTextLine width="100px" height="11px" />
-              </th>
-              <th className="py-3 px-4 text-right pr-4">
-                <SkeletonTextLine width="50px" height="11px" className="ml-auto" />
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[var(--admin-border-subtle)]">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <tr key={i}>
-                <td className="py-3.5 px-4">
-                  <div className="flex items-center gap-3">
-                    <SkeletonBox width="32px" height="32px" rounded="sm" className="shrink-0" />
-                    <div className="space-y-1">
-                      <SkeletonTextLine width="170px" height="14px" />
-                      <SkeletonTextLine width="120px" height="11px" />
-                    </div>
-                  </div>
-                </td>
-                <td className="py-3.5 px-4">
-                  <SkeletonBadge width="75px" height="20px" />
-                </td>
-                <td className="py-3.5 px-4">
-                  <SkeletonTextLine width="110px" height="12px" />
-                </td>
-                <td className="py-3.5 px-4 text-right pr-4">
-                  <SkeletonBox width="28px" height="28px" rounded="sm" className="ml-auto" />
-                </td>
+        {/* Desktop Drafts Table */}
+        <div className="hidden md:block">
+          <table className="admin-table w-full text-left">
+            <thead>
+              <tr className="border-b border-[var(--admin-border-subtle)] bg-[var(--admin-surface)]">
+                <th className="py-3 px-4">
+                  <SkeletonTextLine width="90px" height="11px" />
+                </th>
+                <th className="py-3 px-4">
+                  <SkeletonTextLine width="60px" height="11px" />
+                </th>
+                <th className="py-3 px-4">
+                  <SkeletonTextLine width="100px" height="11px" />
+                </th>
+                <th className="py-3 px-4 text-right pr-4">
+                  <SkeletonTextLine width="50px" height="11px" className="ml-auto" />
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-[var(--admin-border-subtle)]">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <tr key={i}>
+                  <td className="py-3.5 px-4">
+                    <div className="flex items-center gap-3">
+                      <SkeletonBox width="32px" height="32px" rounded="sm" className="shrink-0" />
+                      <div className="space-y-1">
+                        <SkeletonTextLine width="170px" height="14px" />
+                        <SkeletonTextLine width="120px" height="11px" />
+                      </div>
+                    </div>
+                  </td>
+                  <td className="py-3.5 px-4">
+                    <SkeletonBadge width="75px" height="20px" />
+                  </td>
+                  <td className="py-3.5 px-4">
+                    <SkeletonTextLine width="110px" height="12px" />
+                  </td>
+                  <td className="py-3.5 px-4 text-right pr-4">
+                    <SkeletonBox width="28px" height="28px" rounded="sm" className="ml-auto" />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Mobile Drafts Cards */}
+        <div className="md:hidden p-3 space-y-3">
+          {[1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className="p-3.5 rounded-[4px] border border-[var(--admin-border-subtle)] bg-[var(--admin-surface)] space-y-2.5 shadow-xs"
+            >
+              <div className="flex items-center justify-between">
+                <SkeletonTextLine width="140px" height="14px" />
+                <SkeletonBadge width="65px" height="18px" />
+              </div>
+              <div className="flex items-center justify-between text-[11px] pt-1 border-t border-[var(--admin-border-subtle)]">
+                <SkeletonTextLine width="100px" height="11px" />
+                <SkeletonBox width="24px" height="24px" rounded="sm" />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

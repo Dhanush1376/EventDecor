@@ -16,11 +16,20 @@ import {
   formatCurrency,
   fadeUp,
   stagger,
+  AdminFilterDrawer,
 } from '../components/AdminUIKit';
 import { DeleteConfirmModal } from '../components/ui/DeleteConfirmModal';
 import { PermanentDeleteModal } from '../components/ui/PermanentDeleteModal';
 import { useConfirm } from '../../context/ConfirmProvider';
 import { useScrollLock } from '../../hooks/useScrollLock';
+import {
+  useAdminFilters,
+  AdminActiveFilterChips,
+  AdminFilterSection,
+  AdminRangeFilter,
+  AdminFilterEmptyState,
+} from '../components/filters';
+import { productFilterConfig } from '../components/filters/configs';
 
 export function AdminProducts() {
   const navigate = useNavigate();
@@ -43,11 +52,7 @@ export function AdminProducts() {
 
   // States
   const [activeTab, setActiveTab] = useState('products'); // 'products', 'categories', 'inventory'
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [selectedStatus, setSelectedStatus] = useState('All');
-  const [selectedType, setSelectedType] = useState('All');
   const [sortBy, setSortBy] = useState('newest');
-  const [showLowStockOnly, setShowLowStockOnly] = useState(false);
   const [viewMode, setViewMode] = useState('table');
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [showFiltersMenu, setShowFiltersMenu] = useState(false);
@@ -63,22 +68,29 @@ export function AdminProducts() {
 
   useScrollLock(isMobile && showFiltersMenu);
 
-  const activeFiltersCount = useMemo(() => {
-    let count = 0;
-    if (selectedCategory !== 'All') count++;
-    if (selectedStatus !== 'All') count++;
-    if (selectedType !== 'All') count++;
-    if (sortBy !== 'newest') count++;
-    return count;
-  }, [selectedCategory, selectedStatus, selectedType, sortBy]);
+  // Unified Filter Engine
+  const {
+    filteredItems: rawFilteredProducts,
+    filterState,
+    setFilterValue,
+    resetFilter,
+    resetAllFilters,
+    activeChips,
+    activeCount,
+    totalCount,
+    matchCount,
+  } = useAdminFilters(products, productFilterConfig, searchQuery);
 
-  const resetFilters = () => {
-    setSelectedCategory('All');
-    setSelectedStatus('All');
-    setSelectedType('All');
-    setSortBy('newest');
-    setShowLowStockOnly(false);
-  };
+  // Separate sorting stage: Sorters determine order; filters determine membership
+  const filteredProducts = useMemo(() => {
+    const list = [...rawFilteredProducts];
+    if (sortBy === 'price-asc') list.sort((a, b) => a.price - b.price);
+    else if (sortBy === 'price-desc') list.sort((a, b) => b.price - a.price);
+    else if (sortBy === 'stock-asc') list.sort((a, b) => a.stock - b.stock);
+    else if (sortBy === 'stock-desc') list.sort((a, b) => b.stock - a.stock);
+    else if (sortBy === 'name-asc') list.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    return list;
+  }, [rawFilteredProducts, sortBy]);
 
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, type: 'soft', product: null });
   const [isDeleting, setIsDeleting] = useState(false);
@@ -304,42 +316,6 @@ export function AdminProducts() {
       }
     }
   };
-
-  const filteredProducts = useMemo(() => {
-    let result = products.filter((p) => {
-      const matchCategory = selectedCategory === 'All' || p.category === selectedCategory;
-      const matchStatus = selectedStatus === 'All' || p.status === selectedStatus;
-      const matchType = (() => {
-        if (selectedType === 'rental') return p.rawProduct?.rentalEnabled === true;
-        if (selectedType === 'non_rental') return !p.rawProduct?.rentalEnabled;
-        if (selectedType === 'returnable') return !p.rawProduct?.isNonRefundable;
-        if (selectedType === 'non_returnable') return p.rawProduct?.isNonRefundable === true;
-        return true;
-      })();
-      const matchLowStock = showLowStockOnly ? p.stock <= 5 : true;
-      const matchSearch =
-        !searchQuery ||
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        formatCategoryName(p.category).toLowerCase().includes(searchQuery.toLowerCase());
-      return matchCategory && matchStatus && matchType && matchLowStock && matchSearch;
-    });
-
-    if (sortBy === 'price-asc') result.sort((a, b) => a.price - b.price);
-    else if (sortBy === 'price-desc') result.sort((a, b) => b.price - a.price);
-    else if (sortBy === 'stock-asc') result.sort((a, b) => a.stock - b.stock);
-    else if (sortBy === 'stock-desc') result.sort((a, b) => b.stock - a.stock);
-
-    return result;
-  }, [
-    products,
-    selectedCategory,
-    selectedStatus,
-    selectedType,
-    searchQuery,
-    showLowStockOnly,
-    sortBy,
-  ]);
 
   const toggleSelect = (id) =>
     setSelectedProducts((prev) =>
@@ -588,348 +564,373 @@ export function AdminProducts() {
         <>
           {/* Search & Actions Bar: Sticky below top navbar matching Showcase / Orders style */}
           <div className="sticky top-[var(--admin-topbar-height,56px)] z-20 -my-2 py-2.5 bg-[var(--admin-bg)]/95 backdrop-blur-md mb-5">
-            <motion.div variants={fadeUp} className="flex flex-row items-center gap-2 w-full">
-              {/* Search Bar - Height exactly matches Actions (42px) */}
-              <div className="relative flex-1 min-w-0 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] flex items-center px-2.5 sm:px-3 h-[42px] min-h-[42px] max-h-[42px]">
-                <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] shrink-0">
-                  search
-                </span>
-                <input
-                  type="text"
-                  value={searchQuery || ''}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search by title, SKU, or category..."
-                  className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-full min-w-0"
-                />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchQuery('')}
-                    className="text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] cursor-pointer p-1 flex items-center justify-center shrink-0"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">close</span>
-                  </button>
-                )}
-              </div>
-
-              {/* Action Controls Group */}
-              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                {/* Filters Button & Popover */}
-                {activeTab === 'products' && (
-                  <div className="relative shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => setShowFiltersMenu(!showFiltersMenu)}
-                      className={`h-[42px] min-h-[42px] max-h-[42px] px-2.5 sm:px-3.5 flex items-center justify-center gap-1.5 rounded-[4px] border transition-colors shrink-0 cursor-pointer ${
-                        showFiltersMenu || activeFiltersCount > 0
-                          ? 'bg-[var(--admin-accent)] text-white border-transparent shadow-xs'
-                          : 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] border-[var(--admin-border)] hover:border-[var(--admin-border-strong)]'
-                      }`}
-                      title="Product Filters"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">tune</span>
-                      <span className="font-semibold text-[13px] hidden sm:inline">
-                        {activeFiltersCount > 0 ? `${activeFiltersCount} Filters` : 'Filters'}
-                      </span>
-                      {activeFiltersCount > 0 && (
-                        <span className="min-w-[16px] h-4 px-1 rounded-full bg-white text-[var(--admin-accent)] text-[10px] font-bold flex items-center justify-center">
-                          {activeFiltersCount}
-                        </span>
-                      )}
-                    </button>
-
-                    <AnimatePresence>
-                      {showFiltersMenu && (
-                        <>
-                          <div
-                            onClick={() => setShowFiltersMenu(false)}
-                            className="fixed inset-0 z-[120] bg-black/30 sm:bg-transparent"
-                          />
-
-                          <motion.div
-                            initial={isMobile ? { y: '100%' } : { opacity: 0, y: -8, scale: 0.98 }}
-                            animate={isMobile ? { y: 0 } : { opacity: 1, y: 0, scale: 1 }}
-                            exit={isMobile ? { y: '100%' } : { opacity: 0, y: -8, scale: 0.98 }}
-                            transition={{ duration: 0.15 }}
-                            className="fixed sm:absolute bottom-0 inset-x-0 sm:top-full sm:bottom-auto sm:right-0 sm:left-auto z-[130] sm:mt-2 w-full sm:w-[320px] bg-[var(--admin-surface)] rounded-t-[8px] sm:rounded-[4px] shadow-2xl border border-[var(--admin-border-strong)] flex flex-col p-5 sm:p-4 text-left"
-                          >
-                            <div className="flex justify-between items-center mb-4 sm:mb-3">
-                              <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)] flex items-center gap-2">
-                                <span className="material-symbols-outlined text-[18px]">
-                                  filter_list
-                                </span>
-                                Product Filters
-                              </h3>
-                              <button
-                                type="button"
-                                onClick={() => setShowFiltersMenu(false)}
-                                className="sm:hidden admin-btn-icon hover:bg-[var(--admin-bg-subtle)] !rounded-[4px] p-1"
-                              >
-                                <span className="material-symbols-outlined text-[20px]">close</span>
-                              </button>
-                            </div>
-
-                            <div className="space-y-4 max-h-[60vh] overflow-y-auto scrollbar-hide">
-                              {/* Category Filter */}
-                              <div>
-                                <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
-                                  Category
-                                </label>
-                                <select
-                                  value={selectedCategory}
-                                  onChange={(e) => setSelectedCategory(e.target.value)}
-                                  className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
-                                >
-                                  <option value="All">All Categories</option>
-                                  {productCategories.map((c) => (
-                                    <option key={c} value={c}>
-                                      {formatCategoryName(c)}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
-
-                              {/* Status Filter */}
-                              <div>
-                                <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
-                                  Status
-                                </label>
-                                <select
-                                  value={selectedStatus}
-                                  onChange={(e) => setSelectedStatus(e.target.value)}
-                                  className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
-                                >
-                                  <option value="All">All Statuses</option>
-                                  <option value="active">Active</option>
-                                  <option value="inactive">Inactive</option>
-                                  <option value="draft">Draft</option>
-                                  <option value="low_stock">Low Stock</option>
-                                  <option value="out_of_stock">Out of Stock</option>
-                                </select>
-                              </div>
-
-                              {/* Product Type Filter */}
-                              <div>
-                                <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
-                                  Product Type
-                                </label>
-                                <select
-                                  value={selectedType}
-                                  onChange={(e) => setSelectedType(e.target.value)}
-                                  className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
-                                >
-                                  <option value="All">All Types</option>
-                                  <option value="rental">Rental</option>
-                                  <option value="non_rental">Non-Rental</option>
-                                  <option value="returnable">Returnable</option>
-                                  <option value="non_returnable">Non-Returnable</option>
-                                </select>
-                              </div>
-
-                              {/* Sort By */}
-                              <div>
-                                <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
-                                  Sort By
-                                </label>
-                                <select
-                                  value={sortBy}
-                                  onChange={(e) => setSortBy(e.target.value)}
-                                  className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
-                                >
-                                  <option value="newest">Newest Added</option>
-                                  <option value="price-asc">Price: Low to High</option>
-                                  <option value="price-desc">Price: High to Low</option>
-                                  <option value="stock-asc">Stock: Low to High</option>
-                                  <option value="stock-desc">Stock: High to Low</option>
-                                </select>
-                              </div>
-                            </div>
-
-                            <div className="mt-4 pt-4 border-t border-[var(--admin-border-subtle)] flex gap-2">
-                              <button
-                                type="button"
-                                onClick={resetFilters}
-                                className="admin-btn-outline flex-1 justify-center py-2.5 !rounded-[4px] text-[13px]"
-                              >
-                                Clear All
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setShowFiltersMenu(false)}
-                                className="admin-btn-primary flex-1 justify-center py-2.5 !rounded-[4px] text-[13px]"
-                              >
-                                Apply Filters
-                              </button>
-                            </div>
-                          </motion.div>
-                        </>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                )}
-
-                {/* Quick Select All in Grid view */}
-                {viewMode === 'grid' && filteredProducts.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={toggleSelectAll}
-                    className={`h-[42px] min-h-[42px] max-h-[42px] px-2.5 sm:px-3 rounded-[4px] border text-[12px] sm:text-[13px] font-semibold hidden md:flex items-center justify-center gap-1.5 transition-all cursor-pointer shrink-0 ${
-                      selectedProducts.length > 0
-                        ? 'bg-[var(--admin-accent)]/10 text-[var(--admin-accent)] border-[var(--admin-accent)]/40'
-                        : 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] border-[var(--admin-border)] hover:text-[var(--admin-text-primary)]'
-                    }`}
-                    title={
-                      selectedProducts.length === filteredProducts.length
-                        ? 'Deselect All'
-                        : 'Select All Products'
-                    }
-                  >
-                    <span className="material-symbols-outlined text-[18px]">
-                      {selectedProducts.length === filteredProducts.length &&
-                      filteredProducts.length > 0
-                        ? 'check_box'
-                        : selectedProducts.length > 0
-                          ? 'indeterminate_check_box'
-                          : 'check_box_outline_blank'}
-                    </span>
-                    <span>
-                      {selectedProducts.length === filteredProducts.length
-                        ? 'Deselect All'
-                        : 'Select All'}
-                    </span>
-                  </button>
-                )}
-
-                {/* View Mode Switcher Box */}
-                <div className="flex items-center gap-1 shrink-0 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] p-1 h-[42px] min-h-[42px] max-h-[42px] box-border">
-                  <button
-                    type="button"
-                    onClick={() => setViewMode('table')}
-                    className={`h-[32px] w-[32px] min-h-[32px] min-w-[32px] max-h-[32px] max-w-[32px] rounded-[3px] box-border flex items-center justify-center transition-all cursor-pointer ${
-                      viewMode === 'table'
-                        ? 'bg-white dark:bg-stone-800 text-[var(--admin-accent)] shadow-xs font-bold'
-                        : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
-                    }`}
-                    title="Table View"
-                  >
-                    <span className="material-symbols-outlined text-[18px] leading-none">
-                      view_list
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setViewMode('grid')}
-                    className={`h-[32px] w-[32px] min-h-[32px] min-w-[32px] max-h-[32px] max-w-[32px] rounded-[3px] box-border flex items-center justify-center transition-all cursor-pointer ${
-                      viewMode === 'grid'
-                        ? 'bg-white dark:bg-stone-800 text-[var(--admin-accent)] shadow-xs font-bold'
-                        : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
-                    }`}
-                    title="Cards / Grid View"
-                  >
-                    <span className="material-symbols-outlined text-[18px] leading-none">
-                      grid_view
-                    </span>
-                  </button>
-                </div>
-
-                {/* Add Product Button */}
-                <button
-                  type="button"
-                  onClick={() => navigate('/admin/products/add')}
-                  className="h-[42px] min-h-[42px] max-h-[42px] px-3 sm:px-3.5 bg-[var(--admin-accent)] hover:opacity-95 text-white rounded-[4px] flex items-center justify-center cursor-pointer transition-all active:scale-95 shadow-xs shrink-0 gap-1.5 font-semibold text-[13px]"
-                  title="Add Product"
-                >
-                  <span className="material-symbols-outlined text-[18px]">add</span>
-                  <span className="hidden sm:inline">Add Product</span>
-                </button>
-              </div>
-            </motion.div>
-          </div>
-
-          {/* Redesigned Dedicated Bulk Selection Bar */}
-          <AnimatePresence>
-            {selectedProducts.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: -10, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -10, scale: 0.98 }}
-                transition={{ duration: 0.2 }}
-                className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 px-4 py-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border-strong)] rounded-[var(--admin-radius-lg)] shadow-sm mb-6"
-              >
-                {/* Left: Checkbox & Count */}
-                <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={
-                      selectedProducts.length === filteredProducts.length &&
-                      filteredProducts.length > 0
-                    }
-                    onChange={toggleSelectAll}
-                    className="w-4 h-4 rounded-[4px] border-[var(--admin-border-strong)] accent-[var(--admin-accent)] cursor-pointer shrink-0"
-                    title={
-                      selectedProducts.length === filteredProducts.length
-                        ? 'Deselect all'
-                        : 'Select all'
-                    }
-                  />
-                  <span className="text-[13px] font-bold text-[var(--admin-text-primary)] flex items-center gap-1.5">
-                    <span className="inline-flex items-center justify-center min-w-[22px] h-[22px] px-1.5 rounded-full bg-[var(--admin-accent)]/15 text-[var(--admin-accent)] text-[12px] font-extrabold">
-                      {selectedProducts.length}
-                    </span>
-                    <span>product{selectedProducts.length > 1 ? 's' : ''} selected</span>
+            <div className="relative w-full">
+              <motion.div variants={fadeUp} className="flex flex-row items-center gap-2 w-full">
+                {/* Search Bar - Height exactly matches Actions (42px) */}
+                <div className="relative flex-1 min-w-0 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] flex items-center px-2.5 sm:px-3 h-[42px] min-h-[42px] max-h-[42px]">
+                  <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] shrink-0">
+                    search
                   </span>
-
-                  {selectedProducts.length < filteredProducts.length ? (
+                  <input
+                    type="text"
+                    value={searchQuery || ''}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search by title, SKU, or category..."
+                    className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-full min-w-0"
+                  />
+                  {searchQuery && (
                     <button
                       type="button"
-                      onClick={toggleSelectAll}
-                      className="text-[12px] font-semibold text-[var(--admin-accent)] hover:underline cursor-pointer ml-1"
+                      onClick={() => setSearchQuery('')}
+                      className="text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] cursor-pointer p-1 flex items-center justify-center shrink-0"
                     >
-                      Select all {filteredProducts.length}
+                      <span className="material-symbols-outlined text-[16px]">close</span>
                     </button>
-                  ) : (
-                    <span className="text-[11px] font-medium text-[var(--admin-text-tertiary)] ml-1">
-                      (All {filteredProducts.length} selected)
-                    </span>
                   )}
                 </div>
 
-                {/* Right: Actions */}
-                <div className="flex items-center gap-2 justify-end">
+                {/* Action Controls Group */}
+                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                  {/* Filters Button & Popover */}
+                  {activeTab === 'products' && (
+                    <div className="relative shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setShowFiltersMenu(!showFiltersMenu)}
+                        className={`h-[42px] min-h-[42px] max-h-[42px] px-2.5 sm:px-3.5 flex items-center justify-center gap-1.5 rounded-[4px] border transition-colors shrink-0 cursor-pointer ${
+                          showFiltersMenu || activeFiltersCount > 0
+                            ? 'bg-[var(--admin-accent)] text-white border-transparent shadow-xs'
+                            : 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] border-[var(--admin-border)] hover:border-[var(--admin-border-strong)]'
+                        }`}
+                        title="Product Filters"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">tune</span>
+                        <span className="font-semibold text-[13px] hidden sm:inline">
+                          {activeFiltersCount > 0 ? `${activeFiltersCount} Filters` : 'Filters'}
+                        </span>
+                        {activeCount > 0 && (
+                          <span className="min-w-[16px] h-4 px-1 rounded-full bg-white text-[var(--admin-accent)] text-[10px] font-bold flex items-center justify-center">
+                            {activeCount}
+                          </span>
+                        )}
+                      </button>
+
+                      <AdminFilterDrawer
+                        isOpen={showFiltersMenu}
+                        onClose={() => setShowFiltersMenu(false)}
+                        title="Product Filters"
+                        icon="tune"
+                        activeCount={activeCount}
+                        onClearAll={resetAllFilters}
+                        clearAllLabel="Clear All"
+                        onApply={() => setShowFiltersMenu(false)}
+                      >
+                        {/* Category Filter */}
+                        <AdminFilterSection
+                          title="Category"
+                          active={filterState.category !== 'All'}
+                        >
+                          <select
+                            value={filterState.category}
+                            onChange={(e) => setFilterValue('category', e.target.value)}
+                            className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                          >
+                            <option value="All">All Categories</option>
+                            {productCategories.map((c) => (
+                              <option key={c} value={c}>
+                                {formatCategoryName(c)}
+                              </option>
+                            ))}
+                          </select>
+                        </AdminFilterSection>
+
+                        {/* Status Filter */}
+                        <AdminFilterSection
+                          title="Lifecycle Status"
+                          active={filterState.status !== 'All'}
+                        >
+                          <select
+                            value={filterState.status}
+                            onChange={(e) => setFilterValue('status', e.target.value)}
+                            className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                          >
+                            <option value="All">All Statuses</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="draft">Draft</option>
+                          </select>
+                        </AdminFilterSection>
+
+                        {/* Canonical Stock Health Status */}
+                        <AdminFilterSection
+                          title="Stock Health"
+                          active={filterState.stockStatus !== 'all'}
+                        >
+                          <select
+                            value={filterState.stockStatus}
+                            onChange={(e) => setFilterValue('stockStatus', e.target.value)}
+                            className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                          >
+                            <option value="all">All Inventory Levels</option>
+                            <option value="in_stock">In Stock (&gt;15 units)</option>
+                            <option value="low_warning">Low Warning (6–15 units)</option>
+                            <option value="critical_low">Critical Low (1–5 units)</option>
+                            <option value="out_of_stock">Out of Stock (0 units)</option>
+                          </select>
+                        </AdminFilterSection>
+
+                        {/* Stock Quantity Exact Range */}
+                        <AdminFilterSection
+                          title="Stock Quantity Units"
+                          active={
+                            filterState.stockRange?.min !== '' || filterState.stockRange?.max !== ''
+                          }
+                        >
+                          <AdminRangeFilter
+                            value={filterState.stockRange}
+                            onChange={(val) => setFilterValue('stockRange', val)}
+                            minPlaceholder="Min units"
+                            maxPlaceholder="Max units"
+                          />
+                        </AdminFilterSection>
+
+                        {/* Price Range Filter */}
+                        <AdminFilterSection
+                          title="Price Range (₹)"
+                          active={
+                            filterState.priceRange?.min !== '' || filterState.priceRange?.max !== ''
+                          }
+                        >
+                          <AdminRangeFilter
+                            value={filterState.priceRange}
+                            onChange={(val) => setFilterValue('priceRange', val)}
+                            prefix="₹"
+                            minPlaceholder="Min ₹"
+                            maxPlaceholder="Max ₹"
+                            step="50"
+                          />
+                        </AdminFilterSection>
+
+                        {/* Media Hygiene Audit */}
+                        <AdminFilterSection
+                          title="Catalog Photos"
+                          active={filterState.media !== 'all'}
+                        >
+                          <select
+                            value={filterState.media}
+                            onChange={(e) => setFilterValue('media', e.target.value)}
+                            className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                          >
+                            <option value="all">All (With & Without Photos)</option>
+                            <option value="missing_images">Missing Photos (Needs Upload)</option>
+                            <option value="has_images">Has Photos</option>
+                          </select>
+                        </AdminFilterSection>
+
+                        {/* Product Rental Availability Filter */}
+                        <AdminFilterSection
+                          title="Rental Option"
+                          active={filterState.type !== 'All'}
+                        >
+                          <select
+                            value={filterState.type}
+                            onChange={(e) => setFilterValue('type', e.target.value)}
+                            className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                          >
+                            <option value="All">All Products</option>
+                            <option value="rental">Rental Available</option>
+                            <option value="sale_only">Sale Only (Non-Rental)</option>
+                          </select>
+                        </AdminFilterSection>
+
+                        {/* Sort Order */}
+                        <AdminFilterSection title="Sort Order">
+                          <select
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value)}
+                            className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                          >
+                            <option value="newest">Newest Added</option>
+                            <option value="price-asc">Price: Low to High</option>
+                            <option value="price-desc">Price: High to Low</option>
+                            <option value="stock-asc">Stock: Low to High</option>
+                            <option value="stock-desc">Stock: High to Low</option>
+                            <option value="name-asc">Name: A to Z</option>
+                          </select>
+                        </AdminFilterSection>
+                      </AdminFilterDrawer>
+                    </div>
+                  )}
+
+                  {/* Quick Select All in Grid view */}
+                  {viewMode === 'grid' && filteredProducts.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={toggleSelectAll}
+                      className={`h-[42px] min-h-[42px] max-h-[42px] px-2.5 sm:px-3 rounded-[4px] border text-[12px] sm:text-[13px] font-semibold hidden md:flex items-center justify-center gap-1.5 transition-all cursor-pointer shrink-0 ${
+                        selectedProducts.length > 0
+                          ? 'bg-[var(--admin-accent)]/10 text-[var(--admin-accent)] border-[var(--admin-accent)]/40'
+                          : 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] border-[var(--admin-border)] hover:text-[var(--admin-text-primary)]'
+                      }`}
+                      title={
+                        selectedProducts.length === filteredProducts.length
+                          ? 'Deselect All'
+                          : 'Select All Products'
+                      }
+                    >
+                      <span className="material-symbols-outlined text-[18px]">
+                        {selectedProducts.length === filteredProducts.length &&
+                        filteredProducts.length > 0
+                          ? 'check_box'
+                          : selectedProducts.length > 0
+                            ? 'indeterminate_check_box'
+                            : 'check_box_outline_blank'}
+                      </span>
+                      <span>
+                        {selectedProducts.length === filteredProducts.length
+                          ? 'Deselect All'
+                          : 'Select All'}
+                      </span>
+                    </button>
+                  )}
+
+                  {/* View Mode Switcher Box */}
+                  <div className="flex items-center gap-1 shrink-0 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] p-1 h-[42px] min-h-[42px] max-h-[42px] box-border">
+                    <button
+                      type="button"
+                      onClick={() => setViewMode('table')}
+                      className={`h-[32px] w-[32px] min-h-[32px] min-w-[32px] max-h-[32px] max-w-[32px] rounded-[3px] box-border flex items-center justify-center transition-all cursor-pointer ${
+                        viewMode === 'table'
+                          ? 'bg-white dark:bg-stone-800 text-[var(--admin-accent)] shadow-xs font-bold'
+                          : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
+                      }`}
+                      title="Table View"
+                    >
+                      <span className="material-symbols-outlined text-[18px] leading-none">
+                        view_list
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setViewMode('grid')}
+                      className={`h-[32px] w-[32px] min-h-[32px] min-w-[32px] max-h-[32px] max-w-[32px] rounded-[3px] box-border flex items-center justify-center transition-all cursor-pointer ${
+                        viewMode === 'grid'
+                          ? 'bg-white dark:bg-stone-800 text-[var(--admin-accent)] shadow-xs font-bold'
+                          : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
+                      }`}
+                      title="Cards / Grid View"
+                    >
+                      <span className="material-symbols-outlined text-[18px] leading-none">
+                        grid_view
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* Add Product Button */}
                   <button
                     type="button"
-                    onClick={handleBulkDeactivateProducts}
-                    className="h-8.5 px-3 rounded-[var(--admin-radius-sm)] bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-[12px] font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
-                    title="Deactivate selected products"
+                    onClick={() => navigate('/admin/products/add')}
+                    className="h-[42px] min-h-[42px] max-h-[42px] px-3 sm:px-3.5 bg-[var(--admin-accent)] hover:opacity-95 text-white rounded-[4px] flex items-center justify-center cursor-pointer transition-all active:scale-95 shadow-xs shrink-0 gap-1.5 font-semibold text-[13px]"
+                    title="Add Product"
                   >
-                    <span className="material-symbols-outlined text-[16px]">block</span>
-                    <span>Deactivate</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleBulkDelete}
-                    className="h-8.5 px-3 rounded-[var(--admin-radius-sm)] bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/60 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-[12px] font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
-                    title="Delete selected products"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">delete</span>
-                    <span>Delete</span>
-                  </button>
-
-                  <div className="w-[1px] h-6 bg-[var(--admin-border-subtle)] mx-1" />
-
-                  <button
-                    type="button"
-                    onClick={() => setSelectedProducts([])}
-                    className="h-8.5 w-8.5 rounded-[var(--admin-radius-sm)] text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-hover)] flex items-center justify-center transition-colors cursor-pointer"
-                    title="Clear Selection"
-                  >
-                    <span className="material-symbols-outlined text-[18px]">close</span>
+                    <span className="material-symbols-outlined text-[18px]">add</span>
+                    <span className="hidden sm:inline">Add Product</span>
                   </button>
                 </div>
               </motion.div>
-            )}
-          </AnimatePresence>
+
+              {/* Overlapping In-Place Bulk Selection Bar */}
+              <AnimatePresence>
+                {selectedProducts.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4, scale: 0.99 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -4, scale: 0.99 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute inset-0 z-30 flex flex-row items-center justify-between gap-2 sm:gap-3 px-3 sm:px-4 bg-[var(--admin-surface)] border border-[var(--admin-border-strong)] rounded-[4px] shadow-sm h-[42px] min-h-[42px] max-h-[42px] box-border"
+                  >
+                    {/* Left: Checkbox & Count */}
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                      <input
+                        type="checkbox"
+                        checked={
+                          selectedProducts.length === filteredProducts.length &&
+                          filteredProducts.length > 0
+                        }
+                        onChange={toggleSelectAll}
+                        className="w-4 h-4 rounded-[3px] border-[var(--admin-border-strong)] accent-[var(--admin-accent)] cursor-pointer shrink-0"
+                        title={
+                          selectedProducts.length === filteredProducts.length
+                            ? 'Deselect all'
+                            : 'Select all'
+                        }
+                      />
+                      <span className="text-[12.5px] font-bold text-[var(--admin-text-primary)] flex items-center gap-1.5 shrink-0">
+                        <span className="inline-flex items-center justify-center min-w-[20px] h-[20px] px-1 rounded-full bg-[var(--admin-accent)]/15 text-[var(--admin-accent)] text-[11px] font-extrabold">
+                          {selectedProducts.length}
+                        </span>
+                        <span>selected</span>
+                      </span>
+
+                      {selectedProducts.length < filteredProducts.length && (
+                        <button
+                          type="button"
+                          onClick={toggleSelectAll}
+                          className="text-[12px] font-semibold text-[var(--admin-accent)] hover:underline cursor-pointer truncate hidden md:inline"
+                        >
+                          Select all {filteredProducts.length}
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Right: Actions */}
+                    <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={handleBulkDeactivateProducts}
+                        className="h-8 px-2.5 sm:px-3 rounded-[3px] bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-[12px] font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                        title="Deactivate selected products"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">block</span>
+                        <span className="hidden sm:inline">Deactivate</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleBulkDelete}
+                        className="h-8 px-2.5 sm:px-3 rounded-[3px] bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/60 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-[12px] font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                        title="Delete selected products"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">delete</span>
+                        <span className="hidden sm:inline">Delete</span>
+                      </button>
+
+                      <div className="w-[1px] h-5 bg-[var(--admin-border-subtle)] mx-0.5" />
+
+                      <button
+                        type="button"
+                        onClick={() => setSelectedProducts([])}
+                        className="h-8 w-8 rounded-[3px] text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-hover)] flex items-center justify-center transition-colors cursor-pointer"
+                        title="Clear Selection"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">close</span>
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+
+          {/* Unified Active Filter Chips & Match Counter Bar */}
+          <AdminActiveFilterChips
+            activeChips={activeChips}
+            totalCount={totalCount}
+            matchCount={matchCount}
+            onClearAll={resetAllFilters}
+            itemName="products"
+            className="mb-3 sm:mb-4"
+          />
 
           <AnimatePresence mode="wait">
             {dataLoading ? (
@@ -943,9 +944,12 @@ export function AdminProducts() {
                 {viewMode === 'table' ? (
                   <SkeletonTable rows={10} cols={8} />
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
-                    {[...Array(10)].map((_, i) => (
-                      <div key={i} className="admin-skeleton admin-card aspect-[3/4]" />
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
+                    {[...Array(8)].map((_, i) => (
+                      <div
+                        key={i}
+                        className="admin-skeleton admin-card aspect-[16/15] rounded-[var(--admin-radius-lg)]"
+                      />
                     ))}
                   </div>
                 )}
@@ -957,52 +961,31 @@ export function AdminProducts() {
                 animate="show"
                 exit="hidden"
                 variants={fadeUp}
-                className="admin-card py-16 flex justify-center"
+                className="w-full"
               >
-                <EmptyState
-                  icon={searchQuery ? 'search_off' : 'inventory_2'}
-                  title={
-                    searchQuery ||
-                    selectedCategory !== 'All' ||
-                    selectedStatus !== 'All' ||
-                    showLowStockOnly
-                      ? 'No Matches Found'
-                      : 'No Products Yet'
-                  }
-                  description={
-                    searchQuery ||
-                    selectedCategory !== 'All' ||
-                    selectedStatus !== 'All' ||
-                    showLowStockOnly
-                      ? 'No products match the search or filter criteria.'
-                      : 'Get started by adding your first product to the catalog.'
-                  }
-                  action={
-                    searchQuery ||
-                    selectedCategory !== 'All' ||
-                    selectedStatus !== 'All' ||
-                    showLowStockOnly ? (
-                      <button
-                        onClick={() => {
-                          setSelectedCategory('All');
-                          setSelectedStatus('All');
-                          setShowLowStockOnly(false);
-                        }}
-                        className="admin-btn admin-btn-outline"
-                      >
-                        Clear Filters
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => navigate('/admin/products/add')}
-                        className="admin-btn admin-btn-primary"
-                      >
-                        <span className="material-symbols-outlined text-[16px]">add</span> Add
-                        Product
-                      </button>
-                    )
-                  }
-                />
+                {products.length > 0 ? (
+                  <AdminFilterEmptyState
+                    onReset={resetAllFilters}
+                    title="No Matching Products"
+                    description="No products match your active stock, price, category, or media filters. Clear your filters to view all products."
+                  />
+                ) : (
+                  <div className="admin-card py-16 flex justify-center">
+                    <EmptyState
+                      icon="inventory_2"
+                      title="No Products Yet"
+                      description="Get started by adding your first product to the catalog."
+                      action={
+                        <button
+                          onClick={() => navigate('/admin/products/add')}
+                          className="admin-btn admin-btn-primary"
+                        >
+                          Add Product
+                        </button>
+                      }
+                    />
+                  </div>
+                )}
               </motion.div>
             ) : viewMode === 'table' ? (
               <motion.div
@@ -1204,7 +1187,7 @@ export function AdminProducts() {
                 animate="show"
                 exit="hidden"
                 variants={stagger}
-                className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5"
+                className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5"
               >
                 {filteredProducts.map((p) => {
                   const isSelected = selectedProducts.includes(p.id);
@@ -1214,12 +1197,13 @@ export function AdminProducts() {
                       key={p.id}
                       variants={fadeUp}
                       onClick={() => navigate(`/admin/products/edit/${p.id}`)}
-                      className={`bg-[var(--admin-surface)] rounded-[var(--admin-radius-lg)] border overflow-hidden group cursor-pointer hover:border-[var(--admin-border-strong)] hover:shadow-[var(--admin-shadow-md)] transition-all duration-300 flex flex-col justify-between text-left h-full ${
+                      className={`bg-[var(--admin-surface)] rounded-[var(--admin-radius-lg)] border overflow-hidden group cursor-pointer hover:border-[var(--admin-border-strong)] hover:shadow-[var(--admin-shadow-md)] transition-all duration-300 flex flex-col justify-between text-left ${
                         isSelected
                           ? 'border-[var(--admin-accent)] ring-2 ring-[var(--admin-accent)]/20 shadow-sm'
                           : 'border-[var(--admin-border-subtle)]'
                       } ${p.status === 'inactive' || p.status === 'draft' ? 'opacity-75' : ''}`}
                     >
+                      {/* Image Thumbnail with Select Box on Top Left */}
                       <div className="relative aspect-[16/10] overflow-hidden bg-[var(--admin-bg-subtle)] shrink-0">
                         <img
                           onError={handleImageError}
@@ -1227,43 +1211,53 @@ export function AdminProducts() {
                           alt={p.name}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
-                      </div>
-                      <div className="p-4 flex-1 flex flex-col justify-between">
-                        <div>
-                          <div className="flex items-center justify-between gap-2 mb-2">
-                            <div
-                              className="flex items-center gap-2 min-w-0"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={isSelected}
-                                onChange={() => toggleSelect(p.id)}
-                                className="w-4 h-4 rounded-[4px] border-[var(--admin-border-strong)] accent-[var(--admin-accent)] cursor-pointer shrink-0"
-                              />
-                              <span className="text-[10px] font-extrabold uppercase tracking-wider text-[var(--admin-accent)] bg-[var(--admin-accent)]/10 px-2 py-0.5 rounded-[4px] truncate">
-                                {formatCategoryName(p.category)}
-                              </span>
-                            </div>
-                            <span className="text-[10px] text-[var(--admin-text-tertiary)] font-mono shrink-0">
-                              #{(p.id || '').slice(-6)}
-                            </span>
-                          </div>
-                          <h4 className="text-[14px] font-bold text-[var(--admin-text-primary)] group-hover:text-[var(--admin-accent)] transition-colors line-clamp-1 leading-snug">
-                            {p.name}
-                          </h4>
+
+                        {/* Select Box on Picture (Top Left) */}
+                        <div
+                          className="absolute top-2 left-2 z-10"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <label className="w-6 h-6 rounded-[4px] bg-white/90 dark:bg-stone-900/90 backdrop-blur-xs border border-black/15 dark:border-white/15 flex items-center justify-center cursor-pointer shadow-xs transition-transform active:scale-95">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => toggleSelect(p.id)}
+                              className="w-3.5 h-3.5 rounded-[3px] border-[var(--admin-border-strong)] accent-[var(--admin-accent)] cursor-pointer"
+                            />
+                          </label>
                         </div>
-                        <div className="flex items-center justify-between mt-4 pt-3 border-t border-[var(--admin-border-subtle)]">
+                      </div>
+
+                      {/* Card Content */}
+                      <div className="p-2.5 sm:p-3 flex-1 flex flex-col justify-between gap-1.5">
+                        {/* Top: Category (No ID) */}
+                        <div className="flex items-center">
+                          <span className="text-[10px] font-extrabold uppercase tracking-wider text-[var(--admin-accent)] bg-[var(--admin-accent)]/10 px-2 py-0.5 rounded-[4px] truncate max-w-full">
+                            {formatCategoryName(p.category)}
+                          </span>
+                        </div>
+
+                        {/* Title */}
+                        <h4
+                          className="text-[13px] sm:text-[13.5px] font-bold text-[var(--admin-text-primary)] group-hover:text-[var(--admin-accent)] transition-colors line-clamp-1 leading-snug"
+                          title={p.name}
+                        >
+                          {p.name}
+                        </h4>
+
+                        {/* Price & Active Status Row - Clean & Fit Free */}
+                        <div className="flex items-center justify-between pt-1.5 border-t border-[var(--admin-border-subtle)]">
                           <div>
-                            <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--admin-text-tertiary)] block">
-                              Selling Price
+                            <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--admin-text-tertiary)] block leading-none mb-0.5">
+                              Price
                             </span>
-                            <span className="text-[16px] font-black text-[var(--admin-text-primary)]">
+                            <span className="text-[14px] sm:text-[15px] font-black text-[var(--admin-text-primary)] leading-none">
                               {formatCurrency(p.price)}
                             </span>
                           </div>
+
                           <div
-                            className="flex items-center gap-2 bg-[var(--admin-surface-muted)]/80 px-2.5 py-1 rounded-[4px] border border-[var(--admin-border-subtle)]"
+                            className="flex items-center gap-1.5 cursor-pointer"
                             onClick={(e) => e.stopPropagation()}
                             title={
                               p.status !== 'inactive' && p.status !== 'draft'
@@ -1272,7 +1266,7 @@ export function AdminProducts() {
                             }
                           >
                             <span
-                              className={`text-[10px] font-bold uppercase tracking-wider ${
+                              className={`text-[9px] font-bold uppercase tracking-wider ${
                                 p.status !== 'inactive' && p.status !== 'draft'
                                   ? 'text-emerald-600 dark:text-emerald-400'
                                   : 'text-[var(--admin-text-tertiary)]'
@@ -1295,70 +1289,46 @@ export function AdminProducts() {
                             />
                           </div>
                         </div>
-
-                        {/* Inline Stock Stepper on Grid Cards */}
-                        <div
-                          className="flex items-center justify-between mt-2 pt-2 border-t border-[var(--admin-border-subtle)]/70 text-[11px]"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <span className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider">
-                            Stock
-                          </span>
-                          <div className="inline-flex items-center gap-1 bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] rounded-[4px] p-0.5 shadow-2xs">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleStockChange(p.id, Math.max(0, (p.stock || 0) - 1))
-                              }
-                              className="w-5 h-5 rounded-[2px] flex items-center justify-center text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface)] cursor-pointer"
-                              title="Decrease stock"
-                            >
-                              <span className="material-symbols-outlined text-[12px]">remove</span>
-                            </button>
-                            <span
-                              className={`min-w-[28px] text-center font-bold text-[11px] font-mono ${p.stock <= 5 ? (p.stock === 0 ? 'text-rose-600 dark:text-rose-400' : 'text-amber-600 dark:text-amber-400') : 'text-[var(--admin-text-primary)]'}`}
-                            >
-                              {p.stock ?? 0}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => handleStockChange(p.id, (p.stock || 0) + 1)}
-                              className="w-5 h-5 rounded-[2px] flex items-center justify-center text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface)] cursor-pointer"
-                              title="Increase stock"
-                            >
-                              <span className="material-symbols-outlined text-[12px]">add</span>
-                            </button>
-                          </div>
-                        </div>
                       </div>
+
+                      {/* Footer: Stock Stepper on Left, Actions on Right */}
                       <div
-                        className="px-4 py-2 bg-[var(--admin-surface-muted)]/50 border-t border-[var(--admin-border-subtle)] flex items-center justify-between"
+                        className="px-2.5 sm:px-3 py-1.5 border-t border-[var(--admin-border-subtle)] flex items-center justify-between"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <div className="flex items-center gap-2 min-w-0">
-                          {getIsHeroProduct(p.id) ? (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-[4px] border border-amber-500/20">
-                              <span
-                                className="material-symbols-outlined text-[13px]"
-                                style={{ fontVariationSettings: "'FILL' 1" }}
-                              >
-                                star
-                              </span>
-                              Hero
-                            </span>
-                          ) : (
-                            <span
-                              className={`text-[11px] font-bold ${
-                                p.stock <= 5
-                                  ? 'text-[var(--admin-warning)]'
-                                  : 'text-[var(--admin-text-tertiary)]'
-                              }`}
-                            >
-                              {p.stock} in stock
-                            </span>
-                          )}
+                        {/* Compact Stock Stepper */}
+                        <div className="inline-flex items-center bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] rounded-[3px] p-0.5 shadow-2xs">
+                          <button
+                            type="button"
+                            onClick={() => handleStockChange(p.id, Math.max(0, (p.stock || 0) - 1))}
+                            className="w-4 h-4 rounded-[2px] flex items-center justify-center text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface)] cursor-pointer active:scale-95"
+                            title="Decrease stock"
+                          >
+                            <span className="material-symbols-outlined text-[12px]">remove</span>
+                          </button>
+                          <span
+                            className={`min-w-[20px] px-0.5 text-center font-bold text-[11px] font-mono ${
+                              p.stock <= 5
+                                ? p.stock === 0
+                                  ? 'text-rose-600 dark:text-rose-400 font-extrabold'
+                                  : 'text-amber-600 dark:text-amber-400 font-extrabold'
+                                : 'text-[var(--admin-text-primary)]'
+                            }`}
+                          >
+                            {p.stock ?? 0}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleStockChange(p.id, (p.stock || 0) + 1)}
+                            className="w-4 h-4 rounded-[2px] flex items-center justify-center text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface)] cursor-pointer active:scale-95"
+                            title="Increase stock"
+                          >
+                            <span className="material-symbols-outlined text-[12px]">add</span>
+                          </button>
                         </div>
-                        <div className="flex items-center gap-1">
+
+                        {/* Action Buttons */}
+                        <div className="flex items-center gap-0.5">
                           <button
                             type="button"
                             onClick={() => toggleHeroProduct(p.id)}
@@ -1367,14 +1337,14 @@ export function AdminProducts() {
                                 ? 'Remove from Hero Carousel'
                                 : 'Feature on Hero Carousel'
                             }
-                            className={`w-8 h-8 rounded-[4px] flex items-center justify-center transition-all cursor-pointer ${
+                            className={`w-6 h-6 rounded-[3px] flex items-center justify-center transition-all cursor-pointer ${
                               getIsHeroProduct(p.id)
                                 ? 'text-amber-500 bg-amber-500/10 hover:bg-amber-500/20'
                                 : 'text-[var(--admin-text-tertiary)] hover:text-amber-500 hover:bg-black/5 dark:hover:bg-white/5'
                             }`}
                           >
                             <span
-                              className="material-symbols-outlined text-[18px]"
+                              className="material-symbols-outlined text-[15px]"
                               style={{
                                 fontVariationSettings: getIsHeroProduct(p.id)
                                   ? "'FILL' 1"
@@ -1388,17 +1358,17 @@ export function AdminProducts() {
                             type="button"
                             onClick={() => navigate(`/admin/products/edit/${p.id}`)}
                             title="Edit Product"
-                            className="w-8 h-8 rounded-[4px] flex items-center justify-center text-[var(--admin-text-tertiary)] hover:text-[var(--admin-accent)] hover:bg-black/5 dark:hover:bg-white/5 transition-all cursor-pointer"
+                            className="w-6 h-6 rounded-[3px] flex items-center justify-center text-[var(--admin-text-tertiary)] hover:text-[var(--admin-accent)] hover:bg-black/5 dark:hover:bg-white/5 transition-all cursor-pointer"
                           >
-                            <span className="material-symbols-outlined text-[18px]">edit</span>
+                            <span className="material-symbols-outlined text-[15px]">edit</span>
                           </button>
                           <button
                             type="button"
                             onClick={() => openDeleteModal(p, 'soft')}
-                            title="Move to Recycle Bin"
-                            className="w-8 h-8 rounded-[4px] flex items-center justify-center text-[var(--admin-text-tertiary)] hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-all cursor-pointer"
+                            title="Delete Product"
+                            className="w-6 h-6 rounded-[3px] flex items-center justify-center text-[var(--admin-text-tertiary)] hover:text-rose-600 hover:bg-rose-500/10 transition-all cursor-pointer"
                           >
-                            <span className="material-symbols-outlined text-[18px]">delete</span>
+                            <span className="material-symbols-outlined text-[15px]">delete</span>
                           </button>
                         </div>
                       </div>

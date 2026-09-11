@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
-import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AdminStatusPill, AdminStatusDropdown, EmptyState, formatCurrency } from './AdminUIKit';
+import {
+  AdminStatusPill,
+  AdminStatusDropdown,
+  EmptyState,
+  formatCurrency,
+  smoothScrollCardIntoView,
+} from './AdminUIKit';
 import { EXTERNAL_URLS } from '../../config/constants';
 import { WhatsAppIcon } from '../../components/ui/WhatsAppIcon';
 import { InvoiceTemplate } from '../../components/ui';
@@ -26,6 +31,7 @@ export function AdminOrdersTable({
   searchQuery,
   filterStatus,
   setFilterStatus,
+  onResetFilters,
   openOrderDrawer,
   navigate,
   updateOrderStatus,
@@ -40,8 +46,13 @@ export function AdminOrdersTable({
   const toggleExpandCard = (id) => {
     setExpandedCardIds((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      const isExpanding = !next.has(id);
+      if (isExpanding) {
+        next.add(id);
+        smoothScrollCardIntoView(`order-card-${id}`);
+      } else {
+        next.delete(id);
+      }
       return next;
     });
   };
@@ -58,9 +69,8 @@ export function AdminOrdersTable({
     try {
       setUpdatingStatusId(o.id);
       await updateOrderStatus(o.id, 'Confirmed');
-      toast.success('Order confirmed successfully!');
     } catch (_err) {
-      toast.error('Failed to confirm order');
+      // Error toast is handled by updateOrderStatus
     } finally {
       setUpdatingStatusId(null);
     }
@@ -70,9 +80,8 @@ export function AdminOrdersTable({
     try {
       setUpdatingStatusId(o.id);
       await updateOrderStatus(o.id, 'Cancelled');
-      toast.success('Order cancelled');
     } catch (_err) {
-      toast.error('Failed to cancel order');
+      // Error toast is handled by updateOrderStatus
     } finally {
       setUpdatingStatusId(null);
     }
@@ -82,9 +91,8 @@ export function AdminOrdersTable({
     try {
       setUpdatingStatusId(o.id);
       await updateOrderStatus(o.id, newStatus);
-      toast.success(`Order status updated to ${newStatus}`);
     } catch (_err) {
-      toast.error('Failed to update status');
+      // Error toast is handled by updateOrderStatus
     } finally {
       setUpdatingStatusId(null);
     }
@@ -124,7 +132,10 @@ export function AdminOrdersTable({
                     action={
                       searchQuery || filterStatus !== 'All' ? (
                         <button
-                          onClick={() => setFilterStatus('All')}
+                          onClick={() => {
+                            if (onResetFilters) onResetFilters();
+                            else setFilterStatus('All');
+                          }}
                           className="admin-btn admin-btn-outline"
                         >
                           Clear Filters
@@ -153,10 +164,10 @@ export function AdminOrdersTable({
                     className="admin-table-row-clickable group transition-colors"
                     onClick={() => openOrderDrawer(o)}
                   >
-                    <td className="font-semibold text-[var(--admin-text-primary)]">
+                    <td>
                       <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-2">
-                          #{o.id.substring(o.id.length - 8).toUpperCase()}
+                        <div className="flex items-center gap-1.5 font-mono text-[12px] font-semibold text-[var(--admin-text-secondary)]">
+                          #{o.orderCode || o.id.substring(o.id.length - 8).toUpperCase()}
                           {isNew && (
                             <span
                               className="w-1.5 h-1.5 rounded-full bg-[var(--admin-accent)] animate-ping"
@@ -166,10 +177,10 @@ export function AdminOrdersTable({
                         </div>
                         {o.orderType && o.orderType !== 'purchase' && (
                           <span
-                            className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded w-max ${
+                            className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded w-max border ${
                               o.orderType === 'rental'
-                                ? 'bg-indigo-100 text-indigo-700'
-                                : 'bg-purple-100 text-purple-700'
+                                ? 'bg-indigo-50 text-indigo-700 border-indigo-200/70 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800'
+                                : 'bg-purple-50 text-purple-700 border-purple-200/70 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800'
                             }`}
                           >
                             {o.orderType}
@@ -360,7 +371,10 @@ export function AdminOrdersTable({
               action={
                 searchQuery || filterStatus !== 'All' ? (
                   <button
-                    onClick={() => setFilterStatus('All')}
+                    onClick={() => {
+                      if (onResetFilters) onResetFilters();
+                      else setFilterStatus('All');
+                    }}
                     className="admin-btn admin-btn-outline"
                   >
                     Clear Filters
@@ -390,42 +404,45 @@ export function AdminOrdersTable({
             return (
               <div
                 key={o.id}
+                id={`order-card-${o.id}`}
                 onClick={() => openOrderDrawer(o)}
                 className="relative overflow-hidden rounded-[4px] p-3.5 shadow-xs border border-stone-200/90 dark:border-stone-700/80 bg-white dark:bg-stone-900 flex flex-col gap-3 cursor-pointer hover:border-stone-300 dark:hover:border-stone-600 hover:shadow-sm transition-all"
               >
-                {/* Header: Order ID + Tag + Customer + Status Pill */}
+                {/* Header: Customer Name + Status Pill, with subtle faded Order ID & Tag */}
                 <div className="flex justify-between items-start gap-2">
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="font-bold text-[var(--admin-text-primary)] text-[14px]">
-                        #{o.orderCode || o.id.substring(o.id.length - 8).toUpperCase()}
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-bold text-[var(--admin-text-primary)] text-[14px] truncate leading-tight">
+                        {o.customer || o.shippingAddress?.name || 'Customer'}
                       </span>
-                      {o.orderType && o.orderType !== 'purchase' && (
-                        <span
-                          className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border ${
-                            o.orderType === 'rental'
-                              ? 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:border-indigo-800'
-                              : 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:border-purple-800'
-                          }`}
-                        >
-                          {o.orderType}
-                        </span>
-                      )}
                       {isVip && (
-                        <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 uppercase">
+                        <span className="text-[9px] font-extrabold px-1.5 py-0.2 rounded bg-amber-50 text-amber-800 border border-amber-200 uppercase shrink-0">
                           VIP
                         </span>
                       )}
                       {isNew && (
                         <span
-                          className="w-1.5 h-1.5 rounded-full bg-[var(--admin-accent)] animate-ping"
+                          className="w-1.5 h-1.5 rounded-full bg-[var(--admin-accent)] animate-ping shrink-0"
                           title="Recent order"
                         />
                       )}
                     </div>
-                    <span className="text-[12px] font-medium text-[var(--admin-text-secondary)] block mt-0.5 truncate">
-                      {o.customer || o.shippingAddress?.name || 'Customer'}
-                    </span>
+                    <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                      <span className="font-mono text-[11px] font-medium text-[var(--admin-text-tertiary)] dark:text-stone-400">
+                        #{o.orderCode || o.id.substring(o.id.length - 8).toUpperCase()}
+                      </span>
+                      {o.orderType && o.orderType !== 'purchase' && (
+                        <span
+                          className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded border shrink-0 ${
+                            o.orderType === 'rental'
+                              ? 'bg-indigo-50/80 text-indigo-700 border-indigo-200/80 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800'
+                              : 'bg-purple-50/80 text-purple-700 border-purple-200/80 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800'
+                          }`}
+                        >
+                          {o.orderType}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <AdminStatusPill status={o.status} className="shrink-0" />
                 </div>
@@ -493,15 +510,12 @@ export function AdminOrdersTable({
 
                   <div className="flex items-center gap-1.5 shrink-0 ml-auto">
                     <span
-                      className={`inline-flex items-center gap-1 h-[22px] text-[9.5px] font-bold uppercase tracking-wider px-2 rounded-[4px] border whitespace-nowrap shrink-0 leading-none ${
+                      className={`inline-flex items-center h-[22px] text-[9.5px] font-bold uppercase tracking-wider px-2 rounded-[4px] border whitespace-nowrap shrink-0 leading-none ${
                         isPaid
                           ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                           : 'bg-amber-50 text-amber-800 border-amber-200'
                       }`}
                     >
-                      {isPaid && (
-                        <span className="material-symbols-outlined text-[12px]">check_circle</span>
-                      )}
                       {o.payment || 'COD PENDING'}
                     </span>
                   </div>

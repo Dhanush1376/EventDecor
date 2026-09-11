@@ -21,8 +21,8 @@ export function AdminServiceabilitySkeleton() {
         </div>
       </div>
 
-      {/* 2. Table Content */}
-      <div className="overflow-x-auto flex-1">
+      {/* 2. Desktop Table Content */}
+      <div className="hidden md:block overflow-x-auto flex-1">
         <table className="w-full min-w-[480px] text-left border-collapse">
           <thead>
             <tr className="border-b border-[var(--admin-border)] bg-[var(--admin-bg-subtle)]">
@@ -61,6 +61,28 @@ export function AdminServiceabilitySkeleton() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Cards Content */}
+      <div className="md:hidden p-3 space-y-3 flex-1">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <div
+            key={i}
+            className="p-3.5 rounded-[4px] border border-[var(--admin-border-subtle)] bg-[var(--admin-surface)] space-y-2 shadow-xs"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <SkeletonTextLine width="120px" height="14px" className="mb-1" />
+                <SkeletonTextLine width="70px" height="10px" />
+              </div>
+              <SkeletonBadge width="55px" height="20px" />
+            </div>
+            <div className="flex items-center justify-between pt-1 border-t border-[var(--admin-border-subtle)]">
+              <SkeletonTextLine width="110px" height="11px" />
+              <SkeletonBox width="26px" height="26px" rounded="sm" />
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

@@ -277,7 +277,7 @@ export function AdminTeam({ hideHeader = false, setHeaderAction }) {
   );
 
   if (loading) {
-    return <AdminTeamSkeleton />;
+    return <AdminTeamSkeleton hideHeader={hideHeader} />;
   }
 
   return (

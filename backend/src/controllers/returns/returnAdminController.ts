@@ -94,7 +94,7 @@ export const getReturnDetails = asyncHandler(async (req: Request, res: Response)
     isObjectId ? { _id: paramId } : { returnId: paramId },
   )
     .populate('userId', 'name email phone avatar')
-    .populate('orderId', 'paymentStatus orderStatus total items shippingAddress paymentMethod')
+    .populate('orderId')
     .populate('items.productId', 'title imageSrc')
     .populate('assignedStaff', 'name email')
     .populate('refundRecordId');
@@ -107,7 +107,7 @@ export const getReturnDetails = asyncHandler(async (req: Request, res: Response)
     if (linkedExchange) {
       returnRequest = await ReturnRequest.findById(linkedExchange.returnRequestId)
         .populate('userId', 'name email phone avatar')
-        .populate('orderId', 'paymentStatus orderStatus total items shippingAddress paymentMethod')
+        .populate('orderId')
         .populate('items.productId', 'title imageSrc')
         .populate('assignedStaff', 'name email')
         .populate('refundRecordId');

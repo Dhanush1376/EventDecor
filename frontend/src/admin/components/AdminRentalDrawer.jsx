@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { m as motion } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { formatCurrency, AdminStatusPill } from './AdminUIKit';
 import { EXTERNAL_URLS } from '../../config/constants';
 import { WhatsAppIcon } from '../../components/ui/WhatsAppIcon';
 import toast from 'react-hot-toast';
 import rentalService from '../../services/api/rentalService';
+import AdminCustomerProfileModal from './AdminCustomerProfileModal';
 
 const formatDateDMY = (dateStr) => {
   if (!dateStr) return 'N/A';
@@ -86,7 +87,26 @@ export function AdminRentalDrawer({
     '';
   const cleanPhone = customerPhone.replace(/[^0-9]/g, '');
 
+  const [showCustomerModal, setShowCustomerModal] = useState(false);
+  const customerId =
+    selectedRental.userId?._id ||
+    selectedRental.userId?.id ||
+    (typeof selectedRental.userId === 'string' && selectedRental.userId) ||
+    selectedRental.user?._id ||
+    selectedRental.user?.id ||
+    (typeof selectedRental.user === 'string' && selectedRental.user);
+
   const shipping = selectedRental.shippingAddress || {};
+
+  const resolvedCustomer = customerId
+    ? {
+        _id: customerId,
+        name: customerName,
+        phone: customerPhone,
+        email: customerEmail,
+        shippingAddress: shipping,
+      }
+    : null;
   const fullAddress = [
     shipping.address,
     shipping.locality,
@@ -211,26 +231,50 @@ export function AdminRentalDrawer({
         <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar text-left bg-[var(--admin-bg)]">
           {/* 1. Customer & Delivery Profile */}
           <div className="admin-card !rounded-[4px] p-5 space-y-4">
-            <div className="flex items-start justify-between">
-              <div>
+            <div className="flex items-start justify-between gap-2">
+              <div
+                onClick={() => customerId && setShowCustomerModal(true)}
+                className={`min-w-0 ${customerId ? 'cursor-pointer group' : ''}`}
+                title={customerId ? 'Click to view customer profile' : undefined}
+              >
                 <p className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider">
                   Customer Profile
                 </p>
-                <h4 className="text-[14px] font-bold text-[var(--admin-text-primary)] mt-1">
-                  {customerName}
+                <h4
+                  className={`text-[14px] font-bold text-[var(--admin-text-primary)] mt-1 flex items-center gap-1.5 ${customerId ? 'group-hover:text-[var(--admin-accent)] transition-colors' : ''}`}
+                >
+                  <span>{customerName}</span>
+                  {customerId && (
+                    <span className="material-symbols-outlined text-[13px] text-[var(--admin-text-tertiary)] opacity-0 group-hover:opacity-100 transition-opacity">
+                      open_in_new
+                    </span>
+                  )}
                 </h4>
               </div>
-              {cleanPhone && (
-                <a
-                  href={`${EXTERNAL_URLS.WHATSAPP_BASE}/${cleanPhone}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="admin-badge admin-badge-success !rounded-[4px] flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity"
-                >
-                  <WhatsAppIcon className="w-[14px] h-[14px]" />
-                  WhatsApp
-                </a>
-              )}
+              <div className="flex items-center gap-2 shrink-0">
+                {customerId && (
+                  <button
+                    type="button"
+                    onClick={() => setShowCustomerModal(true)}
+                    className="h-7 px-2 rounded-[4px] bg-[var(--admin-surface)] hover:bg-[var(--admin-bg-subtle)] text-[var(--admin-accent)] hover:text-[var(--admin-accent-hover)] border border-[var(--admin-border)] text-[10.5px] font-bold flex items-center gap-1 transition-colors shadow-2xs cursor-pointer"
+                    title="View Customer Profile"
+                  >
+                    <span>View Profile</span>
+                    <span className="material-symbols-outlined text-[12px]">open_in_new</span>
+                  </button>
+                )}
+                {cleanPhone && (
+                  <a
+                    href={`${EXTERNAL_URLS.WHATSAPP_BASE}/${cleanPhone}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="admin-badge admin-badge-success !rounded-[4px] flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity h-7"
+                  >
+                    <WhatsAppIcon className="w-[14px] h-[14px]" />
+                    WhatsApp
+                  </a>
+                )}
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-[12px] pt-4 border-t border-[var(--admin-border-subtle)]">
@@ -466,6 +510,16 @@ export function AdminRentalDrawer({
           </div>
         </div>
       </motion.aside>
+
+      {/* Customer Profile Modal */}
+      <AnimatePresence>
+        {showCustomerModal && resolvedCustomer && (
+          <AdminCustomerProfileModal
+            customer={resolvedCustomer}
+            onClose={() => setShowCustomerModal(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>,
     document.body,
   );

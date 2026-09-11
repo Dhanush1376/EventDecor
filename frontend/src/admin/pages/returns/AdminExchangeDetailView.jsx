@@ -9,6 +9,7 @@ import { handleImageError } from '../../../utils/media/imageUtils';
 import { PLACEHOLDER_IMAGES } from '../../../constants/placeholderImages';
 import { StatusBadge, fadeUp, stagger } from '../../components/AdminUIKit';
 import { WhatsAppIcon } from '../../../components/ui/WhatsAppIcon';
+import AdminCustomerProfileModal from '../../components/AdminCustomerProfileModal';
 
 const EXCHANGE_HAPPY_PATH = [
   'Submitted',
@@ -209,6 +210,31 @@ export default function AdminExchangeDetailView({
   ).replace(/\D/g, '');
   const waPhone = rawPhone.length === 10 ? `91${rawPhone}` : rawPhone;
 
+  const [showCustomerModal, setShowCustomerModal] = useState(false);
+  const customerId =
+    request.userId?._id ||
+    request.userId?.id ||
+    (typeof request.userId === 'string' && request.userId) ||
+    request.user?._id ||
+    request.user;
+
+  const resolvedCustomer = customerId
+    ? {
+        _id: customerId,
+        name: pickupAddr.name || deliveryAddr.name || request.userId?.name || 'Customer',
+        email: request.userId?.email || '',
+        phone: request.userId?.phone || pickupAddr.phone || deliveryAddr.phone || '',
+        shippingAddress: deliveryAddr || pickupAddr,
+      }
+    : null;
+
+  // Order link helper
+  const orderIdVal = request.orderId?._id || request.orderId?.id || request.orderId;
+  const orderCodeVal =
+    request.orderId?.orderCode ||
+    request.orderId?._id?.slice(-8) ||
+    (typeof orderIdVal === 'string' ? orderIdVal.slice(-8) : 'Order');
+
   // Determine current progression step
   const getCurrentStepName = () => {
     if (
@@ -350,62 +376,134 @@ export default function AdminExchangeDetailView({
 
   return (
     <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6 text-left">
-      {/* ─── 1. TOP HEADER (Exact OrderHeader Layout & Rounded-[4px]) ─── */}
+      {/* ─── 1. TOP HEADER (Unified Return/Exchange Layout & Rounded-[4px]) ─── */}
       <motion.div
         variants={fadeUp}
-        className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-6 bg-white/50 dark:bg-stone-850/50 backdrop-blur-sm p-3 sm:p-4 rounded-[4px] border border-[var(--admin-border-subtle)] shadow-sm"
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 bg-[var(--admin-surface)] p-3 sm:p-5 rounded-[4px] shadow-xs border border-[var(--admin-border)] min-w-0"
       >
-        <div className="flex flex-col w-full sm:w-auto overflow-hidden">
-          {/* Row 1: Title on left, Status / Type Badges on right */}
-          <div className="flex items-center justify-between gap-3 w-full">
-            <h2 className="text-[18px] sm:text-[20px] font-bold text-[var(--admin-text-primary)] tracking-tight leading-none">
-              Exchange Details
-            </h2>
-            <div className="flex items-center gap-1.5 shrink-0">
-              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-[4px] shadow-2xs border bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800">
+        {/* Left Column: Title and Exchange/Order IDs */}
+        <div className="flex flex-col w-full sm:w-auto min-w-0">
+          {/* Title Row */}
+          <div className="flex items-center justify-between gap-2.5 w-full">
+            <div className="flex items-center gap-2 min-w-0">
+              <h2 className="text-[18px] sm:text-[20px] font-bold text-[var(--admin-text-primary)] tracking-tight whitespace-nowrap leading-tight">
+                Exchange Details
+              </h2>
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-[4px] shadow-2xs border bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800 shrink-0">
                 {exchangeType.replace(/_/g, ' ')}
               </span>
+            </div>
+            {/* Status badge in top-right for mobile only */}
+            <div className="sm:hidden shrink-0">
               <StatusBadge status={request.status} />
             </div>
           </div>
 
-          {/* Row 2: Exchange ID on left, Date Chip on right */}
-          <div className="flex items-center justify-between gap-3 w-full mt-2">
-            <span
-              className="text-[12px] sm:text-[13px] font-normal text-[var(--admin-text-secondary)] select-all truncate max-w-[180px] sm:max-w-none font-mono"
-              title={exchangeDetails?.exchangeId || request.returnId || request._id}
-            >
-              #{exchangeDetails?.exchangeId || request.returnId || request._id}
-            </span>
-            <span className="text-[11px] font-medium text-[var(--admin-text-secondary)] bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] px-2.5 py-0.5 rounded-[4px] shadow-2xs whitespace-nowrap shrink-0">
-              Requested on{' '}
-              {request.createdAt
-                ? format(new Date(request.createdAt), 'dd MMM yyyy, hh:mm a')
-                : 'N/A'}
-            </span>
+          {/* Row 2: IDs on Left (stacked 1 below another on mobile), Date at Right bottom on mobile */}
+          <div className="flex items-end justify-between gap-2.5 w-full mt-1 sm:mt-1.5">
+            {/* IDs: one below another on mobile, inline on laptop */}
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2 min-w-0">
+              {/* Exchange ID with Copy Button */}
+              <div className="flex items-center gap-1 leading-none">
+                <span
+                  className="font-mono text-[12px] sm:text-[12.5px] font-medium text-[var(--admin-text-secondary)] select-all"
+                  title={exchangeDetails?.exchangeId || request.returnId || request._id}
+                >
+                  #{exchangeDetails?.exchangeId || request.returnId || request._id}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const exId = exchangeDetails?.exchangeId || request.returnId || request._id;
+                    if (exId) {
+                      navigator.clipboard.writeText(exId);
+                      toast.success('Exchange ID copied to clipboard');
+                    }
+                  }}
+                  className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 p-0.5 cursor-pointer transition-colors shrink-0"
+                  title="Copy Exchange ID"
+                >
+                  <span className="material-symbols-outlined text-[13px] sm:text-[14px] block">
+                    content_copy
+                  </span>
+                </button>
+              </div>
+
+              {/* Order ID below Exchange ID on mobile, inline with dot on laptop */}
+              {orderIdVal && (
+                <>
+                  <span className="text-stone-300 dark:text-stone-600 select-none text-[11px] hidden sm:inline">
+                    •
+                  </span>
+                  <Link
+                    to={`/admin/orders/${orderIdVal}`}
+                    className="font-mono text-[11.5px] sm:text-[12px] text-[var(--admin-accent)] hover:underline inline-flex items-center gap-1 font-medium truncate leading-none"
+                    title="View Original Order"
+                  >
+                    <span className="material-symbols-outlined text-[13px]">shopping_bag</span>
+                    <span>Order #{orderCodeVal}</span>
+                  </Link>
+                </>
+              )}
+            </div>
+
+            {/* Date Chip: on mobile aligned to the right bottom */}
+            <div className="sm:hidden shrink-0 self-end">
+              <span className="text-[10.5px] font-medium text-[var(--admin-text-secondary)] bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] px-2 py-0.5 rounded-[4px] shadow-2xs whitespace-nowrap flex items-center gap-1">
+                <span className="material-symbols-outlined text-[12px] text-[var(--admin-text-tertiary)] shrink-0">
+                  schedule
+                </span>
+                <span>
+                  {request.createdAt
+                    ? format(new Date(request.createdAt), 'dd MMM yyyy, hh:mm a')
+                    : 'N/A'}
+                </span>
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Action Buttons: Back, WhatsApp */}
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto mt-2 sm:mt-0 shrink-0">
-          <button
-            onClick={() => navigate('/admin/exchanges')}
-            className="admin-btn admin-btn-outline flex-1 sm:flex-none h-10 px-3 sm:px-5 !rounded-[4px] text-[12px] sm:text-[13px] font-bold shadow-sm min-w-max cursor-pointer"
-          >
-            <span className="material-symbols-outlined text-[18px]">arrow_back</span>
-            Back to Exchanges
-          </button>
-          {waPhone && (
-            <a
-              href={`https://wa.me/${waPhone}?text=Hi%20${encodeURIComponent(pickupAddr.name || request.userId?.name || 'Customer')},%20regarding%20your%20Exchange%20Request%20#${encodeURIComponent(exchangeDetails?.exchangeId || request.returnId)}:`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="h-10 px-3 sm:px-5 rounded-[4px] flex-1 sm:flex-none flex items-center justify-center gap-2 bg-[#25D366] text-white hover:bg-[#128C7E] font-bold text-[12px] sm:text-[13px] transition-colors shadow-sm min-w-max"
+        {/* Right Column: Status & Date (above), Buttons (below) on laptop */}
+        <div className="flex flex-col sm:items-end w-full sm:w-auto mt-2 sm:mt-0 shrink-0 gap-1.5 sm:gap-2">
+          {/* On laptop: Status Badge on top, Date chip directly below it */}
+          <div className="hidden sm:flex flex-col items-end gap-1">
+            <StatusBadge status={request.status} />
+            <span className="text-[11px] font-medium text-[var(--admin-text-secondary)] bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] px-2.5 py-0.5 rounded-[4px] shadow-2xs whitespace-nowrap flex items-center gap-1">
+              <span className="material-symbols-outlined text-[12px] text-[var(--admin-text-tertiary)] shrink-0">
+                schedule
+              </span>
+              <span>
+                {request.createdAt
+                  ? format(new Date(request.createdAt), 'dd MMM yyyy, hh:mm a')
+                  : 'N/A'}
+              </span>
+            </span>
+          </div>
+
+          {/* Action Buttons: Back, WhatsApp */}
+          <div className="flex items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
+            <button
+              type="button"
+              onClick={() => navigate('/admin/exchanges')}
+              className="admin-btn admin-btn-outline flex-1 sm:flex-none !h-9 sm:!h-10 !py-0 px-3 sm:px-4 !rounded-[4px] text-[12px] sm:text-[13px] font-bold shadow-sm min-w-max cursor-pointer inline-flex items-center justify-center gap-1.5 box-border"
             >
-              <WhatsAppIcon className="w-[16px] sm:w-[18px] h-[16px] sm:h-[18px]" />
-              WhatsApp
-            </a>
-          )}
+              <span className="material-symbols-outlined text-[17px] sm:text-[18px] leading-none">
+                arrow_back
+              </span>
+              <span>Back</span>
+            </button>
+            {waPhone && (
+              <a
+                href={`https://wa.me/${waPhone}?text=Hi%20${encodeURIComponent(pickupAddr.name || request.userId?.name || 'Customer')},%20regarding%20your%20Exchange%20Request%20#${encodeURIComponent(exchangeDetails?.exchangeId || request.returnId)}:`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="admin-btn flex-1 sm:flex-none !h-9 sm:!h-10 !py-0 px-3 sm:px-4 !rounded-[4px] text-[12px] sm:text-[13px] font-bold shadow-sm min-w-max cursor-pointer inline-flex items-center justify-center gap-1.5 bg-[#25D366] !text-white hover:!bg-[#128C7E] border border-[#25D366] hover:border-[#128C7E] transition-colors box-border"
+              >
+                <WhatsAppIcon className="w-[17px] sm:w-[18px] h-[17px] sm:h-[18px]" />
+                <span>WhatsApp</span>
+              </a>
+            )}
+          </div>
         </div>
       </motion.div>
 
@@ -506,7 +604,7 @@ export default function AdminExchangeDetailView({
                         </div>
                         <div className="text-center mt-1">
                           <span
-                            className={`text-[9.5px] sm:text-[11px] font-bold uppercase tracking-wider block transition-colors leading-tight ${
+                            className={`text-[9.5px] sm:text-[11px] font-bold uppercase tracking-wider block transition-colors leading-tight whitespace-nowrap ${
                               isActive
                                 ? colors.completedText || 'text-[var(--admin-text-primary)]'
                                 : isCompleted
@@ -514,7 +612,14 @@ export default function AdminExchangeDetailView({
                                   : 'text-[var(--admin-text-tertiary)]'
                             }`}
                           >
-                            {step}
+                            {step === 'Item Picked Up' ? (
+                              <>
+                                <span className="sm:hidden">Pickup</span>
+                                <span className="hidden sm:inline">Item Picked Up</span>
+                              </>
+                            ) : (
+                              step
+                            )}
                           </span>
                         </div>
                       </div>
@@ -524,8 +629,8 @@ export default function AdminExchangeDetailView({
               </div>
 
               {/* Footer Quick Action Bar (Contextual buttons + stage advances) */}
-              <div className="bg-gray-50 dark:bg-stone-850 border-t border-[var(--admin-border-subtle)] px-4 sm:px-5 py-3 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-                <span className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-widest">
+              <div className="bg-gray-50 dark:bg-stone-850 border-t border-[var(--admin-border-subtle)] px-3.5 sm:px-5 py-2.5 sm:py-3.5 flex flex-row items-center justify-between gap-2.5 sm:gap-4 flex-wrap">
+                <span className="text-[10px] sm:text-[11px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-widest shrink-0">
                   Operational Actions
                 </span>
 
@@ -882,21 +987,53 @@ export default function AdminExchangeDetailView({
                   <span className="material-symbols-outlined text-[18px]">local_shipping</span>
                   Shipping Profile
                 </h3>
-                <span className="text-[10px] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] px-2 py-0.5 rounded-[4px] font-bold uppercase tracking-wider border border-[var(--admin-border)] shadow-2xs">
-                  Reverse & Forward
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] px-2 py-0.5 rounded-[4px] font-bold uppercase tracking-wider border border-[var(--admin-border)] shadow-2xs">
+                    Reverse & Forward
+                  </span>
+                  {resolvedCustomer && (
+                    <button
+                      type="button"
+                      onClick={() => setShowCustomerModal(true)}
+                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-[var(--admin-accent)] hover:underline cursor-pointer"
+                      title="View Customer Profile"
+                    >
+                      <span>View Profile</span>
+                      <span className="material-symbols-outlined text-[13px]">open_in_new</span>
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div className="px-3 py-4 sm:p-5 lg:p-6 space-y-5">
                 {/* Customer Contact Header */}
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-300 flex items-center justify-center shrink-0">
+                <div
+                  onClick={() => resolvedCustomer && setShowCustomerModal(true)}
+                  className={`flex items-start gap-3 p-1.5 -m-1.5 rounded-[4px] transition-colors ${
+                    resolvedCustomer
+                      ? 'hover:bg-[var(--admin-surface-muted)]/70 cursor-pointer group'
+                      : ''
+                  }`}
+                  title={resolvedCustomer ? 'Click to view customer profile' : undefined}
+                >
+                  <div
+                    className={`w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-300 flex items-center justify-center shrink-0 ${resolvedCustomer ? 'group-hover:scale-105 transition-transform' : ''}`}
+                  >
                     <span className="material-symbols-outlined text-[20px]">person</span>
                   </div>
                   <div>
-                    <p className="text-[14px] font-bold text-[var(--admin-text-primary)]">
-                      {pickupAddr.name || deliveryAddr.name || request.userId?.name || 'Customer'}
-                    </p>
+                    <div className="flex items-center gap-1.5">
+                      <p
+                        className={`text-[14px] font-bold text-[var(--admin-text-primary)] truncate ${resolvedCustomer ? 'group-hover:text-[var(--admin-accent)] transition-colors' : ''}`}
+                      >
+                        {pickupAddr.name || deliveryAddr.name || request.userId?.name || 'Customer'}
+                      </p>
+                      {resolvedCustomer && (
+                        <span className="material-symbols-outlined text-[13px] text-[var(--admin-text-tertiary)] opacity-0 group-hover:opacity-100 transition-opacity">
+                          open_in_new
+                        </span>
+                      )}
+                    </div>
                     <div className="text-[12px] text-[var(--admin-text-secondary)] mt-0.5 flex flex-col gap-0.5">
                       <span className="flex items-center gap-1.5">
                         <span className="material-symbols-outlined text-[14px]">phone</span>{' '}
@@ -915,10 +1052,22 @@ export default function AdminExchangeDetailView({
                   <div className="w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
                     <span className="material-symbols-outlined text-[20px]">outbox</span>
                   </div>
-                  <div className="flex-1">
-                    <span className="text-[10px] uppercase font-bold text-[var(--admin-text-tertiary)] tracking-wider block mb-0.5">
-                      Reverse Pickup Address
-                    </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2 mb-0.5">
+                      <span className="text-[10px] uppercase font-bold text-[var(--admin-text-tertiary)] tracking-wider block">
+                        Reverse Pickup Address
+                      </span>
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([pickupAddr.address || pickupAddr.addressLine1, pickupAddr.locality, pickupAddr.city, pickupAddr.state, pickupAddr.pincode || pickupAddr.pinCode].filter(Boolean).join(', '))}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-[var(--admin-accent)] hover:underline cursor-pointer shrink-0"
+                        title="Open pickup address in Google Maps"
+                      >
+                        <span className="material-symbols-outlined text-[13px]">map</span>
+                        <span>Open in Maps</span>
+                      </a>
+                    </div>
                     <div className="text-[12px] sm:text-[13px] text-[var(--admin-text-primary)] leading-relaxed">
                       <p>
                         {pickupAddr.address ||
@@ -943,10 +1092,22 @@ export default function AdminExchangeDetailView({
                   <div className="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                     <span className="material-symbols-outlined text-[20px]">home_pin</span>
                   </div>
-                  <div className="flex-1">
-                    <span className="text-[10px] uppercase font-bold text-[var(--admin-text-tertiary)] tracking-wider block mb-0.5">
-                      Replacement Delivery Address
-                    </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2 mb-0.5">
+                      <span className="text-[10px] uppercase font-bold text-[var(--admin-text-tertiary)] tracking-wider block">
+                        Replacement Delivery Address
+                      </span>
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([deliveryAddr.address || deliveryAddr.addressLine1 || pickupAddr.address, deliveryAddr.locality || pickupAddr.locality, deliveryAddr.city || pickupAddr.city, deliveryAddr.state || pickupAddr.state, deliveryAddr.pincode || deliveryAddr.pinCode || pickupAddr.pincode].filter(Boolean).join(', '))}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-[var(--admin-accent)] hover:underline cursor-pointer shrink-0"
+                        title="Open delivery address in Google Maps"
+                      >
+                        <span className="material-symbols-outlined text-[13px]">map</span>
+                        <span>Open in Maps</span>
+                      </a>
+                    </div>
                     <div className="text-[12px] sm:text-[13px] text-[var(--admin-text-primary)] leading-relaxed">
                       <p>
                         {deliveryAddr.address ||
@@ -1183,6 +1344,16 @@ export default function AdminExchangeDetailView({
                   <span className="material-symbols-outlined text-[18px]">receipt_long</span>
                   Original Order Reference
                 </h3>
+                {orderIdVal && (
+                  <Link
+                    to={`/admin/orders/${orderIdVal}`}
+                    className="admin-btn admin-btn-outline h-7 px-2.5 !rounded-[4px] text-[11px] font-bold shadow-2xs flex items-center gap-1 hover:border-[var(--admin-accent)] hover:text-[var(--admin-accent)] transition-colors"
+                    title="View Original Order Details"
+                  >
+                    <span>View Order</span>
+                    <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                  </Link>
+                )}
               </div>
 
               <div className="p-4 sm:p-5 text-[12px] space-y-2.5 font-medium">
@@ -1905,6 +2076,16 @@ export default function AdminExchangeDetailView({
               </button>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* Customer 360 Profile Modal */}
+      <AnimatePresence>
+        {showCustomerModal && resolvedCustomer && (
+          <AdminCustomerProfileModal
+            customer={resolvedCustomer}
+            onClose={() => setShowCustomerModal(false)}
+          />
         )}
       </AnimatePresence>
     </motion.div>

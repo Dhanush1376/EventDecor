@@ -410,9 +410,8 @@ export function AppRoutes() {
               <Route path="serviceability" element={<AdminServiceability />} />
               <Route path="custom-orders" element={<AdminInquiries />} />
               <Route path="customers" element={<AdminCustomers />} />
+              <Route path="customers/:customerId" element={<AdminCustomers />} />
               <Route path="executive" element={<AdminExecutiveDashboard />} />
-
-              {/* <Route path="customers/:customerId" element={<CustomerProfile360 />} /> */}
               <Route path="gallery" element={<AdminGallery />} />
               <Route path="gallery/add" element={<AdminAddGalleryItem />} />
               <Route path="gallery/edit/:id" element={<AdminAddGalleryItem />} />

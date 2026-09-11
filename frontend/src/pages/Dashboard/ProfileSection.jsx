@@ -229,32 +229,22 @@ export function ProfileSection() {
                   <Mail className="absolute left-2.5 top-1/2 -translate-y-1/2 text-secondary w-4 h-4" />
                 </div>
 
-                {!isLoading &&
-                  (googleLinked ? (
-                    <button
-                      type="button"
-                      onClick={() => handleUnlink('google')}
-                      disabled={linkingProvider !== null}
-                      className="px-3 py-0 border border-error/30 text-error hover:bg-error/5 text-[9px] font-bold uppercase tracking-wider rounded-lg transition-colors whitespace-nowrap shrink-0"
-                    >
-                      {linkingProvider === 'google' ? 'Disconnecting...' : 'Disconnect'}
-                    </button>
-                  ) : (
-                    <div className="shrink-0 h-[42px] overflow-hidden rounded-lg">
-                      <div className="scale-[0.85] origin-top-left -mt-[3px]">
-                        <GoogleSignInButton
-                          onClick={() => {
-                            setLinkingProvider('google');
-                            triggerLogin();
-                          }}
-                          isLoading={linkingProvider === 'google'}
-                          disabled={!isReady || linkingProvider !== null}
-                          renderGoogleButton={isReady ? renderGoogleButton : null}
-                          label="Connect Google"
-                        />
-                      </div>
+                {!isLoading && !googleLinked && (
+                  <div className="shrink-0 h-[42px] overflow-hidden rounded-lg">
+                    <div className="scale-[0.85] origin-top-left -mt-[3px]">
+                      <GoogleSignInButton
+                        onClick={() => {
+                          setLinkingProvider('google');
+                          triggerLogin();
+                        }}
+                        isLoading={linkingProvider === 'google'}
+                        disabled={!isReady || linkingProvider !== null}
+                        renderGoogleButton={isReady ? renderGoogleButton : null}
+                        label="Connect Google"
+                      />
                     </div>
-                  ))}
+                  </div>
+                )}
               </div>
               <span className="text-[9px] text-secondary/50 block mt-1">
                 Security Note: Primary login email keys cannot be modified.

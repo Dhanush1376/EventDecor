@@ -2,10 +2,20 @@ import React, { useState } from 'react';
 import { EXTERNAL_URLS } from '../../../config/constants';
 import { WhatsAppIcon } from '../../../components/ui/WhatsAppIcon';
 import { m as motion, AnimatePresence } from 'framer-motion';
+import AdminCustomerProfileModal from '../../components/AdminCustomerProfileModal';
 
 export function RentalCustomerAndProof({ rental }) {
   const [selectedProofImage, setSelectedProofImage] = useState(null);
   const [showFullAadhaar, setShowFullAadhaar] = useState(false);
+  const [showCustomerModal, setShowCustomerModal] = useState(false);
+
+  const customerId =
+    rental.userId?._id ||
+    rental.userId?.id ||
+    (typeof rental.userId === 'string' && rental.userId) ||
+    rental.user?._id ||
+    rental.user?.id ||
+    (typeof rental.user === 'string' && rental.user);
 
   const customerName =
     rental.shippingAddress?.name || rental.userId?.name || rental.user?.name || 'Customer';
@@ -13,6 +23,14 @@ export function RentalCustomerAndProof({ rental }) {
     rental.shippingAddress?.phone || rental.userId?.phone || rental.user?.phone || '';
   const customerEmail =
     rental.shippingAddress?.email || rental.userId?.email || rental.user?.email || '';
+
+  const resolvedCustomer = {
+    _id: customerId,
+    name: customerName,
+    phone: customerPhone,
+    email: customerEmail,
+    shippingAddress: rental.shippingAddress,
+  };
 
   const address = rental.shippingAddress?.address || '';
   const locality = rental.shippingAddress?.locality || '';
@@ -58,28 +76,58 @@ export function RentalCustomerAndProof({ rental }) {
           </span>
           Customer & Delivery
         </h3>
-        <span
-          className={`text-[9.5px] px-2 py-0.5 rounded-[4px] font-bold uppercase tracking-wider border shadow-2xs leading-none ${
-            isKycVerified
-              ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-800'
-              : 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:border-amber-800'
-          }`}
-        >
-          {isKycVerified ? 'KYC Verified' : 'KYC Pending'}
-        </span>
+        <div className="flex items-center gap-2">
+          <span
+            className={`text-[9.5px] px-2 py-0.5 rounded-[4px] font-bold uppercase tracking-wider border shadow-2xs leading-none ${
+              isKycVerified
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-800'
+                : 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:border-amber-800'
+            }`}
+          >
+            {isKycVerified ? 'KYC Verified' : 'KYC Pending'}
+          </span>
+          {customerId && (
+            <button
+              type="button"
+              onClick={() => setShowCustomerModal(true)}
+              className="inline-flex items-center gap-1 text-[11px] font-semibold text-[var(--admin-accent)] hover:underline cursor-pointer"
+              title="View Customer Profile"
+            >
+              <span>View Profile</span>
+              <span className="material-symbols-outlined text-[13px]">open_in_new</span>
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="p-4 sm:p-5 space-y-4">
         {/* Customer Profile Row */}
         <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 font-bold text-[14px] flex items-center justify-center shrink-0 border border-amber-200/60 dark:border-amber-800/40">
+          <div
+            onClick={() => customerId && setShowCustomerModal(true)}
+            className={`flex items-center gap-3 min-w-0 p-1.5 -m-1.5 rounded-[4px] transition-colors ${
+              customerId ? 'hover:bg-[var(--admin-surface-muted)]/70 cursor-pointer group' : ''
+            }`}
+            title={customerId ? 'Click to view customer 360° profile' : undefined}
+          >
+            <div
+              className={`w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 font-bold text-[14px] flex items-center justify-center shrink-0 border border-amber-200/60 dark:border-amber-800/40 ${customerId ? 'group-hover:scale-105 transition-transform' : ''}`}
+            >
               {customerName.charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0">
-              <p className="text-[13.5px] font-bold text-[var(--admin-text-primary)] truncate">
-                {customerName}
-              </p>
+              <div className="flex items-center gap-1.5">
+                <p
+                  className={`text-[13.5px] font-bold text-[var(--admin-text-primary)] truncate ${customerId ? 'group-hover:text-[var(--admin-accent)] transition-colors' : ''}`}
+                >
+                  {customerName}
+                </p>
+                {customerId && (
+                  <span className="material-symbols-outlined text-[13px] text-[var(--admin-text-tertiary)] opacity-0 group-hover:opacity-100 transition-opacity">
+                    open_in_new
+                  </span>
+                )}
+              </div>
               <div className="text-[11.5px] text-[var(--admin-text-secondary)] mt-0.5 flex items-center gap-2 flex-wrap">
                 {customerPhone && (
                   <span className="inline-flex items-center gap-1 font-mono">
@@ -116,7 +164,7 @@ export function RentalCustomerAndProof({ rental }) {
 
         {/* Delivery Address Section */}
         <div className="pt-3 border-t border-[var(--admin-border-subtle)] text-[12px]">
-          <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center justify-between gap-2 mb-0.5">
             <span className="text-[10.5px] font-bold uppercase tracking-wider text-[var(--admin-text-tertiary)] flex items-center gap-1">
               <span className="material-symbols-outlined text-[14px]">location_on</span>
               Delivery Address
@@ -126,9 +174,11 @@ export function RentalCustomerAndProof({ rental }) {
                 href={`https://maps.google.com/?q=${encodeURIComponent(fullAddressString)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[11px] font-bold text-[var(--admin-accent)] hover:underline flex items-center gap-0.5 shrink-0"
+                className="inline-flex items-center gap-1 text-[11px] font-semibold text-[var(--admin-accent)] hover:underline cursor-pointer shrink-0"
+                title="Open delivery address in Google Maps"
               >
-                Maps <span className="material-symbols-outlined text-[12px]">open_in_new</span>
+                <span className="material-symbols-outlined text-[13px]">map</span>
+                <span>Open in Maps</span>
               </a>
             )}
           </div>
@@ -236,6 +286,16 @@ export function RentalCustomerAndProof({ rental }) {
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* Customer 360 Profile Modal */}
+      <AnimatePresence>
+        {showCustomerModal && (
+          <AdminCustomerProfileModal
+            customer={resolvedCustomer}
+            onClose={() => setShowCustomerModal(false)}
+          />
         )}
       </AnimatePresence>
     </div>

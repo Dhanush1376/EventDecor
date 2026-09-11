@@ -86,24 +86,9 @@ export function ProductCoupons({ product, localAppliedCoupon, setLocalAppliedCou
         </span>
       </div>
 
-      <div
-        className={`gap-3 no-scrollbar pb-3 xl:pb-0 ${
-          initialCoupons.length === 1
-            ? 'flex max-w-sm'
-            : initialCoupons.length === 2
-              ? 'flex sm:grid sm:grid-cols-2 max-w-2xl overflow-x-auto sm:overflow-x-visible'
-              : 'flex xl:grid xl:grid-cols-3 overflow-x-auto xl:overflow-x-visible snap-x snap-mandatory -mx-[18px] pl-[18px] pr-[18px] scroll-pl-[18px] xl:mx-0 xl:px-0'
-        }`}
-      >
+      <div className="flex items-center gap-3 overflow-x-auto no-scrollbar pb-1">
         {initialCoupons.map((coupon, idx) => (
-          <div
-            key={coupon._id || coupon.id || idx}
-            className={
-              initialCoupons.length === 1
-                ? 'w-full sm:w-[280px]'
-                : 'w-[260px] xl:w-auto shrink-0 snap-start'
-            }
-          >
+          <div key={coupon._id || coupon.id || idx} className="w-[230px] sm:w-[250px] shrink-0">
             <CouponCard
               coupon={coupon}
               isBest={idx === 0}
@@ -119,13 +104,13 @@ export function ProductCoupons({ product, localAppliedCoupon, setLocalAppliedCou
         <div className="mt-3">
           <button
             onClick={() => setExpanded(!expanded)}
-            className="flex items-center gap-1.5 text-primary hover:text-primary-container text-[11px] uppercase tracking-wider font-bold focus-visible:outline-none transition-colors"
+            className="flex items-center gap-1.5 text-primary hover:text-primary-container text-[11px] uppercase tracking-wider font-bold focus-visible:outline-none transition-colors cursor-pointer"
           >
             <span
               className="material-symbols-outlined text-[16px] transition-transform duration-300"
-              style={{ transform: 'none' }}
+              style={{ transform: expanded ? 'rotate(180deg)' : 'none' }}
             >
-              {expanded ? 'keyboard_arrow_up' : 'keyboard_arrow_down'}
+              keyboard_arrow_down
             </span>
             {expanded ? 'Show Less' : `Explore More Offers (${extraCoupons.length} more)`}
           </button>
@@ -139,11 +124,11 @@ export function ProductCoupons({ product, localAppliedCoupon, setLocalAppliedCou
                 transition={{ duration: 0.3, ease: 'easeInOut' }}
                 className="overflow-hidden"
               >
-                <div className="flex xl:grid xl:grid-cols-3 gap-3 pt-3 overflow-x-auto xl:overflow-x-visible no-scrollbar pb-3 xl:pb-0 snap-x snap-mandatory -mx-4 px-4 xl:mx-0 xl:px-0">
+                <div className="flex gap-3 pt-3 overflow-x-auto no-scrollbar pb-1">
                   {extraCoupons.map((coupon, idx) => (
                     <div
                       key={coupon._id || coupon.id || idx + 3}
-                      className="w-[260px] xl:w-auto shrink-0 snap-start"
+                      className="w-[230px] sm:w-[250px] shrink-0"
                     >
                       <CouponCard
                         coupon={coupon}
@@ -204,7 +189,7 @@ export function CouponCard({
       role={disableHover && !showHoverByDefault ? undefined : 'button'}
       tabIndex={isEligible && !disableHover ? 0 : -1}
       aria-label={`Coupon ${coupon?.code || 'COUPON'}: ${discountText}, ${minOrderText}`}
-      className={`border-2 border-dashed rounded-xl p-3 flex flex-col justify-between gap-1 backdrop-blur-md transition-all duration-300 relative overflow-hidden group select-none ${
+      className={`border border-dashed rounded-xl p-3 sm:p-3.5 flex flex-col justify-between backdrop-blur-md transition-all duration-300 relative overflow-hidden group select-none ${
         !isEligible
           ? 'border-outline-variant/20 opacity-60 grayscale cursor-not-allowed bg-[#fcfbf9]/60 dark:bg-surface-container/40'
           : showHoverByDefault
@@ -219,22 +204,22 @@ export function CouponCard({
       }`}
     >
       {/* Decorative Ticket Circles */}
-      <div className="absolute top-1/2 -left-2.5 w-5 h-5 rounded-full bg-surface border-r border-outline-variant/20 -translate-y-1/2 z-10 pointer-events-none"></div>
-      <div className="absolute top-1/2 -right-2.5 w-5 h-5 rounded-full bg-surface border-l border-outline-variant/20 -translate-y-1/2 z-10 pointer-events-none"></div>
+      <div className="absolute top-1/2 -left-2 w-3.5 h-3.5 rounded-full bg-surface border-r border-outline-variant/20 -translate-y-1/2 z-10 pointer-events-none"></div>
+      <div className="absolute top-1/2 -right-2 w-3.5 h-3.5 rounded-full bg-surface border-l border-outline-variant/20 -translate-y-1/2 z-10 pointer-events-none"></div>
 
       <div>
-        <div className="flex items-center justify-between gap-2 mb-1">
-          <span className="font-label text-[10px] font-bold tracking-wider text-on-surface bg-[#e9e8e5] dark:bg-surface-container-high px-2 py-0.5 rounded uppercase">
+        <div className="flex items-center justify-between gap-2 mb-1.5">
+          <span className="font-label text-[10px] font-bold tracking-wider text-on-surface bg-[#e9e8e5] dark:bg-surface-container-high px-2 py-0.5 rounded uppercase font-mono">
             {coupon?.code || 'COUPON'}
           </span>
           {isBest && (
-            <span className="absolute top-0 right-0 bg-[#2A2927] text-white text-[8px] font-bold uppercase tracking-widest px-3 py-1 rounded-bl-lg rounded-tr-lg shadow-sm z-20">
+            <span className="bg-[#2A2927] text-white text-[8px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full shadow-2xs">
               BEST OFFER
             </span>
           )}
         </div>
 
-        <div className="font-display text-[15px] sm:text-[16px] text-on-surface font-semibold tracking-tight leading-snug">
+        <div className="font-display text-[15px] sm:text-[16px] text-on-surface font-bold tracking-tight leading-snug">
           {discountText}
         </div>
         <p
@@ -244,7 +229,7 @@ export function CouponCard({
         </p>
       </div>
 
-      <div className="flex items-center justify-between pt-2 border-t border-dashed border-outline-variant/20 mt-1">
+      <div className="flex items-center justify-between pt-2 border-t border-dashed border-outline-variant/20 mt-2">
         <span className="font-body text-[9px] text-on-surface/40 uppercase tracking-widest font-bold">
           Exp: {formattedExpiry}
         </span>

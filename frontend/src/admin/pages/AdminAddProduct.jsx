@@ -581,13 +581,18 @@ export function AdminAddProduct({ editId }) {
           </div>
         </div>
 
-        <LivePreviewCard formData={formData} mobileTab={mobileTab} />
+        <LivePreviewCard
+          formData={formData}
+          mobileTab={mobileTab}
+          categoriesList={categoriesList}
+        />
       </div>
 
       <AiCurationOverlay
         showAIHUD={showAIHUD}
         setShowAIHUD={setShowAIHUD}
         aiAnalysisResult={aiAnalysisResult}
+        setAiAnalysisResult={setAiAnalysisResult}
         aiChatInput={aiChatInput}
         setAiChatInput={setAiChatInput}
         handleAiChatSubmit={handleAiChatSubmit}

@@ -355,30 +355,42 @@ export function InquiriesTable({
                 onClick={() => setSelectedOrder(order)}
                 className="rounded-[4px] p-4 shadow-xs border border-[var(--admin-border)] bg-[var(--admin-surface)] flex flex-col gap-3 cursor-pointer hover:border-[var(--admin-border-strong)] transition-all"
               >
-                {/* Header Row: ID + Type Badge + Status Pill */}
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 flex-wrap min-w-0">
-                    <span className="font-mono font-bold text-[var(--admin-accent)] text-[13px]">
-                      {orderCode}
-                    </span>
-                    {order.customOrderType && (
-                      <span
-                        className={`text-[9.5px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-[4px] border ${
-                          order.customOrderType === 'product'
-                            ? 'bg-blue-50 text-blue-700 border-blue-200'
-                            : order.customOrderType === 'event'
-                              ? 'bg-purple-50 text-purple-700 border-purple-200'
-                              : 'bg-amber-50 text-amber-800 border-amber-200'
-                        }`}
-                      >
-                        {order.customOrderType}
-                      </span>
-                    )}
-                    {order.priority === 'high' && (
-                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-[4px] bg-rose-50 text-rose-700 border border-rose-200 uppercase">
-                        HIGH
-                      </span>
-                    )}
+                {/* Header Row: Customer Name + Status Badge, with subtle Inquiry Code */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <div className="w-7 h-7 rounded-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] text-[var(--admin-accent)] font-bold text-[11px] flex items-center justify-center shrink-0">
+                      {(order.customerName || 'C').charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-[var(--admin-text-primary)] text-[13.5px] truncate leading-tight">
+                          {order.customerName || 'Customer'}
+                        </span>
+                        {order.priority === 'high' && (
+                          <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-[4px] bg-rose-50 text-rose-700 border border-rose-200 uppercase shrink-0">
+                            HIGH
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                        <span className="font-mono text-[11px] font-medium text-[var(--admin-text-tertiary)] dark:text-stone-400">
+                          {orderCode}
+                        </span>
+                        {order.customOrderType && (
+                          <span
+                            className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded-[4px] border shrink-0 ${
+                              order.customOrderType === 'product'
+                                ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                : order.customOrderType === 'event'
+                                  ? 'bg-purple-50 text-purple-700 border-purple-200'
+                                  : 'bg-amber-50 text-amber-800 border-amber-200'
+                            }`}
+                          >
+                            {order.customOrderType}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
 
                   {/* Status Badge */}
@@ -391,23 +403,12 @@ export function InquiriesTable({
                   </span>
                 </div>
 
-                {/* Customer Row */}
-                <div className="flex items-center justify-between text-[12px] pt-1 border-t border-[var(--admin-border-subtle)]">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-7 h-7 rounded-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] text-[var(--admin-accent)] font-bold text-[11px] flex items-center justify-center shrink-0">
-                      {(order.customerName || 'C').charAt(0).toUpperCase()}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-bold text-[var(--admin-text-primary)] truncate">
-                        {order.customerName || 'Customer'}
-                      </p>
-                      <span className="text-[10px] text-[var(--admin-text-secondary)] truncate block">
-                        {order.customerPhone || order.customerEmail || 'No contact'}
-                      </span>
-                    </div>
-                  </div>
-
-                  <span className="text-[11px] text-[var(--admin-text-secondary)] font-medium flex items-center gap-1 shrink-0">
+                {/* Sub Row: Contact + Event Date */}
+                <div className="flex items-center justify-between text-[11.5px] pt-1 border-t border-[var(--admin-border-subtle)] text-[var(--admin-text-secondary)]">
+                  <span className="truncate">
+                    {order.customerPhone || order.customerEmail || 'No contact info'}
+                  </span>
+                  <span className="text-[11px] font-medium flex items-center gap-1 shrink-0 ml-2">
                     <span className="material-symbols-outlined text-[13px]">calendar_today</span>
                     {dateStr}
                   </span>

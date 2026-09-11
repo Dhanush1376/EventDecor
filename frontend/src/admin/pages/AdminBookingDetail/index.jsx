@@ -289,7 +289,7 @@ export function AdminBookingDetail() {
         initial="hidden"
         animate="show"
         variants={stagger}
-        className="space-y-4 sm:space-y-6 max-w-[1400px] mx-auto font-sans pb-0"
+        className="space-y-6 no-print"
         style={{
           fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
         }}
@@ -302,46 +302,48 @@ export function AdminBookingDetail() {
           setShowUnpaidModal={setShowUnpaidModal}
         />
 
-        {/* 2-Column Responsive Grid (Matches AdminOrderDetail layout: 2/3 Left, 1/3 Right Sticky) */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 items-start">
-          {/* LEFT COLUMN: Lifecycle Progression, Package & Experience, Logistics (2/3 Width) */}
-          <div className="xl:col-span-2 flex flex-col gap-4 sm:gap-6 lg:gap-8">
-            {/* Status Timeline Stepper */}
-            <BookingStatusTimeline
-              booking={selectedBooking}
-              onUpdateStatus={handleUpdateStatus}
-              setShowUnpaidModal={setShowUnpaidModal}
-            />
+        <div className="max-w-[1400px] mx-auto w-auto">
+          {/* 2-Column Responsive Grid (Matches AdminOrderDetail layout: 2/3 Left, 1/3 Right Sticky) */}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-3 sm:gap-6 lg:gap-8 items-start">
+            {/* LEFT COLUMN: Lifecycle Progression, Package & Experience, Logistics (2/3 Width) */}
+            <div className="xl:col-span-2 flex flex-col gap-3 sm:gap-6 lg:gap-8">
+              {/* Status Timeline Stepper */}
+              <BookingStatusTimeline
+                booking={selectedBooking}
+                onUpdateStatus={handleUpdateStatus}
+                setShowUnpaidModal={setShowUnpaidModal}
+              />
 
-            {/* Event Package & Schedule */}
-            <BookingPackageCard booking={selectedBooking} />
+              {/* Event Package & Schedule */}
+              <BookingPackageCard booking={selectedBooking} />
 
-            {/* Event Venue & Setup Destination (Read-only presentation with interactive map) */}
-            <BookingVenueLocationCard
-              booking={selectedBooking}
-              venueName={venueName}
-              venueAddress={venueAddress}
-              venueCity={venueCity}
-              venueState={venueState}
-              venuePincode={venuePincode}
-              venueLatitude={venueLatitude}
-              venueLongitude={venueLongitude}
-              venueIsOutdoor={venueIsOutdoor}
-              venueGoogleMapsLink={venueGoogleMapsLink}
-            />
-          </div>
+              {/* Event Venue & Setup Destination (Read-only presentation with interactive map) */}
+              <BookingVenueLocationCard
+                booking={selectedBooking}
+                venueName={venueName}
+                venueAddress={venueAddress}
+                venueCity={venueCity}
+                venueState={venueState}
+                venuePincode={venuePincode}
+                venueLatitude={venueLatitude}
+                venueLongitude={venueLongitude}
+                venueIsOutdoor={venueIsOutdoor}
+                venueGoogleMapsLink={venueGoogleMapsLink}
+              />
+            </div>
 
-          {/* RIGHT COLUMN: Customer Profile & Financials (1/3 Width Sticky Sidebar, Matches OrderDetail) */}
-          <div className="xl:col-span-1 flex flex-col gap-4 sm:gap-6 lg:gap-8 sticky top-[88px]">
-            {/* Customer Profile Card */}
-            <BookingCustomerCard booking={selectedBooking} />
+            {/* RIGHT COLUMN: Customer Profile & Financials (1/3 Width Sticky Sidebar, Matches OrderDetail) */}
+            <div className="xl:col-span-1 flex flex-col gap-3 sm:gap-6 lg:gap-8 sticky top-[88px]">
+              {/* Customer Profile Card */}
+              <BookingCustomerCard booking={selectedBooking} />
 
-            {/* Financial Ledger & Manual Payments */}
-            <BookingFinancialsCard
-              booking={selectedBooking}
-              onOpenPaymentModal={() => setShowPaymentModal(true)}
-              onDeletePayment={handleDeletePayment}
-            />
+              {/* Financial Ledger & Manual Payments */}
+              <BookingFinancialsCard
+                booking={selectedBooking}
+                onOpenPaymentModal={() => setShowPaymentModal(true)}
+                onDeletePayment={handleDeletePayment}
+              />
+            </div>
           </div>
         </div>
       </motion.div>
