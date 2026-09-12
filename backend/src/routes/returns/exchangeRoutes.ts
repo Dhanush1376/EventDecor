@@ -24,4 +24,11 @@ router.get(
   exchangeController.getAllExchanges,
 );
 
+router.delete(
+  '/admin/:id',
+  requireAuth,
+  authorize('super_admin', 'main_admin', 'admin'),
+  exchangeController.softDeleteExchange,
+);
+
 export default router;

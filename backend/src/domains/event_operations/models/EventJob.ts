@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../../../utils/SoftDeletePlugin';
 
 export interface IBookingPayment {
   amount: number;
@@ -51,7 +52,7 @@ export interface IBookingStatusHistory {
   updatedBy?: string;
 }
 
-export interface IEventJob extends Document {
+export interface IEventJob extends Document, ISoftDeleted {
   project?: mongoose.Types.ObjectId; // Reference to parent Project
   bookingId?: string;
   user: mongoose.Types.ObjectId;
@@ -350,7 +351,8 @@ EventJobSchema.plugin(TransactionSyncPlugin, {
   paymentStatusField: 'pricing.paymentStatus',
 });
 
+EventJobSchema.plugin(SoftDeletePlugin);
 EventJobSchema.plugin(BaseEntityPlugin);
 
-const EventJob = mongoose.model<IEventJob>('EventJob', EventJobSchema);
+const EventJob = mongoose.model<IEventJob, SoftDeleteModel<IEventJob>>('EventJob', EventJobSchema);
 export default EventJob;

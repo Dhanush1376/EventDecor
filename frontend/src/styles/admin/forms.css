@@ -325,3 +325,11 @@ select.admin-no-arrow:hover {
   width: 20px;
   height: 20px;
 }
+
+/* Checkbox & Radio Buttons — Admin Gold Theme */
+.admin-section-root input[type='checkbox'],
+.admin-section-root input[type='radio'],
+input[type='checkbox'] {
+  accent-color: var(--admin-accent, #826237);
+  cursor: pointer;
+}

@@ -10,6 +10,7 @@ import { PLACEHOLDER_IMAGES } from '../../../constants/placeholderImages';
 import { StatusBadge, fadeUp, stagger } from '../../components/AdminUIKit';
 import { WhatsAppIcon } from '../../../components/ui/WhatsAppIcon';
 import AdminCustomerProfileModal from '../../components/AdminCustomerProfileModal';
+import returnService from '../../../services/api/returnService';
 
 const EXCHANGE_HAPPY_PATH = [
   'Submitted',
@@ -88,6 +89,19 @@ const STEP_COLORS = {
   },
 };
 
+const getExchangeTimelineCardStyle = (currentStepName, isFailed) => {
+  if (isFailed) {
+    return 'bg-gradient-to-r from-rose-500/[0.035] via-rose-500/[0.01] to-white dark:to-[#26241f] border-rose-500/25 shadow-xs';
+  }
+  if (currentStepName === 'Completed') {
+    return 'bg-gradient-to-r from-emerald-500/[0.035] via-emerald-500/[0.01] to-white dark:to-[#26241f] border-emerald-500/25 shadow-xs';
+  }
+  if (['Approved', 'Item Picked Up', 'QC Passed', 'Dispatched'].includes(currentStepName)) {
+    return 'bg-gradient-to-r from-blue-500/[0.035] via-blue-500/[0.01] to-white dark:to-[#26241f] border-blue-500/25 shadow-xs';
+  }
+  return 'bg-gradient-to-r from-amber-500/[0.045] via-amber-500/[0.015] to-white dark:to-[#26241f] border-amber-500/30 shadow-xs';
+};
+
 export default function AdminExchangeDetailView({
   currentReturn,
   onApprove,
@@ -146,6 +160,35 @@ export default function AdminExchangeDetailView({
     autoReserve: true,
   });
   const [isSubmittingCollect, setIsSubmittingCollect] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const isTerminal =
+    ['delivered', 'cancelled', 'completed', 'rejected'].includes(
+      (exchangeDetails?.replacementStatus || '').toLowerCase(),
+    ) || ['completed', 'cancelled', 'rejected'].includes((request?.status || '').toLowerCase());
+
+  const handleDeleteExchange = async () => {
+    const exId = exchangeDetails?._id || request?.exchangeId || request?._id;
+    const confirmed = await confirm({
+      title: 'Move Exchange to Recycle Bin',
+      message: `Are you sure you want to delete exchange request #${exchangeDetails?.exchangeId || request?.returnId || exId}? You can restore it anytime from the Recycle Bin.`,
+      confirmText: 'Move to Recycle Bin',
+      cancelText: 'Cancel',
+      variant: 'danger',
+    });
+    if (!confirmed) return;
+
+    try {
+      setIsDeleting(true);
+      await returnService.deleteExchange(exId);
+      toast.success('Exchange moved to recycle bin');
+      navigate('/admin/exchanges');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to delete exchange');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   // Authoritative fields from backend
   const originalItem = exchangeDetails?.originalItem || request.items?.[0] || {};
@@ -503,6 +546,24 @@ export default function AdminExchangeDetailView({
                 <span>WhatsApp</span>
               </a>
             )}
+            {isTerminal && (
+              <button
+                type="button"
+                onClick={handleDeleteExchange}
+                disabled={isDeleting}
+                className="admin-btn flex-1 sm:flex-none !h-9 sm:!h-10 !py-0 px-3 sm:px-4 !rounded-[4px] text-[12px] sm:text-[13px] font-bold shadow-sm min-w-max cursor-pointer inline-flex items-center justify-center gap-1.5 bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 hover:bg-red-100 transition-colors box-border disabled:opacity-50"
+                title="Move to Recycle Bin"
+              >
+                {isDeleting ? (
+                  <span className="w-3.5 h-3.5 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <span className="material-symbols-outlined text-[17px] sm:text-[18px] leading-none">
+                    delete_outline
+                  </span>
+                )}
+                <span>Delete</span>
+              </button>
+            )}
           </div>
         </div>
       </motion.div>
@@ -513,7 +574,12 @@ export default function AdminExchangeDetailView({
           {/* ─── LEFT COLUMN: Operations, Stepper & Items (2/3 Width) ─── */}
           <div className="xl:col-span-2 flex flex-col gap-3 sm:gap-6 lg:gap-8">
             {/* CARD 1: LIFECYCLE PROGRESSION (Matches OrderStatusTimeline.jsx) */}
-            <div className="bg-white dark:bg-stone-900 rounded-[4px] shadow-sm border border-[var(--admin-border-subtle)] overflow-hidden">
+            <div
+              className={`rounded-[6px] overflow-hidden transition-all border ${getExchangeTimelineCardStyle(
+                currentStepName,
+                isFailed,
+              )}`}
+            >
               <div className="px-5 py-4 border-b border-[var(--admin-border-subtle)] flex items-center justify-between">
                 <div className="flex flex-col">
                   <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)] tracking-tight">
@@ -1379,7 +1445,11 @@ export default function AdminExchangeDetailView({
                 <div className="flex justify-between items-center py-1 border-b border-[var(--admin-border-subtle)]">
                   <span className="text-[var(--admin-text-secondary)]">Order Status:</span>
                   <span className="font-bold capitalize text-[var(--admin-text-primary)]">
-                    {request.orderId?.orderStatus || 'Delivered'}
+                    {request.orderId?.orderStatus ||
+                      request.order?.orderStatus ||
+                      request.orderId?.status ||
+                      request.order?.status ||
+                      'Processing'}
                   </span>
                 </div>
                 {request.orderId?.total !== undefined && (

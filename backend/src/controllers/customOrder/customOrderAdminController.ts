@@ -468,3 +468,51 @@ export const adminUpdateEnterpriseDetails = asyncHandler(async (req: Request, re
 
   res.status(200).json(new ApiResponse(true, 'Enterprise details successfully updated', order));
 });
+
+/**
+ * @desc    Soft delete completed, cancelled, or delivered custom order (Move to Recycle Bin)
+ * @route   DELETE /api/v1/custom-orders/:id
+ * @access  Admin
+ */
+export const adminSoftDeleteCustomOrder = asyncHandler(async (req: Request, res: Response) => {
+  const order = await CustomOrder.findById(req.params.id);
+
+  if (!order) {
+    res.status(404).json(new ApiResponse(false, 'Custom order not found'));
+    return;
+  }
+
+  const status = (order.status || '').toLowerCase();
+  const terminalStatuses = ['completed', 'cancelled', 'delivered'];
+
+  if (!terminalStatuses.includes(status)) {
+    res
+      .status(400)
+      .json(
+        new ApiResponse(
+          false,
+          'Only completed, cancelled, or delivered custom orders can be moved to the recycle bin',
+        ),
+      );
+    return;
+  }
+
+  await (order as any).softDelete(req.user, 'Deleted by admin');
+
+  if (req.user && (req.user as any).role !== 'user') {
+    await AdminAuditService.logAction({
+      actorId: (req.user as any).id,
+      actorEmail: (req.user as any).email || 'unknown',
+      actorRole: (req.user as any).role,
+      method: req.method,
+      path: req.originalUrl,
+      entityType: 'CustomOrder',
+      entityId: order.id,
+      action: 'soft_delete',
+      previousValue: null,
+      newValue: { status: 'deleted' },
+    });
+  }
+
+  res.status(200).json(new ApiResponse(true, 'Custom order moved to recycle bin successfully'));
+});

@@ -4,6 +4,8 @@ import { ExchangeService } from '../../services/returns/ExchangeService';
 import ExchangeRequest from '../../models/ExchangeRequest';
 import Order from '../../models/Order';
 import ApiError from '../../utils/ApiError';
+import ApiResponse from '../../utils/ApiResponse';
+import { AdminAuditService } from '../../services/AdminAuditService';
 
 /**
  * @desc    Create exchange request
@@ -198,4 +200,51 @@ export const verifyPayment = asyncHandler(async (req: Request, res: Response) =>
       _id: exchangeRequest._id,
     },
   });
+});
+
+/**
+ * @desc    Soft delete completed or cancelled exchange request (Move to Recycle Bin)
+ * @route   DELETE /api/v1/exchanges/admin/:id
+ * @access  Admin
+ */
+export const softDeleteExchange = asyncHandler(async (req: Request, res: Response) => {
+  const exchangeId = req.params.id;
+  const exchange = await ExchangeRequest.findById(exchangeId).populate('returnRequestId');
+
+  if (!exchange) {
+    throw new ApiError(404, 'Exchange request not found');
+  }
+
+  const replacementStatus = (exchange.replacementStatus || '').toLowerCase();
+  const returnStatus = ((exchange.returnRequestId as any)?.status || '').toLowerCase();
+
+  const isTerminal =
+    ['delivered', 'cancelled', 'completed', 'rejected'].includes(replacementStatus) ||
+    ['completed', 'cancelled', 'rejected'].includes(returnStatus);
+
+  if (!isTerminal) {
+    throw new ApiError(
+      400,
+      'Only completed or cancelled exchanges can be moved to the recycle bin',
+    );
+  }
+
+  await (exchange as any).softDelete(req.user, 'Deleted by admin');
+
+  if (req.user && req.user.role !== 'user') {
+    await AdminAuditService.logAction({
+      actorId: req.user.id,
+      actorEmail: req.user.email || 'unknown',
+      actorRole: req.user.role,
+      method: req.method,
+      path: req.originalUrl,
+      entityType: 'ExchangeRequest',
+      entityId: exchange.id,
+      action: 'soft_delete',
+      previousValue: null,
+      newValue: { status: 'deleted' },
+    });
+  }
+
+  res.status(200).json(new ApiResponse(true, 'Exchange request moved to recycle bin successfully'));
 });

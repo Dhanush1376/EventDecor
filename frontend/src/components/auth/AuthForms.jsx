@@ -53,7 +53,7 @@ export function UnifiedAuthForm({
                 id="auth-identifier-input"
                 type={isPhone ? 'tel' : 'text'}
                 required
-                className="form-field !text-[12px]"
+                className="form-field text-[16px] sm:!text-[12px]"
                 placeholder="e.g. name@example.com "
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}

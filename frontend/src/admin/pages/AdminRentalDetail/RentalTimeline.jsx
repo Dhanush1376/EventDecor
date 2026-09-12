@@ -73,6 +73,20 @@ const STATUS_COLORS = {
   },
 };
 
+const getRentalTimelineCardStyle = (status) => {
+  const s = (status || '').toLowerCase();
+  if (['completed', 'returned'].includes(s)) {
+    return 'bg-gradient-to-r from-emerald-500/[0.035] via-emerald-500/[0.01] to-white dark:to-[#26241f] border-emerald-500/25 shadow-xs';
+  }
+  if (['cancelled'].includes(s)) {
+    return 'bg-gradient-to-r from-rose-500/[0.035] via-rose-500/[0.01] to-white dark:to-[#26241f] border-rose-500/25 shadow-xs';
+  }
+  if (['active_rental', 'confirmed'].includes(s)) {
+    return 'bg-gradient-to-r from-blue-500/[0.035] via-blue-500/[0.01] to-white dark:to-[#26241f] border-blue-500/25 shadow-xs';
+  }
+  return 'bg-gradient-to-r from-amber-500/[0.045] via-amber-500/[0.015] to-white dark:to-[#26241f] border-amber-500/30 shadow-xs';
+};
+
 export function RentalTimeline({ rental, fetchRentalDetail, nextAction }) {
   const [showInspectionModal, setShowInspectionModal] = useState(false);
   const [inspectionNote, setInspectionNote] = useState('');
@@ -119,7 +133,11 @@ export function RentalTimeline({ rental, fetchRentalDetail, nextAction }) {
   };
 
   return (
-    <div className="bg-white dark:bg-stone-900 rounded-[4px] shadow-sm border border-[var(--admin-border-subtle)] overflow-hidden">
+    <div
+      className={`rounded-[6px] overflow-hidden transition-all border ${getRentalTimelineCardStyle(
+        rental.status,
+      )}`}
+    >
       {/* Card Header with Lifecycle Progression and Status Dropdown */}
       <div className="px-4 sm:px-5 py-3.5 border-b border-[var(--admin-border-subtle)] flex items-center justify-between bg-[var(--admin-bg-subtle)]/40 gap-3">
         <div className="flex items-center gap-2 min-w-0">

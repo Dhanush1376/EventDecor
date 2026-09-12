@@ -269,13 +269,16 @@ export class EventBookingManagementService {
         ),
       };
 
-      // State Transition check
-      EventJobStateMachine.transition(
-        booking,
-        'pending_payment',
-        'Quotation updated and sent to customer',
-        'admin',
-      );
+      // Only transition to pending_payment if not already confirmed/ongoing/completed
+      if (['draft', 'inquiry', 'quote_sent'].includes(booking.status)) {
+        EventJobStateMachine.transition(
+          booking,
+          'pending_payment',
+          'Quotation updated and sent to customer',
+          'admin',
+          true,
+        );
+      }
 
       await BookingMessage.create(
         [
@@ -450,52 +453,53 @@ export class EventBookingManagementService {
       const currentlyOwnsResource = this.isResourceOwningState(oldStatus);
       const willOwnResource = this.isResourceOwningState(targetStatus);
 
-      // 1. Claim Resource Scenario
+      const isPastDate =
+        booking.date && new Date(booking.date).getTime() < new Date().setHours(0, 0, 0, 0);
+
+      // 1. Claim Resource Scenario (only enforce on future/today bookings)
       if (!currentlyOwnsResource && willOwnResource) {
-        // We must claim a slot for this date.
-        // It uses claimSlotAtomically to enforce the hard 3-events-per-day limit.
-        try {
-          await EventResourcePlanningService.claimSlotAtomically(
-            new Date(booking.date),
-            booking._id.toString(),
-            session,
-          );
-        } catch (err: any) {
-          if (err.statusCode === 409) {
-            throw new ApiError(
-              409,
-              'Cannot confirm booking: This date has reached the maximum number of concurrent events.',
+        if (!isPastDate) {
+          try {
+            await EventResourcePlanningService.claimSlotAtomically(
+              new Date(booking.date),
+              booking._id.toString(),
+              session,
             );
+          } catch (err: any) {
+            if (err.statusCode === 409) {
+              throw new ApiError(
+                409,
+                'Cannot confirm booking: This date has reached the maximum number of concurrent events.',
+              );
+            }
+            throw err;
           }
-          throw err; // Re-throw other unexpected DB errors
-        }
 
-        // We also check for exact venue overlap just to be safe
-        if (
-          booking.venue?.address &&
-          booking.venue.address.trim() &&
-          booking.venue.address.toUpperCase() !== 'TBD'
-        ) {
-          const hasTimeOverlap = await EventResourcePlanningService.checkVenueTimeOverlap(
-            new Date(booking.date),
-            booking.venue.address,
-            booking.timing || { start: '10:00 AM', end: '10:00 PM' },
-            booking._id.toString(),
-            session,
-          );
-
-          if (hasTimeOverlap) {
-            throw new ApiError(
-              409,
-              'Venue is already booked for this time slot by another confirmed event.',
+          if (
+            booking.venue?.address &&
+            booking.venue.address.trim() &&
+            booking.venue.address.toUpperCase() !== 'TBD'
+          ) {
+            const hasTimeOverlap = await EventResourcePlanningService.checkVenueTimeOverlap(
+              new Date(booking.date),
+              booking.venue.address,
+              booking.timing || { start: '10:00 AM', end: '10:00 PM' },
+              booking._id.toString(),
+              session,
             );
+
+            if (hasTimeOverlap) {
+              throw new ApiError(
+                409,
+                'Venue is already booked for this time slot by another confirmed event.',
+              );
+            }
           }
         }
       }
 
       // 2. Release Resource Scenario
       if (currentlyOwnsResource && !willOwnResource) {
-        // e.g. confirmed -> cancelled, setup_in_progress -> failed
         await EventResourcePlanningService.releaseSlotAtomically(
           new Date(booking.date),
           booking._id.toString(),

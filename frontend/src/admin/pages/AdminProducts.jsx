@@ -598,7 +598,7 @@ export function AdminProducts() {
                         type="button"
                         onClick={() => setShowFiltersMenu(!showFiltersMenu)}
                         className={`h-[42px] min-h-[42px] max-h-[42px] px-2.5 sm:px-3.5 flex items-center justify-center gap-1.5 rounded-[4px] border transition-colors shrink-0 cursor-pointer ${
-                          showFiltersMenu || activeFiltersCount > 0
+                          showFiltersMenu || activeCount > 0
                             ? 'bg-[var(--admin-accent)] text-white border-transparent shadow-xs'
                             : 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] border-[var(--admin-border)] hover:border-[var(--admin-border-strong)]'
                         }`}
@@ -606,7 +606,7 @@ export function AdminProducts() {
                       >
                         <span className="material-symbols-outlined text-[18px]">tune</span>
                         <span className="font-semibold text-[13px] hidden sm:inline">
-                          {activeFiltersCount > 0 ? `${activeFiltersCount} Filters` : 'Filters'}
+                          {activeCount > 0 ? `${activeCount} Filters` : 'Filters'}
                         </span>
                         {activeCount > 0 && (
                           <span className="min-w-[16px] h-4 px-1 rounded-full bg-white text-[var(--admin-accent)] text-[10px] font-bold flex items-center justify-center">

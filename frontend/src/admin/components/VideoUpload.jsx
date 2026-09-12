@@ -17,8 +17,8 @@ export function VideoUpload({
     if (files.length === 0) return;
 
     // Client-side validation for video formats
-    const allowedExts = ['.mp4', '.webm', '.mov', '.ogg'];
-    const maxSizeBytes = 50 * 1024 * 1024; // 50MB video limit
+    const allowedExts = ['.mp4', '.webm', '.mov', '.ogg', '.m4v'];
+    const maxSizeBytes = 100 * 1024 * 1024; // 100MB video limit
 
     for (const file of files) {
       const fileExt = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();

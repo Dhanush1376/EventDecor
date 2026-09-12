@@ -6,6 +6,7 @@ import {
   EmptyState,
   AdminStatusPill,
   AdminStatusDropdown,
+  AdminPaymentBadge,
   formatCurrency,
   fadeUp,
   smoothScrollCardIntoView,
@@ -27,6 +28,20 @@ const ALL_BOOKING_STATUSES = [
   { value: 'cancelled', label: 'CANCELLED' },
 ];
 
+const getBookingCardStyle = (status) => {
+  const s = (status || '').toLowerCase();
+  if (s === 'completed') {
+    return 'border border-emerald-500/40 bg-gradient-to-r from-emerald-500/[0.035] via-emerald-500/[0.01] to-white dark:to-[#26241f] hover:border-emerald-500/60 shadow-xs';
+  }
+  if (s === 'cancelled') {
+    return 'border border-rose-500/40 bg-gradient-to-r from-rose-500/[0.035] via-rose-500/[0.01] to-white dark:to-[#26241f] hover:border-rose-500/60 shadow-xs';
+  }
+  if (s === 'confirmed' || s === 'setup_in_progress') {
+    return 'border border-blue-500/40 bg-gradient-to-r from-blue-500/[0.035] via-blue-500/[0.01] to-white dark:to-[#26241f] hover:border-blue-500/60 shadow-xs';
+  }
+  return 'border border-amber-500/40 bg-gradient-to-r from-amber-500/[0.045] via-amber-500/[0.015] to-white dark:to-[#26241f] hover:border-amber-500/60 shadow-xs';
+};
+
 export function BookingsTab({
   bookings = [],
   loadingBookings,
@@ -40,6 +55,7 @@ export function BookingsTab({
   const [selectedPaymentBooking, setSelectedPaymentBooking] = useState(null);
   const [expandedCardIds, setExpandedCardIds] = useState(new Set());
   const [updatingStatusId, setUpdatingStatusId] = useState(null);
+  const [deletingBookingId, setDeletingBookingId] = useState(null);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [urgencyFilter, setUrgencyFilter] = useState('all');
@@ -154,13 +170,6 @@ export function BookingsTab({
   };
 
   const handleStatusChange = async (booking, newStatus) => {
-    if (newStatus !== 'pending_payment' && newStatus !== 'cancelled') {
-      if (!booking.pricing?.paymentStatus || booking.pricing?.paymentStatus === 'unpaid') {
-        toast.error('Status cannot be updated. Minimum payment must be recorded first.');
-        return;
-      }
-    }
-
     const isConfirmed = await confirm({
       title: 'Update Booking Status',
       message: `Are you sure you want to change the status to ${newStatus.replace(/_/g, ' ').toUpperCase()}?`,
@@ -192,6 +201,35 @@ export function BookingsTab({
 
   const handleCancelBooking = async (booking) => {
     await handleStatusChange(booking, 'cancelled');
+  };
+
+  const handleDeleteBooking = async (booking, e) => {
+    if (e) e.stopPropagation();
+    const bId = booking._id || booking.id;
+    const bookingLabel = booking.bookingId || `#${(bId || '').toString().slice(-6).toUpperCase()}`;
+
+    const isConfirmed = await confirm({
+      title: 'Move Booking to Recycle Bin?',
+      message: `Are you sure you want to move booking ${bookingLabel} to the recycle bin? You can restore it later from the Recycle Bin.`,
+      confirmText: 'Move to Recycle Bin',
+      cancelText: 'Cancel',
+      type: 'danger',
+    });
+
+    if (!isConfirmed) return;
+
+    setDeletingBookingId(bId);
+    try {
+      const res = await bookingService.adminSoftDelete(bId);
+      if (res.success || res.data) {
+        toast.success('Booking moved to recycle bin');
+        window.location.reload();
+      }
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to move booking to recycle bin'));
+    } finally {
+      setDeletingBookingId(null);
+    }
   };
 
   const filteredBookings = useMemo(() => {
@@ -528,6 +566,17 @@ export function BookingsTab({
                   const isExpanded = expandedCardIds.has(bId);
                   const isPaid = b.pricing?.paymentStatus === 'paid';
                   const isPartial = b.pricing?.paymentStatus === 'partial';
+                  const paymentStatus = b.pricing?.paymentStatus || 'unpaid';
+                  const paymentMethod =
+                    b.pricing?.paymentMethod ||
+                    (b.payments?.[0]?.source === 'manual' ? 'manual' : 'online');
+                  const paymentBorderClass = isPaid
+                    ? 'border-l-[3px] border-l-emerald-500'
+                    : paymentStatus === 'partial'
+                      ? 'border-l-[3px] border-l-amber-500'
+                      : b.status === 'refunded' || paymentStatus === 'refunded'
+                        ? 'border-l-[3px] border-l-purple-500'
+                        : 'border-l-[3px] border-l-rose-500';
                   const bookingCode =
                     b.bookingId || `#${(bId || '').toString().substring(0, 8).toUpperCase()}`;
 
@@ -552,7 +601,9 @@ export function BookingsTab({
                       key={bId}
                       id={`booking-card-${bId}`}
                       onClick={() => navigate(`/admin/events/${bId}`)}
-                      className="relative overflow-hidden rounded-[8px] p-3.5 shadow-xs border border-stone-200/90 dark:border-stone-700/80 bg-white dark:bg-stone-900 flex flex-col gap-3 cursor-pointer hover:border-stone-300 dark:hover:border-stone-600 hover:shadow-sm transition-all"
+                      className={`relative overflow-hidden rounded-[8px] p-3.5 flex flex-col gap-3 cursor-pointer transition-all ${paymentBorderClass} ${getBookingCardStyle(
+                        b.status,
+                      )}`}
                     >
                       {/* Header: Customer + Status Pill, with subtle faded Booking Code */}
                       <div className="flex justify-between items-start gap-2">
@@ -649,22 +700,12 @@ export function BookingsTab({
                         </div>
 
                         <div className="flex items-center gap-1.5">
-                          <span
-                            className={`inline-flex items-center justify-center gap-1 text-[9.5px] font-bold uppercase tracking-wider px-2 h-[22px] min-h-[22px] max-h-[22px] rounded-[4px] border leading-none box-border select-none ${
-                              isPaid
-                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                : isPartial
-                                  ? 'bg-amber-50 text-amber-800 border-amber-200'
-                                  : 'bg-rose-50 text-rose-700 border-rose-200'
-                            }`}
-                          >
-                            {isPaid && (
-                              <span className="material-symbols-outlined !text-[11px] !leading-none shrink-0">
-                                check_circle
-                              </span>
-                            )}
-                            <span>{b.pricing?.paymentStatus || 'UNPAID'}</span>
-                          </span>
+                          <AdminPaymentBadge
+                            isPaid={isPaid}
+                            method={paymentMethod}
+                            status={paymentStatus}
+                            orderStatus={b.status}
+                          />
 
                           {!isPaid && (
                             <button
@@ -961,19 +1002,40 @@ export function BookingsTab({
                                     ? new Date(b.createdAt).toLocaleDateString('en-IN')
                                     : 'Recently'}
                                 </span>
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    navigate(`/admin/events/${bId}`);
-                                  }}
-                                  className="h-7 px-3 rounded-[5px] bg-[var(--admin-accent)] hover:opacity-90 text-white text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-all cursor-pointer shadow-2xs"
-                                >
-                                  <span className="material-symbols-outlined text-[13px]">
-                                    visibility
-                                  </span>
-                                  Manage
-                                </button>
+                                <div className="flex items-center gap-1.5">
+                                  {['completed', 'cancelled', 'rejected'].includes(
+                                    (b.status || '').toLowerCase(),
+                                  ) && (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => handleDeleteBooking(b, e)}
+                                      disabled={deletingBookingId === bId}
+                                      className="h-7 px-2 rounded-[5px] border border-red-200 hover:bg-red-50 dark:border-red-900/60 dark:hover:bg-red-950/40 text-red-600 dark:text-red-400 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-all cursor-pointer shadow-2xs disabled:opacity-50"
+                                      title="Move to Recycle Bin"
+                                    >
+                                      {deletingBookingId === bId ? (
+                                        <span className="w-3 h-3 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+                                      ) : (
+                                        <span className="material-symbols-outlined text-[14px]">
+                                          delete_outline
+                                        </span>
+                                      )}
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      navigate(`/admin/events/${bId}`);
+                                    }}
+                                    className="h-7 px-3 rounded-[5px] bg-[var(--admin-accent)] hover:opacity-90 text-white text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-all cursor-pointer shadow-2xs"
+                                  >
+                                    <span className="material-symbols-outlined text-[13px]">
+                                      visibility
+                                    </span>
+                                    Manage
+                                  </button>
+                                </div>
                               </div>
                             </div>
                           </motion.div>
@@ -1000,12 +1062,25 @@ export function BookingsTab({
                       <th className="p-4 min-w-[160px] w-[180px]">Date & Venue</th>
                       <th className="p-4 min-w-[190px] w-[210px]">Total Price</th>
                       <th className="p-4 min-w-[160px] w-[170px]">Booking Status</th>
-                      <th className="p-4 text-right pr-6 w-[100px] min-w-[90px]">Action</th>
+                      <th className="p-4 text-right pr-6 w-[120px] min-w-[120px]">Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredBookings.map((b) => {
                       const bId = b._id || b.id;
+                      const isPaid = b.pricing?.paymentStatus === 'paid';
+                      const paymentStatus = b.pricing?.paymentStatus || 'unpaid';
+                      const paymentMethod =
+                        b.pricing?.paymentMethod ||
+                        (b.payments?.[0]?.source === 'manual' ? 'manual' : 'online');
+                      const paymentBorderClass = isPaid
+                        ? 'border-l-[3px] border-l-emerald-500'
+                        : paymentStatus === 'partial'
+                          ? 'border-l-[3px] border-l-amber-500'
+                          : b.status === 'refunded' || paymentStatus === 'refunded'
+                            ? 'border-l-[3px] border-l-purple-500'
+                            : 'border-l-[3px] border-l-rose-500';
+
                       const latestManualPayment = (b.payments || [])
                         .filter((p) => p.source === 'manual')
                         .sort((x, y) => new Date(y.date) - new Date(x.date))[0];
@@ -1013,7 +1088,7 @@ export function BookingsTab({
                       return (
                         <tr
                           key={bId}
-                          className="border-b border-[var(--admin-border-subtle)] hover:bg-stone-50/60 dark:hover:bg-stone-800/40 cursor-pointer transition-colors duration-200"
+                          className={`border-b border-[var(--admin-border-subtle)] hover:bg-stone-50/60 dark:hover:bg-stone-800/40 cursor-pointer transition-colors duration-200 ${paymentBorderClass}`}
                           onClick={() => navigate(`/admin/events/${bId}`)}
                         >
                           <td className="p-4 pl-6">
@@ -1089,17 +1164,14 @@ export function BookingsTab({
                                 <span className="text-[13px] font-bold text-[var(--admin-text-primary)] leading-tight">
                                   {formatCurrency(b.pricing?.totalPrice)}
                                 </span>
-                                <span
-                                  className={`mt-1.5 h-[20px] text-[9px] font-bold uppercase tracking-wider px-2 rounded-[4px] border leading-none inline-flex items-center justify-center w-fit ${
-                                    b.pricing?.paymentStatus === 'paid'
-                                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60'
-                                      : b.pricing?.paymentStatus === 'partial'
-                                        ? 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60'
-                                        : 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/60'
-                                  }`}
-                                >
-                                  {b.pricing?.paymentStatus || 'UNPAID'}
-                                </span>
+                                <div className="mt-1.5">
+                                  <AdminPaymentBadge
+                                    isPaid={isPaid}
+                                    method={paymentMethod}
+                                    status={paymentStatus}
+                                    orderStatus={b.status}
+                                  />
+                                </div>
                               </div>
                               <div className="shrink-0 flex items-center">
                                 {b.pricing?.paymentStatus !== 'paid' && (
@@ -1149,24 +1221,27 @@ export function BookingsTab({
                           </td>
 
                           <td
-                            className="p-4 text-right pr-6 min-w-[90px] w-[100px]"
+                            className="p-4 text-right pr-6 min-w-[120px] w-[120px]"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <div className="flex items-center justify-end gap-1.5">
+                              {/* Action 1: Manage / View Booking */}
                               <button
                                 onClick={() => navigate(`/admin/events/${bId}`)}
-                                className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
+                                className="admin-btn-icon w-8 h-8 min-w-[32px] max-w-[32px] min-h-[32px] max-h-[32px] p-0 !rounded-[4px] text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-bg-subtle)] transition-colors flex items-center justify-center shrink-0 cursor-pointer"
                                 title="Manage Booking"
                               >
                                 <span className="material-symbols-outlined text-[16px]">
                                   visibility
                                 </span>
                               </button>
+
+                              {/* Action 2: WhatsApp Customer */}
                               <a
                                 href={`${EXTERNAL_URLS.WHATSAPP_BASE}/${(b.contactPhone || b.user?.phone || '').replace(/[^0-9]/g, '')}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-success)]"
+                                className="admin-btn-icon w-8 h-8 min-w-[32px] max-w-[32px] min-h-[32px] max-h-[32px] p-0 !rounded-[4px] text-[var(--admin-text-tertiary)] hover:text-[var(--admin-success)] hover:bg-[var(--admin-bg-subtle)] transition-colors flex items-center justify-center shrink-0 cursor-pointer"
                                 title="WhatsApp"
                                 onClick={(e) => {
                                   if (!b.contactPhone && !b.user?.phone) {
@@ -1177,6 +1252,32 @@ export function BookingsTab({
                               >
                                 <WhatsAppIcon className="w-[15px] h-[15px]" />
                               </a>
+
+                              {/* Action 3: Move to Recycle Bin (Terminal Status only) + Alignment spacer */}
+                              {['completed', 'cancelled', 'rejected'].includes(
+                                (b.status || '').toLowerCase(),
+                              ) ? (
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleDeleteBooking(b, e)}
+                                  disabled={deletingBookingId === bId}
+                                  className="admin-btn-icon w-8 h-8 min-w-[32px] max-w-[32px] min-h-[32px] max-h-[32px] p-0 !rounded-[4px] text-[var(--admin-text-tertiary)] hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors flex items-center justify-center shrink-0 cursor-pointer disabled:opacity-50"
+                                  title="Move to Recycle Bin"
+                                >
+                                  {deletingBookingId === bId ? (
+                                    <span className="w-3.5 h-3.5 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+                                  ) : (
+                                    <span className="material-symbols-outlined text-[17px]">
+                                      delete_outline
+                                    </span>
+                                  )}
+                                </button>
+                              ) : (
+                                <div
+                                  className="w-8 h-8 min-w-[32px] max-w-[32px] min-h-[32px] max-h-[32px] shrink-0 pointer-events-none"
+                                  aria-hidden="true"
+                                />
+                              )}
                             </div>
                           </td>
                         </tr>

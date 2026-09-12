@@ -59,13 +59,27 @@ const mapDbOrderToFrontend = (o) => {
     total: o.total || o.subtotal || 0,
     status: fStatus,
     payment:
-      o.paymentStatus === 'paid'
-        ? 'Paid'
-        : o.paymentStatus === 'COD Collected'
-          ? 'COD Collected'
-          : o.paymentMethod?.toLowerCase() === 'cod'
-            ? 'COD Pending'
-            : 'Pending',
+      fStatus === 'Returned' || o.paymentStatus === 'returned'
+        ? 'Returned'
+        : fStatus === 'Cancelled' || o.paymentStatus === 'cancelled'
+          ? 'Cancelled'
+          : fStatus === 'Refunded' || o.paymentStatus === 'refunded'
+            ? 'Refunded'
+            : o.paymentStatus === 'paid' ||
+                Boolean(o.razorpayPaymentId) ||
+                (o.paymentMethod?.toLowerCase() === 'cod' &&
+                  (o.settlementStatus === 'Settled' || fStatus === 'Settled'))
+              ? 'Paid'
+              : o.paymentStatus === 'COD Collected' ||
+                  (o.paymentMethod?.toLowerCase() === 'cod' && fStatus === 'Delivered')
+                ? 'COD Collected'
+                : o.paymentMethod?.toLowerCase() === 'cod'
+                  ? 'COD Pending'
+                  : 'Pending',
+    paymentStatus: o.paymentStatus,
+    paymentMethod: o.paymentMethod,
+    settlementStatus: o.settlementStatus,
+    razorpayPaymentId: o.razorpayPaymentId,
     date: dateStr,
     address: o.shippingAddress
       ? `${o.shippingAddress.address}, ${o.shippingAddress.city}, ${o.shippingAddress.state} - ${o.shippingAddress.pincode}`

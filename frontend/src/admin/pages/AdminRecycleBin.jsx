@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useRecycleBin } from '../hooks/useRecycleBin';
 import { useConfirm } from '../../context/ConfirmProvider';
@@ -7,6 +7,7 @@ import { recycleBinApi } from '../services/recycleBinService';
 import { PageHeader, EmptyState, fadeUp, stagger } from '../components/AdminUIKit';
 import { AdminRecycleBinSkeleton } from '../components/skeletons/pages/AdminRecycleBinSkeleton';
 import { AdminActiveFilterChips, AdminFilterEmptyState } from '../components/filters';
+import { AdminFilterDrawer } from '../components/ui';
 import toast from 'react-hot-toast';
 
 const ENTITY_TYPE_CONFIG = {
@@ -14,6 +15,11 @@ const ENTITY_TYPE_CONFIG = {
   Product: { label: 'Products', icon: 'inventory_2', variant: 'info' },
   Category: { label: 'Categories', icon: 'category', variant: 'neutral' },
   Order: { label: 'Orders', icon: 'shopping_bag', variant: 'primary' },
+  RentalOrder: { label: 'Rentals', icon: 'car_rental', variant: 'info' },
+  ReturnRequest: { label: 'Returns', icon: 'assignment_return', variant: 'warning' },
+  ExchangeRequest: { label: 'Exchanges', icon: 'sync_alt', variant: 'neutral' },
+  CustomOrder: { label: 'Custom Orders', icon: 'palette', variant: 'primary' },
+  EventJob: { label: 'Bookings', icon: 'celebration', variant: 'warning' },
   User: { label: 'Customers', icon: 'person', variant: 'success' },
   Review: { label: 'Reviews', icon: 'rate_review', variant: 'warning' },
   Gallery: { label: 'Gallery', icon: 'photo_library', variant: 'neutral' },
@@ -24,11 +30,16 @@ const getThumbnail = (item) => {
   if (item.entityThumbnail) return item.entityThumbnail;
   if (!item.entityData) return null;
   return (
+    item.entityData.productImage ||
     item.entityData.imageSrc ||
     item.entityData.image ||
     item.entityData.heroImage ||
     item.entityData.thumbnail ||
     item.entityData.images?.[0] ||
+    item.entityData.originalItem?.imageSrc ||
+    item.entityData.items?.[0]?.imageSrc ||
+    item.entityData.eventPackage?.image ||
+    item.entityData.inspirationImages?.[0] ||
     null
   );
 };
@@ -83,6 +94,7 @@ export default function AdminRecycleBin() {
   const [cleanupReportModal, setCleanupReportModal] = useState({ isOpen: false, report: null });
   const [isExporting, setIsExporting] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState(null);
+  const [showFiltersMenu, setShowFiltersMenu] = useState(false);
 
   const onSearchSubmit = (e) => {
     e.preventDefault();
@@ -194,6 +206,13 @@ export default function AdminRecycleBin() {
       });
     }
     return chips;
+  }, [filters.entityType, filters.timeRange, handleFilterChange]);
+
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (filters.entityType && filters.entityType !== 'all') count++;
+    if (filters.timeRange) count++;
+    return count;
   }, [filters.entityType, filters.timeRange]);
 
   const resetAllFilters = () => {
@@ -242,117 +261,159 @@ export default function AdminRecycleBin() {
       {/* ── 2. Sticky 42px Toolbar with Search & Controls ── */}
       <div className="sticky top-[var(--admin-topbar-height,56px)] z-20 -my-2 py-2.5 bg-[var(--admin-bg)]/95 backdrop-blur-md">
         <div className="relative w-full">
-          <motion.div variants={fadeUp} className="flex flex-row items-center gap-2 w-full">
-            {/* Unified Search & Action Bar */}
+          <motion.div
+            variants={fadeUp}
+            className="flex flex-row items-center gap-1.5 sm:gap-2 w-full"
+          >
+            {/* Search Input Bar */}
             <form
               onSubmit={onSearchSubmit}
-              className="relative flex-1 min-w-0 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] flex items-center pl-3 pr-1.5 h-[42px] min-h-[42px] max-h-[42px] shadow-2xs"
+              className="relative flex-1 min-w-0 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] flex items-center px-2.5 sm:px-3 h-[42px] min-h-[42px] max-h-[42px] shadow-2xs"
             >
               <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] shrink-0">
                 search
               </span>
               <input
                 type="text"
-                placeholder="Search deleted records by name, ID, or user..."
+                placeholder="Search deleted records..."
                 value={searchInput}
                 onChange={(e) => {
                   setSearchInput(e.target.value);
                   handleSearchChange(e);
                 }}
-                className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2.5 h-full min-w-0"
+                className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 sm:px-2.5 h-full min-w-0"
               />
               {searchInput && (
                 <button
                   type="button"
                   onClick={handleClearSearch}
-                  className="text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] cursor-pointer p-1 flex items-center justify-center shrink-0 mr-1"
+                  className="text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] cursor-pointer p-1 flex items-center justify-center shrink-0"
                   title="Clear search"
                 >
                   <span className="material-symbols-outlined text-[16px]">close</span>
                 </button>
               )}
+            </form>
 
-              {/* Embedded Action Controls */}
-              <div className="flex items-center gap-0.5 pl-1.5 border-l border-[var(--admin-border)] shrink-0">
-                {/* Export CSV */}
+            {/* Action Controls Group */}
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+              {/* Filters Button & Drawer */}
+              <div className="relative shrink-0">
                 <button
                   type="button"
-                  onClick={handleExport}
-                  disabled={isExporting}
-                  className="w-8 h-8 rounded-[3px] hover:bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] flex items-center justify-center cursor-pointer transition-colors shrink-0 disabled:opacity-40"
-                  title="Export Audit Logs as CSV"
+                  onClick={() => setShowFiltersMenu(!showFiltersMenu)}
+                  className={`h-[42px] min-h-[42px] max-h-[42px] px-2.5 sm:px-3.5 flex items-center justify-center gap-1.5 rounded-[4px] border transition-colors shrink-0 cursor-pointer ${
+                    showFiltersMenu || activeFilterCount > 0
+                      ? 'bg-[var(--admin-accent)] text-white border-transparent shadow-xs'
+                      : 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] border-[var(--admin-border)] hover:border-[var(--admin-border-strong)]'
+                  }`}
+                  title="Recycle Bin Filters"
                 >
-                  {isExporting ? (
-                    <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <span className="material-symbols-outlined text-[17px]">download</span>
+                  <span className="material-symbols-outlined text-[18px]">tune</span>
+                  <span className="font-semibold text-[13px] hidden sm:inline">
+                    {activeFilterCount > 0 ? `${activeFilterCount} Filters` : 'Filters'}
+                  </span>
+                  {activeFilterCount > 0 && (
+                    <span className="min-w-[16px] h-4 px-1 rounded-full bg-white text-[var(--admin-accent)] text-[10px] font-bold flex items-center justify-center">
+                      {activeFilterCount}
+                    </span>
                   )}
                 </button>
 
-                {/* Empty Bin (Owner Only) */}
-                {isOwner && (
-                  <button
-                    type="button"
-                    onClick={() => setEmptyBinModal(true)}
-                    disabled={items.length === 0}
-                    className="w-8 h-8 rounded-[3px] hover:bg-rose-100 dark:hover:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center cursor-pointer transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
-                    title="Permanently empty recycle bin"
-                  >
-                    <span className="material-symbols-outlined text-[17px]">delete_forever</span>
-                  </button>
-                )}
+                <AdminFilterDrawer
+                  isOpen={showFiltersMenu}
+                  onClose={() => setShowFiltersMenu(false)}
+                  title="Recycle Bin Filters"
+                  icon="tune"
+                  activeCount={activeFilterCount}
+                  onClearAll={resetAllFilters}
+                  clearAllLabel="Reset"
+                  onApply={() => setShowFiltersMenu(false)}
+                >
+                  {/* Filter 1: Entity Type */}
+                  <div>
+                    <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                      Entity Type
+                    </label>
+                    <select
+                      className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                      value={filters.entityType}
+                      onChange={(e) => handleFilterChange('entityType', e.target.value)}
+                    >
+                      <option value="all">All Entity Types</option>
+                      <option value="Product">Products</option>
+                      <option value="Category">Categories</option>
+                      <option value="Order">Orders</option>
+                      <option value="RentalOrder">Rentals</option>
+                      <option value="CustomOrder">Custom Orders</option>
+                      <option value="EventJob">Bookings</option>
+                      <option value="ReturnRequest">Returns</option>
+                      <option value="ExchangeRequest">Exchanges</option>
+                      <option value="User">Customers</option>
+                      <option value="Review">Reviews</option>
+                      <option value="Gallery">Gallery</option>
+                    </select>
+                  </div>
 
-                {/* Refresh */}
+                  {/* Filter 2: Retention Period */}
+                  <div>
+                    <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                      Retention Period
+                    </label>
+                    <select
+                      className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                      value={filters.timeRange}
+                      onChange={(e) => handleFilterChange('timeRange', e.target.value)}
+                    >
+                      <option value="">Any Retention Time</option>
+                      <option value="today">Deleted Today</option>
+                      <option value="7days">Last 7 Days</option>
+                      <option value="expiring_soon">Expiring Soon (≤3d)</option>
+                      <option value="expired">Expired</option>
+                    </select>
+                  </div>
+                </AdminFilterDrawer>
+              </div>
+
+              {/* Export Button */}
+              <button
+                type="button"
+                onClick={handleExport}
+                disabled={isExporting}
+                className="h-[42px] min-h-[42px] max-h-[42px] w-[38px] sm:w-auto px-0 sm:px-3 bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface-hover)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] rounded-[4px] flex items-center justify-center cursor-pointer transition-all active:scale-95 border border-[var(--admin-border)] hover:border-[var(--admin-border-strong)] shrink-0 gap-1.5 font-semibold text-[13px] disabled:opacity-40"
+                title="Export Audit Logs as CSV"
+              >
+                {isExporting ? (
+                  <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <span className="material-symbols-outlined text-[18px]">download</span>
+                )}
+                <span className="hidden sm:inline">Export</span>
+              </button>
+
+              {/* Refresh Button */}
+              <button
+                type="button"
+                onClick={refresh}
+                className="h-[42px] min-h-[42px] max-h-[42px] w-[38px] sm:w-[42px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface-hover)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] rounded-[4px] flex items-center justify-center cursor-pointer transition-all active:scale-95 border border-[var(--admin-border)] hover:border-[var(--admin-border-strong)] shrink-0"
+                title="Refresh Data"
+              >
+                <span className="material-symbols-outlined text-[18px]">refresh</span>
+              </button>
+
+              {/* Empty Bin (Owner Only) */}
+              {isOwner && (
                 <button
                   type="button"
-                  onClick={refresh}
-                  className="w-8 h-8 rounded-[3px] hover:bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] flex items-center justify-center cursor-pointer transition-colors shrink-0"
-                  title="Refresh Data"
+                  onClick={() => setEmptyBinModal(true)}
+                  disabled={items.length === 0}
+                  className="h-[42px] min-h-[42px] max-h-[42px] w-[38px] sm:w-auto px-0 sm:px-3 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-950/70 text-rose-600 dark:text-rose-400 rounded-[4px] flex items-center justify-center cursor-pointer transition-all active:scale-95 border border-rose-200 dark:border-rose-900/50 shrink-0 gap-1.5 font-semibold text-[13px] disabled:opacity-40 disabled:cursor-not-allowed"
+                  title="Permanently empty recycle bin"
                 >
-                  <span className="material-symbols-outlined text-[17px]">refresh</span>
+                  <span className="material-symbols-outlined text-[18px]">delete_forever</span>
+                  <span className="hidden sm:inline">Empty Bin</span>
                 </button>
-              </div>
-            </form>
-
-            {/* Filter Dropdowns Group */}
-            <div className="flex items-center gap-2 shrink-0">
-              {/* Entity Type Filter Select */}
-              <div className="relative flex items-stretch shrink-0">
-                <select
-                  className="bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] text-[12px] font-bold text-[var(--admin-text-primary)] focus:outline-none cursor-pointer transition-all pl-2.5 pr-7 h-[42px] min-h-[42px] max-h-[42px] appearance-none min-w-[125px] max-w-[145px] truncate shadow-2xs"
-                  value={filters.entityType}
-                  onChange={(e) => handleFilterChange('entityType', e.target.value)}
-                >
-                  <option value="all">All Entity Types</option>
-                  <option value="Product">Products</option>
-                  <option value="Category">Categories</option>
-                  <option value="Order">Orders</option>
-                  <option value="User">Customers</option>
-                  <option value="Review">Reviews</option>
-                  <option value="Gallery">Gallery</option>
-                </select>
-                <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[16px] text-[var(--admin-text-tertiary)] pointer-events-none">
-                  expand_more
-                </span>
-              </div>
-
-              {/* Time / Retention Range Filter */}
-              <div className="relative flex items-stretch shrink-0">
-                <select
-                  className="bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] text-[12px] font-bold text-[var(--admin-text-primary)] focus:outline-none cursor-pointer transition-all pl-2.5 pr-7 h-[42px] min-h-[42px] max-h-[42px] appearance-none min-w-[130px] max-w-[155px] truncate shadow-2xs"
-                  value={filters.timeRange}
-                  onChange={(e) => handleFilterChange('timeRange', e.target.value)}
-                >
-                  <option value="">Any Retention Time</option>
-                  <option value="today">Deleted Today</option>
-                  <option value="7days">Last 7 Days</option>
-                  <option value="expiring_soon">Expiring Soon (≤3d)</option>
-                  <option value="expired">Expired</option>
-                </select>
-                <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[16px] text-[var(--admin-text-tertiary)] pointer-events-none">
-                  expand_more
-                </span>
-              </div>
+              )}
             </div>
           </motion.div>
 
@@ -371,11 +432,7 @@ export default function AdminRecycleBin() {
                     {selectedIds.size}
                   </span>
                   <span className="text-[12px] sm:text-[13px] font-bold text-[var(--admin-text-primary)] truncate">
-                    {selectedIds.size}{' '}
-                    <span className="hidden xs:inline">
-                      {selectedIds.size === 1 ? 'item' : 'items'}
-                    </span>{' '}
-                    selected
+                    {selectedIds.size === 1 ? 'item' : 'items'} selected
                   </span>
                   <button
                     type="button"
@@ -470,7 +527,7 @@ export default function AdminRecycleBin() {
                           type="checkbox"
                           checked={selectedIds.size === items.length && items.length > 0}
                           onChange={() => selectAll(items.map((i) => i._id))}
-                          className="rounded border-[var(--admin-border)] text-amber-600 focus:ring-amber-500 cursor-pointer"
+                          className="rounded border-[var(--admin-border)] text-[var(--admin-accent)] focus:ring-[var(--admin-accent)] accent-[var(--admin-accent)] cursor-pointer"
                           title="Select all on page"
                         />
                       </th>
@@ -501,7 +558,7 @@ export default function AdminRecycleBin() {
                               type="checkbox"
                               checked={isSelected}
                               onChange={() => toggleSelection(item._id)}
-                              className="rounded border-[var(--admin-border)] text-amber-600 focus:ring-amber-500 cursor-pointer"
+                              className="rounded border-[var(--admin-border)] text-[var(--admin-accent)] focus:ring-[var(--admin-accent)] accent-[var(--admin-accent)] cursor-pointer"
                             />
                           </td>
 
@@ -644,19 +701,19 @@ export default function AdminRecycleBin() {
                 return (
                   <div
                     key={item._id}
-                    className={`admin-card p-3 border transition-all ${
+                    className={`admin-card p-3 border transition-all overflow-hidden ${
                       isSelected
                         ? 'border-amber-500/60 bg-amber-500/5'
                         : 'border-[var(--admin-border)]'
                     }`}
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="flex items-center justify-between gap-2 min-w-0 w-full">
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
                         <input
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => toggleSelection(item._id)}
-                          className="rounded border-[var(--admin-border)] text-amber-600 focus:ring-amber-500 cursor-pointer"
+                          className="rounded border-[var(--admin-border)] text-[var(--admin-accent)] focus:ring-[var(--admin-accent)] accent-[var(--admin-accent)] cursor-pointer shrink-0"
                         />
                         {thumb ? (
                           <img
@@ -678,17 +735,18 @@ export default function AdminRecycleBin() {
                             {typeCfg.icon || 'inventory_2'}
                           </span>
                         </div>
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <button
                             type="button"
                             onClick={() =>
                               setPreviewModal({ isOpen: true, item, activeTab: 'data' })
                             }
-                            className="font-medium text-[13px] text-[var(--admin-text-primary)] truncate text-left block cursor-pointer"
+                            className="font-medium text-[13px] text-[var(--admin-text-primary)] hover:text-amber-600 dark:hover:text-amber-400 truncate text-left block w-full max-w-full cursor-pointer"
+                            title={item.entityName}
                           >
                             {item.entityName || 'Unnamed Record'}
                           </button>
-                          <span className="text-[10.5px] text-[var(--admin-text-tertiary)]">
+                          <span className="text-[10.5px] text-[var(--admin-text-tertiary)] truncate block">
                             {item.entityTypeDisplay || item.entityType} •{' '}
                             {new Date(item.deletedAt).toLocaleDateString('en-IN', {
                               day: 'numeric',
@@ -698,12 +756,12 @@ export default function AdminRecycleBin() {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-1.5 shrink-0">
+                      <div className="flex items-center gap-1.5 shrink-0 ml-1.5">
                         <button
                           type="button"
                           onClick={() => handleRestoreClick(item)}
                           disabled={isItemLoading}
-                          className="h-7 px-2 rounded text-[11.5px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800 flex items-center gap-1 cursor-pointer"
+                          className="h-7 px-2.5 rounded text-[11.5px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800 flex items-center gap-1 cursor-pointer shrink-0 whitespace-nowrap"
                         >
                           <span className="material-symbols-outlined text-[14px]">restore</span>
                           <span>Restore</span>
@@ -713,7 +771,7 @@ export default function AdminRecycleBin() {
                             type="button"
                             onClick={() => handlePermanentDeleteClick(item)}
                             disabled={isItemLoading}
-                            className="w-7 h-7 rounded text-stone-400 hover:text-rose-600 flex items-center justify-center cursor-pointer"
+                            className="w-7 h-7 rounded text-stone-400 hover:text-rose-600 flex items-center justify-center cursor-pointer shrink-0"
                             title="Delete"
                           >
                             <span className="material-symbols-outlined text-[15px]">delete</span>

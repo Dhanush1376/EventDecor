@@ -10,13 +10,13 @@ import {
   EmptyState,
   SkeletonTable,
   AdminStatusPill,
+  AdminPaymentBadge,
   AdminFilterDrawer,
   fadeUp,
   stagger,
   formatCurrency,
   smoothScrollCardIntoView,
 } from '../../components/AdminUIKit';
-import { isWithinPeriod } from '../../utils/dateFilters';
 import { useAdminFilters } from '../../components/filters/useAdminFilters';
 import { returnFilterConfig } from '../../components/filters/configs/returnFilterConfig';
 import { AdminActiveFilterChips } from '../../components/filters/AdminActiveFilterChips';
@@ -209,6 +209,31 @@ const RETURN_STATUS_CONFIG = {
   },
 };
 
+const getReturnCardStyle = (statusKey) => {
+  const k = (statusKey || '').toLowerCase();
+  if (['completed', 'refund_completed'].includes(k)) {
+    return 'border border-emerald-500/40 bg-gradient-to-r from-emerald-500/[0.035] via-emerald-500/[0.01] to-white dark:to-[#26241f] hover:border-emerald-500/60 shadow-xs';
+  }
+  if (['rejected', 'cancelled'].includes(k)) {
+    return 'border border-rose-500/40 bg-gradient-to-r from-rose-500/[0.035] via-rose-500/[0.01] to-white dark:to-[#26241f] hover:border-rose-500/60 shadow-xs';
+  }
+  if (
+    [
+      'approved',
+      'return_courier_assigned',
+      'return_picked_up',
+      'return_in_transit',
+      'return_received',
+      'inspection_started',
+      'inspection_passed',
+      'refund_initiated',
+    ].includes(k)
+  ) {
+    return 'border border-blue-500/40 bg-gradient-to-r from-blue-500/[0.035] via-blue-500/[0.01] to-white dark:to-[#26241f] hover:border-blue-500/60 shadow-xs';
+  }
+  return 'border border-amber-500/40 bg-gradient-to-r from-amber-500/[0.045] via-amber-500/[0.015] to-white dark:to-[#26241f] hover:border-amber-500/60 shadow-xs';
+};
+
 const getRequestDetailUrl = (req) => {
   return req?.returnType === 'exchange'
     ? `/admin/exchanges/requests/${req._id}`
@@ -265,6 +290,7 @@ export default function AdminReturnsHub({ hideHeader = false }) {
     performBulkAction,
     transitionStatus,
     settleRefund,
+    deleteReturn,
   } = useReturnManagement();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -309,6 +335,30 @@ export default function AdminReturnsHub({ hideHeader = false }) {
   const [selectedIds, setSelectedIds] = useState([]);
   const [updatingStatusId, setUpdatingStatusId] = useState(null);
   const [expandedCardIds, setExpandedCardIds] = useState(new Set());
+  const [deletingReturnId, setDeletingReturnId] = useState(null);
+
+  const handleDeleteReturn = async (req, e) => {
+    e?.stopPropagation();
+    const confirmed = await confirm({
+      title: 'Move Return to Recycle Bin',
+      message: `Are you sure you want to delete return request #${req.returnId || req._id}? You can restore it anytime from the Recycle Bin.`,
+      confirmText: 'Move to Recycle Bin',
+      cancelText: 'Cancel',
+      variant: 'danger',
+    });
+    if (!confirmed) return;
+
+    try {
+      setDeletingReturnId(req._id);
+      await deleteReturn(req._id);
+      fetchReturnsList();
+      fetchDashboardStats();
+    } catch (_err) {
+      // Handled by hook
+    } finally {
+      setDeletingReturnId(null);
+    }
+  };
 
   const toggleExpandCard = (id) => {
     setExpandedCardIds((prev) => {
@@ -332,12 +382,11 @@ export default function AdminReturnsHub({ hideHeader = false }) {
     const timer = setTimeout(() => {
       const filterParams = {};
       if (searchTerm) filterParams.search = searchTerm;
-      if (returnTypeFilter !== 'All') filterParams.type = returnTypeFilter;
       fetchReturnsList(filterParams);
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [fetchReturnsList, searchTerm, returnTypeFilter]);
+  }, [fetchReturnsList, searchTerm]);
 
   const stats = dashboardStats?.stats || {};
 
@@ -1264,12 +1313,18 @@ export default function AdminReturnsHub({ hideHeader = false }) {
                             ['refund_completed', 'completed'].includes(statusKey) ||
                             Boolean(req.refundRecordId) ||
                             Boolean(req.refundId);
+                          const isRefundInitiated = statusKey === 'refund_initiated';
+                          const paymentBorderClass = isRefundSettled
+                            ? 'border-l-[3px] border-l-emerald-500'
+                            : isRefundInitiated
+                              ? 'border-l-[3px] border-l-amber-500'
+                              : 'border-l-[3px] border-l-rose-500';
 
                           return (
                             <tr
                               key={req._id}
                               onClick={() => navigate(getRequestDetailUrl(req))}
-                              className="group hover:bg-[var(--admin-surface-hover)] transition-colors cursor-pointer text-[12.5px]"
+                              className={`group hover:bg-[var(--admin-surface-hover)] transition-colors cursor-pointer text-[12.5px] ${paymentBorderClass}`}
                             >
                               {/* Return ID & Order Reference */}
                               <td className="font-semibold text-[var(--admin-text-primary)] py-3">
@@ -1522,21 +1577,48 @@ export default function AdminReturnsHub({ hideHeader = false }) {
                               </td>
 
                               {/* Actions */}
-                              <td className="text-right pr-5 py-3 px-4">
+                              <td className="text-right pr-5 py-3 px-4 whitespace-nowrap w-[90px]">
                                 <div
-                                  className="flex items-center justify-end gap-1.5"
+                                  className="flex items-center justify-end gap-1.5 w-[70px] ml-auto"
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   <button
                                     type="button"
                                     onClick={() => navigate(getRequestDetailUrl(req))}
-                                    className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] tooltip-trigger"
+                                    className="admin-btn-icon w-8 h-8 min-w-[32px] max-w-[32px] p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] tooltip-trigger shrink-0"
                                     title="View Request Details"
                                   >
                                     <span className="material-symbols-outlined text-[16px]">
                                       visibility
                                     </span>
                                   </button>
+                                  {[
+                                    'completed',
+                                    'cancelled',
+                                    'rejected',
+                                    'refund_completed',
+                                  ].includes(statusKey) ? (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => handleDeleteReturn(req, e)}
+                                      disabled={deletingReturnId === req._id}
+                                      className="admin-btn-icon w-8 h-8 min-w-[32px] max-w-[32px] p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors flex items-center justify-center shrink-0 cursor-pointer disabled:opacity-50"
+                                      title="Move to Recycle Bin"
+                                    >
+                                      {deletingReturnId === req._id ? (
+                                        <span className="w-3.5 h-3.5 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+                                      ) : (
+                                        <span className="material-symbols-outlined text-[16px]">
+                                          delete_outline
+                                        </span>
+                                      )}
+                                    </button>
+                                  ) : (
+                                    <div
+                                      className="w-8 h-8 min-w-[32px] max-w-[32px] min-h-[32px] max-h-[32px] shrink-0 pointer-events-none"
+                                      aria-hidden="true"
+                                    />
+                                  )}
                                 </div>
                               </td>
                             </tr>
@@ -1626,7 +1708,9 @@ export default function AdminReturnsHub({ hideHeader = false }) {
                       key={req._id}
                       id={`return-card-${req._id}`}
                       onClick={() => navigate(getRequestDetailUrl(req))}
-                      className="relative overflow-hidden rounded-[8px] p-3.5 shadow-xs border border-stone-200/90 dark:border-stone-700/80 bg-white dark:bg-stone-900 flex flex-col gap-3 cursor-pointer hover:border-stone-300 dark:hover:border-stone-600 hover:shadow-sm transition-all text-left"
+                      className={`relative overflow-hidden rounded-[8px] p-3.5 flex flex-col gap-3 cursor-pointer transition-all text-left ${getReturnCardStyle(
+                        statusKey,
+                      )}`}
                     >
                       {/* Header: Customer Name + Status Pill, with subtle faded Return ID + Order Ref */}
                       <div className="flex justify-between items-start gap-2">
@@ -1669,7 +1753,31 @@ export default function AdminReturnsHub({ hideHeader = false }) {
                             )}
                           </div>
                         </div>
-                        <AdminStatusPill status={statusCfg.label} className="shrink-0" />
+                        <div
+                          className="flex items-center gap-1.5 shrink-0"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <AdminStatusPill status={statusCfg.label} className="shrink-0" />
+                          {['completed', 'cancelled', 'rejected', 'refund_completed'].includes(
+                            statusKey,
+                          ) && (
+                            <button
+                              type="button"
+                              onClick={(e) => handleDeleteReturn(req, e)}
+                              disabled={deletingReturnId === req._id}
+                              className="w-7 h-7 !rounded-[4px] border border-red-200 dark:border-red-900/60 bg-red-50/80 dark:bg-red-950/30 text-red-600 dark:text-red-400 flex items-center justify-center cursor-pointer transition-colors hover:bg-red-100 disabled:opacity-50 shrink-0"
+                              title="Move to Recycle Bin"
+                            >
+                              {deletingReturnId === req._id ? (
+                                <span className="w-3 h-3 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+                              ) : (
+                                <span className="material-symbols-outlined text-[15px]">
+                                  delete_outline
+                                </span>
+                              )}
+                            </button>
+                          )}
+                        </div>
                       </div>
 
                       {/* Product Item Box (Matches Exchange Item Box) */}
@@ -1755,34 +1863,11 @@ export default function AdminReturnsHub({ hideHeader = false }) {
                         </div>
 
                         <div>
-                          <span
-                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-[4px] text-[10px] font-bold uppercase tracking-wider border whitespace-nowrap shrink-0 ${
-                              isRefundSettled
-                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'
-                                : statusKey === 'refund_initiated'
-                                  ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800'
-                                  : ['rejected', 'cancelled'].includes(statusKey)
-                                    ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800'
-                                    : 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800'
-                            }`}
-                          >
-                            <span className="material-symbols-outlined text-[12px]">
-                              {isRefundSettled
-                                ? 'check_circle'
-                                : statusKey === 'refund_initiated'
-                                  ? 'sync'
-                                  : ['rejected', 'cancelled'].includes(statusKey)
-                                    ? 'cancel'
-                                    : 'schedule'}
-                            </span>
-                            {isRefundSettled
-                              ? 'SETTLED'
-                              : statusKey === 'refund_initiated'
-                                ? 'INITIATED'
-                                : ['rejected', 'cancelled'].includes(statusKey)
-                                  ? 'CANCELLED'
-                                  : 'PENDING'}
-                          </span>
+                          <AdminPaymentBadge
+                            isPaid={isRefundSettled}
+                            method={req.refundMethod || req.paymentMethod || 'Online'}
+                            status={isRefundSettled ? 'paid' : 'unpaid'}
+                          />
                         </div>
                       </div>
 

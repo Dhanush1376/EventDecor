@@ -55,11 +55,15 @@ export interface IOrder extends ISoftDeleted {
     | 'COD Collected'
     | 'refunded'
     | 'partially_refunded'
+    | 'returned'
+    | 'cancelled'
     | 'chargeback'
     | 'disputed'
     | 'dispute_open'
     | 'dispute_won'
     | 'dispute_lost';
+  isAbandonedCheckout?: boolean;
+  checkoutStatus?: string;
   orderStatus:
     | 'Pending'
     | 'Confirmed'

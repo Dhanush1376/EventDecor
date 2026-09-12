@@ -208,4 +208,10 @@ router.post(
   authorize('super_admin', 'main_admin', 'admin'),
   returnAdminController.completeReturn,
 );
+router.delete(
+  '/admin/:id',
+  requireAuth,
+  authorize('super_admin', 'main_admin', 'admin'),
+  returnAdminController.softDeleteReturn,
+);
 export default router;

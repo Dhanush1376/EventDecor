@@ -1,11 +1,26 @@
 import React, { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { formatCurrency } from '../AdminUIKit';
+import { formatCurrency, AdminPaymentBadge } from '../AdminUIKit';
 import { EXTERNAL_URLS } from '../../../config/constants';
 import { WhatsAppIcon } from '../../../components/ui/WhatsAppIcon';
 import { customOrderService } from '../../../services/domainServices';
 import { getErrorMessage } from '../../../utils/core/errorHelpers';
+import { useConfirm } from '../../../context/ConfirmProvider';
+
+const getInquiryCardStyle = (status) => {
+  const s = (status || '').toLowerCase();
+  if (['delivered', 'approved', 'ready'].includes(s)) {
+    return 'border border-emerald-500/40 bg-gradient-to-r from-emerald-500/[0.035] via-emerald-500/[0.01] to-white dark:to-[#26241f] hover:border-emerald-500/60 shadow-xs';
+  }
+  if (['cancelled'].includes(s)) {
+    return 'border border-rose-500/40 bg-gradient-to-r from-rose-500/[0.035] via-rose-500/[0.01] to-white dark:to-[#26241f] hover:border-rose-500/60 shadow-xs';
+  }
+  if (['in progress', 'reviewing', 'quote sent'].includes(s)) {
+    return 'border border-blue-500/40 bg-gradient-to-r from-blue-500/[0.035] via-blue-500/[0.01] to-white dark:to-[#26241f] hover:border-blue-500/60 shadow-xs';
+  }
+  return 'border border-amber-500/40 bg-gradient-to-r from-amber-500/[0.045] via-amber-500/[0.015] to-white dark:to-[#26241f] hover:border-amber-500/60 shadow-xs';
+};
 
 const ALL_STATUSES = [
   'Pending',
@@ -31,7 +46,33 @@ export function InquiriesTable({
   totalItems = 0,
 }) {
   const queryClient = useQueryClient();
+  const confirm = useConfirm();
   const [updatingStatusId, setUpdatingStatusId] = useState(null);
+
+  const isTerminalOrder = (order) => {
+    const s = (order?.status || '').toLowerCase();
+    return ['completed', 'cancelled', 'delivered'].includes(s);
+  };
+
+  const handleDeleteOrder = async (order) => {
+    const orderLabel = order.customOrderNumber || `#${order._id.slice(-6).toUpperCase()}`;
+    const confirmed = await confirm({
+      title: 'Move Custom Order to Recycle Bin?',
+      message: `Are you sure you want to move custom order ${orderLabel} to the recycle bin? You can restore it later from the Recycle Bin.`,
+      confirmLabel: 'Move to Recycle Bin',
+      isDestructive: true,
+    });
+    if (!confirmed) return;
+
+    try {
+      await customOrderService.adminSoftDelete(order._id);
+      toast.success('Custom order moved to recycle bin');
+      refetchOrders?.();
+      queryClient.invalidateQueries({ queryKey: ['adminCustomOrders'] });
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to delete custom order'));
+    }
+  };
 
   const handleStatusChange = async (orderId, newStatus) => {
     setUpdatingStatusId(orderId);
@@ -135,11 +176,22 @@ export function InquiriesTable({
                   const orderCode =
                     order.customOrderNumber || `#${order._id.slice(-6).toUpperCase()}`;
 
+                  const isPaid =
+                    order.paymentStatus === 'paid' || order.quotation?.status === 'paid';
+                  const isPartiallyPaid = ['partially_paid', 'advance_paid'].includes(
+                    order.paymentStatus,
+                  );
+                  const paymentBorderClass = isPaid
+                    ? 'border-l-[3px] border-l-emerald-500'
+                    : isPartiallyPaid
+                      ? 'border-l-[3px] border-l-amber-500'
+                      : 'border-l-[3px] border-l-rose-500';
+
                   return (
                     <tr
                       key={order._id}
                       onClick={() => setSelectedOrder(order)}
-                      className="border-b border-[var(--admin-border-subtle)] hover:bg-[var(--admin-surface-muted)] cursor-pointer transition-colors duration-150"
+                      className={`border-b border-[var(--admin-border-subtle)] hover:bg-[var(--admin-surface-muted)] cursor-pointer transition-colors duration-150 ${paymentBorderClass}`}
                     >
                       {/* ID & Customer */}
                       <td className="py-3 pl-6 pr-4">
@@ -285,10 +337,10 @@ export function InquiriesTable({
                         className="py-3 pl-4 pr-6 text-right"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <div className="flex items-center justify-end gap-1.5">
+                        <div className="flex items-center justify-end gap-1.5 w-[108px] ml-auto">
                           <button
                             onClick={() => setSelectedOrder(order)}
-                            className="admin-btn-icon w-8 h-8 !rounded-[4px] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]"
+                            className="admin-btn-icon w-8 h-8 min-w-[32px] max-w-[32px] !rounded-[4px] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] shrink-0 cursor-pointer"
                             title="View Inquiry Details & Quotation"
                           >
                             <span className="material-symbols-outlined text-[18px]">
@@ -299,7 +351,7 @@ export function InquiriesTable({
                             href={`${EXTERNAL_URLS.WHATSAPP_BASE}/${(order.customerPhone || order.phone || '').replace(/[^0-9]/g, '')}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="admin-btn-icon w-8 h-8 !rounded-[4px] text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                            className="admin-btn-icon w-8 h-8 min-w-[32px] max-w-[32px] !rounded-[4px] text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 shrink-0 cursor-pointer"
                             title="Chat on WhatsApp"
                             onClick={(e) => {
                               if (!order.customerPhone && !order.phone) {
@@ -310,6 +362,22 @@ export function InquiriesTable({
                           >
                             <WhatsAppIcon className="w-[15px] h-[15px]" />
                           </a>
+                          {isTerminalOrder(order) ? (
+                            <button
+                              onClick={() => handleDeleteOrder(order)}
+                              className="admin-btn-icon w-8 h-8 min-w-[32px] max-w-[32px] !rounded-[4px] text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 shrink-0 cursor-pointer"
+                              title="Move to Recycle Bin"
+                            >
+                              <span className="material-symbols-outlined text-[18px]">
+                                delete_outline
+                              </span>
+                            </button>
+                          ) : (
+                            <div
+                              className="w-8 h-8 min-w-[32px] max-w-[32px] min-h-[32px] max-h-[32px] shrink-0 pointer-events-none"
+                              aria-hidden="true"
+                            />
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -353,7 +421,9 @@ export function InquiriesTable({
               <div
                 key={order._id}
                 onClick={() => setSelectedOrder(order)}
-                className="rounded-[4px] p-4 shadow-xs border border-[var(--admin-border)] bg-[var(--admin-surface)] flex flex-col gap-3 cursor-pointer hover:border-[var(--admin-border-strong)] transition-all"
+                className={`rounded-[4px] p-4 shadow-xs flex flex-col gap-3 cursor-pointer transition-all ${getInquiryCardStyle(
+                  order.status,
+                )}`}
               >
                 {/* Header Row: Customer Name + Status Badge, with subtle Inquiry Code */}
                 <div className="flex items-start justify-between gap-2">
@@ -457,15 +527,11 @@ export function InquiriesTable({
                     </span>
                   </div>
 
-                  <span
-                    className={`inline-flex items-center gap-0.5 text-[9.5px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-[4px] border ${
-                      hasQuote
-                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                        : 'bg-amber-50 text-amber-800 border-amber-200'
-                    }`}
-                  >
-                    {hasQuote ? 'Quote Sent' : 'Quote Pending'}
-                  </span>
+                  <AdminPaymentBadge
+                    isPaid={order.paymentStatus === 'paid' || order.quotation?.status === 'paid'}
+                    method={order.paymentMethod || 'Online'}
+                    status={order.paymentStatus || (hasQuote ? 'unpaid' : 'pending')}
+                  />
                 </div>
 
                 {/* Action Row */}
@@ -533,6 +599,21 @@ export function InquiriesTable({
                         Details
                       </button>
                     </>
+                  )}
+
+                  {/* Terminal Soft Delete Action */}
+                  {isTerminalOrder(order) && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteOrder(order);
+                      }}
+                      className="h-9 px-2.5 rounded-[4px] border border-rose-200 text-rose-600 hover:bg-rose-50 flex items-center justify-center cursor-pointer shrink-0"
+                      title="Move to Recycle Bin"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">delete_outline</span>
+                    </button>
                   )}
 
                   {/* WhatsApp Quick Action */}

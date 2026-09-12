@@ -1,7 +1,7 @@
 import { X } from 'lucide-react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { MandalaElement } from '../ui/MandalaElement';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useAuthFlow } from '../../hooks/useAuthFlow';
 import { useScrollLock } from '../../hooks/useScrollLock';
@@ -47,16 +47,113 @@ export function AuthModal() {
   } = useAuthFlow(loginSuccess, isAuthModalOpen);
 
   const [isFocused, setIsFocused] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 640 : false,
+  );
+  const modalContentRef = useRef(null);
+  const touchStartY = useRef(0);
+  const [viewportStyle, setViewportStyle] = useState({});
 
+  // Dynamic visualViewport tracker for mobile virtual keyboard
   useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 640);
+    if (!isAuthModalOpen || typeof window === 'undefined') return;
+
+    const updateViewport = () => {
+      const mobile = window.innerWidth < 640;
+      setIsMobile(mobile);
+      if (mobile && window.visualViewport) {
+        const vv = window.visualViewport;
+        setViewportStyle({
+          position: 'fixed',
+          top: `${vv.offsetTop}px`,
+          left: `${vv.offsetLeft}px`,
+          width: `${vv.width}px`,
+          height: `${vv.height}px`,
+        });
+        if (window.scrollY !== 0) {
+          window.scrollTo(0, 0);
+        }
+      } else {
+        setViewportStyle({});
+      }
     };
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+
+    updateViewport();
+
+    const vv = window.visualViewport;
+    if (vv) {
+      vv.addEventListener('resize', updateViewport);
+      vv.addEventListener('scroll', updateViewport);
+    }
+    window.addEventListener('resize', updateViewport);
+    window.addEventListener('orientationchange', updateViewport);
+
+    return () => {
+      if (vv) {
+        vv.removeEventListener('resize', updateViewport);
+        vv.removeEventListener('scroll', updateViewport);
+      }
+      window.removeEventListener('resize', updateViewport);
+      window.removeEventListener('orientationchange', updateViewport);
+    };
+  }, [isAuthModalOpen]);
+
+  // Prevent iOS Safari rubber-band scrolling and viewport dragging
+  useEffect(() => {
+    if (!isAuthModalOpen || typeof window === 'undefined') return;
+
+    const handleTouchStart = (e) => {
+      touchStartY.current = e.touches[0]?.clientY || 0;
+    };
+
+    const handleTouchMove = (e) => {
+      const modalEl = modalContentRef.current;
+      if (!modalEl) {
+        if (e.cancelable) e.preventDefault();
+        return;
+      }
+
+      // Check if touch target is inside the modal card
+      if (modalEl.contains(e.target)) {
+        // If the card has actual scrollable content that overflows
+        const hasOverflow = modalEl.scrollHeight > modalEl.clientHeight;
+        if (hasOverflow) {
+          const currentY = e.touches[0]?.clientY || 0;
+          const deltaY = currentY - touchStartY.current;
+          const isAtTop = modalEl.scrollTop <= 0 && deltaY > 0;
+          const isAtBottom =
+            modalEl.scrollTop + modalEl.clientHeight >= modalEl.scrollHeight - 1 && deltaY < 0;
+
+          // Prevent rubber-band bounce when scrolling reaches top/bottom edge
+          if (isAtTop || isAtBottom) {
+            if (e.cancelable) e.preventDefault();
+          }
+          return;
+        }
+      }
+
+      // Otherwise (backdrop, headers, or non-overflowing card), prevent window pan/scroll
+      if (e.cancelable) {
+        e.preventDefault();
+      }
+    };
+
+    const handleWindowScroll = () => {
+      if (window.scrollY !== 0) {
+        window.scrollTo(0, 0);
+      }
+    };
+
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('scroll', handleWindowScroll, { passive: true });
+
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('scroll', handleWindowScroll);
+    };
+  }, [isAuthModalOpen]);
 
   const modalVariants = {
     hidden: isMobile ? { y: '100%', opacity: 1, scale: 1 } : { opacity: 0, scale: 0.95, y: 15 },
@@ -115,7 +212,10 @@ export function AuthModal() {
   return (
     <AnimatePresence>
       {isAuthModalOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div
+          style={viewportStyle}
+          className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4 touch-none overscroll-none"
+        >
           {/* Dark blurred background overlay */}
           <motion.div
             key="auth-backdrop"
@@ -123,7 +223,7 @@ export function AuthModal() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={closeAuthModal}
-            className="absolute inset-0 bg-black/40 backdrop-blur-md"
+            className="absolute inset-0 bg-black/40 backdrop-blur-md touch-none select-none"
           />
 
           {/* Floating Auth Card Modal Container */}
@@ -133,9 +233,12 @@ export function AuthModal() {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="w-full sm:max-w-[390px] relative flex flex-col justify-end"
+            className="w-full sm:max-w-[390px] relative flex flex-col justify-end touch-pan-y"
           >
-            <div className="relative bg-[#faf9f6] w-full rounded-t-[28px] sm:rounded-[28px] p-4 xs:p-5 sm:p-8 border-t sm:border border-outline-variant/30 shadow-[0_-10px_40px_rgba(115,92,0,0.04)] sm:shadow-[0_30px_70px_rgba(115,92,0,0.06)] overflow-y-auto max-h-[95%] no-scrollbar">
+            <div
+              ref={modalContentRef}
+              className="relative bg-[#faf9f6] w-full rounded-t-[28px] sm:rounded-[28px] p-4 xs:p-5 sm:p-8 border-t sm:border border-outline-variant/30 shadow-[0_-10px_40px_rgba(115,92,0,0.04)] sm:shadow-[0_30px_70px_rgba(115,92,0,0.06)] overflow-y-auto max-h-full sm:max-h-[90vh] overscroll-contain no-scrollbar"
+            >
               {/* Grab handle for mobile bottom sheet */}
               <div className="sm:hidden w-12 h-1 bg-outline-variant/40 rounded-full mx-auto mb-4 shrink-0" />
               {/* Concentric rotating gold mandalas for luxury styling */}

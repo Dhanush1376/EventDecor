@@ -37,11 +37,13 @@ export function AdminRentalDrawer({
   updateRentalStatus,
   onViewInvoice,
   navigate,
+  onDeleteRental,
 }) {
   const [isMobile, setIsMobile] = React.useState(
     typeof window !== 'undefined' ? window.innerWidth < 640 : false,
   );
   const [updating, setUpdating] = React.useState(false);
+  const [showCustomerModal, setShowCustomerModal] = useState(false);
 
   React.useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 640);
@@ -87,7 +89,6 @@ export function AdminRentalDrawer({
     '';
   const cleanPhone = customerPhone.replace(/[^0-9]/g, '');
 
-  const [showCustomerModal, setShowCustomerModal] = useState(false);
   const customerId =
     selectedRental.userId?._id ||
     selectedRental.userId?.id ||
@@ -485,6 +486,20 @@ export function AdminRentalDrawer({
               </div>
             </div>
           </div>
+
+          {/* Move to Recycle Bin (Terminal status only) */}
+          {['completed', 'cancelled', 'returned'].includes(
+            (selectedRental.status || '').toLowerCase(),
+          ) && (
+            <button
+              type="button"
+              onClick={() => onDeleteRental && onDeleteRental(selectedRental)}
+              className="admin-btn !rounded-[4px] bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-100 flex items-center justify-center gap-1.5 py-2.5 px-3 w-full shadow-xs font-bold text-[13px] cursor-pointer transition-colors"
+            >
+              <span className="material-symbols-outlined text-[17px]">delete_outline</span>
+              <span>Move to Recycle Bin</span>
+            </button>
+          )}
 
           {/* Bottom Navigation & Action Buttons */}
           <div className="flex items-center gap-3 w-full">

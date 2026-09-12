@@ -1,13 +1,14 @@
 import React from 'react';
 import { m as motion } from 'framer-motion';
 
-const allStatuses = ['Pending', 'Confirmed', 'Processing', 'Delivered', 'Cancelled'];
+const allStatuses = ['Pending', 'Confirmed', 'Processing', 'Delivered', 'Settled', 'Cancelled'];
 
 const statusIcons = {
   Pending: 'schedule',
   Confirmed: 'thumb_up',
   Processing: 'inventory_2',
-  Delivered: 'check_circle',
+  Delivered: 'local_shipping',
+  Settled: 'verified',
   Cancelled: 'cancel',
 };
 
@@ -48,6 +49,15 @@ const STATUS_COLORS = {
     pulse: 'bg-emerald-500',
     progress: 'bg-emerald-500',
   },
+  Settled: {
+    activeBg: 'bg-emerald-600',
+    activeBorder: 'border-emerald-600',
+    activeText: 'text-white',
+    completedBorder: 'border-emerald-600',
+    completedText: 'text-emerald-600',
+    pulse: 'bg-emerald-600',
+    progress: 'bg-emerald-600',
+  },
   Cancelled: {
     activeBg: 'bg-rose-500',
     activeBorder: 'border-rose-500',
@@ -60,15 +70,64 @@ const STATUS_COLORS = {
 };
 
 export function OrderStatusTimeline({ order, updateOrderStatus }) {
-  const isFailed = order.status === 'Cancelled';
-  const happyPath = ['Pending', 'Confirmed', 'Processing', 'Delivered'];
-  const effectiveStatus = ['Settled', 'Delivered'].includes(order.status)
-    ? 'Delivered'
-    : order.status;
+  const rawStatus = (
+    order?.status ||
+    order?.orderStatus ||
+    order?.rawOrder?.orderStatus ||
+    order?.rawOrder?.status ||
+    'Pending'
+  )
+    .toString()
+    .trim();
+
+  // Normalize string to match allStatuses case
+  const getNormalizedStatus = (s) => {
+    const lower = (s || '').toLowerCase().trim();
+    if (lower === 'pending' || lower === 'payment pending' || lower === 'placed') return 'Pending';
+    if (lower === 'confirmed') return 'Confirmed';
+    if (
+      lower === 'processing' ||
+      lower === 'packed' ||
+      lower === 'shipped' ||
+      lower === 'ready to ship' ||
+      lower === 'out for delivery'
+    )
+      return 'Processing';
+    if (lower === 'delivered') return 'Delivered';
+    if (lower === 'settled') return 'Settled';
+    if (lower === 'cancelled') return 'Cancelled';
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  };
+
+  const normalizedStatus = getNormalizedStatus(rawStatus);
+  const isFailed = normalizedStatus === 'Cancelled';
+  const happyPath = ['Pending', 'Confirmed', 'Processing', 'Delivered', 'Settled'];
+  const effectiveStatus = happyPath.includes(normalizedStatus)
+    ? normalizedStatus
+    : normalizedStatus === 'Cancelled'
+      ? 'Cancelled'
+      : 'Pending';
   const currentIdx = happyPath.indexOf(effectiveStatus);
+  const orderTargetId = order?.id || order?._id;
+
+  // Ultra-light, airy status gradient card wash matching payments & returns
+  const getTimelineCardStyle = () => {
+    if (effectiveStatus === 'Delivered' || effectiveStatus === 'Settled') {
+      return 'bg-gradient-to-r from-emerald-500/[0.035] via-emerald-500/[0.01] to-white dark:to-[#26241f] border-emerald-500/25';
+    }
+    if (effectiveStatus === 'Cancelled') {
+      return 'bg-gradient-to-r from-rose-500/[0.035] via-rose-500/[0.01] to-white dark:to-[#26241f] border-rose-500/25';
+    }
+    if (effectiveStatus === 'Processing' || effectiveStatus === 'Confirmed') {
+      return 'bg-gradient-to-r from-blue-500/[0.035] via-blue-500/[0.01] to-white dark:to-[#26241f] border-blue-500/25';
+    }
+    return 'bg-gradient-to-r from-amber-500/[0.045] via-amber-500/[0.015] to-white dark:to-[#26241f] border-amber-500/30';
+  };
 
   return (
-    <div className="bg-[var(--admin-surface)] rounded-[4px] shadow-sm border border-[var(--admin-border-subtle)] overflow-hidden">
+    <div
+      className={`rounded-[6px] shadow-xs border overflow-hidden transition-all ${getTimelineCardStyle()}`}
+    >
       <div className="px-5 py-4 border-b border-[var(--admin-border-subtle)] flex items-center justify-between">
         <div className="flex flex-col">
           <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)] tracking-tight">
@@ -78,11 +137,11 @@ export function OrderStatusTimeline({ order, updateOrderStatus }) {
             Track and override the order's current stage.
           </p>
         </div>
-        {/* Status Dropdown to Update Order Status (4 main steps + 1 cancel step) */}
+        {/* Status Dropdown to Update Order Status */}
         <div className="relative w-[140px] sm:w-[155px] h-8 shrink-0">
           <select
-            value={allStatuses.includes(order.status) ? order.status : effectiveStatus}
-            onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+            value={effectiveStatus}
+            onChange={(e) => updateOrderStatus(orderTargetId, e.target.value)}
             style={{ backgroundImage: 'none' }}
             className="admin-no-arrow w-full h-8 !min-h-[32px] !max-h-[32px] !appearance-none !bg-none bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-750 border border-stone-300 dark:border-stone-600 text-stone-800 dark:text-stone-200 text-[11px] font-bold rounded-[4px] pl-2.5 pr-7 cursor-pointer shadow-2xs outline-none focus:border-amber-500 transition-colors truncate"
           >
@@ -124,7 +183,7 @@ export function OrderStatusTimeline({ order, updateOrderStatus }) {
               >
                 <button
                   type="button"
-                  onClick={() => updateOrderStatus(order.id, step)}
+                  onClick={() => updateOrderStatus(orderTargetId, step)}
                   className="relative group focus:outline-none cursor-pointer"
                 >
                   {/* Pulse Effect for Active Step */}

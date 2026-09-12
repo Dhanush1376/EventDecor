@@ -1,7 +1,8 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import crypto from 'crypto';
+import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDeletePlugin';
 
-export interface IRentalOrder extends Document {
+export interface IRentalOrder extends Document, ISoftDeleted {
   rentalOrderId: string;
   user: mongoose.Types.ObjectId;
   product: mongoose.Types.ObjectId;
@@ -236,6 +237,10 @@ RentalOrderSchema.plugin(TransactionSyncPlugin, {
   statusField: 'status',
   totalField: 'totalAmount',
 });
+RentalOrderSchema.plugin(SoftDeletePlugin);
 
-const RentalOrder = mongoose.model<IRentalOrder>('RentalOrder', RentalOrderSchema);
+const RentalOrder = mongoose.model<IRentalOrder, SoftDeleteModel<IRentalOrder>>(
+  'RentalOrder',
+  RentalOrderSchema,
+);
 export default RentalOrder;

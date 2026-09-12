@@ -18,9 +18,9 @@ const checkContentLength = (req: Request, res: Response, next: import('express')
     return next(new ApiError(411, 'Length Required: Content-Length header is missing.'));
   }
   const size = parseInt(contentLength, 10);
-  if (isNaN(size) || size > 50 * 1024 * 1024) {
-    // 50MB max
-    return next(new ApiError(413, 'Payload Too Large. Max size is 50MB.'));
+  if (isNaN(size) || size > 100 * 1024 * 1024) {
+    // 100MB max
+    return next(new ApiError(413, 'Payload Too Large. Max size is 100MB.'));
   }
   next();
 };

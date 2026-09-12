@@ -4,13 +4,21 @@ import { useAdminFilters } from '../components/filters/useAdminFilters';
 import { orderFilterConfig } from '../components/filters/configs/orderFilterConfig';
 import { isWithinPeriod } from '../utils/dateFilters';
 
-export const allStatuses = ['Pending', 'Confirmed', 'Processing', 'Delivered', 'Cancelled'];
+export const allStatuses = [
+  'Pending',
+  'Confirmed',
+  'Processing',
+  'Delivered',
+  'Settled',
+  'Cancelled',
+];
 
 export const statusIcons = {
   Pending: 'schedule',
   Confirmed: 'thumb_up',
   Processing: 'inventory_2',
-  Delivered: 'verified',
+  Delivered: 'local_shipping',
+  Settled: 'verified',
   Cancelled: 'cancel',
 };
 

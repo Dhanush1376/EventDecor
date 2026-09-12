@@ -2,6 +2,7 @@ import { m as motion, AnimatePresence } from 'framer-motion';
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { useConfirm } from '../../context/ConfirmProvider';
 import rentalService from '../../services/api/rentalService';
 import {
   PageHeader,
@@ -9,6 +10,7 @@ import {
   SkeletonTable,
   AdminStatusPill,
   AdminStatusDropdown,
+  AdminPaymentBadge,
   formatCurrency,
   fadeUp,
   stagger,
@@ -41,7 +43,7 @@ const formatDateDMY = (dateStr) => {
 
 const allStatuses = ['pending', 'confirmed', 'active_rental', 'returned', 'completed', 'cancelled'];
 
-const RENTAL_STATUS_OPTIONS = [
+export const RENTAL_STATUS_OPTIONS = [
   { value: 'pending', label: 'Pending' },
   { value: 'confirmed', label: 'Confirmed' },
   { value: 'active_rental', label: 'Active Rental' },
@@ -49,6 +51,22 @@ const RENTAL_STATUS_OPTIONS = [
   { value: 'completed', label: 'Completed' },
   { value: 'cancelled', label: 'Cancelled' },
 ];
+
+export const ALL_RENTAL_STATUSES = RENTAL_STATUS_OPTIONS;
+
+const getRentalCardStyle = (status) => {
+  const s = (status || '').toLowerCase();
+  if (['completed', 'returned'].includes(s)) {
+    return 'border border-emerald-500/40 bg-gradient-to-r from-emerald-500/[0.035] via-emerald-500/[0.01] to-white dark:to-[#26241f] hover:border-emerald-500/60 shadow-xs';
+  }
+  if (['cancelled'].includes(s)) {
+    return 'border border-rose-500/40 bg-gradient-to-r from-rose-500/[0.035] via-rose-500/[0.01] to-white dark:to-[#26241f] hover:border-rose-500/60 shadow-xs';
+  }
+  if (['active_rental', 'confirmed'].includes(s)) {
+    return 'border border-blue-500/40 bg-gradient-to-r from-blue-500/[0.035] via-blue-500/[0.01] to-white dark:to-[#26241f] hover:border-blue-500/60 shadow-xs';
+  }
+  return 'border border-amber-500/40 bg-gradient-to-r from-amber-500/[0.045] via-amber-500/[0.015] to-white dark:to-[#26241f] hover:border-amber-500/60 shadow-xs';
+};
 
 export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' }) {
   const _navigate = useNavigate();
@@ -75,6 +93,37 @@ export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' })
   const [updatingStatusId, setUpdatingStatusId] = useState(null);
   const [selectedRental, setSelectedRental] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [deletingRentalId, setDeletingRentalId] = useState(null);
+  const confirm = useConfirm();
+
+  const handleDeleteRental = async (r, e) => {
+    e?.stopPropagation();
+    const confirmed = await confirm({
+      title: 'Move Rental to Recycle Bin',
+      message: `Are you sure you want to delete rental ${r.rentalOrderId || r._id}? You can restore it anytime from the Recycle Bin.`,
+      confirmText: 'Move to Recycle Bin',
+      cancelText: 'Cancel',
+      variant: 'danger',
+    });
+    if (!confirmed) return;
+
+    try {
+      setDeletingRentalId(r._id);
+      const res = await rentalService.adminDeleteRental(r._id);
+      if (res?.success || res?.status === 200) {
+        toast.success('Rental moved to recycle bin');
+        await fetchRentals();
+        if (selectedRental?._id === r._id) {
+          setIsDrawerOpen(false);
+          setSelectedRental(null);
+        }
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to delete rental');
+    } finally {
+      setDeletingRentalId(null);
+    }
+  };
 
   const openRentalDrawer = (rental) => {
     setSelectedRental(rental);
@@ -705,6 +754,11 @@ export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' })
                         r.paymentStatus === 'Pending COD' ||
                         (r.paymentMethod === 'Cash_on_Delivery' && !isPaid);
                       const isPartiallyPaid = r.paymentStatus === 'partially_paid';
+                      const paymentBorderClass = isPaid
+                        ? 'border-l-[3px] border-l-emerald-500'
+                        : isPartiallyPaid || isPendingCod
+                          ? 'border-l-[3px] border-l-amber-500'
+                          : 'border-l-[3px] border-l-rose-500';
                       const isNew =
                         new Date().getTime() - new Date(r.createdAt).getTime() <
                         24 * 60 * 60 * 1000;
@@ -718,7 +772,7 @@ export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' })
                       return (
                         <tr
                           key={r._id}
-                          className="admin-table-row-clickable group transition-colors"
+                          className={`admin-table-row-clickable group transition-colors ${paymentBorderClass}`}
                           onClick={() => openRentalDrawer(r)}
                         >
                           {/* Order ID & Tag */}
@@ -837,17 +891,12 @@ export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' })
 
                           {/* Payment */}
                           <td className="hidden sm:table-cell w-[95px] whitespace-nowrap">
-                            <span
-                              className={`text-[9px] px-1.5 py-0.5 rounded-[4px] font-bold uppercase tracking-wider border shadow-2xs ${
-                                isPaid
-                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                  : isPartiallyPaid || isPendingCod
-                                    ? 'bg-amber-50 text-amber-800 border-amber-200'
-                                    : 'bg-red-50 text-red-700 border-red-200'
-                              }`}
-                            >
-                              {paymentStatus}
-                            </span>
+                            <AdminPaymentBadge
+                              isPaid={isPaid}
+                              method={r.paymentMethod}
+                              status={r.paymentStatus}
+                              orderStatus={r.status}
+                            />
                           </td>
 
                           {/* Status Dropdown */}
@@ -870,10 +919,10 @@ export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' })
 
                           {/* Actions - Strictly Aligned in Straight Column */}
                           <td
-                            className="text-right whitespace-nowrap w-[115px]"
+                            className="text-right whitespace-nowrap w-[150px]"
                             onClick={(e) => e.stopPropagation()}
                           >
-                            <div className="flex items-center justify-end gap-1 w-[104px] ml-auto">
+                            <div className="flex items-center justify-end gap-1 w-[140px] ml-auto">
                               {/* Action 1: Quick Details */}
                               <button
                                 type="button"
@@ -908,6 +957,32 @@ export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' })
                               >
                                 <WhatsAppIcon className="w-[16px] h-[16px]" />
                               </a>
+
+                              {/* Action 4: Move to Recycle Bin (Terminal Status only) */}
+                              {['completed', 'cancelled', 'returned'].includes(
+                                (r.status || '').toLowerCase(),
+                              ) ? (
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleDeleteRental(r, e)}
+                                  disabled={deletingRentalId === r._id}
+                                  className="admin-btn-icon w-8 h-8 min-w-[32px] max-w-[32px] min-h-[32px] max-h-[32px] p-0 !rounded-[4px] text-[var(--admin-text-tertiary)] hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors flex items-center justify-center shrink-0 cursor-pointer disabled:opacity-50"
+                                  title="Move to Recycle Bin"
+                                >
+                                  {deletingRentalId === r._id ? (
+                                    <span className="w-3.5 h-3.5 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+                                  ) : (
+                                    <span className="material-symbols-outlined text-[17px]">
+                                      delete_outline
+                                    </span>
+                                  )}
+                                </button>
+                              ) : (
+                                <div
+                                  className="w-8 h-8 min-w-[32px] max-w-[32px] min-h-[32px] max-h-[32px] shrink-0 pointer-events-none"
+                                  aria-hidden="true"
+                                />
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -967,7 +1042,9 @@ export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' })
                       key={r._id}
                       id={`rental-card-${r._id}`}
                       onClick={() => openRentalDrawer(r)}
-                      className="relative overflow-hidden rounded-[4px] p-3.5 shadow-xs border border-stone-200/90 dark:border-stone-700/80 bg-white dark:bg-stone-900 flex flex-col gap-3 cursor-pointer hover:border-stone-300 dark:hover:border-stone-600 hover:shadow-sm transition-all"
+                      className={`relative overflow-hidden rounded-[4px] p-3.5 flex flex-col gap-3 cursor-pointer transition-all ${getRentalCardStyle(
+                        r.status,
+                      )}`}
                     >
                       {/* Header: Customer Name + Status Pill, with subtle faded Order ID & Rental Tag */}
                       <div className="flex justify-between items-start gap-2">
@@ -995,7 +1072,28 @@ export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' })
                             </span>
                           </div>
                         </div>
-                        <AdminStatusPill status={r.status} className="shrink-0" />
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <AdminStatusPill status={r.status} className="shrink-0" />
+                          {['completed', 'cancelled', 'returned'].includes(
+                            (r.status || '').toLowerCase(),
+                          ) && (
+                            <button
+                              type="button"
+                              onClick={(e) => handleDeleteRental(r, e)}
+                              disabled={deletingRentalId === r._id}
+                              className="w-7 h-7 !rounded-[4px] border border-red-200 dark:border-red-900/60 bg-red-50/80 dark:bg-red-950/30 text-red-600 dark:text-red-400 flex items-center justify-center cursor-pointer transition-colors hover:bg-red-100 disabled:opacity-50 shrink-0"
+                              title="Move to Recycle Bin"
+                            >
+                              {deletingRentalId === r._id ? (
+                                <span className="w-3 h-3 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+                              ) : (
+                                <span className="material-symbols-outlined text-[15px]">
+                                  delete_outline
+                                </span>
+                              )}
+                            </button>
+                          )}
+                        </div>
                       </div>
 
                       {/* Rental Product Item Box */}
@@ -1061,20 +1159,12 @@ export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' })
                         </div>
 
                         <div className="flex items-center gap-1.5 shrink-0 ml-auto">
-                          <span
-                            className={`inline-flex items-center gap-1 h-[22px] text-[9.5px] font-bold uppercase tracking-wider px-2 rounded-[4px] border whitespace-nowrap shrink-0 leading-none ${
-                              isPaid
-                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                : 'bg-amber-50 text-amber-800 border-amber-200'
-                            }`}
-                          >
-                            {isPaid && (
-                              <span className="material-symbols-outlined text-[12px]">
-                                check_circle
-                              </span>
-                            )}
-                            {paymentStatus}
-                          </span>
+                          <AdminPaymentBadge
+                            isPaid={isPaid}
+                            method={r.paymentMethod}
+                            status={r.paymentStatus}
+                            orderStatus={r.status}
+                          />
                         </div>
                       </div>
 
@@ -1478,6 +1568,7 @@ export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' })
               setInvoiceRental(getRentalOrderForInvoice(r));
             }}
             navigate={_navigate}
+            onDeleteRental={handleDeleteRental}
           />
         )}
       </AnimatePresence>

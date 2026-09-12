@@ -35,7 +35,14 @@ const PROTECTED_RESOURCES: Record<string, (doc: any) => boolean> = {
  */
 const extractEntityName = (doc: any): string => {
   return (
+    doc.bookingId ||
+    doc.rentalOrderId ||
+    doc.returnId ||
+    doc.exchangeId ||
+    doc.customOrderId ||
+    doc.orderId ||
     doc.title ||
+    doc.productTitle ||
     doc.name ||
     doc.code ||
     doc.slug ||
@@ -51,7 +58,18 @@ const extractEntityName = (doc: any): string => {
  * Extracts a thumbnail URL from a document.
  */
 const extractThumbnail = (doc: any): string | null => {
-  return doc.imageSrc || doc.image || doc.heroImage || doc.thumbnail || null;
+  return (
+    doc.productImage ||
+    doc.imageSrc ||
+    doc.image ||
+    doc.heroImage ||
+    doc.thumbnail ||
+    doc.eventPackage?.image ||
+    doc.inspirationImages?.[0] ||
+    doc.originalItem?.imageSrc ||
+    doc.items?.[0]?.imageSrc ||
+    null
+  );
 };
 
 /**

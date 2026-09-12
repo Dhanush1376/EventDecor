@@ -358,13 +358,24 @@ export const adminUpdateQuotation = asyncHandler(async (req: Request, res: Respo
 
 // 10. Admin Manages Logistics & Setup/Pickup Schedules
 export const adminUpdateLogistics = asyncHandler(async (req: Request, res: Response) => {
-  const { setupTiming, pickupTiming, assignedTeam, rentedInventory, adminNotes, venue } = req.body;
+  const {
+    date,
+    timing,
+    setupTiming,
+    pickupTiming,
+    assignedTeam,
+    rentedInventory,
+    adminNotes,
+    venue,
+  } = req.body;
   const booking = await EventJob.findById(req.params.id);
 
   if (!booking) {
     throw new ApiError(404, 'Booking not found');
   }
 
+  if (date) booking.date = new Date(date);
+  if (timing) booking.timing = timing;
   if (setupTiming) booking.setupTiming = new Date(setupTiming);
   if (pickupTiming) booking.pickupTiming = new Date(pickupTiming);
   if (assignedTeam) booking.assignedTeam = assignedTeam;
@@ -442,4 +453,47 @@ export const adminDeletePayment = asyncHandler(async (_req: Request, _res: Respo
     400,
     'Deleting recorded payments is not supported via this API. Issue a refund instead.',
   );
+});
+
+// 15. Admin Soft Delete Booking (moves terminal state bookings to Recycle Bin)
+export const adminSoftDeleteBooking = asyncHandler(async (req: Request, res: Response) => {
+  const bookingId = req.params.id;
+  const booking = await EventJob.findById(bookingId);
+
+  if (!booking) {
+    throw new ApiError(404, 'Booking not found');
+  }
+
+  const status = (booking.status || '').toLowerCase();
+  const terminalStatuses = ['completed', 'cancelled', 'rejected'];
+
+  if (!terminalStatuses.includes(status)) {
+    throw new ApiError(
+      400,
+      'Only completed, cancelled, or rejected bookings can be moved to the recycle bin',
+    );
+  }
+
+  await (booking as any).softDelete((req as any).user, 'Deleted by admin');
+
+  const user = (req as any).user;
+  if (user && user.role !== 'user') {
+    const { AdminAuditService } = require('../../services/AdminAuditService');
+    await AdminAuditService.logAction({
+      userId: user.id,
+      userEmail: user.email,
+      action: 'SOFT_DELETE',
+      resourceType: 'EventJob',
+      resourceId: booking._id.toString(),
+      metadata: {
+        bookingId: booking.bookingId || booking._id,
+        title: booking.title,
+        status: booking.status,
+      },
+    });
+  }
+
+  res
+    .status(200)
+    .json(new ApiResponse(true, 'Booking moved to recycle bin successfully', { id: booking._id }));
 });

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   AdminStatusPill,
   AdminStatusDropdown,
+  AdminPaymentBadge,
   EmptyState,
   formatCurrency,
   smoothScrollCardIntoView,
@@ -98,6 +99,20 @@ export function AdminOrdersTable({
     }
   };
 
+  const getOrderCardStyle = (o) => {
+    const s = (o.status || '').toLowerCase();
+    if (s === 'delivered' || s === 'settled') {
+      return 'border border-emerald-500/40 bg-gradient-to-r from-emerald-500/[0.035] via-emerald-500/[0.01] to-white dark:to-[#26241f] hover:border-emerald-500/60 shadow-xs';
+    }
+    if (s === 'cancelled' || s === 'rejected') {
+      return 'border border-rose-500/40 bg-gradient-to-r from-rose-500/[0.035] via-rose-500/[0.01] to-white dark:to-[#26241f] hover:border-rose-500/60 shadow-xs';
+    }
+    if (s === 'processing' || s === 'confirmed' || s === 'shipped') {
+      return 'border border-blue-500/40 bg-gradient-to-r from-blue-500/[0.035] via-blue-500/[0.01] to-white dark:to-[#26241f] hover:border-blue-500/60 shadow-xs';
+    }
+    return 'border border-amber-500/40 bg-gradient-to-r from-amber-500/[0.045] via-amber-500/[0.015] to-white dark:to-[#26241f] hover:border-amber-500/60 shadow-xs';
+  };
+
   return (
     <>
       <div className="hidden md:block admin-card overflow-x-auto">
@@ -158,10 +173,66 @@ export function AdminOrdersTable({
                 const isVip = o.total >= 15000;
                 const isNew = o.date && o.date.includes('Today');
 
+                const method = o.rawOrder?.paymentMethod || o.paymentMethod || o.payment || '';
+                const paymentStatus =
+                  o.rawOrder?.paymentStatus || o.paymentStatus || o.payment || '';
+                const settlementStatus =
+                  o.rawOrder?.settlementStatus || o.settlementStatus || 'Not Applicable';
+                const razorpayPaymentId = o.rawOrder?.razorpayPaymentId || o.razorpayPaymentId;
+                const orderStatus = o.status || o.rawOrder?.orderStatus || '';
+
+                const isCod =
+                  method.toLowerCase().includes('cod') ||
+                  method.toLowerCase().includes('cash') ||
+                  paymentStatus.toLowerCase().includes('cod');
+
+                const isReturned =
+                  ['Returned', 'returned', 'return_received', 'return_completed'].includes(
+                    orderStatus,
+                  ) || ['Returned', 'returned'].includes(paymentStatus);
+
+                const isCancelled =
+                  ['Cancelled', 'cancelled', 'rejected'].includes(orderStatus) ||
+                  ['Cancelled', 'cancelled'].includes(paymentStatus);
+
+                const isRefunded =
+                  ['Refunded', 'refunded'].includes(orderStatus) ||
+                  ['Refunded', 'refunded'].includes(paymentStatus);
+
+                const isOnlinePaid =
+                  !isCod && (Boolean(razorpayPaymentId) || paymentStatus.toLowerCase() === 'paid');
+
+                const isCodSettled =
+                  isCod && (settlementStatus === 'Settled' || orderStatus === 'Settled');
+
+                const isCodCollected =
+                  isCod &&
+                  (paymentStatus === 'COD Collected' || orderStatus === 'Delivered') &&
+                  !isCodSettled;
+
+                const isPaid =
+                  (isOnlinePaid || isCodSettled) && !isReturned && !isCancelled && !isRefunded;
+
+                const paymentBorderClass = isRefunded
+                  ? 'border-l-[3px] border-l-purple-500'
+                  : isReturned
+                    ? 'border-l-[3px] border-l-purple-500'
+                    : isCancelled
+                      ? 'border-l-[3px] border-l-rose-500'
+                      : isPaid
+                        ? 'border-l-[3px] border-l-emerald-500'
+                        : isCodCollected
+                          ? 'border-l-[3px] border-l-sky-500'
+                          : ['pending', 'pending cod', 'cod pending'].includes(
+                                paymentStatus.toLowerCase(),
+                              )
+                            ? 'border-l-[3px] border-l-amber-500'
+                            : 'border-l-[3px] border-l-rose-500';
+
                 return (
                   <tr
                     key={o.id}
-                    className="admin-table-row-clickable group transition-colors"
+                    className={`admin-table-row-clickable group transition-colors ${paymentBorderClass}`}
                     onClick={() => openOrderDrawer(o)}
                   >
                     <td>
@@ -273,9 +344,14 @@ export function AdminOrdersTable({
                       </div>
                     </td>
                     <td className="hidden sm:table-cell whitespace-nowrap">
-                      <span className="admin-badge admin-badge-neutral uppercase text-[9px] tracking-wider font-bold">
-                        {o.payment}
-                      </span>
+                      <AdminPaymentBadge
+                        isPaid={isPaid}
+                        method={method}
+                        status={paymentStatus}
+                        orderStatus={orderStatus}
+                        settlementStatus={settlementStatus}
+                        razorpayPaymentId={razorpayPaymentId}
+                      />
                     </td>
                     <td
                       className="w-[150px] whitespace-nowrap"
@@ -399,14 +475,48 @@ export function AdminOrdersTable({
             const firstItem = o.items?.[0] || {};
             const firstImg =
               firstItem.image || firstItem.images?.[0] || firstItem.thumbnail || '/placeholder.png';
-            const isPaid = ['Paid', 'PAID', 'COD Collected'].includes(o.payment);
+            const method = o.rawOrder?.paymentMethod || o.paymentMethod || o.payment || '';
+            const paymentStatus = o.rawOrder?.paymentStatus || o.paymentStatus || o.payment || '';
+            const settlementStatus =
+              o.rawOrder?.settlementStatus || o.settlementStatus || 'Not Applicable';
+            const razorpayPaymentId = o.rawOrder?.razorpayPaymentId || o.razorpayPaymentId;
+            const orderStatus = o.status || o.rawOrder?.orderStatus || '';
+
+            const isCod =
+              method.toLowerCase().includes('cod') ||
+              method.toLowerCase().includes('cash') ||
+              paymentStatus.toLowerCase().includes('cod');
+
+            const isReturned =
+              ['Returned', 'returned', 'return_received', 'return_completed'].includes(
+                orderStatus,
+              ) || ['Returned', 'returned'].includes(paymentStatus);
+
+            const isCancelled =
+              ['Cancelled', 'cancelled', 'rejected'].includes(orderStatus) ||
+              ['Cancelled', 'cancelled'].includes(paymentStatus);
+
+            const isRefunded =
+              ['Refunded', 'refunded'].includes(orderStatus) ||
+              ['Refunded', 'refunded'].includes(paymentStatus);
+
+            const isOnlinePaid =
+              !isCod && (Boolean(razorpayPaymentId) || paymentStatus.toLowerCase() === 'paid');
+
+            const isCodSettled =
+              isCod && (settlementStatus === 'Settled' || orderStatus === 'Settled');
+
+            const isPaid =
+              (isOnlinePaid || isCodSettled) && !isReturned && !isCancelled && !isRefunded;
 
             return (
               <div
                 key={o.id}
                 id={`order-card-${o.id}`}
                 onClick={() => openOrderDrawer(o)}
-                className="relative overflow-hidden rounded-[4px] p-3.5 shadow-xs border border-stone-200/90 dark:border-stone-700/80 bg-white dark:bg-stone-900 flex flex-col gap-3 cursor-pointer hover:border-stone-300 dark:hover:border-stone-600 hover:shadow-sm transition-all"
+                className={`relative overflow-hidden rounded-[4px] p-3.5 flex flex-col gap-3 cursor-pointer transition-all ${getOrderCardStyle(
+                  o,
+                )}`}
               >
                 {/* Header: Customer Name + Status Pill, with subtle faded Order ID & Tag */}
                 <div className="flex justify-between items-start gap-2">
@@ -509,15 +619,14 @@ export function AdminOrdersTable({
                   </div>
 
                   <div className="flex items-center gap-1.5 shrink-0 ml-auto">
-                    <span
-                      className={`inline-flex items-center h-[22px] text-[9.5px] font-bold uppercase tracking-wider px-2 rounded-[4px] border whitespace-nowrap shrink-0 leading-none ${
-                        isPaid
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                          : 'bg-amber-50 text-amber-800 border-amber-200'
-                      }`}
-                    >
-                      {o.payment || 'COD PENDING'}
-                    </span>
+                    <AdminPaymentBadge
+                      isPaid={isPaid}
+                      method={method}
+                      status={paymentStatus}
+                      orderStatus={orderStatus}
+                      settlementStatus={settlementStatus}
+                      razorpayPaymentId={razorpayPaymentId}
+                    />
                   </div>
                 </div>
 

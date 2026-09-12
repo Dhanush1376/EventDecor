@@ -137,6 +137,20 @@
     transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
+  /* Checkbox & Radio styling — Match website theme globally across all pages */
+  input[type='checkbox'],
+  input[type='radio'] {
+    accent-color: var(--color-primary, #735c00);
+    cursor: pointer;
+  }
+
+  .admin-section-root input[type='checkbox'],
+  .admin-section-root input[type='radio'],
+  [class*='admin'] input[type='checkbox'],
+  [class*='admin'] input[type='radio'] {
+    accent-color: var(--admin-accent, #826237) !important;
+  }
+
   /* Global Placeholder Styling */
   ::-webkit-input-placeholder {
     font-size: 0.85em !important;

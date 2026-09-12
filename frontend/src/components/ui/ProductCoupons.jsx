@@ -104,7 +104,7 @@ export function ProductCoupons({ product, localAppliedCoupon, setLocalAppliedCou
         <div className="mt-3">
           <button
             onClick={() => setExpanded(!expanded)}
-            className="flex items-center gap-1.5 text-primary hover:text-primary-container text-[11px] uppercase tracking-wider font-bold focus-visible:outline-none transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 text-[#8c7335] hover:text-[#735e29] text-[11px] uppercase tracking-wider font-bold focus-visible:outline-none transition-colors cursor-pointer"
           >
             <span
               className="material-symbols-outlined text-[16px] transition-transform duration-300"
@@ -112,7 +112,7 @@ export function ProductCoupons({ product, localAppliedCoupon, setLocalAppliedCou
             >
               keyboard_arrow_down
             </span>
-            {expanded ? 'Show Less' : `Explore More Offers (${extraCoupons.length} more)`}
+            {expanded ? 'Show Less' : `EXPLORE MORE OFFERS (${extraCoupons.length} MORE)`}
           </button>
 
           <AnimatePresence initial={false}>
@@ -189,70 +189,72 @@ export function CouponCard({
       role={disableHover && !showHoverByDefault ? undefined : 'button'}
       tabIndex={isEligible && !disableHover ? 0 : -1}
       aria-label={`Coupon ${coupon?.code || 'COUPON'}: ${discountText}, ${minOrderText}`}
-      className={`border border-dashed rounded-xl p-3 sm:p-3.5 flex flex-col justify-between backdrop-blur-md transition-all duration-300 relative overflow-hidden group select-none ${
+      className={`border-[1.5px] border-dashed rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between backdrop-blur-md transition-all duration-300 relative overflow-hidden group select-none ${
         !isEligible
-          ? 'border-outline-variant/20 opacity-60 grayscale cursor-not-allowed bg-[#fcfbf9]/60 dark:bg-surface-container/40'
+          ? 'border-[#bfa36c]/25 opacity-60 grayscale cursor-not-allowed bg-[#fcfbf9]/60 dark:bg-surface-container/40'
           : showHoverByDefault
-            ? 'border-primary/50 ring-1 ring-primary/20 shadow-xs bg-[#faf6e6]/80 dark:bg-[#2c281e]/80 cursor-default'
+            ? 'border-[#bfa36c] ring-1 ring-[#bfa36c]/20 shadow-xs bg-[#faf6e6]/80 dark:bg-[#2c281e]/80 cursor-default'
             : disableHover
               ? isBest
-                ? 'border-primary/50 ring-1 ring-primary/20 shadow-2xs cursor-default bg-[#fcfbf9]/60 dark:bg-surface-container/40'
-                : 'border-outline-variant/30 cursor-default bg-[#fcfbf9]/60 dark:bg-surface-container/40'
+                ? 'border-[#bfa36c] shadow-2xs cursor-default bg-[#fcfbf9]/60 dark:bg-surface-container/40'
+                : 'border-[#bfa36c]/50 cursor-default bg-[#fcfbf9]/60 dark:bg-surface-container/40'
               : isBest
-                ? 'border-primary/50 ring-1 ring-primary/20 shadow-2xs hover:shadow-xs hover:bg-[#faf6e6]/60 cursor-pointer bg-[#fcfbf9]/60 dark:bg-surface-container/40'
-                : 'border-outline-variant/30 hover:border-primary/30 hover:bg-[#faf6e6]/60 cursor-pointer bg-[#fcfbf9]/60 dark:bg-surface-container/40'
+                ? 'border-[#bfa36c] shadow-2xs hover:shadow-xs hover:bg-[#faf6e6]/60 cursor-pointer bg-[#fcfbf9]/60 dark:bg-surface-container/40'
+                : 'border-[#bfa36c]/50 hover:border-[#bfa36c] hover:bg-[#faf6e6]/60 cursor-pointer bg-[#fcfbf9]/60 dark:bg-surface-container/40'
       }`}
     >
+      {/* BEST OFFER Corner Badge */}
+      {isBest && (
+        <span className="absolute top-0 right-0 bg-[#221f1f] text-white text-[8px] sm:text-[8.5px] font-bold uppercase tracking-widest px-3 py-1 rounded-bl-2xl rounded-tr-[14px] rounded-tl-[4px] shadow-xs z-10 select-none pointer-events-none">
+          BEST OFFER
+        </span>
+      )}
+
       {/* Decorative Ticket Circles */}
-      <div className="absolute top-1/2 -left-2 w-3.5 h-3.5 rounded-full bg-surface border-r border-outline-variant/20 -translate-y-1/2 z-10 pointer-events-none"></div>
-      <div className="absolute top-1/2 -right-2 w-3.5 h-3.5 rounded-full bg-surface border-l border-outline-variant/20 -translate-y-1/2 z-10 pointer-events-none"></div>
+      <div className="absolute top-1/2 -left-2 w-3.5 h-3.5 rounded-full bg-white dark:bg-stone-900 border-r border-[#bfa36c]/30 -translate-y-1/2 z-10 pointer-events-none"></div>
+      <div className="absolute top-1/2 -right-2 w-3.5 h-3.5 rounded-full bg-white dark:bg-stone-900 border-l border-[#bfa36c]/30 -translate-y-1/2 z-10 pointer-events-none"></div>
 
       <div>
         <div className="flex items-center justify-between gap-2 mb-1.5">
-          <span className="font-label text-[10px] font-bold tracking-wider text-on-surface bg-[#e9e8e5] dark:bg-surface-container-high px-2 py-0.5 rounded uppercase font-mono">
+          <span className="font-mono text-[10px] font-bold tracking-wider text-stone-800 dark:text-stone-200 bg-[#e7e5e1] dark:bg-stone-800 px-2.5 py-0.5 rounded-[4px] uppercase inline-block">
             {coupon?.code || 'COUPON'}
           </span>
-          {isBest && (
-            <span className="bg-[#2A2927] text-white text-[8px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full shadow-2xs">
-              BEST OFFER
-            </span>
-          )}
         </div>
 
-        <div className="font-display text-[15px] sm:text-[16px] text-on-surface font-bold tracking-tight leading-snug">
+        <div className="font-serif text-[16px] sm:text-[17px] text-stone-900 dark:text-stone-100 font-bold tracking-tight leading-snug">
           {discountText}
         </div>
         <p
-          className={`font-body text-[11px] font-medium leading-normal mt-0.5 ${!isEligible ? 'text-error' : 'text-on-surface/60'}`}
+          className={`font-body text-[11px] font-medium leading-normal mt-0.5 ${!isEligible ? 'text-red-500' : 'text-stone-600 dark:text-stone-400'}`}
         >
           {minOrderText}
         </p>
       </div>
 
-      <div className="flex items-center justify-between pt-2 border-t border-dashed border-outline-variant/20 mt-2">
-        <span className="font-body text-[9px] text-on-surface/40 uppercase tracking-widest font-bold">
-          Exp: {formattedExpiry}
+      <div className="flex items-center justify-between pt-2.5 border-t border-dashed border-[#bfa36c]/25 mt-2.5">
+        <span className="font-body text-[9.5px] text-stone-500 dark:text-stone-400 uppercase tracking-wider font-bold">
+          EXP: {formattedExpiry}
         </span>
         <button
           type="button"
           disabled={!isEligible}
-          className={`flex items-center gap-1 text-[9px] uppercase tracking-widest font-extrabold focus:outline-none transition-colors duration-300 pointer-events-none ${
+          className={`flex items-center gap-1.5 text-[9.5px] uppercase tracking-wider font-extrabold focus:outline-none transition-colors duration-300 pointer-events-none ${
             !isEligible
-              ? 'text-on-surface/40'
+              ? 'text-stone-400'
               : isCopied
-                ? 'text-green-700'
+                ? 'text-emerald-600'
                 : showHoverByDefault
-                  ? 'text-primary-container font-black'
+                  ? 'text-[#8c7335] font-black'
                   : disableHover
-                    ? 'text-primary'
-                    : 'text-primary group-hover:text-primary-container'
+                    ? 'text-[#8c7335]'
+                    : 'text-[#8c7335] group-hover:text-[#735e29]'
           }`}
           aria-hidden="true"
         >
-          <span className="material-symbols-outlined text-[12px]" style={{ transform: 'none' }}>
+          <span className="material-symbols-outlined text-[13px]" style={{ transform: 'none' }}>
             {!isEligible ? 'block' : isCopied ? 'check' : 'content_copy'}
           </span>
-          {!isEligible ? 'Not Eligible' : isCopied ? 'Copied!' : 'Copy Code'}
+          {!isEligible ? 'NOT ELIGIBLE' : isCopied ? 'COPIED!' : 'COPY CODE'}
         </button>
       </div>
     </div>

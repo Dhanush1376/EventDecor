@@ -154,11 +154,17 @@ export class OrderFulfillmentService {
         }
 
         // Automatic COD Remittance Transitions
-        if (order.paymentMethod?.toLowerCase() === 'cod') {
+        const isCodOrder = order.paymentMethod?.toLowerCase() === 'cod';
+
+        if (isCodOrder) {
           if (finalStatus === 'Delivered') {
             order.codCollected = true;
             order.paymentStatus = 'COD Collected';
             order.settlementStatus = 'Pending';
+            if (oldStatus === 'Settled') {
+              // Reverted from Settled to Delivered (Undo Settlement)
+              order.settledAmount = 0;
+            }
             if (!order.courierCharges) {
               order.courierCharges =
                 courierCharges !== undefined
@@ -172,7 +178,7 @@ export class OrderFulfillmentService {
             });
           } else if (finalStatus === 'Settled') {
             order.codCollected = true;
-            order.paymentStatus = 'paid';
+            order.paymentStatus = 'COD Collected';
             order.settlementStatus = 'Settled';
             const charges =
               courierCharges !== undefined
@@ -196,6 +202,16 @@ export class OrderFulfillmentService {
                 note ||
                 `COD Remittance Settled. Received amount: ₹${order.settledAmount} (Collected: ₹${totalCollected} - Courier fee: ₹${charges})`,
             });
+          } else if (finalStatus === 'Returned') {
+            order.codCollected = false;
+            order.settlementStatus = 'Not Applicable';
+            order.settledAmount = 0;
+            order.paymentStatus = 'returned';
+          } else if (finalStatus === 'Cancelled') {
+            order.codCollected = false;
+            order.settlementStatus = 'Not Applicable';
+            order.settledAmount = 0;
+            order.paymentStatus = 'cancelled';
           }
         }
 

@@ -31,6 +31,8 @@ export const returnService = {
 
   completeReturn: (id) => api.post(`/returns/admin/${id}/complete`),
 
+  deleteReturn: (id) => api.delete(`/returns/admin/${id}`),
+
   transitionExchangeReplacement: (id, data) =>
     api.patch(`/returns/admin/exchanges/${id}/transition`, data),
 
@@ -39,6 +41,8 @@ export const returnService = {
     api.post(`/returns/admin/exchanges/${id}/record-payment`, data),
 
   getAllExchanges: (params) => api.get('/exchanges/admin/all', { params }),
+
+  deleteExchange: (id) => api.delete(`/exchanges/admin/${id}`),
 
   getRefundStats: () => api.get('/returns/admin/refunds/stats'),
 

@@ -117,6 +117,7 @@ function getBrowserCoordinates() {
 
 /**
  * Attempts to retrieve approximate location via IP Geolocation (Tier 2).
+ * Tiers: freeipapi.com -> ipwho.is -> BigDataCloud -> ipapi.co -> Backend proxy
  */
 async function getIPLocation() {
   // Provider 1: freeipapi.com (HTTPS, client-safe, CORS-friendly, no keys)
@@ -137,8 +138,9 @@ async function getIPLocation() {
           latitude: data.latitude,
           longitude: data.longitude,
           city: data.cityName || '',
+          district: data.cityName || '',
           state: data.regionName || '',
-          pincode: data.zipCode || '',
+          pincode: (data.zipCode || '').replace(/\D/g, '').slice(0, 6),
           country: data.countryName || 'India',
           source: 'network',
         });
@@ -148,10 +150,77 @@ async function getIPLocation() {
     log.warn('freeipapi lookup failed, attempting secondary IP provider:', err.message);
   }
 
-  // Provider 2 fallback: ipapi.co (HTTPS, CORS-friendly fallback)
+  // Provider 2: ipwho.is (HTTPS, CORS-enabled, fast, free, no keys needed)
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 4000);
+    const res = await fetch('https://ipwho.is/', {
+      signal: controller.signal,
+      headers: { Accept: 'application/json' },
+    });
+    clearTimeout(timeout);
+
+    if (res.ok) {
+      const data = await res.json();
+      if (
+        data &&
+        data.success &&
+        typeof data.latitude === 'number' &&
+        typeof data.longitude === 'number'
+      ) {
+        return createNormalizedAddress({
+          latitude: data.latitude,
+          longitude: data.longitude,
+          city: data.city || '',
+          district: data.city || '',
+          state: data.region || '',
+          pincode: (data.postal || '').replace(/\D/g, '').slice(0, 6),
+          country: data.country || 'India',
+          source: 'network',
+        });
+      }
+    }
+  } catch (err) {
+    log.warn('ipwho.is lookup failed, attempting next IP provider:', err.message);
+  }
+
+  // Provider 3: BigDataCloud client IP geolocation
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+
+    const res = await fetch(
+      'https://api.bigdatacloud.net/data/reverse-geocode-client?localityLanguage=en',
+      {
+        signal: controller.signal,
+        headers: { Accept: 'application/json' },
+      },
+    );
+    clearTimeout(timeout);
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data && typeof data.latitude === 'number' && typeof data.longitude === 'number') {
+        return createNormalizedAddress({
+          latitude: data.latitude,
+          longitude: data.longitude,
+          city: data.city || data.locality || '',
+          district: data.city || '',
+          state: data.principalSubdivision || '',
+          pincode: (data.postcode || '').replace(/\D/g, '').slice(0, 6),
+          country: data.countryName || 'India',
+          source: 'network',
+        });
+      }
+    }
+  } catch (err) {
+    log.warn('BigDataCloud IP lookup failed, attempting final fallback:', err.message);
+  }
+
+  // Provider 4: ipapi.co
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 4000);
 
     const res = await fetch('https://ipapi.co/json/', {
       signal: controller.signal,
@@ -166,8 +235,9 @@ async function getIPLocation() {
           latitude: data.latitude,
           longitude: data.longitude,
           city: data.city || '',
+          district: data.city || '',
           state: data.region || '',
-          pincode: data.postal || '',
+          pincode: (data.postal || '').replace(/\D/g, '').slice(0, 6),
           country: data.country_name || 'India',
           source: 'network',
         });
@@ -177,7 +247,172 @@ async function getIPLocation() {
     log.warn('ipapi.co fallback failed:', err.message);
   }
 
+  // Provider 5: Backend proxy
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000);
+    const res = await fetch('/api/v1/location/ip', {
+      signal: controller.signal,
+      headers: { Accept: 'application/json' },
+    });
+    clearTimeout(timeout);
+
+    if (res.ok) {
+      const json = await res.json();
+      if (json && json.success && json.data && typeof json.data.latitude === 'number') {
+        const d = json.data;
+        return createNormalizedAddress({
+          latitude: d.latitude,
+          longitude: d.longitude,
+          city: d.city || '',
+          district: d.district || '',
+          state: d.state || '',
+          pincode: d.pincode || '',
+          country: d.country || 'India',
+          source: 'network',
+        });
+      }
+    }
+  } catch (_backendErr) {
+    // Continue to failure
+  }
+
   throw new Error('All IP geolocation providers failed');
+}
+
+/**
+ * Parses raw Nominatim address structures and extracts landmarks & POIs.
+ */
+function parseNominatimResponse(data, latitude, longitude) {
+  if (!data || !data.address) return null;
+  const addr = data.address;
+
+  const isGenericTag = (val) => {
+    if (!val || typeof val !== 'string') return true;
+    const lower = val.trim().toLowerCase();
+    return [
+      'yes',
+      'no',
+      'true',
+      'false',
+      'residential',
+      'commercial',
+      'apartments',
+      'unclassified',
+      'building',
+    ].includes(lower);
+  };
+
+  const displayParts = data.display_name ? data.display_name.split(',') : [];
+
+  let detectedPoi = '';
+  if (addr.landmark && !isGenericTag(addr.landmark)) detectedPoi = addr.landmark;
+  else if (addr.amenity && !isGenericTag(addr.amenity)) detectedPoi = addr.amenity;
+  else if (addr.building && !isGenericTag(addr.building)) detectedPoi = addr.building;
+  else if (addr.shop && !isGenericTag(addr.shop)) detectedPoi = addr.shop;
+  else if (addr.tourism && !isGenericTag(addr.tourism)) detectedPoi = addr.tourism;
+  else if (addr.historic && !isGenericTag(addr.historic)) detectedPoi = addr.historic;
+  else if (addr.leisure && !isGenericTag(addr.leisure)) detectedPoi = addr.leisure;
+  else if (addr.office && !isGenericTag(addr.office)) detectedPoi = addr.office;
+  else if (data.name && typeof data.name === 'string') {
+    const n = data.name.trim();
+    if (
+      n !== addr.road &&
+      n !== addr.street &&
+      n !== addr.city &&
+      n !== addr.town &&
+      n !== addr.village &&
+      n !== addr.state &&
+      n !== addr.suburb &&
+      n !== addr.county &&
+      !isGenericTag(n)
+    ) {
+      detectedPoi = n;
+    }
+  } else if (displayParts.length > 3) {
+    const firstPart = displayParts[0]?.trim();
+    if (
+      firstPart &&
+      firstPart !== addr.road &&
+      firstPart !== addr.street &&
+      firstPart !== addr.suburb &&
+      firstPart !== addr.neighbourhood &&
+      firstPart !== addr.city &&
+      firstPart !== addr.town &&
+      firstPart !== addr.village &&
+      firstPart !== addr.county &&
+      firstPart !== addr.state &&
+      firstPart !== addr.postcode &&
+      !isGenericTag(firstPart)
+    ) {
+      detectedPoi = firstPart;
+    }
+  }
+
+  let landmark = '';
+  if (detectedPoi && typeof detectedPoi === 'string') {
+    const cleanPoi = detectedPoi.trim();
+    if (cleanPoi) {
+      landmark = cleanPoi.match(/^(near|opp|opposite|behind|beside)\s/i)
+        ? cleanPoi
+        : `Near ${cleanPoi}`;
+    }
+  }
+
+  const streetParts = [];
+  if (addr.house_number) streetParts.push(addr.house_number);
+  if (addr.house_name) streetParts.push(addr.house_name);
+  if (detectedPoi && detectedPoi !== addr.road && detectedPoi !== addr.street) {
+    streetParts.push(detectedPoi);
+  } else if (addr.building && !isGenericTag(addr.building)) {
+    streetParts.push(addr.building);
+  }
+  if (addr.road || addr.street) streetParts.push(addr.road || addr.street);
+  if (addr.residential) streetParts.push(addr.residential);
+
+  const addressLine =
+    streetParts.length > 0
+      ? Array.from(new Set(streetParts)).join(', ')
+      : displayParts.length > 3
+        ? displayParts.slice(0, 3).join(',').trim()
+        : data.display_name || '';
+
+  const locality =
+    addr.suburb ||
+    addr.neighbourhood ||
+    addr.residential ||
+    addr.subdistrict ||
+    addr.locality ||
+    '';
+
+  const city =
+    addr.city ||
+    addr.town ||
+    addr.village ||
+    addr.municipality ||
+    addr.county ||
+    addr.state_district ||
+    '';
+
+  const district = addr.county || addr.state_district || city || '';
+  const state = addr.state || '';
+  const rawPincode = addr.postcode || '';
+  const pincode = rawPincode.replace(/\D/g, '').slice(0, 6);
+  const country = addr.country || 'India';
+
+  return createNormalizedAddress({
+    latitude,
+    longitude,
+    address: addressLine,
+    locality,
+    landmark,
+    city,
+    district,
+    state,
+    pincode,
+    country,
+    source: 'nominatim',
+  });
 }
 
 /**
@@ -218,8 +453,7 @@ async function enrichFromPincode(pincode) {
 /**
  * Reverse geocodes coordinates (latitude, longitude) into a normalized address.
  *
- * Primary provider: OpenStreetMap Nominatim (without forbidden User-Agent header).
- * Fallback provider: BigDataCloud client API.
+ * Primary provider: App backend reverse geocode endpoint with fallbacks to Nominatim, Photon, and BigDataCloud.
  *
  * @param {number} latitude
  * @param {number} longitude
@@ -263,13 +497,15 @@ export async function reverseGeocodeCoords(latitude, longitude) {
           country: d.country || 'India',
           source: 'backend-geocode',
         });
+      } else if (json && json.address) {
+        resolved = parseNominatimResponse(json, latitude, longitude);
       }
     }
   } catch (backendErr) {
     log.info('Backend reverse geocode unavailable, falling back:', backendErr.message);
   }
 
-  // 1. Browser Direct: Nominatim (if backend did not return full address)
+  // 1. OpenStreetMap Nominatim
   if (!resolved || (!resolved.city && !resolved.pincode)) {
     try {
       const controller = new AbortController();
@@ -287,137 +523,8 @@ export async function reverseGeocodeCoords(latitude, longitude) {
 
       if (res.ok) {
         const data = await res.json();
-        if (data && data.address) {
-          const addr = data.address;
-
-          const isGenericTag = (val) => {
-            if (!val || typeof val !== 'string') return true;
-            const lower = val.trim().toLowerCase();
-            return [
-              'yes',
-              'no',
-              'true',
-              'false',
-              'residential',
-              'commercial',
-              'apartments',
-              'unclassified',
-              'building',
-            ].includes(lower);
-          };
-
-          const displayParts = data.display_name ? data.display_name.split(',') : [];
-
-          // Check for recognized POI or landmark tags
-          let detectedPoi = '';
-          if (addr.landmark && !isGenericTag(addr.landmark)) detectedPoi = addr.landmark;
-          else if (addr.amenity && !isGenericTag(addr.amenity)) detectedPoi = addr.amenity;
-          else if (addr.building && !isGenericTag(addr.building)) detectedPoi = addr.building;
-          else if (addr.shop && !isGenericTag(addr.shop)) detectedPoi = addr.shop;
-          else if (addr.tourism && !isGenericTag(addr.tourism)) detectedPoi = addr.tourism;
-          else if (addr.historic && !isGenericTag(addr.historic)) detectedPoi = addr.historic;
-          else if (addr.leisure && !isGenericTag(addr.leisure)) detectedPoi = addr.leisure;
-          else if (addr.office && !isGenericTag(addr.office)) detectedPoi = addr.office;
-          else if (data.name && typeof data.name === 'string') {
-            const n = data.name.trim();
-            if (
-              n !== addr.road &&
-              n !== addr.street &&
-              n !== addr.city &&
-              n !== addr.town &&
-              n !== addr.village &&
-              n !== addr.state &&
-              n !== addr.suburb &&
-              n !== addr.county &&
-              !isGenericTag(n)
-            ) {
-              detectedPoi = n;
-            }
-          } else if (displayParts.length > 3) {
-            const firstPart = displayParts[0]?.trim();
-            if (
-              firstPart &&
-              firstPart !== addr.road &&
-              firstPart !== addr.street &&
-              firstPart !== addr.suburb &&
-              firstPart !== addr.neighbourhood &&
-              firstPart !== addr.city &&
-              firstPart !== addr.town &&
-              firstPart !== addr.village &&
-              firstPart !== addr.county &&
-              firstPart !== addr.state &&
-              firstPart !== addr.postcode &&
-              !isGenericTag(firstPart)
-            ) {
-              detectedPoi = firstPart;
-            }
-          }
-
-          let landmark = '';
-          if (detectedPoi && typeof detectedPoi === 'string') {
-            const cleanPoi = detectedPoi.trim();
-            if (cleanPoi) {
-              landmark = cleanPoi.match(/^(near|opp|opposite|behind|beside)\s/i)
-                ? cleanPoi
-                : `Near ${cleanPoi}`;
-            }
-          }
-
-          const streetParts = [];
-          if (addr.house_number) streetParts.push(addr.house_number);
-          if (addr.house_name) streetParts.push(addr.house_name);
-          if (detectedPoi && detectedPoi !== addr.road && detectedPoi !== addr.street) {
-            streetParts.push(detectedPoi);
-          } else if (addr.building && !isGenericTag(addr.building)) {
-            streetParts.push(addr.building);
-          }
-          if (addr.road || addr.street) streetParts.push(addr.road || addr.street);
-          if (addr.residential) streetParts.push(addr.residential);
-
-          const addressLine =
-            streetParts.length > 0
-              ? Array.from(new Set(streetParts)).join(', ')
-              : displayParts.length > 3
-                ? displayParts.slice(0, 3).join(',').trim()
-                : data.display_name || '';
-
-          const locality =
-            addr.suburb ||
-            addr.neighbourhood ||
-            addr.residential ||
-            addr.subdistrict ||
-            addr.locality ||
-            '';
-
-          const city =
-            addr.city ||
-            addr.town ||
-            addr.village ||
-            addr.municipality ||
-            addr.county ||
-            addr.state_district ||
-            '';
-
-          const district = addr.county || addr.state_district || city || '';
-          const state = addr.state || '';
-          const rawPincode = addr.postcode || '';
-          const pincode = rawPincode.replace(/\D/g, '').slice(0, 6);
-          const country = addr.country || 'India';
-
-          resolved = createNormalizedAddress({
-            latitude,
-            longitude,
-            address: addressLine,
-            locality,
-            landmark,
-            city,
-            district,
-            state,
-            pincode,
-            country,
-            source: 'nominatim',
-          });
-        }
+        const parsed = parseNominatimResponse(data, latitude, longitude);
+        if (parsed) resolved = parsed;
       }
     } catch (err) {
       log.warn('Nominatim reverse geocode failed, attempting fallbacks:', err.message);
@@ -553,6 +660,12 @@ export async function reverseGeocodeCoords(latitude, longitude) {
   }
 
   if (resolved) {
+    if (!resolved.address) {
+      resolved.address =
+        [resolved.locality, resolved.landmark, resolved.city].filter(Boolean).join(', ') ||
+        resolved.city ||
+        '';
+    }
     return {
       success: true,
       data: resolved,

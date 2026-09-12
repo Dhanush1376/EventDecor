@@ -43,16 +43,26 @@ const PHASES = [
   },
 ];
 
+const getBookingTimelineCardStyle = (status) => {
+  const s = (status || '').toLowerCase();
+  if (s === 'completed') {
+    return 'bg-gradient-to-r from-emerald-500/[0.035] via-emerald-500/[0.01] to-white dark:to-[#26241f] border-emerald-500/25 shadow-xs';
+  }
+  if (s === 'cancelled') {
+    return 'bg-gradient-to-r from-rose-500/[0.035] via-rose-500/[0.01] to-white dark:to-[#26241f] border-rose-500/25 shadow-xs';
+  }
+  if (s === 'confirmed' || s === 'setup_in_progress') {
+    return 'bg-gradient-to-r from-blue-500/[0.035] via-blue-500/[0.01] to-white dark:to-[#26241f] border-blue-500/25 shadow-xs';
+  }
+  return 'bg-gradient-to-r from-amber-500/[0.045] via-amber-500/[0.015] to-white dark:to-[#26241f] border-amber-500/30 shadow-xs';
+};
+
 export function BookingStatusTimeline({ booking, onUpdateStatus, setShowUnpaidModal }) {
   const currentStatus = booking.status || 'inquiry';
   const currentIdx = PHASES.findIndex((p) => p.key === currentStatus);
   const safeIdx = currentIdx === -1 ? 0 : currentIdx;
 
   const handleAdvance = (targetStatus) => {
-    if (targetStatus === 'confirmed' && booking?.pricing?.paymentStatus === 'unpaid') {
-      setShowUnpaidModal(true);
-      return;
-    }
     onUpdateStatus(targetStatus);
   };
 
@@ -60,7 +70,9 @@ export function BookingStatusTimeline({ booking, onUpdateStatus, setShowUnpaidMo
 
   return (
     <div
-      className="bg-[var(--admin-surface)] rounded-[4px] shadow-sm border border-[var(--admin-border-subtle)] overflow-hidden font-sans"
+      className={`rounded-[6px] border overflow-hidden font-sans transition-all ${getBookingTimelineCardStyle(
+        currentStatus,
+      )}`}
       style={{
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       }}

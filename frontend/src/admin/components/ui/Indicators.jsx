@@ -261,3 +261,166 @@ export function EmptyState({ icon = 'inbox', title, description, action, classNa
     </div>
   );
 }
+
+/**
+ * Unified Payment Badge for Order, Rental, Custom Order, Return, Exchange & Booking Cards.
+ * Derives badge state from orderStatus, paymentMethod, paymentStatus, settlementStatus, and razorpayPaymentId.
+ * Precedence:
+ *   Returned -> Cancelled -> Refunded -> Online Verified -> COD Settled -> COD Collected -> COD Pending -> Online Failed/Unpaid
+ */
+export function AdminPaymentBadge({
+  isPaid,
+  method,
+  status,
+  orderStatus,
+  settlementStatus,
+  razorpayPaymentId,
+  className = '',
+}) {
+  const m = (method || '').toString().toLowerCase().trim();
+  const s = (status || '').toString().toLowerCase().trim();
+  const ord = (orderStatus || '').toString().toLowerCase().trim();
+  const sett = (settlementStatus || '').toString().toLowerCase().trim();
+
+  const isCod =
+    m.includes('cod') ||
+    m.includes('cash') ||
+    m.includes('counter') ||
+    s.includes('cod') ||
+    m === 'cod';
+
+  // 1. Returned
+  const isReturned =
+    ord === 'returned' ||
+    ord === 'return_received' ||
+    ord === 'return_completed' ||
+    s === 'returned';
+
+  if (isReturned) {
+    const isRefunded = s === 'refunded' || s.includes('refund');
+    return (
+      <span
+        title={isRefunded ? 'Order returned and payment refunded' : 'Order returned by customer'}
+        className={`inline-flex items-center h-[22px] text-[9.5px] font-bold uppercase tracking-wider px-2 rounded-[4px] border whitespace-nowrap shrink-0 leading-none ${
+          isRefunded
+            ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800'
+            : 'bg-stone-100 text-stone-700 border-stone-300 dark:bg-stone-800 dark:text-stone-300 dark:border-stone-700'
+        } ${className}`}
+      >
+        {isRefunded ? 'REFUNDED' : 'RETURNED'}
+      </span>
+    );
+  }
+
+  // 2. Cancelled
+  const isCancelled = ord === 'cancelled' || ord === 'rejected' || s === 'cancelled';
+  if (isCancelled) {
+    const isRefunded = s === 'refunded' || s.includes('refund');
+    return (
+      <span
+        title={isRefunded ? 'Order cancelled and payment refunded' : 'Order was cancelled'}
+        className={`inline-flex items-center h-[22px] text-[9.5px] font-bold uppercase tracking-wider px-2 rounded-[4px] border whitespace-nowrap shrink-0 leading-none ${
+          isRefunded
+            ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800'
+            : 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800'
+        } ${className}`}
+      >
+        {isRefunded ? 'REFUNDED' : 'CANCELLED'}
+      </span>
+    );
+  }
+
+  // 3. Refunded
+  const isRefunded = ord === 'refunded' || s === 'refunded' || s.includes('refund');
+  if (isRefunded) {
+    return (
+      <span
+        title="Payment has been refunded to customer"
+        className={`inline-flex items-center h-[22px] text-[9.5px] font-bold uppercase tracking-wider px-2 rounded-[4px] border whitespace-nowrap shrink-0 leading-none bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800 ${className}`}
+      >
+        REFUNDED
+      </span>
+    );
+  }
+
+  // 4. Online Verified Paid
+  const isOnlinePaid =
+    !isCod &&
+    (Boolean(razorpayPaymentId) ||
+      s === 'paid' ||
+      s === 'completed' ||
+      s === 'captured' ||
+      (isPaid && !isCod));
+
+  if (isOnlinePaid) {
+    const isWallet = m.includes('wallet');
+    const badgeText = isWallet ? 'PAID (WALLET)' : 'PAID (ONLINE)';
+    return (
+      <span
+        title="Payment completed and verified via payment gateway"
+        className={`inline-flex items-center h-[22px] text-[9.5px] font-bold uppercase tracking-wider px-2 rounded-[4px] border whitespace-nowrap shrink-0 leading-none bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800 ${className}`}
+      >
+        {badgeText}
+      </span>
+    );
+  }
+
+  // 5. COD Settled (Merchant received the remittance)
+  const isCodSettled = isCod && (sett === 'settled' || ord === 'settled' || s === 'settled');
+
+  if (isCodSettled) {
+    return (
+      <span
+        title="Cash on Delivery payment collected and settled by merchant"
+        className={`inline-flex items-center h-[22px] text-[9.5px] font-bold uppercase tracking-wider px-2 rounded-[4px] border whitespace-nowrap shrink-0 leading-none bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800 ${className}`}
+      >
+        SETTLED (COD)
+      </span>
+    );
+  }
+
+  // 6. COD Collected (Cash collected by courier upon delivery; merchant settlement pending)
+  const isCodCollected = isCod && (s === 'cod collected' || ord === 'delivered') && !isCodSettled;
+
+  if (isCodCollected) {
+    return (
+      <span
+        title="Cash collected by courier agent — Remittance settlement pending in drawer"
+        className={`inline-flex items-center h-[22px] text-[9.5px] font-bold uppercase tracking-wider px-2 rounded-[4px] border whitespace-nowrap shrink-0 leading-none bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800 ${className}`}
+      >
+        COD COLLECTED
+      </span>
+    );
+  }
+
+  // 7. COD Pending Delivery
+  if (isCod) {
+    return (
+      <span
+        title="Cash on Delivery — payment will be collected upon delivery"
+        className={`inline-flex items-center h-[22px] text-[9.5px] font-bold uppercase tracking-wider px-2 rounded-[4px] border whitespace-nowrap shrink-0 leading-none bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800 ${className}`}
+      >
+        PENDING (COD)
+      </span>
+    );
+  }
+
+  // 8. Online Failed / Unpaid
+  const isFailed = s === 'failed';
+  return (
+    <span
+      title={
+        isFailed
+          ? 'Online payment attempt failed or was declined'
+          : 'Online payment pending verification from payment gateway (Razorpay)'
+      }
+      className={`inline-flex items-center h-[22px] text-[9.5px] font-bold uppercase tracking-wider px-2 rounded-[4px] border whitespace-nowrap shrink-0 leading-none ${
+        isFailed
+          ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800'
+          : 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800'
+      } ${className}`}
+    >
+      {isFailed ? 'FAILED (ONLINE)' : 'UNPAID (ONLINE)'}
+    </span>
+  );
+}

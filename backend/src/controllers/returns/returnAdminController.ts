@@ -8,6 +8,8 @@ import { ReturnService } from '../../services/returns/ReturnService';
 import { ReturnAnalyticsService } from '../../services/returns/ReturnAnalyticsService';
 import { FraudDetectionService } from '../../services/returns/FraudDetectionService';
 import ApiError from '../../utils/ApiError';
+import ApiResponse from '../../utils/ApiResponse';
+import { AdminAuditService } from '../../services/AdminAuditService';
 import logger from '../../config/logger';
 import mongoose from 'mongoose';
 import ReturnPolicy from '../../models/ReturnPolicy';
@@ -950,4 +952,47 @@ export const recordExchangePayment = asyncHandler(async (req: Request, res: Resp
     session.endSession();
     throw error;
   }
+});
+
+/**
+ * @desc    Soft delete completed or cancelled return request (Move to Recycle Bin)
+ * @route   DELETE /api/v1/returns/admin/:id
+ * @access  Admin
+ */
+export const softDeleteReturn = asyncHandler(async (req: Request, res: Response) => {
+  const returnId = req.params.id;
+  const returnReq = await ReturnRequest.findById(returnId);
+
+  if (!returnReq) {
+    throw new ApiError(404, 'Return request not found');
+  }
+
+  const status = (returnReq.status || '').toLowerCase();
+  const terminalStatuses = ['completed', 'cancelled', 'rejected', 'refund_completed'];
+
+  if (!terminalStatuses.includes(status)) {
+    throw new ApiError(
+      400,
+      'Only completed, cancelled, rejected, or refunded returns can be moved to the recycle bin',
+    );
+  }
+
+  await (returnReq as any).softDelete(req.user, 'Deleted by admin');
+
+  if (req.user && req.user.role !== 'user') {
+    await AdminAuditService.logAction({
+      actorId: req.user.id,
+      actorEmail: req.user.email || 'unknown',
+      actorRole: req.user.role,
+      method: req.method,
+      path: req.originalUrl,
+      entityType: 'ReturnRequest',
+      entityId: returnReq.id,
+      action: 'soft_delete',
+      previousValue: null,
+      newValue: { status: 'deleted' },
+    });
+  }
+
+  res.status(200).json(new ApiResponse(true, 'Return request moved to recycle bin successfully'));
 });

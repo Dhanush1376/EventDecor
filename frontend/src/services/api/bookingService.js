@@ -77,4 +77,9 @@ export const bookingService = {
       throw error;
     }
   },
+
+  adminSoftDelete: async (id) => {
+    const response = await api.delete(`/event-bookings/admin/${id}`);
+    return response.data;
+  },
 };

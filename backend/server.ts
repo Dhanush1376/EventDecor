@@ -2,6 +2,12 @@ import './src/config/loadEnv'; // Load & validate environment variables before a
 import dns from 'dns';
 
 dns.setDefaultResultOrder('ipv4first');
+try {
+  // Use public DNS resolvers to prevent querySrv ECONNREFUSED when local router DNS drops SRV packets
+  dns.setServers(['8.8.8.8', '1.1.1.1', '8.8.4.4']);
+} catch {
+  // Ignore in environments where setting DNS servers is not permitted
+}
 
 import logger from './src/config/logger';
 

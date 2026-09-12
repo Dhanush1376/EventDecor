@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import os from 'os';
+import dns from 'dns';
 import logger from './logger';
 import { DestructionGuard } from '../utils/DestructionGuard';
 
@@ -87,12 +88,16 @@ class DatabaseManager {
    * Override at runtime with MONGO_POOL_SIZE / MONGO_MIN_POOL_SIZE env vars.
    */
   private calculatePoolLimits(): { maxPoolSize: number; minPoolSize: number } {
-    const envMax = process.env.MONGO_POOL_SIZE ? Number(process.env.MONGO_POOL_SIZE) : null;
+    const envMax = process.env.MONGO_POOL_SIZE
+      ? Number(process.env.MONGO_POOL_SIZE)
+      : process.env.NODE_ENV === 'development'
+        ? 50
+        : null;
     const envMin = process.env.MONGO_MIN_POOL_SIZE ? Number(process.env.MONGO_MIN_POOL_SIZE) : null;
 
     if (envMax !== null) {
       const max = envMax;
-      const min = envMin !== null ? envMin : Math.max(2, Math.floor(max / 5));
+      const min = envMin !== null ? envMin : Math.max(5, Math.floor(max / 5));
       return { maxPoolSize: max, minPoolSize: min };
     }
 
@@ -109,11 +114,10 @@ class DatabaseManager {
       }
     }
 
-    // Set max connections budget across all instances to a conservative value (40)
-    // Override with MONGO_POOL_SIZE env var if production metrics indicate higher demand
-    const TOTAL_BUDGET = 40;
-    const calculatedMax = Math.max(10, Math.floor(TOTAL_BUDGET / instances));
-    const calculatedMin = Math.max(2, Math.floor(calculatedMax / 8));
+    // Set max connections budget across all instances (minimum 50 in dev)
+    const TOTAL_BUDGET = process.env.NODE_ENV === 'development' ? 50 : 40;
+    const calculatedMax = Math.max(15, Math.floor(TOTAL_BUDGET / instances));
+    const calculatedMin = Math.max(2, Math.floor(calculatedMax / 5));
 
     logger.info(
       `[DATABASE] Dynamic connection pool: ${instances} instances detected. Configured maxPoolSize=${calculatedMax}, minPoolSize=${calculatedMin}`,
@@ -273,7 +277,7 @@ class DatabaseManager {
       socketTimeoutMS: 45000,
       heartbeatFrequencyMS: 10000,
       maxIdleTimeMS: 270000, // 4.5 minutes (safely below 5m NAT drop)
-      waitQueueTimeoutMS: 10000,
+      waitQueueTimeoutMS: 30000, // 30 seconds to prevent checkout timeout during startup
       bufferCommands: true, // Enable buffering to ride over transient connection drops
       compressors: ['zstd', 'snappy'],
       retryReads: true,
@@ -334,6 +338,20 @@ class DatabaseManager {
         return conn;
       } catch (err: any) {
         logger.error(`[DATABASE] MongoDB connection attempt ${attempt} failed: ${err.message}`);
+
+        if (
+          err.message &&
+          (err.message.includes('querySrv') || err.message.includes('ENOTFOUND'))
+        ) {
+          try {
+            dns.setServers(['8.8.8.8', '1.1.1.1', '8.8.4.4']);
+            logger.info(
+              '[DATABASE] Configured public DNS servers (8.8.8.8/1.1.1.1) to resolve Atlas cluster',
+            );
+          } catch {
+            // Ignore if setting DNS servers is not supported
+          }
+        }
 
         if (attempt === maxRetries) {
           this.cachedConnectionPromise = null; // Reset cached promise on final failure to allow retry triggers later

@@ -43,9 +43,12 @@ export function OrderHeader({ order, navigate, onPrintInvoice, onViewInvoice }) 
           </div>
           {/* Status badge in top-right for mobile only */}
           <div className="sm:hidden shrink-0 flex items-center gap-1.5">
-            <StatusBadge
-              status={order.payment ? order.payment.replace('_', '') : order.status || 'pending'}
-            />
+            <StatusBadge status={order.status || order.orderStatus || 'Pending'} />
+            {order.payment && (
+              <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-[4px] border bg-stone-100 text-stone-700 border-stone-200 dark:bg-stone-800 dark:text-stone-300 dark:border-stone-700">
+                {order.payment.replace('_', ' ')}
+              </span>
+            )}
           </div>
         </div>
 
@@ -87,9 +90,14 @@ export function OrderHeader({ order, navigate, onPrintInvoice, onViewInvoice }) 
       <div className="flex flex-col sm:items-end w-full sm:w-auto mt-2 sm:mt-0 shrink-0 gap-1.5 sm:gap-2">
         {/* On laptop: Status Badge on top, Date chip directly below it */}
         <div className="hidden sm:flex flex-col items-end gap-1">
-          <StatusBadge
-            status={order.payment ? order.payment.replace('_', '') : order.status || 'pending'}
-          />
+          <div className="flex items-center gap-1.5">
+            <StatusBadge status={order.status || order.orderStatus || 'Pending'} />
+            {order.payment && (
+              <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-[4px] border bg-stone-100 text-stone-700 border-stone-200 dark:bg-stone-800 dark:text-stone-300 dark:border-stone-700">
+                {order.payment.replace('_', ' ')}
+              </span>
+            )}
+          </div>
           <span className="text-[11px] font-medium text-[var(--admin-text-secondary)] bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] px-2.5 py-0.5 rounded-[4px] shadow-2xs whitespace-nowrap flex items-center gap-1">
             <span className="material-symbols-outlined text-[12px] text-[var(--admin-text-tertiary)] shrink-0">
               schedule

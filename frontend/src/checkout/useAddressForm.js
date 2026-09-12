@@ -27,6 +27,8 @@ export function useAddressForm({ setNewAddress, setIsAddingNewAddress, newAddres
 
       if (res.success && res.data) {
         const d = res.data;
+        const resolvedAddressLine =
+          d.address || [d.locality, d.landmark, d.city].filter(Boolean).join(', ');
 
         setNewAddress((prev) => ({
           ...prev,
@@ -36,7 +38,7 @@ export function useAddressForm({ setNewAddress, setIsAddingNewAddress, newAddres
           city: d.city || prev.city,
           state: d.state || prev.state,
           locality: d.locality || prev.locality,
-          address: d.address || prev.address,
+          address: resolvedAddressLine || prev.address,
           landmark: d.landmark || prev.landmark,
         }));
 
@@ -68,6 +70,9 @@ export function useAddressForm({ setNewAddress, setIsAddingNewAddress, newAddres
           setMapPosition({ lat: d.latitude, lng: d.longitude });
         }
 
+        const resolvedAddressLine =
+          d.address || [d.locality, d.landmark, d.city].filter(Boolean).join(', ');
+
         setNewAddress((prev) => ({
           ...prev,
           latitude: d.latitude ?? prev.latitude,
@@ -76,11 +81,13 @@ export function useAddressForm({ setNewAddress, setIsAddingNewAddress, newAddres
           city: d.city || prev.city,
           state: d.state || prev.state,
           locality: d.locality || prev.locality,
-          address: d.address || prev.address,
+          address: resolvedAddressLine || prev.address,
           landmark: d.landmark || prev.landmark,
         }));
 
-        const hasFilledFields = Boolean(d.pincode || d.city || d.state || d.locality || d.address);
+        const hasFilledFields = Boolean(
+          d.pincode || d.city || d.state || d.locality || resolvedAddressLine,
+        );
         if (hasFilledFields) {
           const successMsg =
             res.source === 'gps'

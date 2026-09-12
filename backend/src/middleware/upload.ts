@@ -42,7 +42,7 @@ const multerProducts = multer({
 });
 const multerGallery = multer({
   storage: memoryStorage,
-  limits: { fileSize: 10 * 1024 * 1024 },
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB limit for gallery videos and images
   fileFilter: createFileFilter(true),
 });
 const multerCMS = multer({

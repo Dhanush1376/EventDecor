@@ -120,4 +120,10 @@ export const customOrderService = {
     const response = await api.patch(`/custom-orders/${id}/archive`, { archived });
     return response.data;
   },
+
+  // ─── Admin: Soft Delete (Move to Recycle Bin) ───
+  adminSoftDelete: async (id) => {
+    const response = await api.delete(`/custom-orders/${id}`);
+    return response.data;
+  },
 };

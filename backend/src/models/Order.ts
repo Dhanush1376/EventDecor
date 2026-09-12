@@ -51,6 +51,8 @@ const OrderSchema: Schema = new Schema(
         'COD Collected',
         'refunded',
         'partially_refunded',
+        'returned',
+        'cancelled',
         'chargeback',
         'disputed',
         'dispute_open',
@@ -59,6 +61,8 @@ const OrderSchema: Schema = new Schema(
       ],
       default: 'pending',
     },
+    isAbandonedCheckout: { type: Boolean, default: false, index: true },
+    checkoutStatus: { type: String },
     orderStatus: {
       type: String,
       enum: [

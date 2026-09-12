@@ -19,6 +19,7 @@ import {
   adminCancelRental,
   getDueReturns,
   recordCodPayment,
+  softDeleteRental,
 } from '../../controllers/rentals/rentalController';
 import { requireAuth, requireAdmin } from '../../middleware/authMiddleware';
 import { validate } from '../../middleware/validateMiddleware';
@@ -81,5 +82,6 @@ router.get('/admin/analytics', requireAuth, requireAdmin, getRentalAnalytics);
 router.post('/admin/:id/cancel', requireAuth, requireAdmin, adminCancelRental);
 router.get('/admin/due-returns', requireAuth, requireAdmin, getDueReturns);
 router.post('/admin/:id/record-payment', requireAuth, requireAdmin, recordCodPayment);
+router.delete('/admin/:id', requireAuth, requireAdmin, softDeleteRental);
 
 export default router;

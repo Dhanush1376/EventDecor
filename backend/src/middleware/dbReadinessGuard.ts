@@ -11,7 +11,12 @@ export const dbReadinessGuard = async (req: Request, res: Response, next: NextFu
     return next();
   }
 
-  if (skipEndpoints.includes(path) || path.endsWith('/health') || path.endsWith('/readiness')) {
+  if (
+    skipEndpoints.includes(path) ||
+    path.endsWith('/health') ||
+    path.endsWith('/readiness') ||
+    path.startsWith('/api/v1/location')
+  ) {
     return next();
   }
 

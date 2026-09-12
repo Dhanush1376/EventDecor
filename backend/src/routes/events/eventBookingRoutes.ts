@@ -17,6 +17,7 @@ import {
   initializeMilestonePayment,
   adminRecordPayment,
   adminDeletePayment,
+  adminSoftDeleteBooking,
 } from '../../controllers/events/eventBookingController';
 import { requireAuth, requireAdmin } from '../../middleware/authMiddleware';
 import {
@@ -96,6 +97,15 @@ router.delete(
   ...eventBookingIdParam, // valid ID param
   validate,
   adminDeletePayment,
+);
+
+router.delete(
+  '/admin/:id',
+  requireAuth,
+  requireAdmin,
+  ...eventBookingIdParam,
+  validate,
+  adminSoftDeleteBooking,
 );
 
 // Client Endpoints

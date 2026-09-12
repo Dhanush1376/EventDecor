@@ -11,6 +11,7 @@ import { EXTERNAL_URLS } from '../../../config/constants';
 import { WhatsAppIcon } from '../../../components/ui/WhatsAppIcon';
 import { formatCurrency } from '../AdminUIKit';
 import AdminCustomerProfileModal from '../AdminCustomerProfileModal';
+import { useConfirm } from '../../../context/ConfirmProvider';
 
 const ALL_STATUSES = [
   'Pending',
@@ -24,11 +25,13 @@ const ALL_STATUSES = [
 ];
 
 export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, refetchOrders, isMobile }) {
+  const confirm = useConfirm();
   const chatEndRef = useRef(null);
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'quote' | 'chat'
   const [adminMessageText, setAdminMessageText] = useState('');
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [updatingId, setUpdatingId] = useState(null);
+  const [showCustomerModal, setShowCustomerModal] = useState(false);
 
   // Scroll lock when drawer is active
   useEffect(() => {
@@ -188,12 +191,34 @@ export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, refetchOr
   const orderCode =
     selectedOrder.customOrderNumber || `#${selectedOrder._id.slice(-6).toUpperCase()}`;
 
+  const isTerminal = ['completed', 'cancelled', 'delivered'].includes(
+    (selectedOrder.status || '').toLowerCase(),
+  );
+
+  const handleDeleteOrder = async () => {
+    const confirmed = await confirm({
+      title: 'Move Custom Order to Recycle Bin?',
+      message: `Are you sure you want to move custom order ${orderCode} to the recycle bin? You can restore it later from the Recycle Bin.`,
+      confirmLabel: 'Move to Recycle Bin',
+      isDestructive: true,
+    });
+    if (!confirmed) return;
+
+    try {
+      await customOrderService.adminSoftDelete(selectedOrder._id);
+      toast.success('Custom order moved to recycle bin');
+      refetchOrders?.();
+      setSelectedOrder(null);
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to delete custom order'));
+    }
+  };
+
   const cleanPhone = (selectedOrder.customerPhone || selectedOrder.phone || '').replace(
     /[^0-9]/g,
     '',
   );
 
-  const [showCustomerModal, setShowCustomerModal] = useState(false);
   const customerId =
     selectedOrder.userId?._id ||
     selectedOrder.userId?.id ||
@@ -348,6 +373,15 @@ export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, refetchOr
             >
               <span className="material-symbols-outlined text-[17px]">archive</span>
             </button>
+            {isTerminal && (
+              <button
+                onClick={handleDeleteOrder}
+                className="admin-btn-icon text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 !rounded-[4px] w-8 h-8"
+                title="Move to Recycle Bin"
+              >
+                <span className="material-symbols-outlined text-[18px]">delete_outline</span>
+              </button>
+            )}
             <button
               onClick={() => setSelectedOrder(null)}
               className="admin-btn-icon !rounded-[4px] w-8 h-8"
@@ -780,6 +814,29 @@ export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, refetchOr
                   </div>
                 )}
               </div>
+
+              {/* Terminal Actions Card */}
+              {isTerminal && (
+                <div className="admin-card !rounded-[4px] p-4 bg-rose-500/[0.03] border border-rose-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] font-bold text-rose-700 dark:text-rose-400">
+                      Order Concluded ({selectedOrder.status})
+                    </p>
+                    <p className="text-[10.5px] text-[var(--admin-text-secondary)] mt-0.5">
+                      This custom order is in a terminal state. You can safely move it to the
+                      Recycle Bin.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleDeleteOrder}
+                    className="px-3.5 h-8 rounded-[4px] bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 shrink-0 transition-colors shadow-xs cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-[15px]">delete_outline</span>
+                    Move to Recycle Bin
+                  </button>
+                </div>
+              )}
             </>
           )}
 

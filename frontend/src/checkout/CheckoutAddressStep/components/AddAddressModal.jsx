@@ -4,7 +4,8 @@ import { m as motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useScrollLock } from '../../../hooks/useScrollLock';
 import { sanitizePhoneNumber } from '../../../utils/phoneUtils';
-import { detectAndResolveAddress } from '../../../utils/locationService';
+import { detectAndResolveAddress, searchLocations } from '../../../utils/locationService';
+import { LocationMarker } from './LocationMarker';
 
 export function AddAddressModal({
   isAddingNewAddress,
@@ -24,8 +25,25 @@ export function AddAddressModal({
   useScrollLock(isAddingNewAddress);
 
   const formContainerRef = useRef(null);
+  const searchContainerRef = useRef(null);
+  const searchDebounceRef = useRef(null);
   const [maxModalHeight, setMaxModalHeight] = useState('90vh');
   const [isInternalLocating, setIsInternalLocating] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [locationSuggestions, setLocationSuggestions] = useState([]);
+  const [isSearchingLocation, setIsSearchingLocation] = useState(false);
+  const [showMap, setShowMap] = useState(false);
+
+  // Close search suggestions on click outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target)) {
+        setLocationSuggestions([]);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Dynamic visualViewport tracker for mobile virtual keyboard resizing
   useEffect(() => {
@@ -80,10 +98,69 @@ export function AddAddressModal({
     }
   };
 
+  const handleLocationSearchChange = (e) => {
+    const q = e.target.value;
+    setSearchQuery(q);
+
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+
+    if (!q || q.trim().length < 2) {
+      setLocationSuggestions([]);
+      setIsSearchingLocation(false);
+      return;
+    }
+
+    setIsSearchingLocation(true);
+    searchDebounceRef.current = setTimeout(async () => {
+      try {
+        const results = await searchLocations(q.trim());
+        setLocationSuggestions(results || []);
+      } catch {
+        setLocationSuggestions([]);
+      } finally {
+        setIsSearchingLocation(false);
+      }
+    }, 350);
+  };
+
+  const handleSelectSuggestion = (item) => {
+    const addr = item.address || {};
+    const lat = item.lat;
+    const lng = item.lon;
+
+    if (lat && lng && typeof setMapPosition === 'function') {
+      setMapPosition({ lat, lng });
+      setShowMap(true);
+    }
+
+    const street = addr.road || addr.street || item.name || '';
+    const locality = addr.locality || addr.district || addr.suburb || item.name || '';
+    const city = addr.city || addr.town || addr.village || '';
+    const state = addr.state || '';
+    const pincode = (addr.pincode || '').replace(/\D/g, '').slice(0, 6);
+    const fullAddress = item.displayName || [street, locality, city].filter(Boolean).join(', ');
+
+    setNewAddress((prev) => ({
+      ...prev,
+      latitude: lat ?? prev.latitude,
+      longitude: lng ?? prev.longitude,
+      pincode: pincode || prev.pincode,
+      city: city || prev.city,
+      state: state || prev.state,
+      locality: locality || prev.locality,
+      address: fullAddress || prev.address,
+    }));
+
+    setSearchQuery(item.name || item.displayName || '');
+    setLocationSuggestions([]);
+    toast.success(`Location selected: ${item.name || 'Auto-filled'}!`, { id: 'search-loc' });
+  };
+
   const handleLocationClick = async (e) => {
     e.preventDefault();
     if (typeof handleAutofillLocation === 'function') {
       await handleAutofillLocation();
+      setShowMap(true);
       return;
     }
 
@@ -95,8 +172,10 @@ export function AddAddressModal({
         const d = res.data;
         if (d.latitude && d.longitude && typeof setMapPosition === 'function') {
           setMapPosition({ lat: d.latitude, lng: d.longitude });
+          setShowMap(true);
         }
-        const hasFilledFields = Boolean(d.pincode || d.city || d.state || d.locality || d.address);
+        const resolvedAddressLine =
+          d.address || [d.locality, d.landmark, d.city].filter(Boolean).join(', ');
         setNewAddress((prev) => ({
           ...prev,
           latitude: d.latitude ?? prev.latitude,
@@ -105,9 +184,12 @@ export function AddAddressModal({
           city: d.city || prev.city,
           state: d.state || prev.state,
           locality: d.locality || prev.locality,
-          address: d.address || prev.address,
+          address: resolvedAddressLine || prev.address,
           landmark: d.landmark || prev.landmark,
         }));
+        const hasFilledFields = Boolean(
+          d.pincode || d.city || d.state || d.locality || resolvedAddressLine,
+        );
         if (hasFilledFields) {
           const msg =
             res.source === 'gps'
@@ -258,23 +340,122 @@ export function AddAddressModal({
                   </div>
 
                   <div className="py-6 border-b border-outline-variant/20">
-                    <div className="flex items-center justify-between mb-5">
+                    <div className="flex items-center justify-between mb-4">
                       <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5 m-0">
                         <span className="material-symbols-outlined text-[12px]">home</span>
                         Address Details
                       </h2>
-                      <button
-                        type="button"
-                        disabled={isLocating}
-                        onClick={handleLocationClick}
-                        className="inline-flex items-center gap-1 text-[8px] text-white font-bold uppercase tracking-widest bg-[#1a1a1a] hover:bg-black px-2.5 py-1.5 rounded-full cursor-pointer transition-all shadow-sm disabled:opacity-50"
-                      >
-                        <span className="material-symbols-outlined text-[10px] font-bold">
-                          my_location
-                        </span>
-                        <span>{isLocating ? 'Locating...' : 'Use Current Location'}</span>
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setShowMap((prev) => !prev)}
+                          className="inline-flex items-center gap-1 text-[8px] text-on-surface font-bold uppercase tracking-widest bg-surface-container-high hover:bg-surface-container-highest px-2.5 py-1.5 rounded-full cursor-pointer transition-all border border-outline-variant/30"
+                        >
+                          <span className="material-symbols-outlined text-[11px]">map</span>
+                          <span>{showMap ? 'Hide Map' : 'Map Pin'}</span>
+                        </button>
+                        <button
+                          type="button"
+                          disabled={isLocating}
+                          onClick={handleLocationClick}
+                          className="inline-flex items-center gap-1 text-[8px] text-white font-bold uppercase tracking-widest bg-[#1a1a1a] hover:bg-black px-2.5 py-1.5 rounded-full cursor-pointer transition-all shadow-sm disabled:opacity-50"
+                        >
+                          <span
+                            className={`material-symbols-outlined text-[10px] font-bold ${
+                              isLocating ? 'animate-spin' : ''
+                            }`}
+                          >
+                            {isLocating ? 'progress_activity' : 'my_location'}
+                          </span>
+                          <span>{isLocating ? 'Detecting...' : 'Use Current Location'}</span>
+                        </button>
+                      </div>
                     </div>
+
+                    {/* Auto-Select Location Search Bar */}
+                    <div ref={searchContainerRef} className="relative mb-4">
+                      <label className="form-label text-[10px] mb-1.5 flex items-center justify-between">
+                        <span className="flex items-center gap-1">
+                          <span className="material-symbols-outlined text-xs text-primary">
+                            search
+                          </span>
+                          Auto-Select Location (Area / City / Landmark)
+                        </span>
+                        {isSearchingLocation && (
+                          <span className="text-[9px] text-primary animate-pulse font-medium">
+                            Searching places...
+                          </span>
+                        )}
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={searchQuery}
+                          onChange={handleLocationSearchChange}
+                          placeholder="Search area, landmark, or city to auto-fill..."
+                          className="form-field pr-8 text-[12px]"
+                        />
+                        {searchQuery ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSearchQuery('');
+                              setLocationSuggestions([]);
+                            }}
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant/60 hover:text-on-surface cursor-pointer"
+                          >
+                            <span className="material-symbols-outlined text-[14px]">close</span>
+                          </button>
+                        ) : (
+                          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant/40 material-symbols-outlined text-[16px] pointer-events-none">
+                            travel_explore
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Dropdown suggestions */}
+                      {locationSuggestions.length > 0 && (
+                        <div className="absolute left-0 right-0 top-full mt-1.5 bg-surface-bright rounded-xl shadow-xl border border-outline-variant/30 overflow-hidden z-30 max-h-56 overflow-y-auto">
+                          {locationSuggestions.map((item, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => handleSelectSuggestion(item)}
+                              className="w-full text-left px-3.5 py-2.5 hover:bg-surface-container-low border-b border-outline-variant/10 last:border-b-0 flex items-start gap-2.5 transition-colors cursor-pointer"
+                            >
+                              <span className="material-symbols-outlined text-[16px] text-primary mt-0.5 shrink-0">
+                                location_on
+                              </span>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[11px] font-bold text-on-surface truncate">
+                                  {item.name || 'Selected Location'}
+                                </p>
+                                <p className="text-[10px] text-on-surface-variant truncate">
+                                  {item.displayName}
+                                </p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Interactive Leaflet Map for fine-tuning location pin */}
+                    {(showMap || (newAddress.latitude && newAddress.longitude)) && (
+                      <div className="mb-4">
+                        <div className="w-full h-44 bg-surface-container-low rounded-xl overflow-hidden border border-outline-variant/30 relative shadow-inner">
+                          <LocationMarker
+                            position={mapPosition}
+                            setPosition={setMapPosition}
+                            fetchAddressFromCoords={fetchAddressFromCoords}
+                          />
+                        </div>
+                        <p className="text-[9px] text-on-surface-variant/70 mt-1 flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[11px]">info</span>
+                          Drag marker or tap on map to auto-update address and coordinates.
+                        </p>
+                      </div>
+                    )}
 
                     {newAddress.latitude && newAddress.longitude && (
                       <motion.div
@@ -284,8 +465,8 @@ export function AddAddressModal({
                       >
                         <span className="material-symbols-outlined text-xs">share_location</span>
                         <span>
-                          GPS Locked: {newAddress.latitude.toFixed(6)},{' '}
-                          {newAddress.longitude.toFixed(6)}
+                          GPS Locked: {Number(newAddress.latitude).toFixed(5)},{' '}
+                          {Number(newAddress.longitude).toFixed(5)}
                         </span>
                       </motion.div>
                     )}

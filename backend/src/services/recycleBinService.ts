@@ -32,6 +32,8 @@ const ENTITY_MODEL_MAP: Record<string, string> = {
   EmailCampaign: 'EmailCampaign',
   ServiceArea: 'ServiceArea',
   Location: 'Location',
+  RentalOrder: 'RentalOrder',
+  EventJob: 'EventJob',
 };
 
 // Entity type → display name mapping
@@ -46,6 +48,10 @@ const ENTITY_DISPLAY_NAMES: Record<string, string> = {
   User: 'Customer',
   ShowcaseCollection: 'Showcase Collection',
   CustomOrder: 'Custom Order',
+  RentalOrder: 'Rental Order',
+  ReturnRequest: 'Return Request',
+  ExchangeRequest: 'Exchange Request',
+  EventJob: 'Event Booking',
   Coupon: 'Coupon',
   Blog: 'Blog Post',
   ContentSection: 'Content Section',
@@ -104,6 +110,24 @@ interface CleanupResult {
 }
 
 export class RecycleBinService {
+  public static resolveModel(entityType: string): mongoose.Model<any> | null {
+    const modelName = ENTITY_MODEL_MAP[entityType];
+    if (!modelName) return null;
+    let Model = mongoose.models[modelName];
+    if (!Model) {
+      try {
+        Model = require(`../models/${modelName}`).default;
+      } catch (_err) {
+        try {
+          Model = require(`../domains/event_operations/models/${modelName}`).default;
+        } catch (_err2) {
+          // ignore
+        }
+      }
+    }
+    return Model || null;
+  }
+
   // ─────────────────────────────────────────────────────────────
   //  LIST / SEARCH / FILTER
   // ─────────────────────────────────────────────────────────────
@@ -347,12 +371,10 @@ export class RecycleBinService {
       return { success: false, conflicts: [] };
     }
 
-    const modelName = ENTITY_MODEL_MAP[entry.entityType];
-    if (!modelName || !mongoose.models[modelName]) {
+    const Model = this.resolveModel(entry.entityType);
+    if (!Model) {
       return { success: true };
     }
-
-    const Model = mongoose.models[modelName];
     const uniqueFieldsForType = UNIQUE_FIELDS[entry.entityType] || [];
     const conflicts: RestoreConflict[] = [];
 
@@ -436,16 +458,7 @@ export class RecycleBinService {
       return { success: false };
     }
 
-    const modelName = ENTITY_MODEL_MAP[entry.entityType];
-    let Model = mongoose.models[modelName];
-    if (!Model && modelName) {
-      try {
-        Model = require(`../models/${modelName}`).default;
-      } catch (_err) {
-        // ignore
-      }
-    }
-
+    const Model = this.resolveModel(entry.entityType);
     if (!Model) {
       return { success: false };
     }
@@ -608,15 +621,7 @@ export class RecycleBinService {
     try {
       session.startTransaction();
 
-      const modelName = ENTITY_MODEL_MAP[entry.entityType];
-      let Model = mongoose.models[modelName];
-      if (!Model && modelName) {
-        try {
-          Model = require(`../models/${modelName}`).default;
-        } catch (_err) {
-          // ignore
-        }
-      }
+      const Model = this.resolveModel(entry.entityType);
 
       if (Model) {
         const deleteResult = await Model.deleteOne({ _id: entry.entityId }, { session });

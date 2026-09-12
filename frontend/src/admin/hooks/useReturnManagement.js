@@ -400,6 +400,30 @@ export const useReturnManagement = () => {
     }
   };
 
+  const deleteReturn = async (id) => {
+    setLoading(true);
+    try {
+      const response = await returnService.deleteReturn(id);
+      toast.success('Return moved to recycle bin');
+      setLoading(false);
+      return response.data;
+    } catch (err) {
+      handleError(err);
+    }
+  };
+
+  const deleteExchange = async (id) => {
+    setLoading(true);
+    try {
+      const response = await returnService.deleteExchange(id);
+      toast.success('Exchange moved to recycle bin');
+      setLoading(false);
+      return response.data;
+    } catch (err) {
+      handleError(err);
+    }
+  };
+
   const fetchFraudMetrics = useCallback(async () => {
     setLoading(true);
     try {
@@ -512,6 +536,8 @@ export const useReturnManagement = () => {
     saveReturnSettings,
     schedulePickup,
     completeReturn,
+    deleteReturn,
+    deleteExchange,
     getOrderReturnSummary,
     submitInspection,
   };

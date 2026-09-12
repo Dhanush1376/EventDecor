@@ -20,6 +20,21 @@ export class OrderQueryService {
       filter.user = query.user;
     }
 
+    // Exclude abandoned online checkout intents from operational orders unless explicitly requested
+    if (!query.includeAbandoned && !query.paymentStatus) {
+      filter.$nor = [
+        { isAbandonedCheckout: true },
+        {
+          paymentMethod: 'razorpay',
+          $or: [
+            { razorpayPaymentId: { $in: [null, '', undefined] } },
+            { razorpayPaymentId: { $exists: false } },
+          ],
+          paymentStatus: { $in: ['pending', 'failed'] },
+        },
+      ];
+    }
+
     const [orders, total] = await Promise.all([
       Order.find(filter)
         .populate('user', 'name email phone')

@@ -56,6 +56,22 @@ export const verifyFileSignature = (buffer: Buffer, mimetype: string): boolean =
     return true; // Weak fallback
   }
 
+  // Handle video containers: MP4, QuickTime / MOV, and WebM
+  if (mimetype === 'video/mp4' || mimetype === 'video/quicktime') {
+    if (buffer.length < 12) return false;
+    const ftyp = buffer.toString('hex', 4, 8).toLowerCase();
+    if (ftyp === '66747970') {
+      return true; // Valid MP4 / MOV / QuickTime container with 'ftyp' box
+    }
+    const atom = buffer.toString('ascii', 4, 8).toLowerCase();
+    if (['moov', 'mdat', 'wide', 'free'].includes(atom)) return true;
+    return false;
+  }
+
+  if (mimetype === 'video/webm') {
+    return buffer.toString('hex', 0, 4).toLowerCase() === '1a45dfa3';
+  }
+
   // Handle formats like WEBP and MP4/AVIF that have offsets or varying lengths for the magic number
   if (mimetype === 'image/webp') {
     const isRiff = hexString.startsWith('52494646');
@@ -88,8 +104,10 @@ export const validateFile = (file: Express.Multer.File, module: string = 'defaul
     throw new ApiError(415, `Unsupported media format: ${file.mimetype}`);
   }
 
-  // 3. Size check based on module context
-  const limit = UPLOAD_LIMITS[module as keyof typeof UPLOAD_LIMITS] || UPLOAD_LIMITS.default;
+  // 3. Size check based on media type and module context (Videos get 100MB limit)
+  const limit = isVideo
+    ? UPLOAD_LIMITS.videos
+    : UPLOAD_LIMITS[module as keyof typeof UPLOAD_LIMITS] || UPLOAD_LIMITS.default;
   if (file.size > limit) {
     throw new ApiError(
       413,

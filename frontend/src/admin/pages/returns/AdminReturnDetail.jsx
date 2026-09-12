@@ -116,6 +116,23 @@ const mapStatusToStep = (status) => {
   return 'Submitted';
 };
 
+const getReturnTimelineCardStyle = (currentStepName, isFailed) => {
+  if (isFailed) {
+    return 'bg-gradient-to-r from-rose-500/[0.035] via-rose-500/[0.01] to-white dark:to-[#26241f] border-rose-500/25 shadow-xs';
+  }
+  if (currentStepName === 'Completed') {
+    return 'bg-gradient-to-r from-emerald-500/[0.035] via-emerald-500/[0.01] to-white dark:to-[#26241f] border-emerald-500/25 shadow-xs';
+  }
+  if (
+    currentStepName === 'Approved' ||
+    currentStepName === 'Item Picked Up' ||
+    currentStepName === 'QC Passed'
+  ) {
+    return 'bg-gradient-to-r from-blue-500/[0.035] via-blue-500/[0.01] to-white dark:to-[#26241f] border-blue-500/25 shadow-xs';
+  }
+  return 'bg-gradient-to-r from-amber-500/[0.045] via-amber-500/[0.015] to-white dark:to-[#26241f] border-amber-500/30 shadow-xs';
+};
+
 const AdminReturnDetail = () => {
   const { id } = useParams();
   const location = useLocation();
@@ -131,6 +148,7 @@ const AdminReturnDetail = () => {
     settleRefund,
     submitInspection,
     addInternalNote,
+    deleteReturn,
     loading,
     error,
   } = useReturnManagement();
@@ -168,7 +186,29 @@ const AdminReturnDetail = () => {
   const [invoiceOrder, setInvoiceOrder] = useState(null);
   const [loadingInvoice, setLoadingInvoice] = useState(false);
   const [showCustomerModal, setShowCustomerModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const confirm = useConfirm();
+
+  const handleDeleteReturn = async () => {
+    const confirmed = await confirm({
+      title: 'Move Return to Recycle Bin',
+      message: `Are you sure you want to delete return request #${request.returnId || request._id}? You can restore it anytime from the Recycle Bin.`,
+      confirmText: 'Move to Recycle Bin',
+      cancelText: 'Cancel',
+      variant: 'danger',
+    });
+    if (!confirmed) return;
+
+    try {
+      setIsDeleting(true);
+      await deleteReturn(id);
+      navigate('/admin/returns');
+    } catch (_err) {
+      // Handled by hook
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const handleInspectionChange = (itemIndex, field, value) => {
     setInspectionState((prev) => ({
@@ -654,6 +694,26 @@ const AdminReturnDetail = () => {
                 <span>WhatsApp</span>
               </a>
             )}
+            {['completed', 'cancelled', 'rejected', 'refund_completed'].includes(
+              (request.status || '').toLowerCase(),
+            ) && (
+              <button
+                type="button"
+                onClick={handleDeleteReturn}
+                disabled={isDeleting}
+                className="admin-btn flex-1 sm:flex-none !h-9 sm:!h-10 !py-0 px-3 sm:px-4 !rounded-[4px] text-[12px] sm:text-[13px] font-bold shadow-sm min-w-max cursor-pointer inline-flex items-center justify-center gap-1.5 bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 hover:bg-red-100 transition-colors box-border disabled:opacity-50"
+                title="Move to Recycle Bin"
+              >
+                {isDeleting ? (
+                  <span className="w-3.5 h-3.5 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <span className="material-symbols-outlined text-[17px] sm:text-[18px] leading-none">
+                    delete_outline
+                  </span>
+                )}
+                <span>Delete</span>
+              </button>
+            )}
           </div>
         </div>
       </motion.div>
@@ -664,7 +724,12 @@ const AdminReturnDetail = () => {
           {/* ─── LEFT COLUMN: Operations, Stepper & Items (2/3 Width) ─── */}
           <div className="xl:col-span-2 flex flex-col gap-3 sm:gap-6 lg:gap-8">
             {/* CARD 1: LIFECYCLE PROGRESSION (Matches OrderStatusTimeline.jsx) */}
-            <div className="bg-white dark:bg-stone-900 rounded-[4px] shadow-sm border border-[var(--admin-border-subtle)] overflow-hidden">
+            <div
+              className={`rounded-[6px] overflow-hidden transition-all border ${getReturnTimelineCardStyle(
+                currentStepName,
+                isFailed,
+              )}`}
+            >
               <div className="px-5 py-4 border-b border-[var(--admin-border-subtle)] flex items-center justify-between">
                 <div className="flex flex-col">
                   <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)] tracking-tight">
@@ -1604,7 +1669,11 @@ const AdminReturnDetail = () => {
                 <div className="flex justify-between items-center py-1 border-b border-[var(--admin-border-subtle)]">
                   <span className="text-[var(--admin-text-secondary)]">Order Status:</span>
                   <span className="font-bold capitalize text-[var(--admin-text-primary)]">
-                    {request.orderId?.orderStatus || 'Delivered'}
+                    {request.orderId?.orderStatus ||
+                      request.order?.orderStatus ||
+                      request.orderId?.status ||
+                      request.order?.status ||
+                      'Processing'}
                   </span>
                 </div>
                 {request.orderId?.total !== undefined && (

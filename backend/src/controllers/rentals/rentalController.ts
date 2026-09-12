@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import RentalService from '../../services/rentalService';
+import RentalOrder from '../../models/RentalOrder';
+import { AdminAuditService } from '../../services/AdminAuditService';
 import asyncHandler from '../../utils/asyncHandler';
 import ApiResponse from '../../utils/ApiResponse';
 import ApiError from '../../utils/ApiError';
@@ -142,4 +144,47 @@ export const adminCancelRental = asyncHandler(async (req: Request, res: Response
   if (!req.user?.id) throw new ApiError(401, 'Authentication required');
   const result = await RentalService.cancelRentalOrder(req.params.id as string, req.user.id, true);
   res.status(200).json(new ApiResponse(true, 'Rental cancelled by admin', result));
+});
+
+/**
+ * @desc    Soft delete completed, cancelled, or returned rental order (Move to Recycle Bin)
+ * @route   DELETE /api/v1/rentals/admin/:id
+ * @access  Admin
+ */
+export const softDeleteRental = asyncHandler(async (req: Request, res: Response) => {
+  const rentalId = req.params.id;
+  const rental = await RentalOrder.findById(rentalId);
+
+  if (!rental) {
+    throw new ApiError(404, 'Rental order not found');
+  }
+
+  const status = (rental.status || '').toLowerCase();
+  const terminalStatuses = ['completed', 'cancelled', 'returned'];
+
+  if (!terminalStatuses.includes(status)) {
+    throw new ApiError(
+      400,
+      'Only completed, cancelled, or returned rentals can be moved to the recycle bin',
+    );
+  }
+
+  await (rental as any).softDelete(req.user, 'Deleted by admin');
+
+  if (req.user && req.user.role !== 'user') {
+    await AdminAuditService.logAction({
+      actorId: req.user.id,
+      actorEmail: req.user.email || 'unknown',
+      actorRole: req.user.role,
+      method: req.method,
+      path: req.originalUrl,
+      entityType: 'RentalOrder',
+      entityId: rental.id,
+      action: 'soft_delete',
+      previousValue: null,
+      newValue: { status: 'deleted' },
+    });
+  }
+
+  res.status(200).json(new ApiResponse(true, 'Rental order moved to recycle bin successfully'));
 });

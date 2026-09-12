@@ -46,16 +46,21 @@ export const createResponseInterceptor = ({
 
     const method = originalRequest?.method?.toLowerCase() || 'get';
     const isGet = method === 'get';
-    const isDatabaseDown = status === 503 && error.response?.data?.message?.includes('Database');
+    const isDatabaseDown =
+      status === 503 &&
+      (error.response?.data?.message?.includes('Database') ||
+        error.response?.data?.message?.includes('reconnecting') ||
+        error.response?.data?.message?.includes('temporarily') ||
+        !error.response?.data);
 
-    // Auto-retry database unavailability errors with backoff
+    // Auto-retry database/service 503 unavailability errors with backoff
     const dbRetryCount = originalRequest?._dbRetryCount || 0;
-    if (isDatabaseDown && dbRetryCount < 3) {
+    if ((isDatabaseDown || status === 503) && dbRetryCount < 3) {
       originalRequest._dbRetryCount = dbRetryCount + 1;
-      const baseDelay = error.response?.data?.retryAfterMs || 2000;
-      const retryDelay = Math.min(Math.round(baseDelay * Math.pow(1.5, dbRetryCount)), 6000);
+      const baseDelay = error.response?.data?.retryAfterMs || 1500;
+      const retryDelay = Math.min(Math.round(baseDelay * Math.pow(1.5, dbRetryCount)), 5000);
       logger.warn(
-        `[API] Database temporarily unavailable. Auto-retrying (attempt ${dbRetryCount + 1}/3) in ${retryDelay}ms...`,
+        `[API] Service/Database temporarily unavailable (503). Auto-retrying ${originalRequest?.url} (attempt ${dbRetryCount + 1}/3) in ${retryDelay}ms...`,
       );
       await new Promise((resolve) => setTimeout(resolve, retryDelay));
       return api(originalRequest);
@@ -71,7 +76,7 @@ export const createResponseInterceptor = ({
     const maxRetries = isGet ? MAX_GET_RETRIES : MAX_MUTATION_RETRIES;
     const hasRetryAttemptsLeft =
       originalRequest && (!originalRequest._retryCount || originalRequest._retryCount < maxRetries);
-    const isAuthRoute = pathIncludesAuth(originalRequest?.url);
+    const isAuthRoute = isAuthRefresh ? false : pathIncludesAuth(originalRequest?.url);
     const retryDisabled = originalRequest?._disableRetry === true;
     const isPaymentOrOrderMutation =
       originalRequest?.url?.includes('/orders') ||

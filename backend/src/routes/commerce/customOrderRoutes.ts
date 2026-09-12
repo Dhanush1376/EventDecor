@@ -25,6 +25,7 @@ import {
   adminUpdateQuotation,
   adminArchiveOrder,
   adminUpdateEnterpriseDetails,
+  adminSoftDeleteCustomOrder,
 } from '../../controllers/customOrder/customOrderAdminController';
 
 import {
@@ -200,6 +201,15 @@ router.patch(
   ...customOrderIdParam,
   validate,
   adminUpdateEnterpriseDetails,
+);
+
+router.delete(
+  '/:id',
+  requireAuth,
+  requireRole(['super_admin', 'main_admin', 'admin', 'order_manager']),
+  ...customOrderIdParam,
+  validate,
+  adminSoftDeleteCustomOrder,
 );
 
 export default router;

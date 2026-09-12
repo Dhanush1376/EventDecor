@@ -272,6 +272,99 @@ router.get(
 );
 
 /**
+ * Public IP Geolocation Fallback Endpoint
+ * GET /api/v1/location/ip
+ */
+router.get(
+  '/ip',
+  asyncHandler(async (req: Request, res: Response) => {
+    const rawIp =
+      (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
+      req.socket.remoteAddress ||
+      '';
+    const isLocal =
+      !rawIp ||
+      rawIp === '127.0.0.1' ||
+      rawIp === '::1' ||
+      rawIp.startsWith('192.168.') ||
+      rawIp.startsWith('10.') ||
+      rawIp === '::ffff:127.0.0.1';
+    const queryIp = isLocal ? '' : rawIp;
+
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 4000);
+      const url = queryIp ? `https://ipwho.is/${queryIp}` : 'https://ipwho.is/';
+      const ipRes = await fetch(url, {
+        signal: controller.signal,
+        headers: { Accept: 'application/json' },
+      });
+      clearTimeout(timeout);
+
+      if (ipRes.ok) {
+        const d: any = await ipRes.json();
+        if (d && d.success && typeof d.latitude === 'number' && typeof d.longitude === 'number') {
+          return res.json({
+            success: true,
+            data: {
+              latitude: d.latitude,
+              longitude: d.longitude,
+              city: d.city || '',
+              district: d.city || '',
+              state: d.region || '',
+              pincode: (d.postal || '').replace(/\D/g, '').slice(0, 6),
+              country: d.country || 'India',
+              source: 'network-ip',
+            },
+          });
+        }
+      }
+    } catch (err: any) {
+      logger.warn(`[Location IP] ipwho.is failed: ${err.message}`);
+    }
+
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 4000);
+      const url = queryIp
+        ? `https://freeipapi.com/api/json/${queryIp}`
+        : 'https://freeipapi.com/api/json';
+      const freeRes = await fetch(url, {
+        signal: controller.signal,
+        headers: { Accept: 'application/json' },
+      });
+      clearTimeout(timeout);
+
+      if (freeRes.ok) {
+        const d: any = await freeRes.json();
+        if (d && typeof d.latitude === 'number' && typeof d.longitude === 'number') {
+          return res.json({
+            success: true,
+            data: {
+              latitude: d.latitude,
+              longitude: d.longitude,
+              city: d.cityName || '',
+              district: d.cityName || '',
+              state: d.regionName || '',
+              pincode: (d.zipCode || '').replace(/\D/g, '').slice(0, 6),
+              country: d.countryName || 'India',
+              source: 'network-ip',
+            },
+          });
+        }
+      }
+    } catch (err: any) {
+      logger.warn(`[Location IP] freeipapi failed: ${err.message}`);
+    }
+
+    return res.status(404).json({
+      success: false,
+      message: 'Unable to detect location from IP',
+    });
+  }),
+);
+
+/**
  * Public Location Search / Autocomplete Endpoint
  * GET /api/v1/location/search?q=Ongole
  *

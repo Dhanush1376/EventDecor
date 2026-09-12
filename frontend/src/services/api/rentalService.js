@@ -121,6 +121,11 @@ const rentalService = {
     return res.data;
   },
 
+  adminDeleteRental: async (id) => {
+    const res = await api.delete(`${RENTAL_BASE}/admin/${id}`);
+    return res.data;
+  },
+
   // ─── Rental Policy ───
   getPolicy: async () => {
     const res = await api.get(POLICY_BASE);

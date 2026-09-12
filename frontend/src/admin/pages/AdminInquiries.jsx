@@ -1,4 +1,4 @@
-import { m as motion, AnimatePresence } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import {
   AdminCustomOrdersSkeleton,
   PageHeader,
@@ -128,7 +128,7 @@ export function AdminInquiries({ hideHeader = false }) {
 
   // ─── EXPORT TO CSV ───
   const handleExportCSV = () => {
-    if (!filteredAndSortedOrders || filteredAndSortedOrders.length === 0) {
+    if (!sortedOrders || sortedOrders.length === 0) {
       toast.error('No custom orders to export');
       return;
     }
