@@ -18,6 +18,43 @@ function getCacheKey(lat: number, lon: number): string {
   return `${lat.toFixed(4)},${lon.toFixed(4)}`;
 }
 
+function cleanCityName(raw: string): string {
+  if (!raw || typeof raw !== 'string') return '';
+  return raw.replace(/\s+(Tahsil|Tehsil|Taluk|Taluka|Mandal|Sub-district|District)\b/gi, '').trim();
+}
+
+function synthesizeLandmark(poiName: string, locality: string, street: string): string {
+  if (poiName && typeof poiName === 'string') {
+    const cleanPoi = poiName.trim();
+    if (cleanPoi) {
+      const prefix = cleanPoi.match(/^(near|opp|opposite|behind|beside)\s/i) ? '' : 'Near ';
+      if (
+        locality &&
+        locality.toLowerCase() !== cleanPoi.toLowerCase() &&
+        !cleanPoi.toLowerCase().includes(locality.toLowerCase())
+      ) {
+        return `${prefix}${cleanPoi}, ${locality}`;
+      }
+      return `${prefix}${cleanPoi}`;
+    }
+  }
+  if (locality && typeof locality === 'string') {
+    const cleanLoc = locality.trim();
+    if (cleanLoc) {
+      return cleanLoc.match(/^(near|opp|opposite|behind|beside)\s/i)
+        ? cleanLoc
+        : `Near ${cleanLoc}`;
+    }
+  }
+  if (street && typeof street === 'string') {
+    const cleanStreet = street.trim();
+    if (cleanStreet) {
+      return `On ${cleanStreet}`;
+    }
+  }
+  return '';
+}
+
 /**
  * Public Reverse Geocoding Endpoint
  * GET /api/v1/location/reverse-geocode?lat=17.385044&lng=78.486671
@@ -46,144 +83,114 @@ router.get(
 
     let resolvedAddress: any = null;
 
-    // 1. Primary: Nominatim with compliant User-Agent
+    // 1. Query Nominatim & Photon in parallel for rich street, POI, and administrative data
     try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 5000);
+      const [osmSettled, photonSettled] = await Promise.allSettled([
+        (async () => {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 5000);
+          const nominatimUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1&zoom=18`;
+          const osmRes = await fetch(nominatimUrl, {
+            signal: controller.signal,
+            headers: {
+              'User-Agent':
+                'SiriArtsAndCrafts/1.0 (https://siriartsandcrafts.com; contact: info@siriartsandcrafts.com)',
+              Accept: 'application/json',
+              'Accept-Language': 'en',
+            },
+          });
+          clearTimeout(timeout);
+          return osmRes.ok ? await osmRes.json() : null;
+        })(),
+        (async () => {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 5000);
+          const photonRes = await fetch(
+            `https://photon.komoot.io/reverse?lat=${lat}&lon=${lng}&limit=5`,
+            {
+              signal: controller.signal,
+              headers: { Accept: 'application/json' },
+            },
+          );
+          clearTimeout(timeout);
+          return photonRes.ok ? await photonRes.json() : null;
+        })(),
+      ]);
 
-      const nominatimUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1&zoom=18`;
-      const osmRes = await fetch(nominatimUrl, {
-        signal: controller.signal,
-        headers: {
-          'User-Agent':
-            'SiriArtsAndCrafts/1.0 (https://siriartsandcrafts.com; contact: info@siriartsandcrafts.com)',
-          Accept: 'application/json',
-          'Accept-Language': 'en',
-        },
-      });
-      clearTimeout(timeout);
+      const osmData: any = osmSettled.status === 'fulfilled' ? osmSettled.value : null;
+      const photonData: any = photonSettled.status === 'fulfilled' ? photonSettled.value : null;
 
-      if (osmRes.ok) {
-        const osmData: any = await osmRes.json();
-        if (osmData && osmData.address) {
-          const a = osmData.address;
-          const displayParts = (osmData.display_name || '').split(',');
+      const a = osmData?.address || {};
+      const props = photonData?.features?.[0]?.properties || {};
 
-          const isGenericTag = (val: any) => {
-            if (!val || typeof val !== 'string') return true;
-            const lower = val.trim().toLowerCase();
-            return [
-              'yes',
-              'no',
-              'true',
-              'false',
-              'residential',
-              'commercial',
-              'apartments',
-              'unclassified',
-              'building',
-            ].includes(lower);
-          };
+      const isGenericTag = (val: any) => {
+        if (!val || typeof val !== 'string') return true;
+        const lower = val.trim().toLowerCase();
+        return [
+          'yes',
+          'no',
+          'true',
+          'false',
+          'residential',
+          'commercial',
+          'apartments',
+          'unclassified',
+          'building',
+        ].includes(lower);
+      };
 
-          const poi =
-            a.amenity ||
-            a.shop ||
-            a.tourism ||
-            a.building ||
-            a.landmark ||
-            (osmData.name && osmData.name !== a.road && !isGenericTag(osmData.name)
-              ? osmData.name
-              : '');
-          const landmark = poi
-            ? poi.match(/^(near|opp|opposite|behind|beside)\s/i)
-              ? poi
-              : `Near ${poi}`
-            : '';
+      const street = props.street || a.road || a.street || '';
+      const building =
+        (props.name && props.name !== props.street ? props.name : '') ||
+        (a.building && !isGenericTag(a.building) ? a.building : '') ||
+        (a.amenity && !isGenericTag(a.amenity) ? a.amenity : '') ||
+        (a.shop && !isGenericTag(a.shop) ? a.shop : '') ||
+        (a.tourism && !isGenericTag(a.tourism) ? a.tourism : '') ||
+        a.house_name ||
+        '';
+      const housenumber = a.house_number || props.housenumber || '';
+      const locality =
+        a.residential ||
+        a.suburb ||
+        a.neighbourhood ||
+        props.locality ||
+        props.district ||
+        a.subdistrict ||
+        a.locality ||
+        '';
 
-          const streetParts = [
-            a.house_number,
-            a.house_name,
-            a.building && !isGenericTag(a.building) ? a.building : '',
-            a.road || a.street,
-          ].filter(Boolean);
+      const landmark = synthesizeLandmark(building, locality, street);
 
-          const address =
-            streetParts.length > 0
-              ? Array.from(new Set(streetParts)).join(', ')
-              : displayParts.length > 3
-                ? displayParts.slice(0, 3).join(',').trim()
-                : osmData.display_name || '';
+      const addressParts = [housenumber, building, street, locality].filter(Boolean);
+      const address =
+        addressParts.length > 0
+          ? Array.from(new Set(addressParts)).join(', ')
+          : osmData?.display_name || '';
 
-          const locality =
-            a.suburb || a.neighbourhood || a.residential || a.subdistrict || a.locality || '';
-          const city = a.city || a.town || a.village || a.municipality || a.county || '';
-          const district = a.county || a.state_district || city || '';
-          const state = a.state || '';
-          const pincode = (a.postcode || '').replace(/\D/g, '').slice(0, 6);
+      const rawCity =
+        a.city || a.town || a.village || props.city || a.municipality || a.county || '';
+      const city = cleanCityName(rawCity);
+      const district = cleanCityName(a.county || a.state_district || props.district || city);
+      const state = a.state || props.state || '';
+      const pincode = (a.postcode || props.postcode || '').replace(/\D/g, '').slice(0, 6);
 
-          resolvedAddress = {
-            latitude: lat,
-            longitude: lng,
-            address,
-            locality,
-            landmark,
-            city,
-            district,
-            state,
-            pincode,
-            country: a.country || 'India',
-            source: 'nominatim',
-          };
-        }
+      if (city || pincode || address) {
+        resolvedAddress = {
+          latitude: lat,
+          longitude: lng,
+          address,
+          locality,
+          landmark,
+          city,
+          district,
+          state,
+          pincode,
+          country: a.country || props.country || 'India',
+          source: 'hybrid-osm-photon',
+        };
       }
-    } catch (nominatimErr: any) {
-      logger.warn(`[Location] Nominatim lookup failed: ${nominatimErr.message}`);
-    }
-
-    // 2. Fallback: Photon API by Komoot (CORS-friendly, open OSM index)
-    if (!resolvedAddress || (!resolvedAddress.pincode && !resolvedAddress.city)) {
-      try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 5000);
-        const photonRes = await fetch(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lng}`, {
-          signal: controller.signal,
-          headers: { Accept: 'application/json' },
-        });
-        clearTimeout(timeout);
-
-        if (photonRes.ok) {
-          const pData: any = await photonRes.json();
-          const props = pData?.features?.[0]?.properties;
-          if (props) {
-            const pName = props.name || '';
-            const pStreet = props.street || '';
-            const pLocality = props.locality || props.district || '';
-            const pCity = props.city || props.county || '';
-            const pState = props.state || '';
-            const pPincode = (props.postcode || '').replace(/\D/g, '').slice(0, 6);
-
-            const addrLine =
-              [pName !== pStreet ? pName : '', pStreet].filter(Boolean).join(', ') || pLocality;
-
-            resolvedAddress = {
-              latitude: lat,
-              longitude: lng,
-              address: resolvedAddress?.address || addrLine,
-              locality: resolvedAddress?.locality || pLocality,
-              landmark:
-                resolvedAddress?.landmark || (pName && pName !== pStreet ? `Near ${pName}` : ''),
-              city: resolvedAddress?.city || pCity,
-              district: resolvedAddress?.district || props.district || pCity,
-              state: resolvedAddress?.state || pState,
-              pincode: resolvedAddress?.pincode || pPincode,
-              country: props.country || 'India',
-              source: 'photon',
-            };
-          }
-        }
-      } catch (photonErr: any) {
-        logger.warn(`[Location] Photon lookup failed: ${photonErr.message}`);
-      }
+    } catch (hybridErr: any) {
+      logger.warn(`[Location] Hybrid geocode failed: ${hybridErr.message}`);
     }
 
     // 3. Fallback: BigDataCloud Client API
@@ -374,106 +381,210 @@ router.get(
 router.get(
   '/search',
   asyncHandler(async (req: Request, res: Response) => {
-    const q = ((req.query.q as string) || '').trim();
-    if (!q || q.length < 1) {
+    const rawQ = ((req.query.q as string) || '').trim();
+    if (!rawQ || rawQ.length < 1) {
       return res.json({ success: true, data: [] });
     }
 
-    const cacheKey = `search:${q.toLowerCase()}`;
+    const biasLat = parseFloat(req.query.lat as string) || 20.5937;
+    const biasLon = parseFloat(req.query.lon as string) || 78.9629;
+
+    const cacheKey = `search:${rawQ.toLowerCase()}:${biasLat.toFixed(2)}:${biasLon.toFixed(2)}`;
     const cached = geocodeCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
       return res.json({ success: true, source: 'cache', data: cached.data });
     }
 
-    let results: any[] = [];
-
-    // 1. Primary: Nominatim with compliant User-Agent
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 4000);
-      const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&addressdetails=1&countrycodes=in&limit=15`;
-      const osmRes = await fetch(nominatimUrl, {
-        signal: controller.signal,
-        headers: {
-          'User-Agent':
-            'SiriArtsAndCrafts/1.0 (https://siriartsandcrafts.com; contact: info@siriartsandcrafts.com)',
-          Accept: 'application/json',
-          'Accept-Language': 'en',
-        },
-      });
-      clearTimeout(timeout);
-
-      if (osmRes.ok) {
-        const osmData: any = await osmRes.json();
-        if (Array.isArray(osmData) && osmData.length > 0) {
-          results = osmData.map((item: any) => {
-            const addr = item.address || {};
-            const street = addr.road || addr.suburb || addr.neighbourhood || '';
-            const city = addr.city || addr.town || addr.village || addr.county || '';
-            const state = addr.state || '';
-            const pincode = (addr.postcode || '').replace(/\D/g, '').slice(0, 6);
-            const name =
-              item.name || addr.amenity || addr.building || street || 'Selected Location';
-
-            return {
-              displayName: item.display_name,
-              name,
-              lat: parseFloat(item.lat),
-              lon: parseFloat(item.lon),
-              address: {
-                road: street,
-                city,
-                state,
-                pincode,
-                country: addr.country || 'India',
-              },
-            };
-          });
-        }
-      }
-    } catch (osmErr: any) {
-      logger.warn(`[Location Search] Nominatim search failed: ${osmErr.message}`);
-    }
-
-    // 2. Fallback: Photon (Komoot)
-    if (results.length === 0) {
+    // 1. Direct Postal Pincode Lookup if 6-digit Indian PIN
+    const cleanPin = rawQ.replace(/\D/g, '');
+    if (/^\d{6}$/.test(rawQ.trim()) || (cleanPin.length === 6 && rawQ.length <= 8)) {
       try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 4000);
-        const photonUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=15`;
-        const photonRes = await fetch(photonUrl, {
-          signal: controller.signal,
-          headers: { Accept: 'application/json' },
+        const pinController = new AbortController();
+        const pinTimeout = setTimeout(() => pinController.abort(), 4000);
+        const pinRes = await fetch(`https://api.postalpincode.in/pincode/${cleanPin}`, {
+          signal: pinController.signal,
         });
-        clearTimeout(timeout);
+        clearTimeout(pinTimeout);
 
-        if (photonRes.ok) {
-          const photonData: any = await photonRes.json();
-          if (Array.isArray(photonData.features) && photonData.features.length > 0) {
-            results = photonData.features.map((feat: any) => {
-              const p = feat.properties || {};
-              const coords = feat.geometry?.coordinates || [0, 0];
-              const parts = [p.name, p.street, p.district, p.city, p.state, p.country].filter(
-                Boolean,
-              );
+        if (pinRes.ok) {
+          const pinData: any = await pinRes.json();
+          if (
+            Array.isArray(pinData) &&
+            pinData[0]?.Status === 'Success' &&
+            Array.isArray(pinData[0].PostOffice) &&
+            pinData[0].PostOffice.length > 0
+          ) {
+            const pinResults = pinData[0].PostOffice.map((po: any) => {
+              const locality = po.Name;
+              const city = cleanCityName(po.District || po.Block || po.Region);
+              const state = po.State || '';
+              const displayName = `${locality}, ${city}, ${state} - ${cleanPin}, India`;
               return {
-                displayName: parts.join(', '),
-                name: p.name || p.street || 'Selected Location',
-                lat: coords[1],
-                lon: coords[0],
+                displayName,
+                name: locality,
+                lat: biasLat,
+                lon: biasLon,
                 address: {
-                  road: p.street || '',
-                  city: p.city || p.district || '',
-                  state: p.state || '',
-                  pincode: (p.postcode || '').replace(/\D/g, '').slice(0, 6),
-                  country: p.country || 'India',
+                  building: '',
+                  road: '',
+                  locality,
+                  landmark: `Near ${locality}`,
+                  city,
+                  district: po.District || city,
+                  state,
+                  pincode: cleanPin,
+                  country: 'India',
                 },
               };
             });
+
+            geocodeCache.set(cacheKey, { data: pinResults, timestamp: Date.now() });
+            return res.json({ success: true, source: 'postal-pincode', data: pinResults });
           }
         }
-      } catch (photonErr: any) {
-        logger.warn(`[Location Search] Photon search failed: ${photonErr.message}`);
+      } catch (pinErr: any) {
+        logger.warn(`[Location Search] Pincode lookup failed: ${pinErr.message}`);
+      }
+    }
+
+    // 2. Multi-Tier Hybrid Search (Parallel Nominatim IN + Photon India-biased)
+    const executeSearch = async (queryText: string) => {
+      const [osmSettled, photonSettled] = await Promise.allSettled([
+        (async () => {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 4000);
+          const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+            queryText,
+          )}&addressdetails=1&countrycodes=in&limit=15`;
+          const osmRes = await fetch(nominatimUrl, {
+            signal: controller.signal,
+            headers: {
+              'User-Agent':
+                'SiriArtsAndCrafts/1.0 (https://siriartsandcrafts.com; contact: info@siriartsandcrafts.com)',
+              Accept: 'application/json',
+              'Accept-Language': 'en',
+            },
+          });
+          clearTimeout(timeout);
+          return osmRes.ok ? await osmRes.json() : [];
+        })(),
+        (async () => {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 4000);
+          const photonUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(
+            queryText,
+          )}&lat=${biasLat}&lon=${biasLon}&limit=20`;
+          const photonRes = await fetch(photonUrl, {
+            signal: controller.signal,
+            headers: { Accept: 'application/json' },
+          });
+          clearTimeout(timeout);
+          return photonRes.ok ? await photonRes.json() : { features: [] };
+        })(),
+      ]);
+
+      const osmData: any[] =
+        osmSettled.status === 'fulfilled' && Array.isArray(osmSettled.value)
+          ? osmSettled.value
+          : [];
+      const photonData: any[] =
+        photonSettled.status === 'fulfilled' &&
+        Array.isArray((photonSettled.value as any)?.features)
+          ? (photonSettled.value as any).features
+          : [];
+
+      const aggregated: any[] = [];
+      const seen = new Set<string>();
+
+      // A. Process Nominatim results (already constrained to countrycodes=in)
+      for (const item of osmData) {
+        const addr = item.address || {};
+        const street = addr.road || addr.street || '';
+        const locality = addr.suburb || addr.neighbourhood || addr.residential || '';
+        const city = cleanCityName(addr.city || addr.town || addr.village || addr.county || '');
+        const state = addr.state || '';
+        const pincode = (addr.postcode || '').replace(/\D/g, '').slice(0, 6);
+        const building =
+          item.name && item.name !== street ? item.name : addr.building || addr.amenity || '';
+        const name = item.name || building || street || locality || 'Selected Location';
+        const landmark = synthesizeLandmark(building, locality, street);
+
+        const key = `${name.toLowerCase()}|${city.toLowerCase()}|${state.toLowerCase()}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          aggregated.push({
+            displayName: item.display_name,
+            name,
+            lat: parseFloat(item.lat),
+            lon: parseFloat(item.lon),
+            address: {
+              building,
+              road: street,
+              locality,
+              landmark,
+              city,
+              state,
+              pincode,
+              country: addr.country || 'India',
+            },
+          });
+        }
+      }
+
+      // B. Process Photon results (strictly filter to India bounds and country)
+      for (const feat of photonData) {
+        const p = feat.properties || {};
+        const [fLon, fLat] = feat.geometry?.coordinates || [0, 0];
+        const isIndiaCountry =
+          (p.country && p.country.toLowerCase() === 'india') ||
+          (p.countrycode && p.countrycode.toLowerCase() === 'in');
+        const inIndiaBox = fLat >= 6.5 && fLat <= 37.5 && fLon >= 68.0 && fLon <= 97.5;
+
+        // Strictly eliminate non-India results
+        if (!isIndiaCountry && !inIndiaBox) continue;
+
+        const street = p.street || '';
+        const building = p.name && p.name !== street ? p.name : '';
+        const locality = p.locality || p.district || '';
+        const city = cleanCityName(p.city || p.district || '');
+        const state = p.state || '';
+        const pincode = (p.postcode || '').replace(/\D/g, '').slice(0, 6);
+        const name = p.name || street || locality || 'Selected Location';
+        const landmark = synthesizeLandmark(building, locality, street);
+
+        const key = `${name.toLowerCase()}|${city.toLowerCase()}|${state.toLowerCase()}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          const parts = [building, street, locality, city, state, 'India'].filter(Boolean);
+          aggregated.push({
+            displayName: Array.from(new Set(parts)).join(', '),
+            name,
+            lat: fLat,
+            lon: fLon,
+            address: {
+              building,
+              road: street,
+              locality,
+              landmark,
+              city,
+              state,
+              pincode,
+              country: p.country || 'India',
+            },
+          });
+        }
+      }
+
+      return aggregated;
+    };
+
+    let results = await executeSearch(rawQ);
+
+    // 3. Typo-Tolerant Fallback: If 0 results, retry with cleaned repeated trailing characters
+    if (results.length === 0) {
+      const cleanedTypo = rawQ.replace(/([a-z])\1+$/i, '$1');
+      if (cleanedTypo !== rawQ && cleanedTypo.length >= 2) {
+        results = await executeSearch(cleanedTypo);
       }
     }
 

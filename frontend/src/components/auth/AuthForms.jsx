@@ -53,7 +53,7 @@ export function UnifiedAuthForm({
                 id="auth-identifier-input"
                 type={isPhone ? 'tel' : 'text'}
                 required
-                className="form-field text-[16px] sm:!text-[12px]"
+                className="form-field text-[16px] sm:!text-[12px] !rounded-full !px-5"
                 placeholder="e.g. name@example.com "
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
@@ -109,7 +109,7 @@ export function TwoFactorForm({ totpCode, setTotpCode, verify2FA, isLoading, res
         autoComplete="one-time-code"
         value={totpCode}
         onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-        className="form-field !text-center !font-mono !text-[20px] !tracking-[0.3em] !font-bold !py-3"
+        className="form-field !text-center !font-mono !text-[20px] !tracking-[0.3em] !font-bold !py-3 !rounded-full"
         placeholder="000000"
       />
       <LoadingButton

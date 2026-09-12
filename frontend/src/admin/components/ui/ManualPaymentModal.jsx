@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { bookingService } from '../../../services/domainServices';
 import { getErrorMessage } from '../../../utils/core/errorHelpers';
+import { useMobileDrawerEngine, DrawerDragHandle } from '../../../components/ui/drawer';
 
 export function ManualPaymentModal({ booking, onClose, onSuccess }) {
   const [amount, setAmount] = useState('');
@@ -56,15 +57,10 @@ export function ManualPaymentModal({ booking, onClose, onSuccess }) {
     }
   };
 
-  const [isMobile, setIsMobile] = useState(() =>
-    typeof window !== 'undefined' ? window.innerWidth < 640 : false,
-  );
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 640);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  const { isMobile, dragProps, sheetTransition } = useMobileDrawerEngine({
+    isOpen: !!booking,
+    onClose: !isSubmitting ? onClose : undefined,
+  });
 
   const isDark =
     typeof document !== 'undefined' &&
@@ -94,11 +90,12 @@ export function ManualPaymentModal({ booking, onClose, onSuccess }) {
 
         {/* Modal Card / Mobile App Drawer */}
         <motion.div
-          initial={{ opacity: 0, y: isMobile ? '100%' : 4, scale: isMobile ? 1 : 0.98 }}
+          initial={{ opacity: 0, y: isMobile ? '100%' : 8, scale: isMobile ? 1 : 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: isMobile ? '100%' : 4, scale: isMobile ? 1 : 0.98 }}
-          transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-          className={`admin-section-root ${isDark ? 'dark' : ''} pointer-events-auto relative w-full sm:max-w-md bg-white dark:bg-[#1f1e1b] rounded-t-[6px] sm:rounded-[4px] shadow-2xl overflow-hidden z-10 border-t sm:border border-[#e8e4d9] dark:border-white/10 font-sans max-h-[88vh] sm:max-h-none flex flex-col`}
+          exit={{ opacity: 0, y: isMobile ? '100%' : 8, scale: isMobile ? 1 : 0.98 }}
+          transition={sheetTransition}
+          {...dragProps}
+          className={`admin-section-root ${isDark ? 'dark' : ''} pointer-events-auto relative w-full sm:max-w-md bg-white dark:bg-[#1f1e1b] rounded-t-2xl sm:rounded-[4px] shadow-2xl overflow-hidden z-10 border-t sm:border border-[#e8e4d9] dark:border-white/10 font-sans max-h-[90dvh] sm:max-h-none flex flex-col`}
           style={{
             backgroundColor: 'var(--admin-surface, #ffffff)',
             borderColor: 'var(--admin-border, #e8e4d9)',
@@ -107,10 +104,7 @@ export function ManualPaymentModal({ booking, onClose, onSuccess }) {
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Mobile Drawer Pull Indicator */}
-          <div className="pt-2.5 pb-1 sm:hidden flex justify-center w-full cursor-grab active:cursor-grabbing">
-            <div className="w-10 h-1.5 rounded-full bg-stone-300 dark:bg-stone-600" />
-          </div>
+          {isMobile && <DrawerDragHandle onClick={!isSubmitting ? onClose : undefined} />}
 
           {/* Header */}
           <div
@@ -149,7 +143,7 @@ export function ManualPaymentModal({ booking, onClose, onSuccess }) {
           {/* Form */}
           <form
             onSubmit={handleSubmit}
-            className="p-5 sm:p-6 space-y-4 font-sans overflow-y-auto custom-scrollbar flex-1 pb-8 sm:pb-6"
+            className="p-5 sm:p-6 space-y-4 font-sans overflow-y-auto overscroll-contain touch-pan-y custom-scrollbar flex-1 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] sm:pb-6"
           >
             {/* Price Summary Box (Clean, Warm & Polished) */}
             <div

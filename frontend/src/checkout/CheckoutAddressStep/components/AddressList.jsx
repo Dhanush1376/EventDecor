@@ -11,7 +11,10 @@ export function AddressList({
   return (
     <div className="bg-surface-container-low pb-24 -mt-2">
       <div className="p-4 sm:p-6 max-w-2xl mx-auto flex items-center justify-between mb-2">
-        <h2 className="font-display text-sm font-extrabold text-on-surface uppercase tracking-wider">
+        <h2
+          className="font-sans text-sm font-bold text-on-surface uppercase tracking-wider"
+          style={{ fontFamily: 'var(--font-body)' }}
+        >
           Saved Addresses
         </h2>
         <button

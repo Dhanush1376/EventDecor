@@ -6,10 +6,20 @@ import { useNavigate } from 'react-router-dom';
 import { useWishlist } from '../../context/WishlistContext';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
-import { useScrollLock } from '../../hooks/useScrollLock';
+import { createPortal } from 'react-dom';
+import { useMobileDrawerEngine, DrawerDragHandle } from './drawer';
 import toast from 'react-hot-toast';
 
 export const QuickViewModal = ({ isOpen, onClose, product, onNext, onPrev, hasNext, hasPrev }) => {
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const { isMobile, dragProps, sheetTransition } = useMobileDrawerEngine({
+    isOpen,
+    onClose,
+  });
   const modalRef = React.useRef(null);
   const triggerElementRef = React.useRef(null);
   const scrollContainerRef = React.useRef(null);
@@ -85,8 +95,6 @@ export const QuickViewModal = ({ isOpen, onClose, product, onNext, onPrev, hasNe
     }
   };
 
-  useScrollLock(isOpen);
-
   React.useEffect(() => {
     if (isOpen) {
       triggerElementRef.current = document.activeElement;
@@ -149,11 +157,13 @@ export const QuickViewModal = ({ isOpen, onClose, product, onNext, onPrev, hasNe
     navigate(product.itemType === 'event' ? `/events/${productId}` : `/product/${productId}`);
   };
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <div
-          className="fixed inset-0 z-[200] flex items-end lg:items-center justify-center p-3 sm:p-4 lg:p-8 pb-[max(16px,var(--safe-area-bottom,_env(safe-area-inset-bottom)))] lg:pb-8"
+          className="fixed inset-0 z-[200] flex items-end lg:items-center justify-center p-0 sm:p-4 lg:p-8 pointer-events-none"
           role="dialog"
           aria-modal="true"
           aria-labelledby="quickview-title"
@@ -163,28 +173,20 @@ export const QuickViewModal = ({ isOpen, onClose, product, onNext, onPrev, hasNe
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-on-surface-variant/40 backdrop-blur-xl"
+            className="fixed inset-0 bg-on-surface-variant/40 backdrop-blur-xl pointer-events-auto cursor-pointer"
           />
 
           <motion.div
             ref={modalRef}
-            initial={{ opacity: 0, y: 40, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 40, scale: 0.96 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300, mass: 0.8 }}
-            style={{ willChange: 'transform, opacity' }}
-            drag="y"
-            dragDirectionLock
-            dragConstraints={{ top: 0, bottom: 150 }}
-            dragElastic={0.1}
-            onDragEnd={(e, { offset, velocity }) => {
-              if (offset.y > 100 || velocity.y > 400) {
-                onClose();
-              }
-            }}
+            initial={{ opacity: 0, scale: isMobile ? 1 : 0.96, y: isMobile ? '100%' : 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: isMobile ? 1 : 0.96, y: isMobile ? '100%' : 20 }}
+            transition={sheetTransition}
+            {...dragProps}
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-[440px] sm:max-w-[480px] lg:max-w-5xl bg-surface rounded-[24px] lg:rounded-[32px] overflow-hidden shadow-2xl flex flex-col lg:flex-row h-auto max-h-[85%] border border-outline-variant/10 touch-pan-x"
+            className="pointer-events-auto relative w-full max-w-[440px] sm:max-w-[480px] lg:max-w-5xl bg-surface rounded-t-3xl sm:rounded-[24px] lg:rounded-[32px] overflow-hidden shadow-2xl flex flex-col lg:flex-row h-auto max-h-[90dvh] sm:max-h-[85vh] border border-outline-variant/10 touch-pan-x"
           >
+            {isMobile && <DrawerDragHandle onClick={onClose} />}
             {/* Close Button - Fixed in Modal Container */}
             <button
               onClick={onClose}
@@ -482,6 +484,7 @@ export const QuickViewModal = ({ isOpen, onClose, product, onNext, onPrev, hasNe
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 };

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { createPortal } from 'react-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
 
@@ -9,6 +9,9 @@ import { m as motion, AnimatePresence } from 'framer-motion';
  * - Mobile (< 640px): Full App Drawer (bottom sheet) portaled to document.body with touch handle,
  *   scrolling container, backdrop, and sticky Clear / Apply footer buttons.
  */
+import { useMobileDrawerEngine } from '../../../hooks/useMobileDrawerEngine';
+import { DrawerDragHandle } from '../../../components/ui/drawer/DrawerDragHandle';
+
 export function AdminFilterDrawer({
   isOpen,
   onClose,
@@ -24,34 +27,10 @@ export function AdminFilterDrawer({
   footer,
   subtitle,
 }) {
-  const [isMobile, setIsMobile] = useState(() =>
-    typeof window !== 'undefined' ? window.innerWidth < 640 : false,
-  );
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const mql = window.matchMedia('(max-width: 639px)');
-    const onChange = (e) => setIsMobile(e.matches);
-    setIsMobile(mql.matches);
-    if (mql.addEventListener) {
-      mql.addEventListener('change', onChange);
-      return () => mql.removeEventListener('change', onChange);
-    } else {
-      mql.addListener(onChange);
-      return () => mql.removeListener(onChange);
-    }
-  }, []);
-
-  // Lock background scrolling on mobile when drawer is open
-  useEffect(() => {
-    if (isOpen && isMobile) {
-      const originalOverflow = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
-      return () => {
-        document.body.style.overflow = originalOverflow;
-      };
-    }
-  }, [isOpen, isMobile]);
+  const { isMobile, dragProps, sheetTransition } = useMobileDrawerEngine({
+    isOpen,
+    onClose,
+  });
 
   const handleApply = () => {
     if (onApply) onApply();
@@ -85,19 +64,15 @@ export function AdminFilterDrawer({
             {/* Bottom Sheet Drawer */}
             <motion.div
               key="admin-filter-drawer-sheet"
+              {...dragProps}
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
-              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-              className="fixed bottom-0 inset-x-0 z-[9999] bg-[var(--admin-surface)] rounded-t-[14px] shadow-[0_-8px_30px_rgba(0,0,0,0.3)] border-t border-[var(--admin-border-strong)] flex flex-col max-h-[85vh] text-left overflow-hidden pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]"
+              transition={sheetTransition}
+              className="fixed bottom-0 inset-x-0 z-[9999] bg-[var(--admin-surface)] rounded-t-[14px] shadow-[0_-8px_30px_rgba(0,0,0,0.3)] border-t border-[var(--admin-border-strong)] flex flex-col max-h-[85dvh] text-left overflow-hidden pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]"
             >
               {/* Drag / Pull Handle */}
-              <div
-                className="w-full flex justify-center pt-2.5 pb-1 shrink-0 cursor-pointer"
-                onClick={onClose}
-              >
-                <div className="w-10 h-1 rounded-[2px] bg-[var(--admin-border-strong)] opacity-60" />
-              </div>
+              <DrawerDragHandle onClick={onClose} pillClassName="bg-[var(--admin-border-strong)]" />
 
               {/* Drawer Header */}
               <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--admin-border-subtle)] shrink-0">
@@ -128,7 +103,7 @@ export function AdminFilterDrawer({
 
               {/* Scrollable Content Body */}
               <div
-                className="flex-1 overflow-y-auto px-4 py-3.5 space-y-4 touch-pan-y"
+                className="flex-1 overflow-y-auto px-4 py-3.5 space-y-4 touch-pan-y overscroll-contain"
                 style={{ WebkitOverflowScrolling: 'touch' }}
               >
                 {children}

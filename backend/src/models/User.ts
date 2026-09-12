@@ -120,6 +120,7 @@ const UserSchema: Schema = new Schema(
     referralCode: { type: String, unique: true, sparse: true },
     referredBy: { type: Schema.Types.ObjectId, ref: 'User' },
     referralsCount: { type: Number, default: 0 },
+    referralRewarded: { type: Boolean, default: false },
   },
   {
     timestamps: true,

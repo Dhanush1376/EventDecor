@@ -18,11 +18,11 @@ import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { reviewService } from '../../services/domainServices';
 import { useAuth } from '../../context/AuthContext';
-import { useScrollLock } from '../../hooks/useScrollLock';
 import toast from 'react-hot-toast';
 import imageCompression from 'browser-image-compression';
 import { uploadService } from '../../services/api/uploadService';
 import { LoadingButton } from '../ui/LoadingButton';
+import { useMobileDrawerEngine, DrawerDragHandle } from '../ui/drawer';
 
 // ─── Star Component ─────────────────────────────────────────────────────────
 function StarRating({ value = 0, max = 5, interactive = false, size = 20, onChange }) {
@@ -172,22 +172,21 @@ export function WriteReviewModal({ productId, productTitle, onClose, onSuccess, 
   );
   const [localPreviews, setLocalPreviews] = useState([]);
   const combinedPreviews = [...remoteImages.map((img) => img.secureUrl), ...localPreviews];
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  const userInitials = (user?.name || 'Customer')
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
+  const userInitials = useMemo(() => {
+    if (!user?.name) return 'U';
+    return user.name
+      .split(' ')
+      .map((n) => n[0])
+      .slice(0, 2)
+      .join('')
+      .toUpperCase();
+  }, [user]);
 
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  useScrollLock(true);
+  const { isMobile, dragProps, sheetTransition } = useMobileDrawerEngine({
+    isOpen: true,
+    onClose,
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -277,23 +276,21 @@ export function WriteReviewModal({ productId, productTitle, onClose, onSuccess, 
       {/* Modal Card / Drawer */}
       <motion.div
         variants={{
-          initial: { opacity: 0, y: '100%' },
-          animate: { opacity: 1, y: 0 },
-          exit: { opacity: 0, y: '100%' },
+          initial: { opacity: 0, y: isMobile ? '100%' : 8, scale: isMobile ? 1 : 0.98 },
+          animate: { opacity: 1, y: 0, scale: 1 },
+          exit: { opacity: 0, y: isMobile ? '100%' : 8, scale: isMobile ? 1 : 0.98 },
         }}
         initial="initial"
         animate="animate"
         exit="exit"
-        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="relative bg-surface w-full max-w-lg h-[85vh] sm:h-auto sm:max-h-[90vh] rounded-t-[24px] sm:rounded-lg shadow-2xl flex flex-col z-[100000] font-body text-left border-t sm:border border-outline-variant/30"
+        transition={sheetTransition}
+        {...dragProps}
+        className="relative bg-surface w-full max-w-lg h-auto max-h-[88dvh] sm:max-h-[90vh] rounded-t-3xl sm:rounded-lg shadow-2xl flex flex-col z-[100000] font-body text-left border-t sm:border border-outline-variant/30 overflow-hidden"
       >
-        {/* Drawer Drag Handle (Mobile Only) */}
-        <div className="w-full flex justify-center pt-3 pb-1 sm:hidden absolute top-0 left-0 z-10">
-          <div className="w-12 h-1.5 bg-outline-variant/40 rounded-full" />
-        </div>
+        {isMobile && <DrawerDragHandle onClick={onClose} />}
 
         {/* Header */}
-        <div className="flex items-center justify-between p-5 pt-8 sm:pt-5 border-b border-outline-variant/20 shrink-0 bg-surface-bright rounded-t-[24px] sm:rounded-t-lg">
+        <div className="flex items-center justify-between p-5 pt-5 border-b border-outline-variant/20 shrink-0 bg-surface-bright rounded-t-3xl sm:rounded-t-lg">
           <div>
             <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
               <FileEdit className="text-[14px]" strokeWidth={1.5} />
@@ -312,7 +309,7 @@ export function WriteReviewModal({ productId, productTitle, onClose, onSuccess, 
         </div>
 
         {/* Scrollable Form Body */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-4 no-scrollbar bg-surface">
+        <div className="flex-1 overflow-y-auto overscroll-contain touch-pan-y p-5 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] sm:pb-5 space-y-4 no-scrollbar bg-surface">
           <form onSubmit={handleSubmit} className="space-y-4 pb-4">
             {/* User Profile Info */}
             <div className="flex items-center gap-3 p-4 bg-surface-bright rounded-lg border border-outline-variant/40 shadow-xs">

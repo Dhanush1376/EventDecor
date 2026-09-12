@@ -4,8 +4,8 @@ import { createPortal } from 'react-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { EVENT_TYPES } from '../../config/constants';
 import { LocationSelectorModal } from '../../components/ui/LocationSelectorModal';
-import { useScrollLock } from '../../hooks/useScrollLock';
 import Check from 'lucide-react/dist/esm/icons/check';
+import { useMobileDrawerEngine, DrawerDragHandle } from '../../components/ui/drawer';
 
 export function EventCustomizerDrawer({ event, bookingForm }) {
   const [mounted, setMounted] = useState(false);
@@ -14,9 +14,11 @@ export function EventCustomizerDrawer({ event, bookingForm }) {
   }, []);
 
   const { state, actions } = bookingForm;
-  useScrollLock(state.isDrawerOpen);
 
-  if (!mounted) return null;
+  const { isMobile, dragProps, sheetTransition } = useMobileDrawerEngine({
+    isOpen: state.isDrawerOpen,
+    onClose: () => actions.setIsDrawerOpen(false),
+  });
 
   return createPortal(
     <AnimatePresence>
@@ -36,9 +38,11 @@ export function EventCustomizerDrawer({ event, bookingForm }) {
           initial={{ y: '100%' }}
           animate={{ y: 0 }}
           exit={{ y: '100%' }}
-          transition={{ type: 'spring', damping: 28, stiffness: 220 }}
-          className="fixed bottom-0 left-0 right-0 lg:top-0 lg:bottom-0 lg:my-auto lg:h-fit lg:left-0 lg:right-0 lg:mx-auto lg:w-[600px] lg:rounded-[2.5rem] lg:overflow-hidden z-[1000] bg-[#FCFAF6] border-t border-black/10 rounded-t-[2.5rem] shadow-[0_-10px_40px_rgba(0,0,0,0.15)] flex flex-col max-h-[85vh] lg:max-h-[90vh]"
+          transition={sheetTransition}
+          {...dragProps}
+          className="fixed bottom-0 left-0 right-0 lg:top-0 lg:bottom-0 lg:my-auto lg:h-fit lg:left-0 lg:right-0 lg:mx-auto lg:w-[600px] lg:rounded-[2.5rem] lg:overflow-hidden z-[1000] bg-[#FCFAF6] border-t border-black/10 rounded-t-[2.5rem] shadow-[0_-10px_40px_rgba(0,0,0,0.15)] flex flex-col max-h-[88dvh] lg:max-h-[90vh]"
         >
+          {isMobile && <DrawerDragHandle onClick={() => actions.setIsDrawerOpen(false)} />}
           <div className="bg-[#FAF6F0] px-6 py-4 border-b border-black/5 flex items-center justify-between shrink-0 relative rounded-t-[2.5rem] lg:rounded-t-none">
             <div className="flex items-center gap-2">
               <SlidersHorizontal className="text-black text-[20px]" strokeWidth={1.5} />
@@ -77,7 +81,7 @@ export function EventCustomizerDrawer({ event, bookingForm }) {
             </div>
           </div>
 
-          <div className="p-6 lg:p-8 overflow-y-auto flex-1 space-y-6">
+          <div className="p-6 lg:p-8 overflow-y-auto overscroll-contain touch-pan-y flex-1 space-y-6">
             {/* STEP 1: Occasion */}
             {state.customizerStep === 1 && (
               <div className="space-y-4 pt-2">
@@ -387,7 +391,7 @@ export function EventCustomizerDrawer({ event, bookingForm }) {
           </div>
 
           {/* Footer Actions */}
-          <div className="p-4 lg:p-6 pb-[calc(1rem+var(--safe-area-bottom))] lg:pb-6 bg-white border-t border-black/5 shrink-0 flex gap-2 z-10 rounded-b-[2.5rem]">
+          <div className="p-4 lg:p-6 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] lg:pb-6 bg-white border-t border-black/5 shrink-0 flex gap-2 z-10 rounded-b-[2.5rem]">
             {state.customizerStep > 1 && state.customizerStep < 3 && (
               <button
                 onClick={() => actions.setCustomizerStep(state.customizerStep - 1)}

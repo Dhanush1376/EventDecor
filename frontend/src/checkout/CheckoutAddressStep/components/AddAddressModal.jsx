@@ -2,9 +2,14 @@ import { useState, useEffect, useRef } from 'react';
 import AlertTriangle from 'lucide-react/dist/esm/icons/alert-triangle';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { useScrollLock } from '../../../hooks/useScrollLock';
+import { createPortal } from 'react-dom';
+import { useMobileDrawerEngine, DrawerDragHandle } from '../../../components/ui/drawer';
 import { sanitizePhoneNumber } from '../../../utils/phoneUtils';
-import { detectAndResolveAddress, searchLocations } from '../../../utils/locationService';
+import {
+  detectAndResolveAddress,
+  searchLocations,
+  reverseGeocodeCoords,
+} from '../../../utils/locationService';
 import { LocationMarker } from './LocationMarker';
 
 export function AddAddressModal({
@@ -22,12 +27,19 @@ export function AddAddressModal({
   handleAutofillLocation,
   isResolvingLocation,
 }) {
-  useScrollLock(isAddingNewAddress);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const { isMobile, dragProps, sheetTransition } = useMobileDrawerEngine({
+    isOpen: isAddingNewAddress,
+    onClose: () => setIsAddingNewAddress(false),
+  });
 
   const formContainerRef = useRef(null);
   const searchContainerRef = useRef(null);
   const searchDebounceRef = useRef(null);
-  const [maxModalHeight, setMaxModalHeight] = useState('90vh');
   const [isInternalLocating, setIsInternalLocating] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [locationSuggestions, setLocationSuggestions] = useState([]);
@@ -44,35 +56,6 @@ export function AddAddressModal({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  // Dynamic visualViewport tracker for mobile virtual keyboard resizing
-  useEffect(() => {
-    if (!isAddingNewAddress || typeof window === 'undefined') return;
-
-    const vv = window.visualViewport;
-    if (!vv) return;
-
-    const updateHeight = () => {
-      const isMobile = window.innerWidth < 1024;
-      if (isMobile) {
-        // Dynamically clamp modal height so the entire modal and footer fit within the visual viewport
-        const availableHeight = vv.height;
-        const targetHeight = Math.max(260, Math.floor(availableHeight * 0.94));
-        setMaxModalHeight(`${targetHeight}px`);
-      } else {
-        setMaxModalHeight('90vh');
-      }
-    };
-
-    updateHeight();
-    vv.addEventListener('resize', updateHeight);
-    vv.addEventListener('scroll', updateHeight);
-
-    return () => {
-      vv.removeEventListener('resize', updateHeight);
-      vv.removeEventListener('scroll', updateHeight);
-    };
-  }, [isAddingNewAddress]);
 
   // Smoothly scroll focused input into clear visible area when mobile keyboard opens
   const handleFocusCapture = (e) => {
@@ -113,17 +96,20 @@ export function AddAddressModal({
     setIsSearchingLocation(true);
     searchDebounceRef.current = setTimeout(async () => {
       try {
-        const results = await searchLocations(q.trim());
+        const results = await searchLocations(q.trim(), {
+          latitude: mapPosition?.lat || newAddress?.latitude,
+          longitude: mapPosition?.lng || newAddress?.longitude,
+        });
         setLocationSuggestions(results || []);
       } catch {
         setLocationSuggestions([]);
       } finally {
         setIsSearchingLocation(false);
       }
-    }, 350);
+    }, 300);
   };
 
-  const handleSelectSuggestion = (item) => {
+  const handleSelectSuggestion = async (item) => {
     const addr = item.address || {};
     const lat = item.lat;
     const lng = item.lon;
@@ -133,12 +119,16 @@ export function AddAddressModal({
       setShowMap(true);
     }
 
-    const street = addr.road || addr.street || item.name || '';
-    const locality = addr.locality || addr.district || addr.suburb || item.name || '';
+    const street = addr.road || addr.street || '';
+    const building = addr.building || (item.name && item.name !== street ? item.name : '');
+    const locality = addr.locality || addr.district || addr.suburb || '';
     const city = addr.city || addr.town || addr.village || '';
     const state = addr.state || '';
     const pincode = (addr.pincode || '').replace(/\D/g, '').slice(0, 6);
-    const fullAddress = item.displayName || [street, locality, city].filter(Boolean).join(', ');
+    const landmark =
+      addr.landmark || (building ? `Near ${building}` : item.name ? `Near ${item.name}` : '');
+    const fullAddress =
+      [building, street, locality].filter(Boolean).join(', ') || item.displayName || '';
 
     setNewAddress((prev) => ({
       ...prev,
@@ -148,12 +138,32 @@ export function AddAddressModal({
       city: city || prev.city,
       state: state || prev.state,
       locality: locality || prev.locality,
+      landmark: landmark || prev.landmark,
       address: fullAddress || prev.address,
     }));
 
     setSearchQuery(item.name || item.displayName || '');
     setLocationSuggestions([]);
     toast.success(`Location selected: ${item.name || 'Auto-filled'}!`, { id: 'search-loc' });
+
+    // Deep-enrich via reverse geocoding if lat & lng are available
+    if (lat && lng) {
+      try {
+        const enriched = await reverseGeocodeCoords(lat, lng);
+        if (enriched.success && enriched.data) {
+          const d = enriched.data;
+          setNewAddress((prev) => ({
+            ...prev,
+            pincode: d.pincode || prev.pincode,
+            city: d.city || prev.city,
+            state: d.state || prev.state,
+            locality: d.locality || prev.locality,
+            landmark: d.landmark || prev.landmark,
+            address: d.address || prev.address,
+          }));
+        }
+      } catch {}
+    }
   };
 
   const handleLocationClick = async (e) => {
@@ -213,36 +223,54 @@ export function AddAddressModal({
 
   const isLocating = isResolvingLocation || isInternalLocating;
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {isAddingNewAddress && (
-        <>
+        <div className="fixed inset-0 z-[100] flex items-end lg:items-center justify-center p-0 lg:p-4 pointer-events-none">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsAddingNewAddress(false)}
-            className="fixed inset-0 bg-black/60 z-[100] backdrop-blur-sm cursor-pointer"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm pointer-events-auto cursor-pointer"
           />
           <motion.div
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            style={{ maxHeight: maxModalHeight }}
-            className="fixed bottom-0 left-0 right-0 lg:top-0 lg:bottom-0 lg:my-auto lg:h-fit lg:rounded-2xl lg:overflow-hidden z-[101] bg-surface-container-low rounded-t-2xl sm:rounded-t-3xl w-full max-w-[800px] mx-auto shadow-2xl flex flex-col"
+            initial={{ opacity: 0, scale: isMobile ? 1 : 0.95, y: isMobile ? '100%' : 16 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: isMobile ? 1 : 0.95, y: isMobile ? '100%' : 16 }}
+            transition={sheetTransition}
+            {...dragProps}
+            className="pointer-events-auto relative z-10 bg-surface-bright dark:bg-surface-container-low rounded-t-3xl lg:rounded-2xl w-full max-w-[760px] max-h-[92dvh] lg:max-h-[90vh] shadow-2xl flex flex-col overflow-hidden border border-outline-variant/20 modern-sans-headings font-body"
           >
+            {isMobile && (
+              <DrawerDragHandle
+                onClick={() => setIsAddingNewAddress(false)}
+                className="pt-2 pb-0.5"
+              />
+            )}
+
             {/* Modal Header */}
-            <div className="bg-surface-bright z-10 pt-5 pb-4 px-6 flex justify-between items-center border-b border-outline-variant/20 rounded-t-2xl sm:rounded-t-3xl lg:rounded-t-none shrink-0">
-              <h2 className="text-[11px] font-extrabold text-on-surface uppercase tracking-widest">
-                {newAddress?.id ? 'Edit Address' : 'Add New Address'}
-              </h2>
+            <div className="bg-surface-bright z-10 pt-1.5 pb-2.5 sm:py-3.5 px-4 sm:px-6 flex justify-between items-center border-b border-outline-variant/20 shrink-0">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[18px] sm:text-[20px] text-primary">
+                  add_location_alt
+                </span>
+                <h2
+                  className="font-sans text-[12px] sm:text-[13px] font-bold text-on-surface uppercase tracking-wider"
+                  style={{ fontFamily: 'var(--font-body)' }}
+                >
+                  {newAddress?.id ? 'Edit Address' : 'Add New Address'}
+                </h2>
+              </div>
               <button
                 type="button"
                 onClick={() => setIsAddingNewAddress(false)}
-                className="w-8 h-8 min-h-0 rounded-full bg-surface-container-low flex items-center justify-center border border-outline-variant/30 hover:bg-surface-container transition-colors cursor-pointer"
+                className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-surface-container-low hover:bg-surface-container flex items-center justify-center border border-outline-variant/30 text-secondary hover:text-on-surface transition-all cursor-pointer"
+                aria-label="Close modal"
               >
-                <span className="material-symbols-outlined text-[18px]">close</span>
+                <span className="material-symbols-outlined text-[16px] sm:text-[18px]">close</span>
               </button>
             </div>
 
@@ -250,17 +278,23 @@ export function AddAddressModal({
             <div
               ref={formContainerRef}
               onFocusCapture={handleFocusCapture}
-              className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-6 pb-6"
+              className="flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y p-4 sm:p-6 pb-6"
             >
               <form id="address-form" onSubmit={handleSaveNewAddress}>
                 <div className="space-y-4">
-                  <div className="py-6 border-b border-outline-variant/20">
-                    <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5 mb-5">
-                      <span className="material-symbols-outlined text-[12px]">person</span>
+                  {/* Contact Details */}
+                  <div className="pb-5 border-b border-outline-variant/20">
+                    <h2
+                      className="font-sans text-[11px] font-bold uppercase tracking-wider text-secondary flex items-center gap-1.5 mb-4"
+                      style={{ fontFamily: 'var(--font-body)' }}
+                    >
+                      <span className="material-symbols-outlined text-[14px] text-primary">
+                        person
+                      </span>
                       Contact Details
                     </h2>
-                    <div className="flex flex-col gap-5">
-                      <div className="grid grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
                         <div>
                           <label className="form-label">Receiver Full Name*</label>
                           <input
@@ -287,7 +321,7 @@ export function AddAddressModal({
                           />
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
                         <div>
                           <label className="form-label">Phone Number*</label>
                           <input
@@ -339,103 +373,142 @@ export function AddAddressModal({
                     </div>
                   </div>
 
-                  <div className="py-6 border-b border-outline-variant/20">
-                    <div className="flex items-center justify-between mb-4">
-                      <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5 m-0">
-                        <span className="material-symbols-outlined text-[12px]">home</span>
-                        Address Details
+                  {/* Address Details */}
+                  <div className="py-2 border-b border-outline-variant/20">
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                      <h2
+                        className="font-sans text-[11.5px] font-bold uppercase tracking-wider text-secondary flex items-center gap-1.5 m-0"
+                        style={{ fontFamily: 'var(--font-body)' }}
+                      >
+                        <span className="material-symbols-outlined text-[15px] text-primary">
+                          pin_drop
+                        </span>
+                        Address & Location
                       </h2>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setShowMap((prev) => !prev)}
-                          className="inline-flex items-center gap-1 text-[8px] text-on-surface font-bold uppercase tracking-widest bg-surface-container-high hover:bg-surface-container-highest px-2.5 py-1.5 rounded-full cursor-pointer transition-all border border-outline-variant/30"
-                        >
-                          <span className="material-symbols-outlined text-[11px]">map</span>
-                          <span>{showMap ? 'Hide Map' : 'Map Pin'}</span>
-                        </button>
-                        <button
-                          type="button"
-                          disabled={isLocating}
-                          onClick={handleLocationClick}
-                          className="inline-flex items-center gap-1 text-[8px] text-white font-bold uppercase tracking-widest bg-[#1a1a1a] hover:bg-black px-2.5 py-1.5 rounded-full cursor-pointer transition-all shadow-sm disabled:opacity-50"
-                        >
-                          <span
-                            className={`material-symbols-outlined text-[10px] font-bold ${
-                              isLocating ? 'animate-spin' : ''
-                            }`}
-                          >
-                            {isLocating ? 'progress_activity' : 'my_location'}
-                          </span>
-                          <span>{isLocating ? 'Detecting...' : 'Use Current Location'}</span>
-                        </button>
-                      </div>
+                      <span className="text-[9.5px] font-bold tracking-wider uppercase bg-primary/10 text-primary px-2.5 py-0.5 rounded-full border border-primary/20">
+                        All India
+                      </span>
                     </div>
 
-                    {/* Auto-Select Location Search Bar */}
+                    {/* Quick Action Toolbar */}
+                    <div className="grid grid-cols-2 gap-2.5 mb-3.5">
+                      <button
+                        type="button"
+                        onClick={() => setShowMap((prev) => !prev)}
+                        className={`flex items-center justify-center gap-2 py-2 px-3 rounded-xl border text-[11px] font-bold tracking-wide transition-all cursor-pointer ${
+                          showMap
+                            ? 'bg-primary/10 border-primary text-primary shadow-xs'
+                            : 'bg-surface hover:bg-surface-container-low border-outline-variant/30 text-on-surface'
+                        }`}
+                      >
+                        <span className="material-symbols-outlined text-[15px] text-primary">
+                          {showMap ? 'layers_clear' : 'map'}
+                        </span>
+                        <span>{showMap ? 'Hide Map' : 'Adjust on Map'}</span>
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isLocating}
+                        onClick={handleLocationClick}
+                        className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-neutral-900 hover:bg-black text-white text-[11px] font-bold tracking-wide transition-all shadow-xs disabled:opacity-50 cursor-pointer active:scale-[0.98]"
+                      >
+                        <span
+                          className={`material-symbols-outlined text-[15px] ${
+                            isLocating ? 'animate-spin' : 'text-primary'
+                          }`}
+                        >
+                          {isLocating ? 'progress_activity' : 'my_location'}
+                        </span>
+                        <span>{isLocating ? 'Locating...' : 'Use Current GPS'}</span>
+                      </button>
+                    </div>
+
+                    {/* Google Maps-Style Location Search Bar */}
                     <div ref={searchContainerRef} className="relative mb-4">
-                      <label className="form-label text-[10px] mb-1.5 flex items-center justify-between">
-                        <span className="flex items-center gap-1">
-                          <span className="material-symbols-outlined text-xs text-primary">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[10.5px] font-bold uppercase tracking-wider text-secondary flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[13px] text-primary">
                             search
                           </span>
-                          Auto-Select Location (Area / City / Landmark)
+                          Search Location (India)
                         </span>
-                        {isSearchingLocation && (
-                          <span className="text-[9px] text-primary animate-pulse font-medium">
-                            Searching places...
+                        {isSearchingLocation ? (
+                          <span className="text-[10px] text-primary animate-pulse font-semibold flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-ping" />
+                            Searching India places...
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-on-surface-variant/70 font-medium">
+                            Auto-fills address form
                           </span>
                         )}
-                      </label>
-                      <div className="relative">
+                      </div>
+
+                      <div className="relative flex items-center bg-surface border border-outline-variant/40 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 rounded-xl transition-all shadow-2xs">
+                        <span className="material-symbols-outlined text-[18px] text-primary/80 pl-3 shrink-0 pointer-events-none">
+                          search
+                        </span>
                         <input
                           type="text"
                           value={searchQuery}
                           onChange={handleLocationSearchChange}
-                          placeholder="Search area, landmark, or city to auto-fill..."
-                          className="form-field pr-8 text-[12px]"
+                          placeholder="Search area, landmark, colony, PG, road, or 6-digit pincode..."
+                          className="w-full py-2.5 px-2.5 text-[12px] sm:text-[13px] bg-transparent outline-none text-on-surface placeholder:text-on-surface-variant/50 font-medium"
                         />
-                        {searchQuery ? (
+                        {searchQuery && (
                           <button
                             type="button"
                             onClick={() => {
                               setSearchQuery('');
                               setLocationSuggestions([]);
                             }}
-                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant/60 hover:text-on-surface cursor-pointer"
+                            className="p-2 text-on-surface-variant/60 hover:text-on-surface cursor-pointer shrink-0"
+                            aria-label="Clear search"
                           >
-                            <span className="material-symbols-outlined text-[14px]">close</span>
+                            <span className="material-symbols-outlined text-[16px]">cancel</span>
                           </button>
-                        ) : (
-                          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant/40 material-symbols-outlined text-[16px] pointer-events-none">
-                            travel_explore
-                          </span>
                         )}
                       </div>
 
                       {/* Dropdown suggestions */}
                       {locationSuggestions.length > 0 && (
-                        <div className="absolute left-0 right-0 top-full mt-1.5 bg-surface-bright rounded-xl shadow-xl border border-outline-variant/30 overflow-hidden z-30 max-h-56 overflow-y-auto">
+                        <div className="absolute left-0 right-0 top-full mt-1.5 bg-surface-bright rounded-xl shadow-2xl border border-outline-variant/30 overflow-hidden z-30 max-h-64 overflow-y-auto divide-y divide-outline-variant/10">
                           {locationSuggestions.map((item, idx) => (
                             <button
                               key={idx}
                               type="button"
                               onClick={() => handleSelectSuggestion(item)}
-                              className="w-full text-left px-3.5 py-2.5 hover:bg-surface-container-low border-b border-outline-variant/10 last:border-b-0 flex items-start gap-2.5 transition-colors cursor-pointer"
+                              className="w-full text-left px-3.5 py-2.5 hover:bg-primary/5 flex items-start gap-2.5 transition-colors cursor-pointer group"
                             >
-                              <span className="material-symbols-outlined text-[16px] text-primary mt-0.5 shrink-0">
-                                location_on
-                              </span>
+                              <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary mt-0.5 shrink-0 group-hover:bg-primary group-hover:text-white transition-colors">
+                                <span className="material-symbols-outlined text-[14px]">
+                                  location_on
+                                </span>
+                              </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-[11px] font-bold text-on-surface truncate">
-                                  {item.name || 'Selected Location'}
-                                </p>
-                                <p className="text-[10px] text-on-surface-variant truncate">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <p className="text-[11.5px] font-bold text-on-surface truncate">
+                                    {item.name || 'Selected Location'}
+                                  </p>
+                                  {item.address?.landmark && (
+                                    <span className="text-[9px] bg-amber-500/10 text-amber-700 dark:text-amber-400 font-semibold px-1.5 py-0.2 rounded-md">
+                                      {item.address.landmark}
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-[10px] text-on-surface-variant/80 truncate mt-0.5">
                                   {item.displayName}
                                 </p>
                               </div>
                             </button>
                           ))}
+                          <div className="px-3.5 py-1.5 bg-surface-container-lowest text-[9px] text-on-surface-variant/60 flex items-center justify-between font-medium">
+                            <span>Showing locations in India</span>
+                            <span className="flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                              OSM & Postal Registry
+                            </span>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -471,8 +544,8 @@ export function AddAddressModal({
                       </motion.div>
                     )}
 
-                    <div className="flex flex-col gap-5">
-                      <div className="grid grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
                         <div>
                           <label className="form-label">6-Digit Pincode*</label>
                           <input
@@ -539,12 +612,12 @@ export function AddAddressModal({
                           onChange={(e) =>
                             setNewAddress((prev) => ({ ...prev, address: e.target.value }))
                           }
-                          className="form-field min-h-[70px]"
+                          className="form-field min-h-[75px] resize-none"
                         />
                       </div>
 
                       <div>
-                        <label className="form-label">Landmark</label>
+                        <label className="form-label">Landmark (Optional)</label>
                         <input
                           type="text"
                           placeholder="e.g. Near Apollo Hospital"
@@ -556,7 +629,7 @@ export function AddAddressModal({
                         />
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
                         <div>
                           <label className="form-label">City / District*</label>
                           <input
@@ -588,12 +661,18 @@ export function AddAddressModal({
                     </div>
                   </div>
 
-                  <div className="py-6">
-                    <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5 mb-5">
-                      <span className="material-symbols-outlined text-[12px]">local_shipping</span>
+                  {/* Destination & Options */}
+                  <div className="pt-2 pb-4">
+                    <h2
+                      className="font-sans text-[11px] font-bold uppercase tracking-wider text-secondary flex items-center gap-1.5 mb-4"
+                      style={{ fontFamily: 'var(--font-body)' }}
+                    >
+                      <span className="material-symbols-outlined text-[14px] text-primary">
+                        local_shipping
+                      </span>
                       Destination & Options
                     </h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                       <div>
                         <label className="form-label">Destination Type</label>
                         <select
@@ -611,8 +690,8 @@ export function AddAddressModal({
                       </div>
                     </div>
 
-                    <div className="sm:col-span-2 mb-4">
-                      <label className="form-label">Delivery Instructions</label>
+                    <div className="mb-4">
+                      <label className="form-label">Delivery Instructions (Optional)</label>
                       <textarea
                         placeholder="E.g. Leave with security, call before delivery"
                         value={newAddress.deliveryInstructions}
@@ -622,11 +701,11 @@ export function AddAddressModal({
                             deliveryInstructions: e.target.value,
                           }))
                         }
-                        className="form-field min-h-[70px]"
+                        className="form-field min-h-[70px] resize-none"
                       />
                     </div>
 
-                    <label className="flex items-center gap-2 cursor-pointer mt-2 select-none">
+                    <label className="flex items-center gap-2.5 cursor-pointer mt-2 select-none">
                       <input
                         type="checkbox"
                         checked={newAddress.isDefault || false}
@@ -635,7 +714,7 @@ export function AddAddressModal({
                         }
                         className="w-4 h-4 rounded border-outline-variant/40 text-primary focus:ring-primary cursor-pointer"
                       />
-                      <span className="text-[12px] text-on-surface">
+                      <span className="text-[12px] text-on-surface font-medium">
                         Make this as my default address
                       </span>
                     </label>
@@ -645,7 +724,10 @@ export function AddAddressModal({
             </div>
 
             {/* Modal Footer: Non-overlapping, pinned at bottom of modal flex container */}
-            <div className="bg-surface-bright border-t border-outline-variant/20 p-4 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] shrink-0 z-20">
+            <div
+              className="bg-surface-bright border-t border-outline-variant/20 p-4 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] shrink-0 z-20"
+              style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}
+            >
               {addressError && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
@@ -659,11 +741,11 @@ export function AddAddressModal({
                   <span className="font-bold flex-1 leading-snug">{addressError}</span>
                 </motion.div>
               )}
-              <div className="w-full flex gap-4">
+              <div className="w-full flex gap-3 sm:gap-4">
                 <button
                   type="button"
                   onClick={() => setIsAddingNewAddress(false)}
-                  className="flex-1 bg-transparent text-on-surface font-bold uppercase tracking-widest text-[10px] py-3 rounded-full border border-outline-variant/40 hover:bg-surface-container-low transition-colors cursor-pointer"
+                  className="flex-1 bg-surface-container-low hover:bg-surface-container text-on-surface font-bold uppercase tracking-widest text-[11px] py-3 rounded-xl border border-outline-variant/30 transition-all cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -671,15 +753,25 @@ export function AddAddressModal({
                   form="address-form"
                   type="submit"
                   disabled={isProcessing}
-                  className="flex-1 bg-[#282828] hover:bg-black text-white py-3 rounded-full font-bold uppercase tracking-widest text-[10px] shadow-md flex justify-center transition-colors disabled:opacity-70 cursor-pointer"
+                  className="flex-1 bg-neutral-900 hover:bg-black text-white py-3 rounded-xl font-bold uppercase tracking-widest text-[11px] shadow-md hover:shadow-lg flex items-center justify-center gap-2 transition-all disabled:opacity-70 cursor-pointer active:scale-[0.99]"
                 >
-                  {isProcessing ? 'Saving...' : 'Save Address'}
+                  {isProcessing ? (
+                    <>
+                      <span className="material-symbols-outlined text-[14px] animate-spin">
+                        progress_activity
+                      </span>
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    'Save Address'
+                  )}
                 </button>
               </div>
             </div>
           </motion.div>
-        </>
+        </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }

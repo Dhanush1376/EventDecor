@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import api from '../../../services/api';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '../../../utils/core/errorHelpers';
 import { AdminToggle } from '../AdminUIKit';
+import { useMobileDrawerEngine, DrawerDragHandle } from '../../../components/ui/drawer';
 
 export function PolicyModalDrawer({ isOpen, onClose, policy = null, onSuccess }) {
   const isEditMode = Boolean(policy && (policy._id || policy.id));
@@ -17,15 +19,10 @@ export function PolicyModalDrawer({ isOpen, onClose, policy = null, onSuccess })
   const [showAiPrompt, setShowAiPrompt] = useState(false);
   const [aiTopic, setAiTopic] = useState('');
 
-  const [isMobile, setIsMobile] = useState(
-    typeof window !== 'undefined' ? window.innerWidth < 640 : false,
-  );
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 640);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  const { isMobile, dragProps, sheetTransition } = useMobileDrawerEngine({
+    isOpen,
+    onClose: !submitting ? onClose : undefined,
+  });
 
   const parseContentToSections = (content) => {
     if (!content) return [{ heading: '', paragraph: '' }];
@@ -96,17 +93,6 @@ export function PolicyModalDrawer({ isOpen, onClose, policy = null, onSuccess })
       setAiTopic('');
     }
   }, [policy, isOpen]);
-
-  // Lock body scroll when open
-  useEffect(() => {
-    if (isOpen) {
-      const originalStyle = window.getComputedStyle(document.body).overflow;
-      document.body.style.overflow = 'hidden';
-      return () => {
-        document.body.style.overflow = originalStyle;
-      };
-    }
-  }, [isOpen]);
 
   // ESC key handler
   useEffect(() => {
@@ -220,7 +206,9 @@ export function PolicyModalDrawer({ isOpen, onClose, policy = null, onSuccess })
     }
   };
 
-  return (
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 pointer-events-none">
@@ -238,27 +226,25 @@ export function PolicyModalDrawer({ isOpen, onClose, policy = null, onSuccess })
             }}
           />
 
-          {/* Modal / Mobile App Drawer Card with reduced border radius */}
+          {/* Modal / Mobile App Drawer Card */}
           <motion.div
             initial={{
               opacity: 0,
-              y: isMobile ? '100%' : 4,
+              y: isMobile ? '100%' : 8,
               scale: isMobile ? 1 : 0.98,
             }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{
               opacity: 0,
-              y: isMobile ? '100%' : 4,
+              y: isMobile ? '100%' : 8,
               scale: isMobile ? 1 : 0.98,
             }}
-            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-            className="pointer-events-auto relative w-full sm:max-w-xl md:max-w-2xl bg-[var(--admin-surface)] rounded-t-[4px] sm:rounded-[4px] shadow-2xl border-t sm:border border-[var(--admin-border)] flex flex-col max-h-[92vh] sm:max-h-[88vh] overflow-hidden z-10"
+            transition={sheetTransition}
+            {...dragProps}
+            className="pointer-events-auto relative w-full sm:max-w-xl md:max-w-2xl bg-[var(--admin-surface)] rounded-t-2xl sm:rounded-[4px] shadow-2xl border-t sm:border border-[var(--admin-border)] flex flex-col max-h-[90dvh] sm:max-h-[88vh] overflow-hidden z-10"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Mobile Drawer Pull Indicator */}
-            <div className="pt-2 pb-0.5 sm:hidden flex justify-center w-full shrink-0">
-              <div className="w-8 h-1 rounded-sm bg-stone-300 dark:bg-stone-700" />
-            </div>
+            {isMobile && <DrawerDragHandle onClick={!submitting ? onClose : undefined} />}
 
             {/* Header */}
             <div className="px-5 py-3 sm:py-3.5 border-b border-[var(--admin-border-subtle)] flex items-center justify-between shrink-0 bg-[var(--admin-surface)]">
@@ -352,9 +338,9 @@ export function PolicyModalDrawer({ isOpen, onClose, policy = null, onSuccess })
               )}
             </AnimatePresence>
 
-            {/* Form */}
+            {/* Form Content */}
             <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
-              <div className="p-5 overflow-y-auto space-y-4 flex-1">
+              <div className="p-5 overflow-y-auto overscroll-contain touch-pan-y space-y-4 flex-1">
                 {/* 1. Policy Title */}
                 <div className="space-y-1.5">
                   <label className="block text-[11.5px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)]">
@@ -454,7 +440,7 @@ export function PolicyModalDrawer({ isOpen, onClose, policy = null, onSuccess })
               </div>
 
               {/* Sticky Footer Action Bar */}
-              <div className="px-5 py-3.5 border-t border-[var(--admin-border-subtle)] bg-[var(--admin-surface)] flex items-center justify-end gap-2.5 shrink-0">
+              <div className="px-5 py-3.5 pb-[calc(0.875rem+env(safe-area-inset-bottom,0px))] sm:pb-3.5 border-t border-[var(--admin-border-subtle)] bg-[var(--admin-surface)] flex items-center justify-end gap-2.5 shrink-0">
                 <button
                   type="button"
                   onClick={!submitting ? onClose : undefined}
@@ -484,7 +470,8 @@ export function PolicyModalDrawer({ isOpen, onClose, policy = null, onSuccess })
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }
 

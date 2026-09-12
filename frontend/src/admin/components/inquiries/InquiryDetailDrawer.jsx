@@ -12,6 +12,7 @@ import { WhatsAppIcon } from '../../../components/ui/WhatsAppIcon';
 import { formatCurrency } from '../AdminUIKit';
 import AdminCustomerProfileModal from '../AdminCustomerProfileModal';
 import { useConfirm } from '../../../context/ConfirmProvider';
+import { useMobileDrawerEngine, DrawerDragHandle } from '../../../components/ui/drawer';
 
 const ALL_STATUSES = [
   'Pending',
@@ -24,7 +25,12 @@ const ALL_STATUSES = [
   'Cancelled',
 ];
 
-export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, refetchOrders, isMobile }) {
+export function InquiryDetailDrawer({
+  selectedOrder,
+  setSelectedOrder,
+  refetchOrders,
+  isMobile: propIsMobile,
+}) {
   const confirm = useConfirm();
   const chatEndRef = useRef(null);
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'quote' | 'chat'
@@ -33,15 +39,10 @@ export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, refetchOr
   const [updatingId, setUpdatingId] = useState(null);
   const [showCustomerModal, setShowCustomerModal] = useState(false);
 
-  // Scroll lock when drawer is active
-  useEffect(() => {
-    if (!selectedOrder || typeof document === 'undefined') return;
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = originalOverflow;
-    };
-  }, [selectedOrder]);
+  const { isMobile, dragProps, sheetTransition, slideDrawer } = useMobileDrawerEngine({
+    isOpen: !!selectedOrder,
+    onClose: () => setSelectedOrder(null),
+  });
 
   const {
     formData: quoteData,
@@ -244,12 +245,6 @@ export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, refetchOr
       })
     : 'TBD';
 
-  const slideDrawer = {
-    hidden: isMobile ? { y: '100%', opacity: 0 } : { x: '100%', opacity: 0 },
-    show: isMobile ? { y: 0, opacity: 1 } : { x: 0, opacity: 1 },
-    exit: isMobile ? { y: '100%', opacity: 0 } : { x: '100%', opacity: 0 },
-  };
-
   const isDark =
     typeof document !== 'undefined' &&
     (document.documentElement.classList.contains('dark') ||
@@ -290,10 +285,12 @@ export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, refetchOr
         animate="show"
         exit="exit"
         variants={slideDrawer}
-        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-        className="fixed z-[1000] flex flex-col overflow-hidden shadow-[var(--admin-shadow-2xl)] border-[var(--admin-border)] sm:inset-y-0 sm:top-0 sm:bottom-0 sm:right-0 sm:left-auto sm:w-[560px] md:w-[600px] sm:h-full sm:max-h-none sm:rounded-none sm:border-l sm:border-t-0 bottom-0 inset-x-0 max-h-[92vh] h-auto rounded-t-[4px] border-t bg-[var(--admin-surface)] text-[var(--admin-text-primary)]"
+        transition={sheetTransition}
+        {...dragProps}
+        className="fixed z-[1000] flex flex-col overflow-hidden shadow-[var(--admin-shadow-2xl)] border-[var(--admin-border)] sm:inset-y-0 sm:top-0 sm:bottom-0 sm:right-0 sm:left-auto sm:w-[560px] md:w-[600px] sm:h-full sm:max-h-none sm:rounded-none sm:border-l sm:border-t-0 bottom-0 inset-x-0 max-h-[90dvh] h-auto rounded-t-2xl sm:rounded-t-none border-t bg-[var(--admin-surface)] text-[var(--admin-text-primary)]"
         style={{ background: 'var(--admin-surface, #ffffff)' }}
       >
+        {isMobile && <DrawerDragHandle onClick={() => setSelectedOrder(null)} />}
         {/* Drawer Header (Consistent with AdminReturnDetail) */}
         <div className="px-4 sm:px-5 py-3 border-b border-[var(--admin-border-subtle)] flex items-center justify-between gap-2 shrink-0 bg-[var(--admin-surface)]">
           <div className="flex flex-col min-w-0">
@@ -457,7 +454,7 @@ export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, refetchOr
         </div>
 
         {/* Drawer Scroll Body */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 custom-scrollbar text-left bg-[var(--admin-bg)]">
+        <div className="flex-1 overflow-y-auto overscroll-contain touch-pan-y p-4 sm:p-5 space-y-4 custom-scrollbar text-left bg-[var(--admin-bg)]">
           {/* ══════════════ TAB 1: DETAILS & SCOPE ══════════════ */}
           {activeTab === 'overview' && (
             <>
@@ -1142,7 +1139,7 @@ export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, refetchOr
         </div>
 
         {/* ══════════════ FIXED BOTTOM BAR: ALWAYS VISIBLE TO UPDATE STATUS & CHAT ══════════════ */}
-        <div className="sticky bottom-0 inset-x-0 z-30 px-4 py-3 bg-[var(--admin-surface)] border-t border-[var(--admin-border)] shadow-[0_-4px_16px_rgba(0,0,0,0.06)] flex items-center justify-between gap-2 shrink-0">
+        <div className="sticky bottom-0 inset-x-0 z-30 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] sm:pb-3 bg-[var(--admin-surface)] border-t border-[var(--admin-border)] shadow-[0_-4px_16px_rgba(0,0,0,0.06)] flex items-center justify-between gap-2 shrink-0">
           {/* Status Controls */}
           <div className="flex items-center gap-2 flex-1 min-w-0">
             <span className="hidden sm:inline text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider shrink-0">

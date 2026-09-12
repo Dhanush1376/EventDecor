@@ -6,14 +6,16 @@ export function AddressFormFields({ addressFormData, setAddressFormData }) {
   return (
     <>
       {/* Contact Information Section */}
-      {/* Contact Information Section */}
       <div className="py-5 border-b border-outline-variant/20">
-        <h4 className="text-[9px] font-bold uppercase tracking-widest text-secondary mb-5 flex items-center gap-1.5">
+        <h4
+          className="font-sans text-[11px] font-bold uppercase tracking-wider text-secondary mb-5 flex items-center gap-1.5"
+          style={{ fontFamily: 'var(--font-body)' }}
+        >
           <User className="text-[12px]" strokeWidth={1.5} />
           Contact Details
         </h4>
         <div className="flex flex-col gap-5">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="dashboard-address-name" className="form-label">
                 Receiver Full Name*
@@ -52,7 +54,7 @@ export function AddressFormFields({ addressFormData, setAddressFormData }) {
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="dashboard-address-phone" className="form-label">
                 Phone Number*
@@ -122,12 +124,15 @@ export function AddressFormFields({ addressFormData, setAddressFormData }) {
 
       {/* Address Details Section */}
       <div className="py-5">
-        <h4 className="text-[9px] font-bold uppercase tracking-widest text-secondary mb-5 flex items-center gap-1.5">
+        <h4
+          className="font-sans text-[11px] font-bold uppercase tracking-wider text-secondary mb-5 flex items-center gap-1.5"
+          style={{ fontFamily: 'var(--font-body)' }}
+        >
           <Home className="text-[12px]" strokeWidth={1.5} />
           Address Information
         </h4>
         <div className="flex flex-col gap-5">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="dashboard-address-pincode" className="form-label">
                 6-Digit Pincode*
@@ -204,7 +209,7 @@ export function AddressFormFields({ addressFormData, setAddressFormData }) {
               }
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="dashboard-address-city" className="form-label">
                 City / District*

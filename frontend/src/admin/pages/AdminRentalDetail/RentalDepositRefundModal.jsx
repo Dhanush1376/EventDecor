@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import rentalService from '../../../services/api/rentalService';
 import { m as motion, AnimatePresence } from 'framer-motion';
+import { useMobileDrawerEngine, DrawerDragHandle } from '../../../components/ui/drawer';
 
 export function RentalDepositRefundModal({ rental, onClose, onSuccess }) {
   const depositHeld = rental.securityDeposit || 0;
@@ -44,15 +45,10 @@ export function RentalDepositRefundModal({ rental, onClose, onSuccess }) {
 
   const formatCurrency = (val) => `₹${Number(val || 0).toLocaleString('en-IN')}`;
 
-  const [isMobile, setIsMobile] = useState(() =>
-    typeof window !== 'undefined' ? window.innerWidth < 640 : false,
-  );
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 640);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  const { isMobile, dragProps, sheetTransition } = useMobileDrawerEngine({
+    isOpen: !!rental,
+    onClose: !isSubmitting ? onClose : undefined,
+  });
 
   const isDark =
     typeof document !== 'undefined' &&
@@ -82,11 +78,12 @@ export function RentalDepositRefundModal({ rental, onClose, onSuccess }) {
 
         {/* Modal Card / Mobile App Drawer */}
         <motion.div
-          initial={{ opacity: 0, y: isMobile ? '100%' : 4, scale: isMobile ? 1 : 0.98 }}
+          initial={{ opacity: 0, y: isMobile ? '100%' : 8, scale: isMobile ? 1 : 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: isMobile ? '100%' : 4, scale: isMobile ? 1 : 0.98 }}
-          transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-          className={`admin-section-root ${isDark ? 'dark' : ''} pointer-events-auto relative bg-white dark:bg-[#1f1e1b] rounded-t-[20px] sm:rounded-[4px] shadow-2xl w-full sm:max-w-md overflow-hidden z-10 border-t sm:border border-[#e8e4d9] dark:border-white/10 font-sans max-h-[88vh] sm:max-h-none flex flex-col`}
+          exit={{ opacity: 0, y: isMobile ? '100%' : 8, scale: isMobile ? 1 : 0.98 }}
+          transition={sheetTransition}
+          {...dragProps}
+          className={`admin-section-root ${isDark ? 'dark' : ''} pointer-events-auto relative bg-white dark:bg-[#1f1e1b] rounded-t-2xl sm:rounded-[4px] shadow-2xl w-full sm:max-w-md overflow-hidden z-10 border-t sm:border border-[#e8e4d9] dark:border-white/10 font-sans max-h-[90dvh] sm:max-h-none flex flex-col`}
           style={{
             backgroundColor: 'var(--admin-surface, #ffffff)',
             borderColor: 'var(--admin-border, #e8e4d9)',
@@ -95,10 +92,7 @@ export function RentalDepositRefundModal({ rental, onClose, onSuccess }) {
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Mobile Drawer Pull Indicator */}
-          <div className="pt-2.5 pb-1 sm:hidden flex justify-center w-full bg-[#f2efe5] dark:bg-[#2a2823] cursor-grab active:cursor-grabbing">
-            <div className="w-10 h-1.5 rounded-full bg-stone-300 dark:bg-stone-600" />
-          </div>
+          {isMobile && <DrawerDragHandle onClick={!isSubmitting ? onClose : undefined} />}
 
           <div
             className="px-5 py-3.5 sm:py-4 border-b border-[#e8e4d9] dark:border-white/10 flex items-center justify-between bg-[#f2efe5] dark:bg-[#2a2823] shrink-0"
@@ -133,7 +127,7 @@ export function RentalDepositRefundModal({ rental, onClose, onSuccess }) {
 
           <form
             onSubmit={handleSubmit}
-            className="p-5 font-sans overflow-y-auto custom-scrollbar flex-1 pb-8 sm:pb-5"
+            className="p-5 font-sans overflow-y-auto overscroll-contain touch-pan-y custom-scrollbar flex-1 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] sm:pb-5"
           >
             <div className="bg-[var(--admin-bg-subtle)] rounded-[4px] p-3.5 mb-5 border border-[var(--admin-border-subtle)]">
               <div className="flex justify-between mb-2">

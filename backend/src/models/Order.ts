@@ -136,6 +136,8 @@ const OrderSchema: Schema = new Schema(
     orderUuid: { type: String, index: true },
     packageIds: [{ type: String }],
     shipmentIds: [{ type: String }],
+    rewardsProcessed: { type: Boolean, default: false, index: true },
+    walletRefunded: { type: Boolean, default: false, index: true },
     orderQrCode: { type: String },
     orderQrSignature: { type: String },
     estimatedDeliveryDate: { type: Date },

@@ -1,8 +1,8 @@
-import { X, AlertCircle, CheckCircle2 } from 'lucide-react';
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { X, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
-import { useScrollLock } from '../../../hooks/useScrollLock';
+import { useMobileDrawerEngine, DrawerDragHandle } from '../../ui/drawer';
 
 export function CouponModal({
   isCouponModalOpen,
@@ -16,7 +16,10 @@ export function CouponModal({
   actualSubtotal,
   items = [],
 }) {
-  useScrollLock(isCouponModalOpen);
+  const { isMobile, dragProps, sheetTransition } = useMobileDrawerEngine({
+    isOpen: isCouponModalOpen,
+    onClose: () => setIsCouponModalOpen(false),
+  });
 
   if (typeof document === 'undefined') return null;
 
@@ -32,14 +35,23 @@ export function CouponModal({
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
           />
           <motion.div
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="relative w-full max-w-[500px] flex flex-col z-[1001]"
+            initial={{
+              y: isMobile ? '100%' : 8,
+              opacity: isMobile ? 1 : 0,
+              scale: isMobile ? 1 : 0.98,
+            }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={{
+              y: isMobile ? '100%' : 8,
+              opacity: isMobile ? 1 : 0,
+              scale: isMobile ? 1 : 0.98,
+            }}
+            transition={sheetTransition}
+            {...dragProps}
+            className="relative w-full max-w-[500px] flex flex-col z-[1001] max-h-[88dvh] sm:max-h-[85vh]"
           >
-            <div className="w-full bg-surface-bright rounded-t-[24px] sm:rounded-[24px] p-6 sm:p-8 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] overflow-hidden max-h-[85vh] flex flex-col">
-              <div className="w-12 h-1.5 bg-outline-variant/60 rounded-full mx-auto mb-6 sm:hidden" />
+            <div className="w-full bg-surface-bright rounded-t-3xl sm:rounded-[24px] p-6 sm:p-8 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] sm:pb-8 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] overflow-hidden max-h-[88dvh] sm:max-h-[85vh] flex flex-col">
+              {isMobile && <DrawerDragHandle onClick={() => setIsCouponModalOpen(false)} />}
               <button
                 onClick={() => setIsCouponModalOpen(false)}
                 className="absolute top-6 right-6 w-8 h-8 min-h-0 rounded-full bg-surface-container-lowest border border-outline-variant/40 flex items-center justify-center hover:bg-surface-container transition-all z-50 cursor-pointer shadow-xs hidden sm:flex"
@@ -91,7 +103,7 @@ export function CouponModal({
                   </button>
                 </form>
 
-                <div className="flex-1 overflow-y-auto pr-2 space-y-4 scrollbar-thin">
+                <div className="flex-1 overflow-y-auto overscroll-contain touch-pan-y pr-2 space-y-4 scrollbar-thin">
                   <span className="text-[11px] font-bold uppercase tracking-widest text-secondary block">
                     Available Offers
                   </span>

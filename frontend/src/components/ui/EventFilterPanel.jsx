@@ -1,8 +1,8 @@
 import { Check, CheckCircle2, X } from 'lucide-react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import { useScrollLock } from '../../hooks/useScrollLock';
 import { createPortal } from 'react-dom';
+import { useMobileDrawerEngine, DrawerDragHandle } from './drawer';
 
 const FilterSection = ({ title, _id, isOpen, onToggle, children }) => (
   <div className="mb-5 border-b border-outline-variant/10 pb-4 last:border-0 last:pb-0">
@@ -89,7 +89,10 @@ export function EventFilterPanel({
     return () => setMounted(false);
   }, []);
 
-  useScrollLock(isOpen);
+  const { isMobile, dragProps, sheetTransition } = useMobileDrawerEngine({
+    isOpen,
+    onClose,
+  });
 
   const toggleSection = (section) => {
     setActiveSections((prev) => ({ ...prev, [section]: !prev[section] }));
@@ -239,26 +242,24 @@ export function EventFilterPanel({
                   initial={{ y: '100%' }}
                   animate={{ y: 0 }}
                   exit={{ y: '100%' }}
-                  transition={{
-                    type: 'spring',
-                    damping: 32,
-                    stiffness: 300,
-                    mass: 0.8,
-                  }}
+                  transition={sheetTransition}
+                  {...dragProps}
                   className="fixed bottom-0 left-0 right-0 z-10 pointer-events-auto flex flex-col"
                 >
-                  <div className="relative w-full bg-surface rounded-t-[40px] p-6 shadow-2xl flex flex-col max-h-[85vh] overflow-hidden border-t border-outline-variant/10 pb-[calc(1.5rem+var(--safe-area-bottom))]">
+                  <div className="relative w-full bg-surface rounded-t-[40px] p-6 shadow-2xl flex flex-col max-h-[88dvh] overflow-hidden border-t border-outline-variant/10 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]">
                     {/* Handlebar for bottom sheet feel */}
-                    <div className="w-12 h-1.5 bg-black/10 rounded-full mx-auto mb-4 shrink-0" />
+                    <DrawerDragHandle onClick={onClose} />
 
                     <button
                       onClick={onClose}
-                      className="absolute top-6 right-6 w-10 h-10 min-h-0 rounded-full bg-black/5 flex items-center justify-center text-on-surface hover:bg-black/10 transition-all z-10"
+                      className="absolute top-6 right-6 w-10 h-10 min-h-0 rounded-full bg-black/5 flex items-center justify-center text-on-surface hover:bg-black/10 transition-all z-10 cursor-pointer"
                     >
                       <X className="text-[20px]" strokeWidth={1.5} />
                     </button>
 
-                    <div className="flex-1 overflow-y-auto no-scrollbar pt-2">{panelContent}</div>
+                    <div className="flex-1 overflow-y-auto overscroll-contain touch-pan-y no-scrollbar pt-2">
+                      {panelContent}
+                    </div>
 
                     {/* Bottom Action Bar */}
                     <div className="mt-6 pt-6 border-t border-outline-variant/20">

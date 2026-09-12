@@ -14,6 +14,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { EmptyState } from '../ui';
 import { CloudinaryImage } from '../ui/CloudinaryImage';
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useCart } from '../../context/CartContext';
 import { prefetchManager } from '../../utils/performance/prefetchManager';
 import { useActiveCoupons } from '../../hooks/useActiveCoupons';
@@ -96,7 +97,9 @@ export function CartDrawer({ isOpen, onClose }) {
     }
   }, [isOpen, onClose]);
 
-  return (
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <>
@@ -126,7 +129,7 @@ export function CartDrawer({ isOpen, onClose }) {
                 onClose();
               }
             }}
-            className="fixed right-0 top-0 w-full max-w-[calc(100vw-32px)] sm:max-w-[440px] h-full bg-white/95 backdrop-blur-2xl z-[210] flex flex-col shadow-[-20px_0_60px_rgba(0,0,0,0.08)] touch-pan-y border-l border-white/60 modern-sans-headings font-body"
+            className="fixed right-0 top-0 w-full max-w-[calc(100vw-32px)] sm:max-w-[440px] h-full h-[100dvh] bg-white/95 backdrop-blur-2xl z-[210] flex flex-col shadow-[-20px_0_60px_rgba(0,0,0,0.08)] touch-pan-y overscroll-contain border-l border-white/60 modern-sans-headings font-body"
           >
             {/* Header */}
             <div className="flex justify-between items-center px-5 py-3.5 border-b border-black/[0.06] bg-white/70 sticky top-0 z-10 backdrop-blur-md">
@@ -158,7 +161,7 @@ export function CartDrawer({ isOpen, onClose }) {
             </div>
 
             {/* Items List */}
-            <div className="flex-1 overflow-y-auto px-5 pt-3.5 pb-6 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-black/10 hover:scrollbar-thumb-black/20">
+            <div className="flex-1 overflow-y-auto overscroll-contain touch-pan-y px-5 pt-3.5 pb-6 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-black/10 hover:scrollbar-thumb-black/20">
               {loading && items.length === 0 ? (
                 <div className="space-y-4">
                   {Array.from({ length: Math.max(1, cartCount || 3) }).map((_, i) => (
@@ -758,6 +761,7 @@ export function CartDrawer({ isOpen, onClose }) {
           </motion.div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }

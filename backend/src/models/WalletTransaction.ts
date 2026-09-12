@@ -21,6 +21,7 @@ export interface IWalletTransaction extends Document {
   updatedAt: Date;
   reviewId?: mongoose.Types.ObjectId;
   returnRequestId?: mongoose.Types.ObjectId;
+  refereeId?: mongoose.Types.ObjectId;
   balanceBefore?: number;
   balanceAfter?: number;
   adminId?: mongoose.Types.ObjectId;
@@ -50,6 +51,7 @@ const WalletTransactionSchema: Schema = new Schema(
     orderId: { type: Schema.Types.ObjectId, ref: 'Order' },
     reviewId: { type: Schema.Types.ObjectId, ref: 'Review' },
     returnRequestId: { type: Schema.Types.ObjectId, ref: 'ReturnRequest' },
+    refereeId: { type: Schema.Types.ObjectId, ref: 'User' },
     expiryDate: { type: Date },
     balanceBefore: { type: Number },
     balanceAfter: { type: Number },
@@ -79,7 +81,26 @@ WalletTransactionSchema.index(
   },
 );
 
-// High-Performance Production Compound Index for User History Feed Pagination
+// Idempotency constraint for purchase cashback and refunds: max 1 per order per source
+WalletTransactionSchema.index(
+  { source: 1, orderId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      source: { $in: ['purchase_cashback', 'refund'] },
+      orderId: { $exists: true },
+    },
+  },
+);
+
+// Idempotency constraint for referral bonus: max 1 bonus transaction per referee user
+WalletTransactionSchema.index(
+  { source: 1, refereeId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { source: 'referral_bonus', refereeId: { $exists: true } },
+  },
+);
 
 // Idempotency constraint for wallet refunds: max 1 refund transaction per return request
 WalletTransactionSchema.index(

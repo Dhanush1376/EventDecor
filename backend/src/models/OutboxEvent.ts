@@ -54,6 +54,7 @@ OutboxEventSchema.index({ aggregateId: 1, aggregateType: 1 });
  * - This makes the system work WITHOUT cron AND without Redis.
  */
 OutboxEventSchema.post('save', function (doc: any) {
+  if (process.env.NODE_ENV === 'test') return;
   if (doc.status !== 'PENDING') return; // Only process new/pending events
 
   setTimeout(async () => {
@@ -68,6 +69,7 @@ OutboxEventSchema.post('save', function (doc: any) {
 
 // @ts-expect-error - mongoose 7.x schema generic issue on method assignment
 OutboxEventSchema.post('insertMany', function (docs: any[]) {
+  if (process.env.NODE_ENV === 'test') return;
   docs.forEach((doc) => {
     if (doc.status !== 'PENDING') return;
 

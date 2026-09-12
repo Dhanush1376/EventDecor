@@ -940,12 +940,37 @@ export function OrderSuccess() {
                     {order.shippingFee === 0 ? 'FREE' : `₹${safeFormatNumber(order.shippingFee)}`}
                   </span>
                 </div>
-                {order.tax > 0 && (
-                  <div className="flex justify-between">
-                    <span>Taxes & GST</span>
-                    <span className="font-medium">₹{safeFormatNumber(order.tax)}</span>
-                  </div>
-                )}
+                {order.tax > 0 &&
+                  (() => {
+                    const effectiveSubtotal = order.isMixed
+                      ? (order.purchaseSubtotal || 0) + (order.rentalCharge || 0)
+                      : order.subtotal || 0;
+                    const isTaxAddedOnTop = Boolean(
+                      order.isTaxAddedOnTop ??
+                      Math.abs(
+                        effectiveSubtotal +
+                          (order.shippingFee || 0) +
+                          (order.tax || 0) -
+                          (order.discount || 0) +
+                          (order.depositTotal || order.securityDeposit || 0) +
+                          (order.codFee || 0) -
+                          (order.totalAmount + (order.walletDeduction || 0)),
+                      ) < 1,
+                    );
+                    return (
+                      <div className="flex justify-between">
+                        <span className="flex items-center gap-1">
+                          {isTaxAddedOnTop ? 'Taxes & GST' : 'Taxes & GST (Included in Price)'}
+                          {!isTaxAddedOnTop && (
+                            <span className="text-[9px] bg-black/5 dark:bg-white/5 text-secondary px-1.5 py-0.5 rounded font-mono font-bold">
+                              INCL
+                            </span>
+                          )}
+                        </span>
+                        <span className="font-medium">₹{safeFormatNumber(order.tax)}</span>
+                      </div>
+                    );
+                  })()}
                 {!order.isPurePurchase && (order.depositTotal > 0 || order.securityDeposit > 0) && (
                   <div className="flex justify-between">
                     <span className="flex items-center gap-1">

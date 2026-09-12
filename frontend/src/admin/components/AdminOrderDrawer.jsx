@@ -40,13 +40,16 @@ const RETURN_STATUSES = [
 ];
 const EXCHANGE_STATUSES = ['pending_stock', 'reserved', 'shipped', 'delivered'];
 
+import { useMobileDrawerEngine, DrawerDragHandle } from '../../components/ui/drawer';
+
 export function AdminOrderDrawer({
   selectedOrder,
   selectedOrderData,
   setIsDrawerOpen,
-  allStatuses,
+  allStatuses = [],
   updateOrderStatus,
   deleteOrder,
+  refetchOrders,
   navigate,
 }) {
   const [showDeleteModal, setShowDeleteModal] = React.useState(false);
@@ -64,31 +67,15 @@ export function AdminOrderDrawer({
       0,
   );
 
-  const [isMobile, setIsMobile] = React.useState(
-    typeof window !== 'undefined' ? window.innerWidth < 640 : false,
-  );
-
-  React.useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 640);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  React.useEffect(() => {
-    if (typeof document === 'undefined') return;
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = originalOverflow;
-    };
-  }, []);
+  const { isMobile, dragProps, sheetTransition } = useMobileDrawerEngine({
+    isOpen: true,
+    onClose: () => setIsDrawerOpen(false),
+  });
 
   const slideDrawer = {
-    hidden: isMobile ? { y: '100%', opacity: 0 } : { x: '100%', opacity: 0 },
-    show: isMobile ? { y: 0, opacity: 1 } : { x: 0, opacity: 1 },
-    exit: isMobile ? { y: '100%', opacity: 0 } : { x: '100%', opacity: 0 },
+    hidden: isMobile ? { y: '100%' } : { x: '100%' },
+    show: isMobile ? { y: 0 } : { x: 0 },
+    exit: isMobile ? { y: '100%' } : { x: '100%' },
   };
 
   React.useEffect(() => {
@@ -183,16 +170,25 @@ export function AdminOrderDrawer({
 
       <motion.aside
         key="admin-order-drawer-aside"
+        {...dragProps}
         initial="hidden"
         animate="show"
         exit="exit"
         variants={slideDrawer}
-        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-        className="fixed z-[1000] flex flex-col overflow-hidden shadow-[var(--admin-shadow-2xl)] border-[var(--admin-border)] sm:inset-y-0 sm:top-0 sm:bottom-0 sm:right-0 sm:left-auto sm:w-[520px] sm:h-full sm:max-h-none sm:rounded-none sm:border-l sm:border-t-0 bottom-0 inset-x-0 max-h-[90vh] h-auto rounded-t-[4px] border-t bg-[var(--admin-surface)] text-[var(--admin-text-primary)]"
+        transition={sheetTransition}
+        className="fixed z-[1000] flex flex-col overflow-hidden shadow-[var(--admin-shadow-2xl)] border-[var(--admin-border)] sm:inset-y-0 sm:top-0 sm:bottom-0 sm:right-0 sm:left-auto sm:w-[520px] sm:h-full sm:max-h-none sm:rounded-none sm:border-l sm:border-t-0 bottom-0 inset-x-0 max-h-[90dvh] h-auto rounded-t-[14px] sm:rounded-t-none border-t sm:border-t-0 bg-[var(--admin-surface)] text-[var(--admin-text-primary)] pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] sm:pb-0"
         style={{ background: 'var(--admin-surface, #ffffff)' }}
       >
+        {/* Mobile Pull Handle */}
+        {isMobile && (
+          <DrawerDragHandle
+            onClick={() => setIsDrawerOpen(false)}
+            pillClassName="bg-[var(--admin-border-strong)]"
+          />
+        )}
+
         {/* Drawer Header */}
-        <div className="px-6 py-5 border-b border-[var(--admin-border-subtle)] flex items-center justify-between shrink-0 text-left bg-[var(--admin-bg-subtle)]">
+        <div className="px-6 py-4 sm:py-5 border-b border-[var(--admin-border-subtle)] flex items-center justify-between shrink-0 text-left bg-[var(--admin-bg-subtle)]">
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)]">
@@ -226,7 +222,7 @@ export function AdminOrderDrawer({
         </div>
 
         {/* Drawer Scroll Body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar text-left bg-[var(--admin-bg)]">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar text-left bg-[var(--admin-bg)] touch-pan-y overscroll-contain">
           {/* 1. Client Card */}
           <div className="admin-card !rounded-[4px] p-5 space-y-4">
             <div className="flex items-start justify-between">

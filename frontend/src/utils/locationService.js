@@ -22,6 +22,49 @@ const log = {
 const DEFAULT_TIMEOUT_MS = 9000;
 
 /**
+ * Cleans administrative subdivisions from city names (e.g. 'Phagwara Tahsil' -> 'Phagwara').
+ */
+export function cleanCityName(raw) {
+  if (!raw || typeof raw !== 'string') return '';
+  return raw.replace(/\s+(Tahsil|Tehsil|Taluk|Taluka|Mandal|Sub-district|District)\b/gi, '').trim();
+}
+
+/**
+ * Synthesizes a natural, exact landmark from POIs, building names, localities, and streets.
+ */
+export function synthesizeLandmark(poiName, locality, street) {
+  if (poiName && typeof poiName === 'string') {
+    const cleanPoi = poiName.trim();
+    if (cleanPoi) {
+      const prefix = cleanPoi.match(/^(near|opp|opposite|behind|beside)\s/i) ? '' : 'Near ';
+      if (
+        locality &&
+        locality.toLowerCase() !== cleanPoi.toLowerCase() &&
+        !cleanPoi.toLowerCase().includes(locality.toLowerCase())
+      ) {
+        return `${prefix}${cleanPoi}, ${locality}`;
+      }
+      return `${prefix}${cleanPoi}`;
+    }
+  }
+  if (locality && typeof locality === 'string') {
+    const cleanLoc = locality.trim();
+    if (cleanLoc) {
+      return cleanLoc.match(/^(near|opp|opposite|behind|beside)\s/i)
+        ? cleanLoc
+        : `Near ${cleanLoc}`;
+    }
+  }
+  if (street && typeof street === 'string') {
+    const cleanStreet = street.trim();
+    if (cleanStreet) {
+      return `On ${cleanStreet}`;
+    }
+  }
+  return '';
+}
+
+/**
  * Normalizes an address object into a consistent data structure.
  */
 function createNormalizedAddress({
@@ -43,8 +86,8 @@ function createNormalizedAddress({
     address: address ? String(address).trim() : '',
     locality: locality ? String(locality).trim() : '',
     landmark: landmark ? String(landmark).trim() : '',
-    city: city ? String(city).trim() : '',
-    district: district ? String(district).trim() : '',
+    city: city ? cleanCityName(String(city)) : '',
+    district: district ? cleanCityName(String(district)) : '',
     state: state ? String(state).trim() : '',
     pincode: pincode ? String(pincode).replace(/\D/g, '').slice(0, 6) : '',
     country: country ? String(country).trim() : 'India',
@@ -505,80 +548,123 @@ export async function reverseGeocodeCoords(latitude, longitude) {
     log.info('Backend reverse geocode unavailable, falling back:', backendErr.message);
   }
 
-  // 1. OpenStreetMap Nominatim
-  if (!resolved || (!resolved.city && !resolved.pincode)) {
+  // 1. If backend gave no result OR gave incomplete landmark/street details:
+  // Query Nominatim AND Photon in parallel to assemble rich street, POI, building, and landmark
+  if (
+    !resolved ||
+    !resolved.landmark ||
+    !resolved.address ||
+    (!resolved.city && !resolved.pincode)
+  ) {
     try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+      const [nomSettled, phoSettled] = await Promise.allSettled([
+        (async () => {
+          const c = new AbortController();
+          const t = setTimeout(() => c.abort(), DEFAULT_TIMEOUT_MS);
+          const r = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1&zoom=18`,
+            { signal: c.signal, headers: { Accept: 'application/json', 'Accept-Language': 'en' } },
+          );
+          clearTimeout(t);
+          return r.ok ? await r.json() : null;
+        })(),
+        (async () => {
+          const c = new AbortController();
+          const t = setTimeout(() => c.abort(), 6000);
+          const r = await fetch(
+            `https://photon.komoot.io/reverse?lat=${latitude}&lon=${longitude}&limit=5`,
+            { signal: c.signal, headers: { Accept: 'application/json' } },
+          );
+          clearTimeout(t);
+          return r.ok ? await r.json() : null;
+        })(),
+      ]);
 
-      const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1&zoom=18`;
-      const res = await fetch(url, {
-        signal: controller.signal,
-        headers: {
-          Accept: 'application/json',
-          'Accept-Language': 'en',
-        },
-      });
-      clearTimeout(timeout);
+      const nomData = nomSettled.status === 'fulfilled' ? nomSettled.value : null;
+      const phoData = phoSettled.status === 'fulfilled' ? phoSettled.value : null;
+      const addr = nomData?.address || {};
+      const phoProps = phoData?.features?.[0]?.properties || {};
 
-      if (res.ok) {
-        const data = await res.json();
-        const parsed = parseNominatimResponse(data, latitude, longitude);
-        if (parsed) resolved = parsed;
+      const isGenericTag = (val) => {
+        if (!val || typeof val !== 'string') return true;
+        const lower = val.trim().toLowerCase();
+        return [
+          'yes',
+          'no',
+          'true',
+          'false',
+          'residential',
+          'commercial',
+          'apartments',
+          'unclassified',
+          'building',
+        ].includes(lower);
+      };
+
+      const street = phoProps.street || addr.road || addr.street || '';
+      const building =
+        (phoProps.name && phoProps.name !== phoProps.street ? phoProps.name : '') ||
+        (addr.building && !isGenericTag(addr.building) ? addr.building : '') ||
+        (addr.amenity && !isGenericTag(addr.amenity) ? addr.amenity : '') ||
+        (addr.shop && !isGenericTag(addr.shop) ? addr.shop : '') ||
+        (addr.tourism && !isGenericTag(addr.tourism) ? addr.tourism : '') ||
+        addr.house_name ||
+        '';
+      const housenumber = addr.house_number || phoProps.housenumber || '';
+      const locality =
+        addr.residential ||
+        addr.suburb ||
+        addr.neighbourhood ||
+        phoProps.locality ||
+        phoProps.district ||
+        addr.subdistrict ||
+        addr.locality ||
+        resolved?.locality ||
+        '';
+
+      const landmark = resolved?.landmark || synthesizeLandmark(building, locality, street);
+
+      const addressParts = [housenumber, building, street, locality].filter(Boolean);
+      const addressLine =
+        addressParts.length > 0
+          ? Array.from(new Set(addressParts)).join(', ')
+          : nomData?.display_name || resolved?.address || '';
+
+      const rawCity =
+        addr.city ||
+        addr.town ||
+        addr.village ||
+        phoProps.city ||
+        addr.municipality ||
+        addr.county ||
+        resolved?.city ||
+        '';
+      const city = cleanCityName(rawCity);
+      const district = cleanCityName(
+        addr.county || addr.state_district || phoProps.district || city,
+      );
+      const state = addr.state || phoProps.state || resolved?.state || '';
+      const pincode = (addr.postcode || phoProps.postcode || resolved?.pincode || '')
+        .replace(/\D/g, '')
+        .slice(0, 6);
+
+      if (city || pincode || addressLine || landmark) {
+        resolved = createNormalizedAddress({
+          latitude,
+          longitude,
+          address: addressLine,
+          locality,
+          landmark,
+          city,
+          district,
+          state,
+          pincode,
+          country: addr.country || phoProps.country || 'India',
+          source: resolved ? resolved.source : 'hybrid-osm-photon',
+        });
       }
     } catch (err) {
-      log.warn('Nominatim reverse geocode failed, attempting fallbacks:', err.message);
-    }
-  }
-
-  // 2. Direct Fallback: Photon API by Komoot (CORS-friendly, open OSM index)
-  if (!resolved || (!resolved.city && !resolved.pincode)) {
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 6000);
-      const photonUrl = `https://photon.komoot.io/reverse?lat=${latitude}&lon=${longitude}`;
-      const res = await fetch(photonUrl, {
-        signal: controller.signal,
-        headers: { Accept: 'application/json' },
-      });
-      clearTimeout(timeout);
-
-      if (res.ok) {
-        const data = await res.json();
-        const feature = data?.features?.[0]?.properties;
-        if (feature) {
-          const streetParts = [
-            feature.housenumber,
-            feature.name && feature.name !== feature.street ? feature.name : '',
-            feature.street,
-          ].filter(Boolean);
-
-          const addressLine =
-            streetParts.length > 0
-              ? Array.from(new Set(streetParts)).join(', ')
-              : feature.name || '';
-          const locality = feature.district || feature.locality || '';
-          const city = feature.city || feature.county || '';
-          const state = feature.state || '';
-          const pincode = (feature.postcode || '').replace(/\D/g, '').slice(0, 6);
-
-          resolved = createNormalizedAddress({
-            latitude,
-            longitude,
-            address: resolved?.address || addressLine,
-            locality: resolved?.locality || locality,
-            landmark: resolved?.landmark || '',
-            city: resolved?.city || city,
-            district: resolved?.district || feature.county || city,
-            state: resolved?.state || state,
-            pincode: resolved?.pincode || pincode,
-            country: feature.country || 'India',
-            source: resolved ? resolved.source : 'photon',
-          });
-        }
-      }
-    } catch (photonErr) {
-      log.warn('Photon reverse geocode failed, attempting BigDataCloud:', photonErr.message);
+      log.warn('Hybrid reverse geocode error:', err.message);
     }
   }
 
@@ -774,23 +860,77 @@ export async function detectAndResolveAddress() {
 }
 
 /**
- * Searches places and addresses with multi-tier fallback (Backend Nominatim -> Direct Photon).
+ * Searches places and addresses with high-precision India prioritization.
  *
- * @param {string} query
+ * @param {string} query - Free-text place, landmark, street, colony, or 6-digit PIN
+ * @param {object} [options] - Optional bias coordinates { latitude, longitude }
  * @returns {Promise<Array<{ displayName: string, name: string, lat: number, lon: number, address: object }>>}
  */
-export async function searchLocations(query) {
+export async function searchLocations(query, options = {}) {
   const cleanQ = (query || '').trim();
   if (!cleanQ) return [];
 
-  // 1. Try Backend search endpoint (Nominatim with compliant User-Agent)
+  const biasLat = options.latitude || 20.5937;
+  const biasLon = options.longitude || 78.9629;
+
+  // 1. Direct Postal Pincode Lookup if 6-digit Indian PIN
+  const cleanPin = cleanQ.replace(/\D/g, '');
+  if (/^\d{6}$/.test(cleanQ) || (cleanPin.length === 6 && cleanQ.length <= 8)) {
+    try {
+      const pinController = new AbortController();
+      const pinTimeout = setTimeout(() => pinController.abort(), 4000);
+      const pinRes = await fetch(`https://api.postalpincode.in/pincode/${cleanPin}`, {
+        signal: pinController.signal,
+      });
+      clearTimeout(pinTimeout);
+
+      if (pinRes.ok) {
+        const pinData = await pinRes.json();
+        if (
+          Array.isArray(pinData) &&
+          pinData[0]?.Status === 'Success' &&
+          Array.isArray(pinData[0].PostOffice) &&
+          pinData[0].PostOffice.length > 0
+        ) {
+          return pinData[0].PostOffice.map((po) => {
+            const locality = po.Name;
+            const city = cleanCityName(po.District || po.Block || po.Region);
+            const state = po.State || '';
+            const displayName = `${locality}, ${city}, ${state} - ${cleanPin}, India`;
+            return {
+              displayName,
+              name: locality,
+              lat: biasLat,
+              lon: biasLon,
+              address: {
+                building: '',
+                road: '',
+                locality,
+                landmark: `Near ${locality}`,
+                city,
+                district: po.District || city,
+                state,
+                pincode: cleanPin,
+                country: 'India',
+              },
+            };
+          });
+        }
+      }
+    } catch (_pinErr) {}
+  }
+
+  // 2. Try Backend Search API (combines Nominatim + Photon with Indian server cache)
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 4000);
-    const res = await fetch(`/api/v1/location/search?q=${encodeURIComponent(cleanQ)}`, {
-      signal: controller.signal,
-      headers: { Accept: 'application/json' },
-    });
+    const timeout = setTimeout(() => controller.abort(), 4500);
+    const res = await fetch(
+      `/api/v1/location/search?q=${encodeURIComponent(cleanQ)}&lat=${biasLat}&lon=${biasLon}`,
+      {
+        signal: controller.signal,
+        headers: { Accept: 'application/json' },
+      },
+    );
     clearTimeout(timeout);
 
     if (res.ok) {
@@ -800,47 +940,79 @@ export async function searchLocations(query) {
       }
     }
   } catch (err) {
-    log.warn('Backend location search failed, falling back to Photon:', err.message);
+    log.warn('Backend location search failed, using client-side fallback:', err.message);
   }
 
-  // 2. Direct client fallback to Photon (CORS-friendly, no User-Agent needed)
+  // 3. Direct client fallback to Photon with India bounding-box filtering & typo tolerance
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 4000);
-    const photonRes = await fetch(
-      `https://photon.komoot.io/api/?q=${encodeURIComponent(cleanQ)}&limit=15`,
-      {
-        signal: controller.signal,
-        headers: { Accept: 'application/json' },
-      },
-    );
-    clearTimeout(timeout);
+    const searchPhoton = async (qText) => {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 4000);
+      const photonRes = await fetch(
+        `https://photon.komoot.io/api/?q=${encodeURIComponent(qText)}&lat=${biasLat}&lon=${biasLon}&limit=20`,
+        {
+          signal: controller.signal,
+          headers: { Accept: 'application/json' },
+        },
+      );
+      clearTimeout(timeout);
 
-    if (photonRes.ok) {
+      if (!photonRes.ok) return [];
       const data = await photonRes.json();
-      if (Array.isArray(data.features) && data.features.length > 0) {
-        return data.features.map((feat) => {
+      if (!Array.isArray(data.features) || data.features.length === 0) return [];
+
+      return data.features
+        .filter((feat) => {
+          const p = feat.properties || {};
+          const [lon, lat] = feat.geometry?.coordinates || [0, 0];
+          const isIndia =
+            (p.country && p.country.toLowerCase() === 'india') ||
+            (p.countrycode && p.countrycode.toLowerCase() === 'in');
+          const inBox = lat >= 6.5 && lat <= 37.5 && lon >= 68.0 && lon <= 97.5;
+          return isIndia || inBox;
+        })
+        .map((feat) => {
           const p = feat.properties || {};
           const coords = feat.geometry?.coordinates || [0, 0];
-          const parts = [p.name, p.street, p.district, p.city, p.state, p.country].filter(Boolean);
+          const building = p.name && p.name !== p.street ? p.name : '';
+          const street = p.street || '';
+          const locality = p.locality || p.district || '';
+          const landmark = synthesizeLandmark(building, locality, street);
+          const city = cleanCityName(p.city || p.district || '');
+          const parts = [building, street, locality, city, p.state, 'India'].filter(Boolean);
           return {
-            displayName: parts.join(', '),
-            name: p.name || p.street || 'Selected Location',
+            displayName: Array.from(new Set(parts)).join(', '),
+            name: p.name || p.street || locality || 'Selected Location',
             lat: coords[1],
             lon: coords[0],
             address: {
-              road: p.street || '',
-              city: p.city || p.district || '',
+              building,
+              road: street,
+              locality,
+              landmark,
+              city,
               state: p.state || '',
               pincode: (p.postcode || '').replace(/\D/g, '').slice(0, 6),
               country: p.country || 'India',
             },
           };
         });
+    };
+
+    let clientHits = await searchPhoton(cleanQ);
+
+    // Typo fallback: if 0 hits and trailing repeated chars (e.g. 'lawgateff' -> 'lawgate')
+    if (clientHits.length === 0) {
+      const cleaned = cleanQ.replace(/([a-z])\1+$/i, '$1');
+      if (cleaned !== cleanQ && cleaned.length >= 2) {
+        clientHits = await searchPhoton(cleaned);
       }
     }
+
+    return clientHits;
   } catch (err) {
-    log.warn('Photon fallback search failed:', err.message);
+    log.warn('Client-side location search fallback failed:', err.message);
+    return [];
   }
 
   return [];

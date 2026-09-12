@@ -105,17 +105,20 @@ export class OrderRollbackService {
    */
   static async rollbackWallet(order: any, session: mongoose.ClientSession): Promise<void> {
     if (!order.walletDeduction || order.walletDeduction <= 0) return;
+    if (order.walletRefunded) {
+      logger.info(`[ROLLBACK] Wallet already refunded for order ${order._id}, skipping`);
+      return;
+    }
 
     // Idempotency check — prevent double wallet refunds
     const existingRefund = await WalletTransaction.findOne({
-      userId: order.user,
-      amount: order.walletDeduction,
+      orderId: order._id,
       source: 'refund',
-      description: { $regex: new RegExp(`order ${order._id}`, 'i') },
     }).session(session);
 
     if (existingRefund) {
       logger.info(`[ROLLBACK] Wallet refund already exists for order ${order._id}, skipping`);
+      order.walletRefunded = true;
       return;
     }
 
@@ -127,13 +130,15 @@ export class OrderRollbackService {
           type: 'credit',
           amount: order.walletDeduction,
           source: 'refund',
-          description: `Refund for order ${order._id}`,
+          description: `Refund of spent wallet credits for order #${order.invoiceNumber || order._id}`,
+          orderId: order._id,
           status: 'active',
         },
       ],
       { session },
     );
 
+    order.walletRefunded = true;
     logger.info(`[ROLLBACK] Wallet ₹${order.walletDeduction} refunded for order ${order._id}`);
   }
 

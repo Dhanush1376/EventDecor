@@ -75,6 +75,7 @@ export interface IUser extends ISoftDeleted {
   referralCode?: string;
   referredBy?: mongoose.Types.ObjectId;
   referralsCount: number;
+  referralRewarded?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

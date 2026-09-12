@@ -218,12 +218,18 @@ export class OrderFulfillmentService {
         order.statusHistory.push({ status: finalStatus, timestamp: new Date(), note });
 
         // Process Loyalty/Wallet adjustments based on status change
-        if (finalStatus === 'Delivered') {
+        // Strict Guard: ONLY trigger purchase rewards on genuine first-time transition to Delivered
+        if (finalStatus === 'Delivered' && oldStatus !== 'Delivered' && !order.rewardsProcessed) {
           triggerPurchaseRewards = true;
+          order.rewardsProcessed = true;
         } else if (
-          finalStatus === 'Cancelled' ||
-          finalStatus === 'Returned' ||
-          finalStatus === 'Refunded'
+          (finalStatus === 'Cancelled' ||
+            finalStatus === 'Returned' ||
+            finalStatus === 'Refunded') &&
+          oldStatus !== finalStatus &&
+          oldStatus !== 'Cancelled' &&
+          oldStatus !== 'Returned' &&
+          oldStatus !== 'Refunded'
         ) {
           triggerReversalRewards = true;
 

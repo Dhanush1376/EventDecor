@@ -2,7 +2,7 @@ import { MessageSquare, X, MessageCircle, Send } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
-import { useScrollLock } from '../../hooks/useScrollLock';
+import { useMobileDrawerEngine, DrawerDragHandle } from '../ui/drawer';
 
 export function MobileChatDrawer({
   isMobileChatOpen,
@@ -19,7 +19,10 @@ export function MobileChatDrawer({
     setMounted(true);
   }, []);
 
-  useScrollLock(isMobileChatOpen && !!selectedBooking);
+  const { dragProps, sheetTransition } = useMobileDrawerEngine({
+    isOpen: isMobileChatOpen && !!selectedBooking,
+    onClose: () => setIsMobileChatOpen(false),
+  });
 
   if (!mounted) return null;
 
@@ -42,14 +45,13 @@ export function MobileChatDrawer({
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
-            transition={{ type: 'spring', stiffness: 320, damping: 32 }}
-            className="fixed bottom-0 left-0 right-0 z-10 pointer-events-auto flex flex-col max-h-[85vh] h-[85vh]"
+            transition={sheetTransition}
+            {...dragProps}
+            className="fixed bottom-0 left-0 right-0 z-10 pointer-events-auto flex flex-col max-h-[88dvh] h-[88dvh]"
           >
-            <div className="w-full h-full bg-white rounded-t-[28px] flex flex-col relative overflow-hidden">
+            <div className="w-full h-full bg-white rounded-t-[28px] flex flex-col relative overflow-hidden shadow-2xl">
               {/* Drag handle pill */}
-              <div className="flex justify-center pt-3 pb-1 shrink-0">
-                <div className="w-10 h-1 rounded-full bg-black/10" />
-              </div>
+              <DrawerDragHandle onClick={() => setIsMobileChatOpen(false)} />
 
               {/* Sheet header */}
               <div className="flex items-center justify-between px-5 py-3 border-b border-black/5 shrink-0">
@@ -76,7 +78,7 @@ export function MobileChatDrawer({
               </div>
 
               {/* Messages list */}
-              <div className="flex-1 overflow-y-auto py-4 px-5 space-y-4 no-scrollbar flex flex-col">
+              <div className="flex-1 overflow-y-auto overscroll-contain touch-pan-y py-4 px-5 space-y-4 no-scrollbar flex flex-col">
                 {chatHistory?.length === 0 || !chatHistory ? (
                   <div className="flex flex-col items-center justify-center flex-1 gap-3 py-12">
                     <div className="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center">

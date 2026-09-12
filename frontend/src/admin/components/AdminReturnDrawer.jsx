@@ -5,6 +5,7 @@ import { formatCurrency } from './AdminUIKit';
 import { EXTERNAL_URLS } from '../../config/constants';
 import { WhatsAppIcon } from '../../components/ui/WhatsAppIcon';
 import toast from 'react-hot-toast';
+import { useMobileDrawerEngine, DrawerDragHandle } from '../../components/ui/drawer';
 
 const formatDateDMY = (dateStr) => {
   if (!dateStr) return 'N/A';
@@ -143,25 +144,10 @@ export function AdminReturnDrawer({
   const [settleNotes, setSettleNotes] = useState('');
   const [settleAmount, setSettleAmount] = useState(0);
 
-  const [isMobile, setIsMobile] = useState(
-    typeof window !== 'undefined' ? window.innerWidth < 640 : false,
-  );
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 640);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  useEffect(() => {
-    if (typeof document === 'undefined' || !isOpen || !selectedReturn) return;
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow =
-        originalOverflow && originalOverflow !== 'hidden' ? originalOverflow : '';
-    };
-  }, [isOpen, selectedReturn]);
+  const { isMobile, dragProps, sheetTransition, slideDrawer } = useMobileDrawerEngine({
+    isOpen: !!selectedReturn && isOpen,
+    onClose: closeDrawer,
+  });
 
   useEffect(() => {
     if (selectedReturn) {
@@ -179,12 +165,6 @@ export function AdminReturnDrawer({
   }, [selectedReturn]);
 
   if (!selectedReturn || typeof document === 'undefined') return null;
-
-  const slideDrawer = {
-    hidden: isMobile ? { y: '100%', opacity: 0 } : { x: '100%', opacity: 0 },
-    show: isMobile ? { y: 0, opacity: 1 } : { x: 0, opacity: 1 },
-    exit: isMobile ? { y: '100%', opacity: 0 } : { x: '100%', opacity: 0 },
-  };
 
   const isDark =
     typeof document !== 'undefined' &&
@@ -315,10 +295,12 @@ export function AdminReturnDrawer({
         animate="show"
         exit="exit"
         variants={slideDrawer}
-        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-        className="fixed z-[1000] flex flex-col overflow-hidden shadow-[var(--admin-shadow-2xl)] border-[var(--admin-border)] sm:inset-y-0 sm:top-0 sm:bottom-0 sm:right-0 sm:left-auto sm:w-[540px] sm:h-full sm:max-h-none sm:rounded-none sm:border-l sm:border-t-0 bottom-0 inset-x-0 max-h-[92vh] h-auto rounded-t-[4px] border-t bg-[var(--admin-surface)] text-[var(--admin-text-primary)]"
+        transition={sheetTransition}
+        {...dragProps}
+        className="fixed z-[1000] flex flex-col overflow-hidden shadow-[var(--admin-shadow-2xl)] border-[var(--admin-border)] sm:inset-y-0 sm:top-0 sm:bottom-0 sm:right-0 sm:left-auto sm:w-[540px] sm:h-full sm:max-h-none sm:rounded-none sm:border-l sm:border-t-0 bottom-0 inset-x-0 max-h-[90dvh] h-auto rounded-t-2xl sm:rounded-t-none border-t bg-[var(--admin-surface)] text-[var(--admin-text-primary)]"
         style={{ background: 'var(--admin-surface, #ffffff)' }}
       >
+        {isMobile && <DrawerDragHandle onClick={closeDrawer} />}
         {/* ─── DRAWER HEADER ─── */}
         <div className="px-5 sm:px-6 py-4 border-b border-[var(--admin-border-subtle)] flex items-center justify-between shrink-0 text-left bg-[var(--admin-bg-subtle)]">
           <div>
@@ -411,7 +393,7 @@ export function AdminReturnDrawer({
         </div>
 
         {/* ─── DRAWER SCROLLABLE BODY ─── */}
-        <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6 text-left">
+        <div className="flex-1 overflow-y-auto overscroll-contain touch-pan-y p-5 sm:p-6 space-y-6 text-left">
           {activeTab === 'overview' && (
             <>
               {/* LIFECYCLE ACTION CONTROLS */}
@@ -949,7 +931,7 @@ export function AdminReturnDrawer({
         </div>
 
         {/* ─── DRAWER FOOTER ─── */}
-        <div className="p-4 sm:px-6 border-t border-[var(--admin-border-subtle)] bg-[var(--admin-surface)] flex items-center justify-between shrink-0">
+        <div className="p-4 sm:px-6 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] sm:pb-4 border-t border-[var(--admin-border-subtle)] bg-[var(--admin-surface)] flex items-center justify-between shrink-0">
           <button
             type="button"
             onClick={() => closeDrawer()}

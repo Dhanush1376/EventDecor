@@ -354,11 +354,23 @@ export function InvoiceTemplate({ order, user = {}, onClose, isAdmin = false }) 
   const totalTax = Number(taxSnap.totalTax ?? taxAmount) || 0;
 
   const walletDeduction = order.walletDeduction ?? 0;
+  // Check if tax was charged on top (exclusive) or already included in the subtotal
+  const computedExclusiveTotal =
+    subtotal + securityDeposit + deliveryCharge + totalTax - discount - walletDeduction;
+  const isTaxAddedOnTop =
+    totalTax > 0 &&
+    (order.taxInclusive === false ||
+      Math.abs(
+        (order.totalAmount ?? order.total ?? computedExclusiveTotal) - computedExclusiveTotal,
+      ) < 1);
+
   const grandTotal =
     taxSnap.grandTotal ??
     order.totalAmount ??
     order.total ??
-    subtotal + securityDeposit + deliveryCharge + taxAmount - discount - walletDeduction;
+    (isTaxAddedOnTop
+      ? computedExclusiveTotal
+      : subtotal + securityDeposit + deliveryCharge - discount - walletDeduction);
 
   const taxableAmount = isPurePurchase
     ? Number(taxSnap.taxableAmount ?? subtotal - (totalTax || taxAmount)) ||
@@ -928,13 +940,43 @@ export function InvoiceTemplate({ order, user = {}, onClose, isAdmin = false }) 
                     </div>
                   )}
 
-                  <div className="flex justify-end gap-3">
-                    <span className="font-medium text-[#4b5563]">Taxes & GST:</span>
-                    <span className="font-medium font-mono text-[#111827] w-[90px]">
-                      {currency}
-                      {taxAmount > 0 ? taxAmount.toFixed(2) : totalTax.toFixed(2)}
-                    </span>
-                  </div>
+                  {securityDeposit > 0 && (
+                    <div className="flex justify-end gap-3">
+                      <span className="font-bold text-[#4b5563]">Security Deposit:</span>
+                      <span className="font-bold font-mono text-[#059669] w-[90px]">
+                        {currency}
+                        {securityDeposit.toLocaleString()}
+                      </span>
+                    </div>
+                  )}
+
+                  {walletDeduction > 0 && (
+                    <div className="flex justify-end gap-3 text-[#15803d]">
+                      <span className="font-bold">Wallet Deduction:</span>
+                      <span className="font-bold font-mono w-[90px]">
+                        -{currency}
+                        {walletDeduction.toLocaleString()}
+                      </span>
+                    </div>
+                  )}
+
+                  {isTaxAddedOnTop ? (
+                    <div className="flex justify-end gap-3">
+                      <span className="font-bold text-[#4b5563]">Taxes & GST:</span>
+                      <span className="font-bold font-mono text-[#111827] w-[90px]">
+                        +{currency}
+                        {totalTax.toFixed(2)}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex justify-end gap-3 text-[#6b7280]">
+                      <span className="font-medium">Taxes & GST:</span>
+                      <span className="font-medium font-mono text-[#4b5563]">
+                        Included in Subtotal ({currency}
+                        {taxAmount > 0 ? taxAmount.toFixed(2) : totalTax.toFixed(2)})
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Grand Total Banner */}

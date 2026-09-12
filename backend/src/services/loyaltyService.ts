@@ -232,6 +232,7 @@ export class LoyaltyService {
 
   /**
    * Process and apply purchase rewards (Cashback, Siri Coins, Tier upgrades) upon checkout completion
+   * Strictly guarded against multiple executions and uncontrolled wallet payouts.
    */
   static async processPurchaseRewards(userId: string, orderId: string, totalSpend: number) {
     const session = await mongoose.startSession();
@@ -245,37 +246,72 @@ export class LoyaltyService {
         return;
       }
 
-      const settings = await storeSettingsService.getSettings();
-
-      // 1. Calculate Siri Coins points earned
-      const coinsEarned = Math.round(order.subtotal * settings.loyalty.coinsPerRupee);
-
-      // 2. Calculate Cashback percentage randomly between 1% and 4% (1 decimal place)
-      const randomPercent = Math.round((Math.random() * (4.0 - 1.0) + 1.0) * 10) / 10;
-      const cashbackRate = randomPercent / 100;
-
-      let cashbackEarned = Math.round((order.total || totalSpend) * cashbackRate);
-
-      // Limit cashback to a maximum of 40 INR per order
-      if (cashbackEarned > 40) {
-        cashbackEarned = 40;
+      // 0. Strict Idempotency: Has this order already been rewarded?
+      if (order.rewardsProcessed) {
+        logger.info(`[LOYALTY] Purchase rewards already processed for order ${orderId}, skipping.`);
+        await session.abortTransaction();
+        session.endSession();
+        return;
       }
 
-      // Atomically credit siriCoins and walletBalance without read-modify-write saves
-      await User.findByIdAndUpdate(
-        userId,
-        {
-          $inc: {
-            siriCoins: coinsEarned,
-            walletBalance: cashbackEarned,
-          },
-        },
-        { session },
-      );
+      const existingCashbackTx = await WalletTransaction.findOne({
+        source: 'purchase_cashback',
+        orderId: order._id,
+      }).session(session);
 
-      // 3. Update Order Document for dynamic receipt rendering
+      if (existingCashbackTx) {
+        logger.info(
+          `[LOYALTY] Cashback transaction already exists for order ${orderId}, marking processed and skipping.`,
+        );
+        order.rewardsProcessed = true;
+        await order.save({ session });
+        await session.commitTransaction();
+        session.endSession();
+        return;
+      }
+
+      const settings = await storeSettingsService.getSettings();
+
+      // 1. Calculate Siri Coins points earned (reward points, NOT cash currency)
+      const coinsPerRupee = Number(settings.loyalty?.coinsPerRupee) || 0;
+      const coinsEarned = coinsPerRupee > 0 ? Math.round(order.subtotal * coinsPerRupee) : 0;
+
+      // 2. Cashback into Wallet:
+      // STRICT FINANCIAL GUARD: Do NOT arbitrarily give away money on order status updates.
+      // Only award cashback if wallet is explicitly enabled AND the user's tier has a designated rate > 0.
+      let cashbackEarned = 0;
+      const isWalletEnabled = Boolean(settings.loyalty?.walletEnabled);
+      if (isWalletEnabled) {
+        const tiers = settings.loyalty?.tiers || [];
+        const userTier = tiers.find((t: any) => t.name === (user.loyaltyTier || 'Bronze'));
+        const tierCashbackRate = Number(userTier?.cashbackRate) || 0;
+
+        if (tierCashbackRate > 0) {
+          cashbackEarned = Math.round((order.total || totalSpend) * tierCashbackRate);
+          // Hard safety limit at 40 INR per order
+          if (cashbackEarned > 40) {
+            cashbackEarned = 40;
+          }
+        }
+      }
+
+      // Atomically update User rewards
+      const userUpdate: any = {};
+      if (coinsEarned > 0) {
+        userUpdate.$inc = { ...(userUpdate.$inc || {}), siriCoins: coinsEarned };
+      }
+      if (cashbackEarned > 0) {
+        userUpdate.$inc = { ...(userUpdate.$inc || {}), walletBalance: cashbackEarned };
+      }
+
+      if (Object.keys(userUpdate).length > 0) {
+        await User.findByIdAndUpdate(userId, userUpdate, { session });
+      }
+
+      // 3. Update Order Document for dynamic receipt rendering and idempotency tracking
       order.coinsEarned = coinsEarned;
       order.cashbackEarned = cashbackEarned;
+      order.rewardsProcessed = true;
       await order.save({ session });
 
       // Log Cashback Credit in transaction audit ledger
@@ -287,8 +323,10 @@ export class LoyaltyService {
               type: 'credit',
               amount: cashbackEarned,
               source: 'purchase_cashback',
-              description: `Earned ${randomPercent}% Siri Cashback on order #${order.invoiceNumber || orderId}`,
+              description: `Earned Siri Cashback on order #${order.invoiceNumber || orderId}`,
               orderId: order._id,
+              balanceBefore: user.walletBalance || 0,
+              balanceAfter: (user.walletBalance || 0) + cashbackEarned,
               status: 'active',
             },
           ],
@@ -298,13 +336,20 @@ export class LoyaltyService {
 
       await session.commitTransaction();
 
-      // 4. Check for Referral Rewards on Referee's First Purchase
-      const ordersCount = await Order.countDocuments({
-        user: userId,
-        orderStatus: { $nin: ['Cancelled', 'Refunded'] },
-      });
-      if (ordersCount === 1 && user.referredBy) {
-        await this.applyReferralBonus(user.referredBy.toString(), userId);
+      // 4. Check for Referral Rewards on Referee's First Purchase (strictly protected against repeat payouts)
+      if (
+        user.referredBy &&
+        !user.referralRewarded &&
+        settings.loyalty?.referralProgramEnabled &&
+        settings.loyalty?.walletEnabled
+      ) {
+        const ordersCount = await Order.countDocuments({
+          user: userId,
+          orderStatus: { $nin: ['Cancelled', 'Refunded'] },
+        });
+        if (ordersCount === 1) {
+          await this.applyReferralBonus(user.referredBy.toString(), userId);
+        }
       }
 
       // 5. Evaluate Membership Tier Upgrades based on Lifetime Valid Purchases
@@ -318,7 +363,8 @@ export class LoyaltyService {
   }
 
   /**
-   * Applies referral bonus to both referrer and referee on referee's first purchase completion
+   * Applies referral bonus to referrer on referee's first purchase completion.
+   * Strictly idempotent and single-use per referee.
    */
   static async applyReferralBonus(referrerId: string, refereeId: string) {
     const session = await mongoose.startSession();
@@ -332,31 +378,70 @@ export class LoyaltyService {
         return;
       }
 
+      // Idempotency: Has this referee already triggered a referral reward?
+      if (referee.referralRewarded) {
+        logger.info(`[REFERRAL] Referee ${refereeId} already triggered referral reward, skipping.`);
+        await session.abortTransaction();
+        session.endSession();
+        return;
+      }
+
+      const existingRefTx = await WalletTransaction.findOne({
+        source: 'referral_bonus',
+        refereeId: referee._id,
+      }).session(session);
+
+      if (existingRefTx) {
+        logger.info(
+          `[REFERRAL] Referral transaction already exists for referee ${refereeId}, skipping.`,
+        );
+        referee.referralRewarded = true;
+        await referee.save({ session });
+        await session.commitTransaction();
+        session.endSession();
+        return;
+      }
+
       const settings = await storeSettingsService.getSettings();
+      if (!settings.loyalty?.referralProgramEnabled || !settings.loyalty?.walletEnabled) {
+        await session.abortTransaction();
+        session.endSession();
+        return;
+      }
 
-      // Credit Referrer atomically
-      const referrerBonus = settings.loyalty.referralBonusReferrer;
-      await User.findByIdAndUpdate(
-        referrerId,
-        {
-          $inc: { walletBalance: referrerBonus, referralsCount: 1 },
-        },
-        { session },
-      );
+      const referrerBonus = Number(settings.loyalty.referralBonusReferrer) || 0;
+      if (referrerBonus > 0) {
+        const balanceBefore = referrer.walletBalance || 0;
+        const balanceAfter = balanceBefore + referrerBonus;
 
-      await WalletTransaction.create(
-        [
+        await User.findByIdAndUpdate(
+          referrerId,
           {
-            userId: referrerId,
-            type: 'credit',
-            amount: referrerBonus,
-            source: 'referral_bonus',
-            description: `Referral Bonus: You referred ${referee.name || 'a friend'}!`,
-            status: 'active',
+            $inc: { walletBalance: referrerBonus, referralsCount: 1 },
           },
-        ],
-        { session },
-      );
+          { session },
+        );
+
+        await WalletTransaction.create(
+          [
+            {
+              userId: referrerId,
+              refereeId: referee._id,
+              type: 'credit',
+              amount: referrerBonus,
+              source: 'referral_bonus',
+              description: `Referral Bonus: You referred ${referee.name || 'a friend'}!`,
+              balanceBefore,
+              balanceAfter,
+              status: 'active',
+            },
+          ],
+          { session },
+        );
+      }
+
+      referee.referralRewarded = true;
+      await referee.save({ session });
 
       await session.commitTransaction();
       logger.info(
@@ -532,47 +617,34 @@ export class LoyaltyService {
 
       const incFields: any = {};
 
-      // 1. Re-credit spent wallet balance back to user's wallet
-      if (order.walletDeduction && order.walletDeduction > 0) {
-        incFields.walletBalance = (incFields.walletBalance || 0) + order.walletDeduction;
-
-        await WalletTransaction.create(
-          [
-            {
-              userId: user._id,
-              type: 'credit',
-              amount: order.walletDeduction,
-              source: 'refund',
-              description: `Restored spent wallet credits from cancelled order #${order.invoiceNumber || orderId}`,
-              orderId: order._id,
-              status: 'active',
-            },
-          ],
-          { session },
-        );
-      }
-
-      // 2. Revoke/Reverse any cashback earned on this order
+      // 1. Revoke/Reverse any cashback earned on this order (if not already reversed)
       if (order.cashbackEarned && order.cashbackEarned > 0) {
-        incFields.walletBalance = (incFields.walletBalance || 0) - order.cashbackEarned;
+        const existingReversal = await WalletTransaction.findOne({
+          source: 'reversal',
+          orderId: order._id,
+        }).session(session);
 
-        await WalletTransaction.create(
-          [
-            {
-              userId: user._id,
-              type: 'debit',
-              amount: order.cashbackEarned,
-              source: 'reversal',
-              description: `Revoked earned cashback from cancelled/refunded order #${order.invoiceNumber || orderId}`,
-              orderId: order._id,
-              status: 'active',
-            },
-          ],
-          { session },
-        );
+        if (!existingReversal) {
+          incFields.walletBalance = (incFields.walletBalance || 0) - order.cashbackEarned;
+
+          await WalletTransaction.create(
+            [
+              {
+                userId: user._id,
+                type: 'debit',
+                amount: order.cashbackEarned,
+                source: 'reversal',
+                description: `Revoked earned cashback from cancelled/refunded order #${order.invoiceNumber || orderId}`,
+                orderId: order._id,
+                status: 'active',
+              },
+            ],
+            { session },
+          );
+        }
       }
 
-      // 3. Revoke earned Siri Coins
+      // 2. Revoke earned Siri Coins
       if (order.coinsEarned && order.coinsEarned > 0) {
         incFields.siriCoins = -order.coinsEarned;
       }
@@ -592,10 +664,14 @@ export class LoyaltyService {
         }
         await User.findByIdAndUpdate(user._id, [{ $set: setFields }], { session });
       }
+
+      // Clear earned reward amounts so they cannot be reversed again
+      order.cashbackEarned = 0;
+      order.coinsEarned = 0;
+      await order.save({ session });
+
       if (!providedSession) await session.commitTransaction();
-      logger.info(
-        `Successfully reversed purchase rewards and restored credits for order ${orderId}`,
-      );
+      logger.info(`Successfully reversed earned rewards for order ${orderId}`);
     } catch (err) {
       if (!providedSession) await session.abortTransaction();
       logger.error(`Failed to reverse rewards for order ${orderId}:`, err);

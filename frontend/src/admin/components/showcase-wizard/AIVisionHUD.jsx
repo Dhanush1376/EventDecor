@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
+import { useMobileDrawerEngine, DrawerDragHandle } from '../../../components/ui/drawer';
 
 export function AIVisionHUD({
   showAIHUD,
@@ -11,26 +13,10 @@ export function AIVisionHUD({
   isAILearning,
   handleApplyAISpecs,
 }) {
-  const [isMobile, setIsMobile] = useState(
-    typeof window !== 'undefined' ? window.innerWidth < 640 : false,
-  );
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 640);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  // Lock body scroll when open
-  useEffect(() => {
-    if (showAIHUD && aiAnalysisResult) {
-      const originalStyle = window.getComputedStyle(document.body).overflow;
-      document.body.style.overflow = 'hidden';
-      return () => {
-        document.body.style.overflow = originalStyle;
-      };
-    }
-  }, [showAIHUD, aiAnalysisResult]);
+  const { isMobile, dragProps, sheetTransition } = useMobileDrawerEngine({
+    isOpen: showAIHUD && !!aiAnalysisResult,
+    onClose: () => setShowAIHUD(false),
+  });
 
   // Close on Escape key
   useEffect(() => {
@@ -43,7 +29,9 @@ export function AIVisionHUD({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showAIHUD, setShowAIHUD]);
 
-  return (
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
     <AnimatePresence>
       {showAIHUD && aiAnalysisResult && (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 pointer-events-none">
@@ -74,14 +62,12 @@ export function AIVisionHUD({
               y: isMobile ? '100%' : 8,
               scale: isMobile ? 1 : 0.98,
             }}
-            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-            className="pointer-events-auto relative z-10 bg-[var(--admin-surface)] border-t sm:border border-[var(--admin-border)] w-full sm:max-w-xl rounded-t-[8px] sm:rounded-[4px] shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[86vh] overflow-hidden"
+            transition={sheetTransition}
+            {...dragProps}
+            className="pointer-events-auto relative z-10 bg-[var(--admin-surface)] border-t sm:border border-[var(--admin-border)] w-full sm:max-w-xl rounded-t-2xl sm:rounded-[4px] shadow-2xl flex flex-col max-h-[90dvh] sm:max-h-[86vh] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Mobile Drawer Pull Indicator */}
-            <div className="pt-2 pb-0.5 sm:hidden flex justify-center w-full shrink-0">
-              <div className="w-8 h-1 rounded-full bg-stone-300 dark:bg-stone-700" />
-            </div>
+            {isMobile && <DrawerDragHandle onClick={() => setShowAIHUD(false)} />}
 
             {/* Header */}
             <div className="px-4 sm:px-5 py-3 border-b border-[var(--admin-border-subtle)] bg-[var(--admin-surface)] flex items-center justify-between gap-2 shrink-0">
@@ -114,7 +100,7 @@ export function AIVisionHUD({
             </div>
 
             {/* Scrollable Dashboard Panel */}
-            <div className="p-4 sm:p-5 overflow-y-auto space-y-3.5 custom-scrollbar text-left text-[var(--admin-text-primary)] flex-1">
+            <div className="p-4 sm:p-5 overflow-y-auto overscroll-contain touch-pan-y space-y-3.5 custom-scrollbar text-left text-[var(--admin-text-primary)] flex-1">
               {/* Classification Banner: Concept + Match */}
               <div className="flex items-center justify-between gap-3 p-3 sm:p-3.5 rounded-[4px] bg-[var(--admin-surface-muted)] border border-[var(--admin-border)]">
                 <div className="min-w-0">
@@ -265,7 +251,7 @@ export function AIVisionHUD({
             </div>
 
             {/* Footer Actions */}
-            <div className="p-3 sm:p-4 bg-[var(--admin-surface-muted)] border-t border-[var(--admin-border-subtle)] flex items-center gap-2 sm:gap-2.5 shrink-0">
+            <div className="p-3 sm:p-4 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] sm:pb-4 bg-[var(--admin-surface-muted)] border-t border-[var(--admin-border-subtle)] flex items-center gap-2 sm:gap-2.5 shrink-0">
               <button
                 type="button"
                 onClick={() => setShowAIHUD(false)}
@@ -288,6 +274,7 @@ export function AIVisionHUD({
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }

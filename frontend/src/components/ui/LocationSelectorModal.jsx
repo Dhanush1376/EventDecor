@@ -3,7 +3,7 @@ import { m as motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
-import { useScrollLock } from '../../hooks/useScrollLock';
+import { useMobileDrawerEngine, DrawerDragHandle } from './drawer';
 
 import logger from '../../utils/core/logger';
 import 'leaflet/dist/leaflet.css';
@@ -30,7 +30,10 @@ export function LocationSelectorModal({
     setMounted(true);
   }, []);
 
-  useScrollLock(isOpen && !inline);
+  const { isMobile, dragProps, sheetTransition } = useMobileDrawerEngine({
+    isOpen: isOpen && !inline,
+    onClose,
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
@@ -433,7 +436,7 @@ export function LocationSelectorModal({
           className={
             inline
               ? 'relative w-full flex-1 flex flex-col'
-              : 'fixed inset-0 z-[999] flex items-center justify-center p-4'
+              : 'fixed inset-0 z-[999] flex items-end sm:items-center justify-center p-0 sm:p-4 pointer-events-none'
           }
         >
           {/* Blur Overlay */}
@@ -443,25 +446,33 @@ export function LocationSelectorModal({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={onClose}
-              className="absolute inset-0 bg-black/60 backdrop-blur-md"
+              className="fixed inset-0 bg-black/60 backdrop-blur-md pointer-events-auto cursor-pointer"
             />
           )}
 
           {/* Modal Container */}
           <motion.div
-            initial={inline ? false : { opacity: 0, scale: 0.9, y: 30 }}
+            initial={
+              inline ? false : { opacity: 0, scale: isMobile ? 1 : 0.95, y: isMobile ? '100%' : 16 }
+            }
             animate={inline ? false : { opacity: 1, scale: 1, y: 0 }}
-            exit={inline ? false : { opacity: 0, scale: 0.9, y: 30 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-            className={`relative bg-[#FCFAF6] border border-[#826237]/30 w-full font-body flex flex-col z-10 ${
+            exit={
+              inline ? false : { opacity: 0, scale: isMobile ? 1 : 0.95, y: isMobile ? '100%' : 16 }
+            }
+            transition={inline ? undefined : sheetTransition}
+            {...(!inline ? dragProps : {})}
+            className={`pointer-events-auto relative bg-[#FCFAF6] border border-[#826237]/30 w-full font-body flex flex-col z-10 ${
               inline
                 ? 'rounded-2xl'
-                : 'max-w-2xl rounded-[1.5rem] sm:rounded-[2.5rem] shadow-2xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden'
+                : 'max-w-2xl rounded-t-3xl sm:rounded-[2.5rem] shadow-2xl max-h-[90dvh] sm:max-h-[90vh] overflow-hidden'
             }`}
           >
+            {/* Drawer Drag Handle on mobile */}
+            {!inline && isMobile && <DrawerDragHandle onClick={onClose} />}
+
             {/* Elegant Header Banner */}
             {!inline && (
-              <div className="bg-[#FAF6F0] px-6 py-5 border-b border-black/5 flex items-center justify-between relative">
+              <div className="bg-[#FAF6F0] px-6 py-4 sm:py-5 border-b border-black/5 flex items-center justify-between relative">
                 <div className="flex items-center gap-2">
                   <Map className="text-primary text-[24px]" strokeWidth={1.5} />
                   <div>
@@ -485,7 +496,7 @@ export function LocationSelectorModal({
 
             {/* Modal Body */}
             <div
-              className={`p-4 sm:p-6 space-y-4 flex flex-col ${inline ? '' : 'overflow-y-auto flex-1 min-h-0'}`}
+              className={`p-4 sm:p-6 space-y-4 flex flex-col ${inline ? '' : 'overflow-y-auto overscroll-contain touch-pan-y flex-1 min-h-0'}`}
             >
               {/* Autocomplete Search Bar */}
               <div className="relative z-30 w-full">
@@ -612,7 +623,7 @@ export function LocationSelectorModal({
 
             {/* Modal Footer Controls */}
             {!inline && (
-              <div className="bg-[#FAF6F0] px-4 sm:px-6 py-4 sm:py-5 border-t border-black/5 flex flex-col sm:flex-row gap-3 items-center justify-between shrink-0">
+              <div className="bg-[#FAF6F0] px-4 sm:px-6 py-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] sm:py-5 border-t border-black/5 flex flex-col sm:flex-row gap-3 items-center justify-between shrink-0">
                 <span className="text-[10px] text-stone-500 font-light leading-relaxed max-w-xs text-center sm:text-left">
                   Ensure coordinates map accurately. You can drag the gold heritage map marker pin
                   to tweak setup logistics!

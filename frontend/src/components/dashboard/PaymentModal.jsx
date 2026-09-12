@@ -1,8 +1,9 @@
 import { X } from 'lucide-react';
 import React from 'react';
+import { createPortal } from 'react-dom';
 import CreditCard from 'lucide-react/dist/esm/icons/credit-card';
 import { m as motion, AnimatePresence } from 'framer-motion';
-import { useScrollLock } from '../../hooks/useScrollLock';
+import { useMobileDrawerEngine, DrawerDragHandle } from '../ui/drawer';
 
 export function PaymentModal({
   isPaymentModalOpen,
@@ -13,25 +14,41 @@ export function PaymentModal({
   setPaymentNote,
   handleProcessPayment,
 }) {
-  useScrollLock(isPaymentModalOpen);
-  return (
+  const { isMobile, dragProps, sheetTransition } = useMobileDrawerEngine({
+    isOpen: isPaymentModalOpen,
+    onClose: () => setIsPaymentModalOpen(false),
+  });
+
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
     <AnimatePresence>
       {isPaymentModalOpen && (
-        <div className="fixed inset-0 z-[999] flex items-end sm:items-center justify-center sm:p-4">
+        <div className="fixed inset-0 z-[999] flex items-end sm:items-center justify-center sm:p-4 pointer-events-none">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsPaymentModalOpen(false)}
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm pointer-events-auto cursor-pointer"
           />
           <motion.div
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="bg-surface-bright rounded-t-2xl sm:rounded-2xl border border-outline-variant/30 shadow-2xl p-6 lg:p-8 w-full sm:max-w-md relative z-10 space-y-6 max-h-[90vh] overflow-y-auto"
+            initial={{
+              y: isMobile ? '100%' : 8,
+              opacity: isMobile ? 1 : 0,
+              scale: isMobile ? 1 : 0.98,
+            }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={{
+              y: isMobile ? '100%' : 8,
+              opacity: isMobile ? 1 : 0,
+              scale: isMobile ? 1 : 0.98,
+            }}
+            transition={sheetTransition}
+            {...dragProps}
+            className="bg-surface-bright rounded-t-3xl sm:rounded-2xl border border-outline-variant/30 shadow-2xl p-6 lg:p-8 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] sm:pb-8 w-full sm:max-w-md relative z-10 space-y-6 max-h-[88dvh] sm:max-h-[90vh] overflow-y-auto overscroll-contain touch-pan-y pointer-events-auto"
           >
+            {isMobile && <DrawerDragHandle onClick={() => setIsPaymentModalOpen(false)} />}
             <div className="flex justify-between items-start border-b border-outline-variant/20 pb-3">
               <div className="space-y-0.5">
                 <span className="font-label text-[8px] uppercase tracking-widest text-primary font-bold">
@@ -43,7 +60,7 @@ export function PaymentModal({
               </div>
               <button
                 onClick={() => setIsPaymentModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center active:scale-90"
+                className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center active:scale-90 cursor-pointer"
               >
                 <X className="text-[18px]" strokeWidth={1.5} />
               </button>
@@ -86,7 +103,7 @@ export function PaymentModal({
 
               <button
                 type="submit"
-                className="w-full bg-black text-white py-2.5 rounded-full font-label text-[9px] uppercase tracking-widest font-bold hover:bg-primary hover:text-black transition-colors shadow-md"
+                className="w-full bg-black text-white py-2.5 rounded-full font-label text-[9px] uppercase tracking-widest font-bold hover:bg-primary hover:text-black transition-colors shadow-md cursor-pointer"
               >
                 Proceed to Payment
               </button>
@@ -94,6 +111,7 @@ export function PaymentModal({
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }

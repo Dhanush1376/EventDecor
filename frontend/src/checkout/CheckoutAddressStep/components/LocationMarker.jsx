@@ -1,4 +1,25 @@
 import { useEffect, useRef } from 'react';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Crisp, self-contained SVG marker icon that never breaks or fails on external CDN assets
+const createCustomMarkerIcon = () =>
+  L.divIcon({
+    className: 'custom-location-marker-pin',
+    html: `
+      <div style="display:flex;flex-direction:column;align-items:center;cursor:grab;filter:drop-shadow(0 3px 6px rgba(0,0,0,0.35));transform:translate(-50%,-100%);">
+        <div style="position:relative;width:34px;height:42px;display:flex;align-items:center;justify-content:center;">
+          <svg width="34" height="42" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2C7.58 2 4 5.58 4 10C4 15.25 12 22 12 22C12 22 20 15.25 20 10C20 5.58 16.42 2 12 2Z" fill="#b45309" stroke="#ffffff" stroke-width="1.5" stroke-linejoin="round"/>
+            <circle cx="12" cy="10" r="3.5" fill="#ffffff"/>
+          </svg>
+        </div>
+        <div style="width:14px;height:4px;background:rgba(0,0,0,0.25);border-radius:50%;filter:blur(1px);margin-top:-2px;"></div>
+      </div>
+    `,
+    iconSize: [34, 42],
+    iconAnchor: [17, 42],
+  });
 
 export function LocationMarker({ position, setPosition, fetchAddressFromCoords }) {
   const mapContainerRef = useRef(null);
@@ -11,98 +32,140 @@ export function LocationMarker({ position, setPosition, fetchAddressFromCoords }
   }, [setPosition, fetchAddressFromCoords]);
 
   useEffect(() => {
-    let isCancelled = false;
+    if (!mapContainerRef.current) return;
 
-    const initMap = () => {
-      if (!window.L || mapRef.current || !mapContainerRef.current || isCancelled) return;
+    // Clean up any stale leaflet ID on the container
+    if (mapContainerRef.current._leaflet_id) {
+      delete mapContainerRef.current._leaflet_id;
+    }
+    if (mapRef.current) {
+      try {
+        mapRef.current.remove();
+      } catch (e) {
+        // ignore
+      }
+      mapRef.current = null;
+      markerRef.current = null;
+    }
 
-      const L = window.L;
-      const DefaultIcon = L.icon({
-        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-      });
-      L.Marker.prototype.options.icon = DefaultIcon;
+    const hasValidPos =
+      typeof position?.lat === 'number' &&
+      typeof position?.lng === 'number' &&
+      !isNaN(position.lat) &&
+      !isNaN(position.lng) &&
+      position.lat !== 0;
 
-      const safeLat = typeof position?.lat === 'number' ? position.lat : 20.5937;
-      const safeLng = typeof position?.lng === 'number' ? position.lng : 78.9629;
-      const zoom = position?.lat && position?.lng ? 15 : 5;
+    const safeLat = hasValidPos ? position.lat : 20.5937;
+    const safeLng = hasValidPos ? position.lng : 78.9629;
+    const initialZoom = hasValidPos ? 15 : 5;
 
-      const map = L.map(mapContainerRef.current).setView([safeLat, safeLng], zoom);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors',
-        maxZoom: 19,
+    let map = null;
+    let ro = null;
+
+    try {
+      map = L.map(mapContainerRef.current, {
+        zoomControl: true,
+        scrollWheelZoom: true,
+        attributionControl: false,
+      }).setView([safeLat, safeLng], initialZoom);
+
+      // CartoDB Voyager tiles (crisp, highly reliable, global fast CDN)
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        subdomains: 'abcd',
+        maxZoom: 20,
       }).addTo(map);
 
-      const marker = L.marker([safeLat, safeLng], { draggable: true }).addTo(map);
+      // Fallback OpenStreetMap tile layer if ever needed
+      map.on('tileerror', (error) => {
+        if (error?.tile?.src?.includes('cartocdn')) {
+          error.tile.src = error.tile.src.replace(
+            /https:\/\/.*\.basemaps\.cartocdn\.com\/rastertiles\/voyager/,
+            'https://tile.openstreetmap.org',
+          );
+        }
+      });
+
+      const customIcon = createCustomMarkerIcon();
+      const marker = L.marker([safeLat, safeLng], {
+        icon: customIcon,
+        draggable: true,
+      }).addTo(map);
 
       marker.on('dragend', (e) => {
         const pos = e.target.getLatLng();
-        callbacksRef.current.setPosition({ lat: pos.lat, lng: pos.lng });
-        callbacksRef.current.fetchAddressFromCoords(pos.lat, pos.lng);
+        callbacksRef.current.setPosition?.({ lat: pos.lat, lng: pos.lng });
+        callbacksRef.current.fetchAddressFromCoords?.(pos.lat, pos.lng);
       });
 
       map.on('click', (e) => {
         marker.setLatLng(e.latlng);
-        callbacksRef.current.setPosition({ lat: e.latlng.lat, lng: e.latlng.lng });
-        callbacksRef.current.fetchAddressFromCoords(e.latlng.lat, e.latlng.lng);
+        callbacksRef.current.setPosition?.({ lat: e.latlng.lat, lng: e.latlng.lng });
+        callbacksRef.current.fetchAddressFromCoords?.(e.latlng.lat, e.latlng.lng);
       });
 
       mapRef.current = map;
       markerRef.current = marker;
 
-      // Invalidate size once container transition is completed
-      setTimeout(() => {
-        if (mapRef.current) {
-          mapRef.current.invalidateSize();
-        }
-      }, 300);
-    };
+      // Force invalidation to avoid blank grey tiles inside modal/animation transitions
+      map.invalidateSize();
+      const t1 = setTimeout(() => map?.invalidateSize(), 80);
+      const t2 = setTimeout(() => map?.invalidateSize(), 250);
+      const t3 = setTimeout(() => map?.invalidateSize(), 500);
 
-    if (!document.getElementById('leaflet-css-cdn')) {
-      const link = document.createElement('link');
-      link.id = 'leaflet-css-cdn';
-      link.rel = 'stylesheet';
-      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-      document.head.appendChild(link);
-    }
-
-    if (!document.getElementById('leaflet-js-cdn')) {
-      const script = document.createElement('script');
-      script.id = 'leaflet-js-cdn';
-      script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-      script.onload = () => {
-        if (!isCancelled) initMap();
-      };
-      document.head.appendChild(script);
-    } else if (window.L) {
-      initMap();
-    }
-
-    return () => {
-      isCancelled = true;
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-        markerRef.current = null;
+      if (window.ResizeObserver && mapContainerRef.current) {
+        ro = new ResizeObserver(() => {
+          if (mapRef.current) {
+            mapRef.current.invalidateSize();
+          }
+        });
+        ro.observe(mapContainerRef.current);
       }
-    };
+
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+        clearTimeout(t3);
+        if (ro) {
+          ro.disconnect();
+        }
+        if (mapRef.current) {
+          try {
+            mapRef.current.remove();
+          } catch (e) {
+            // ignore
+          }
+          mapRef.current = null;
+          markerRef.current = null;
+        }
+      };
+    } catch (err) {
+      console.error('Failed to initialize Leaflet map in LocationMarker:', err);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Sync marker and center when position updates from outside
   useEffect(() => {
     if (
       mapRef.current &&
       markerRef.current &&
       typeof position?.lat === 'number' &&
-      typeof position?.lng === 'number'
+      typeof position?.lng === 'number' &&
+      !isNaN(position.lat) &&
+      !isNaN(position.lng) &&
+      position.lat !== 0
     ) {
-      mapRef.current.setView([position.lat, position.lng], 15);
-      markerRef.current.setLatLng([position.lat, position.lng]);
-      setTimeout(() => {
-        if (mapRef.current) mapRef.current.invalidateSize();
-      }, 200);
+      const currentPos = markerRef.current.getLatLng();
+      const diff =
+        Math.abs(currentPos.lat - position.lat) + Math.abs(currentPos.lng - position.lng);
+      if (diff > 0.00001) {
+        mapRef.current.setView(
+          [position.lat, position.lng],
+          Math.max(mapRef.current.getZoom(), 15),
+        );
+        markerRef.current.setLatLng([position.lat, position.lng]);
+        mapRef.current.invalidateSize();
+      }
     }
   }, [position?.lat, position?.lng]);
 
@@ -110,7 +173,7 @@ export function LocationMarker({ position, setPosition, fetchAddressFromCoords }
     <div
       ref={mapContainerRef}
       className="w-full h-full relative z-0 select-none"
-      style={{ minHeight: '180px' }}
+      style={{ minHeight: '176px', width: '100%' }}
     />
   );
 }
