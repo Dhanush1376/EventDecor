@@ -54,12 +54,12 @@ export function useAddressForm({ setNewAddress, setIsAddingNewAddress, newAddres
   };
 
   /**
-   * Detects location via GPS or network IP fallback and autofills available fields.
+   * Detects location via pinpoint GPS with approximate network fallback and autofills available fields.
    */
   const handleAutofillLocation = async () => {
     try {
       setIsResolvingLocation(true);
-      toast.loading('Detecting your location...', { id: 'location-detect' });
+      toast.loading('Acquiring pinpoint GPS location...', { id: 'location-detect' });
 
       const res = await detectAndResolveAddress();
 
@@ -81,27 +81,28 @@ export function useAddressForm({ setNewAddress, setIsAddingNewAddress, newAddres
           city: d.city || prev.city,
           state: d.state || prev.state,
           locality: d.locality || prev.locality,
-          address: resolvedAddressLine || prev.address,
+          // If pinpoint GPS, set the auto-detected address line; if approximate IP, preserve existing input
+          address: res.isPinpoint
+            ? resolvedAddressLine || prev.address
+            : prev.address || resolvedAddressLine,
           landmark: d.landmark || prev.landmark,
         }));
 
-        const hasFilledFields = Boolean(
-          d.pincode || d.city || d.state || d.locality || resolvedAddressLine,
-        );
-        if (hasFilledFields) {
-          const successMsg =
-            res.source === 'gps'
-              ? 'Location & address auto-filled from GPS!'
-              : 'Location & address detected from network!';
-          toast.success(successMsg, { id: 'location-detect' });
+        if (res.isPinpoint && res.source === 'gps') {
+          const accText = res.accuracy ? ` (~${Math.round(res.accuracy)}m)` : '';
+          toast.success(`Exact pinpoint GPS location locked${accText}!`, { id: 'location-detect' });
+        } else if (res.isApproximate) {
+          toast(
+            'Approximate region detected from network. Please drag the pin on the map or search your exact address!',
+            { id: 'location-detect', duration: 5000 },
+          );
         } else {
-          toast.success('GPS coordinates locked! Please enter pincode and address details.', {
-            id: 'location-detect',
-          });
+          toast.success('Location detected!', { id: 'location-detect' });
         }
       } else {
         toast.error(res.error || 'Could not detect location. Please fill manually.', {
           id: 'location-detect',
+          duration: 5000,
         });
       }
     } catch (_err) {

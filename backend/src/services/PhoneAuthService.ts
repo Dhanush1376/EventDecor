@@ -7,6 +7,7 @@ import AuthIdentity from '../models/AuthIdentity';
 import OtpChallenge from '../models/OtpChallenge';
 import { getSmsProvider } from './SmsProviderService';
 import { SecurityAuditService } from './SecurityAuditService';
+import { isAdministrativeRole } from '../config/adminConfig';
 import SessionAuthService from './SessionAuthService';
 import ApiError from '../utils/ApiError';
 import logger from '../config/logger';
@@ -200,11 +201,12 @@ export class PhoneAuthService {
       challengeId,
     });
 
-    const normalizedPhone = challenge.identifier;
+    const canonicalPhone = this.normalizePhone(challenge.identifier);
+    const rawDigits = canonicalPhone.replace(/\D/g, '').slice(-10);
 
     const identity = await AuthIdentity.findOne({
       provider: 'phone',
-      providerSubjectId: normalizedPhone,
+      $or: [{ providerSubjectId: canonicalPhone }, { providerSubjectId: rawDigits }],
     });
 
     let user;
@@ -212,34 +214,144 @@ export class PhoneAuthService {
 
     if (identity) {
       user = await User.findById(identity.userId);
-      if (!user || !user.isVerified) {
+      if (!user || user.isDeleted) {
         throw new ApiError(401, 'Authentication failed. Please try again.');
       }
+      if (isAdministrativeRole(user.role)) {
+        throw new ApiError(403, 'Administrative accounts must sign in via the Admin Portal.');
+      }
+      // Migrate legacy phone representation to canonical E.164
+      if (user.phone !== canonicalPhone) {
+        user.phone = canonicalPhone;
+      }
+      if (!user.phoneVerified) {
+        user.phoneVerified = true;
+      }
+      if (!user.isVerified) {
+        user.isVerified = true;
+      }
+      user.lastLogin = new Date();
+      await user.save();
+
+      if (identity.providerSubjectId !== canonicalPhone) {
+        identity.providerSubjectId = canonicalPhone;
+        await identity.save();
+      }
     } else {
-      eventType = 'SIGNUP_SUCCESS';
-      // Transaction to create new user + identity
-      user = await mongoose.connection.transaction(async (txSession) => {
-        const newUser = new User({
-          phone: normalizedPhone,
-          role: 'customer',
-          isVerified: true,
-        });
-        await newUser.save({ session: txSession });
-
-        await AuthIdentity.create(
-          [
-            {
-              userId: newUser._id,
-              provider: 'phone',
-              providerSubjectId: normalizedPhone,
-              verifiedAt: new Date(),
-            },
-          ],
-          { session: txSession },
-        );
-
-        return newUser;
+      // Check if an existing User already has this phone (legacy or from orders/email)
+      const existingUser = await User.findOne({
+        $or: [{ phone: canonicalPhone }, { phone: rawDigits }],
+        isDeleted: { $ne: true },
       });
+
+      if (existingUser) {
+        if (isAdministrativeRole(existingUser.role)) {
+          throw new ApiError(403, 'Administrative accounts must sign in via the Admin Portal.');
+        }
+        user = existingUser;
+        // Migrate to canonical E.164
+        user.phone = canonicalPhone;
+        user.phoneVerified = true;
+        if (!user.isVerified) {
+          user.isVerified = true;
+        }
+        user.lastLogin = new Date();
+        await user.save();
+
+        await AuthIdentity.findOneAndUpdate(
+          { provider: 'phone', providerSubjectId: canonicalPhone },
+          { $set: { userId: user._id, verifiedAt: new Date() } },
+          { upsert: true, new: true },
+        );
+        eventType = 'LOGIN_SUCCESS';
+      } else {
+        eventType = 'SIGNUP_SUCCESS';
+        try {
+          // Transaction to create new user + identity
+          user = await mongoose.connection.transaction(async (txSession) => {
+            const newUser = new User({
+              phone: canonicalPhone,
+              role: 'customer',
+              isVerified: true,
+              phoneVerified: true,
+              name: '', // Empty name prompt will be shown post-login for customers
+              wishlist: [],
+              cart: [],
+              recentlyViewed: [],
+              notificationPreferences: { email: true, marketing: true },
+              accountPreferences: { theme: 'light', language: 'en' },
+              lastLogin: new Date(),
+            });
+            await newUser.save({ session: txSession });
+
+            await AuthIdentity.create(
+              [
+                {
+                  userId: newUser._id,
+                  provider: 'phone',
+                  providerSubjectId: canonicalPhone,
+                  verifiedAt: new Date(),
+                },
+              ],
+              { session: txSession },
+            );
+
+            return newUser;
+          });
+        } catch (createErr: any) {
+          // Concurrent account-creation safety: recover from duplicate key race
+          if (
+            createErr.code === 11000 ||
+            createErr.name === 'MongoServerError' ||
+            String(createErr.message || '').includes('E11000')
+          ) {
+            logger.info(
+              `[PhoneAuthService] Concurrent account-creation race detected for ${canonicalPhone}. Recovering existing account...`,
+            );
+            const recoveredIdentity = await AuthIdentity.findOne({
+              provider: 'phone',
+              providerSubjectId: canonicalPhone,
+            });
+            if (recoveredIdentity) {
+              const existingRecovered = await User.findById(recoveredIdentity.userId);
+              if (existingRecovered && !existingRecovered.isDeleted) {
+                if (isAdministrativeRole(existingRecovered.role)) {
+                  throw new ApiError(
+                    403,
+                    'Administrative accounts must sign in via the Admin Portal.',
+                  );
+                }
+                user = existingRecovered;
+                user.phoneVerified = true;
+                user.lastLogin = new Date();
+                await user.save();
+                eventType = 'LOGIN_SUCCESS';
+              }
+            } else {
+              const existingRecoveredUser = await User.findOne({
+                phone: canonicalPhone,
+                isDeleted: { $ne: true },
+              });
+              if (existingRecoveredUser) {
+                if (isAdministrativeRole(existingRecoveredUser.role)) {
+                  throw new ApiError(
+                    403,
+                    'Administrative accounts must sign in via the Admin Portal.',
+                  );
+                }
+                user = existingRecoveredUser;
+                user.phoneVerified = true;
+                user.lastLogin = new Date();
+                await user.save();
+                eventType = 'LOGIN_SUCCESS';
+              }
+            }
+          }
+          if (!user) {
+            throw createErr;
+          }
+        }
+      }
     }
 
     const userWith2fa = await User.findById(user._id).select('+twoFactorEnabled');
@@ -265,7 +377,7 @@ export class PhoneAuthService {
       ip,
       userAgent,
       provider: 'phone',
-      identifier: normalizedPhone,
+      identifier: canonicalPhone,
     });
 
     return sessionData;

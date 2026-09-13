@@ -165,12 +165,18 @@
   background: var(--admin-text-tertiary);
 }
 
-.admin-section-root .scrollbar-hide::-webkit-scrollbar {
-  display: none;
+.admin-section-root .scrollbar-none::-webkit-scrollbar,
+.admin-section-root .scrollbar-hide::-webkit-scrollbar,
+.admin-drawer-scroll-hidden::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
-.admin-section-root .scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+.admin-section-root .scrollbar-none,
+.admin-section-root .scrollbar-hide,
+.admin-drawer-scroll-hidden {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

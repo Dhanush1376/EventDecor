@@ -517,7 +517,7 @@ export function AdminAddGalleryItem() {
                         }}
                         className="text-[10px] font-bold text-[var(--admin-accent)] hover:underline flex items-center gap-1 cursor-pointer"
                       >
-                        <span className="material-symbols-outlined text-[13px]">auto_awesome</span>
+                        <span className="material-symbols-outlined text-[13px]">bolt</span>
                         <span>AI Autofill</span>
                       </button>
                     </div>
@@ -826,7 +826,7 @@ export function AdminAddGalleryItem() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="w-7 h-7 rounded-full bg-[var(--admin-accent)]/15 text-[var(--admin-accent)] flex items-center justify-center">
-                  <span className="material-symbols-outlined text-[16px]">auto_awesome</span>
+                  <span className="material-symbols-outlined text-[16px]">psychology</span>
                 </span>
                 <h3 className="font-bold text-[13.5px] text-[var(--admin-text-primary)]">
                   AI Decor Assistant

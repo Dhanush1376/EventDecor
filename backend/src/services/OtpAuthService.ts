@@ -1,5 +1,3 @@
-import fs from 'fs';
-import path from 'path';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import User from '../models/User';
@@ -21,8 +19,12 @@ import { cacheOtpSession } from '../utils/cache/otpVerifyCache';
 import { recordOtpVerifyFailure } from '../utils/security/otpRateLimit';
 import SessionAuthService from './SessionAuthService';
 import { getFrontendUrl } from '../utils/getFrontendUrl';
-import { getOtpEmailTemplate, getCodOtpEmailTemplate } from '../utils/email/emailTemplates';
+import { getOtpEmailTemplate } from '../utils/email/emailTemplates';
+import jwt from 'jsonwebtoken';
+import { getSmsProvider, maskPhone } from './SmsProviderService';
+import { PhoneAuthService } from './PhoneAuthService';
 import { SecurityAuditService } from './SecurityAuditService';
+import { isAdministrativeRole } from '../config/adminConfig';
 
 class OtpAuthService {
   static normalizeOtpInput(otp: string): string {
@@ -191,7 +193,7 @@ class OtpAuthService {
       throw new ApiError(400, 'Invalid or expired verification session');
     }
 
-    const cleanEmail = challenge.identifier;
+    const cleanEmail = canonicalizeEmail(challenge.identifier);
 
     const isTestRateLimit = process.env.TEST_RATE_LIMIT === 'true';
     if (!isTestRateLimit && process.env.NODE_ENV !== 'development') {
@@ -296,113 +298,195 @@ class OtpAuthService {
     let user;
     let isNewUser = false;
 
-    let identity = await AuthIdentity.findOne({
-      provider: challenge.identifierType,
+    const identity = await AuthIdentity.findOne({
+      provider: 'email',
       providerSubjectId: cleanEmail,
     });
 
-    if (!identity) {
-      const legacyUser = await User.findOne({ email: cleanEmail });
-      if (legacyUser) {
-        // Auto-migrate legacy user
-        identity = await AuthIdentity.create({
-          userId: legacyUser._id,
-          provider: 'email',
-          providerSubjectId: cleanEmail,
-          verifiedAt: new Date(),
-        });
-      }
-    }
-
     if (identity) {
       user = await User.findById(identity.userId);
-      if (!user) {
-        throw new ApiError(400, 'Account not found');
+      if (!user || user.isDeleted) {
+        throw new ApiError(401, 'Account not found');
       }
-      user.isVerified = true;
+      if (isAdministrativeRole(user.role)) {
+        throw new ApiError(403, 'Administrative accounts must sign in via the Admin Portal.');
+      }
+      if (user.email !== cleanEmail) {
+        user.email = cleanEmail;
+      }
+      if (!user.emailVerified) {
+        user.emailVerified = true;
+      }
+      if (!user.isVerified) {
+        user.isVerified = true;
+      }
       user.lastLogin = new Date();
       await user.save();
     } else {
-      isNewUser = true;
-      const namePart = cleanEmail.split('@')[0];
-      const capitalizedName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
-      const hash = crypto.createHash('md5').update(cleanEmail).digest('hex');
-      const avatar = `https://www.gravatar.com/avatar/${hash}?d=identicon&s=200`;
+      // Check if an existing User already has this email
+      const existingUser = await User.findOne({
+        email: cleanEmail,
+        isDeleted: { $ne: true },
+      });
 
-      const dbSession = await mongoose.startSession();
-      dbSession.startTransaction();
+      if (existingUser) {
+        if (isAdministrativeRole(existingUser.role)) {
+          throw new ApiError(403, 'Administrative accounts must sign in via the Admin Portal.');
+        }
+        user = existingUser;
+        user.email = cleanEmail;
+        user.emailVerified = true;
+        if (!user.isVerified) {
+          user.isVerified = true;
+        }
+        user.lastLogin = new Date();
+        await user.save();
 
-      try {
-        user = new User({
-          name: capitalizedName,
-          email: cleanEmail,
-          role: 'customer',
-          isVerified: true,
-          avatar,
-          wishlist: [],
-          cart: [],
-          recentlyViewed: [],
-          notificationPreferences: { email: true, marketing: true },
-          accountPreferences: { theme: 'light', language: 'en' },
-          lastLogin: new Date(),
-        });
-        await user.save({ session: dbSession });
+        await AuthIdentity.findOneAndUpdate(
+          { provider: 'email', providerSubjectId: cleanEmail },
+          { $set: { userId: user._id, verifiedAt: new Date() } },
+          { upsert: true, new: true },
+        );
+      } else {
+        isNewUser = true;
+        const namePart = cleanEmail.split('@')[0];
+        const capitalizedName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+        const hash = crypto.createHash('md5').update(cleanEmail).digest('hex');
+        const avatar = `https://www.gravatar.com/avatar/${hash}?d=identicon&s=200`;
 
-        await AuthIdentity.create(
-          [
-            {
-              userId: user._id,
+        try {
+          const dbSession = await mongoose.startSession();
+          dbSession.startTransaction();
+
+          try {
+            user = new User({
+              name: capitalizedName,
+              email: cleanEmail,
+              role: 'customer',
+              isVerified: true,
+              emailVerified: true,
+              avatar,
+              wishlist: [],
+              cart: [],
+              recentlyViewed: [],
+              notificationPreferences: { email: true, marketing: true },
+              accountPreferences: { theme: 'light', language: 'en' },
+              lastLogin: new Date(),
+            });
+            await user.save({ session: dbSession });
+
+            await AuthIdentity.create(
+              [
+                {
+                  userId: user._id,
+                  provider: 'email',
+                  providerSubjectId: cleanEmail,
+                  verifiedAt: new Date(),
+                },
+              ],
+              { session: dbSession },
+            );
+
+            await dbSession.commitTransaction();
+          } catch (err) {
+            await dbSession.abortTransaction();
+            throw err;
+          } finally {
+            dbSession.endSession();
+          }
+        } catch (createErr: any) {
+          // Concurrent account-creation safety: recover from duplicate key race
+          if (
+            createErr.code === 11000 ||
+            createErr.name === 'MongoServerError' ||
+            String(createErr.message || '').includes('E11000')
+          ) {
+            logger.info(
+              `[OtpAuthService] Concurrent account-creation race detected for ${cleanEmail}. Recovering existing account...`,
+            );
+            const recoveredIdentity = await AuthIdentity.findOne({
               provider: 'email',
               providerSubjectId: cleanEmail,
-              verifiedAt: new Date(),
-            },
-          ],
-          { session: dbSession },
-        );
-
-        await dbSession.commitTransaction();
-      } catch (err) {
-        await dbSession.abortTransaction();
-        throw err;
-      } finally {
-        dbSession.endSession();
-      }
-
-      (async () => {
-        try {
-          if (typeof fetch === 'function') {
-            const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 1500);
-            const res = await fetch(`https://www.gravatar.com/${hash}.json`, {
-              headers: { 'User-Agent': 'SiriArtsApp/1.0' },
-              signal: controller.signal,
-            })
-              .then((r: any) => {
-                clearTimeout(timeout);
-                return r.ok ? r.json() : null;
-              })
-              .catch(() => {
-                clearTimeout(timeout);
-                return null;
+            });
+            if (recoveredIdentity) {
+              const existingRecovered = await User.findById(recoveredIdentity.userId);
+              if (existingRecovered && !existingRecovered.isDeleted) {
+                if (isAdministrativeRole(existingRecovered.role)) {
+                  throw new ApiError(
+                    403,
+                    'Administrative accounts must sign in via the Admin Portal.',
+                  );
+                }
+                user = existingRecovered;
+                user.emailVerified = true;
+                user.lastLogin = new Date();
+                await user.save();
+                isNewUser = false;
+              }
+            } else {
+              const existingRecoveredUser = await User.findOne({
+                email: cleanEmail,
+                isDeleted: { $ne: true },
               });
-
-            if (res && res.entry && res.entry[0]) {
-              const entry = res.entry[0];
-              const gravatarName = entry.displayName || entry.preferredUsername || capitalizedName;
-              const gravatarAvatar = entry.thumbnailUrl || avatar;
-
-              await User.findByIdAndUpdate(user!._id, {
-                $set: {
-                  name: gravatarName,
-                  avatar: gravatarAvatar,
-                },
-              });
+              if (existingRecoveredUser) {
+                if (isAdministrativeRole(existingRecoveredUser.role)) {
+                  throw new ApiError(
+                    403,
+                    'Administrative accounts must sign in via the Admin Portal.',
+                  );
+                }
+                user = existingRecoveredUser;
+                user.emailVerified = true;
+                user.lastLogin = new Date();
+                await user.save();
+                isNewUser = false;
+              }
             }
           }
-        } catch (err) {
-          logger.debug('Background Gravatar profile lookup skipped or failed', err);
+          if (!user) {
+            throw createErr;
+          }
         }
-      })();
+
+        if (isNewUser) {
+          (async () => {
+            try {
+              if (typeof fetch === 'function') {
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 1500);
+                const res = await fetch(`https://www.gravatar.com/${hash}.json`, {
+                  headers: { 'User-Agent': 'SiriArtsApp/1.0' },
+                  signal: controller.signal,
+                })
+                  .then((r: any) => {
+                    clearTimeout(timeout);
+                    return r.ok ? r.json() : null;
+                  })
+                  .catch(() => {
+                    clearTimeout(timeout);
+                    return null;
+                  });
+
+                if (res && res.entry && res.entry[0]) {
+                  const entry = res.entry[0];
+                  const gravatarName =
+                    entry.displayName || entry.preferredUsername || capitalizedName;
+                  const gravatarAvatar = entry.thumbnailUrl || avatar;
+
+                  await User.findByIdAndUpdate(user!._id, {
+                    $set: {
+                      name: gravatarName,
+                      avatar: gravatarAvatar,
+                    },
+                  });
+                }
+              }
+            } catch (err) {
+              logger.debug('Background Gravatar profile lookup skipped or failed', err);
+            }
+          })();
+        }
+      }
     }
 
     if (isNewUser) {
@@ -480,12 +564,33 @@ class OtpAuthService {
     return session;
   }
 
-  static async generateCodOTP(email: string, _ip: string = '127.0.0.1') {
-    if (!email || !email.includes('@')) {
-      throw new ApiError(400, 'A valid email address is required');
+  static async generateCodOTP(phone: string, userId?: string, ip: string = '127.0.0.1') {
+    if (!phone) {
+      throw new ApiError(400, 'A valid delivery phone number is required for COD verification');
     }
 
-    const cleanEmail = canonicalizeEmail(email);
+    const normalizedPhone = PhoneAuthService.normalizePhone(phone);
+    const purpose = 'COD_VERIFICATION';
+
+    // Anti-SMS Bombing / Cooldown (30 seconds)
+    const recentChallenge = await OtpChallenge.findOne({
+      identifier: normalizedPhone,
+      purpose,
+      createdAt: { $gt: new Date(Date.now() - 30 * 1000) },
+    });
+    if (recentChallenge) {
+      throw new ApiError(429, 'Please wait before requesting another verification code');
+    }
+
+    // Hourly rate limit (5 per hour)
+    const hourlyCount = await OtpChallenge.countDocuments({
+      identifier: normalizedPhone,
+      purpose,
+      createdAt: { $gt: new Date(Date.now() - 60 * 60 * 1000) },
+    });
+    if (hourlyCount >= 5) {
+      throw new ApiError(429, 'Too many verification attempts. Please try again later.');
+    }
 
     const otp = crypto.randomInt(100000, 999999).toString();
     const salt = await bcrypt.genSalt(12);
@@ -494,79 +599,69 @@ class OtpAuthService {
     const expiryMinutes = 5;
     const expiresAt = new Date(Date.now() + expiryMinutes * 60 * 1000);
     const challengeId = crypto.randomUUID();
-    const purpose = 'COD_VERIFICATION';
 
     await OtpChallenge.updateMany(
-      { identifier: cleanEmail, purpose, exhausted: false, consumedAt: null },
+      { identifier: normalizedPhone, purpose, exhausted: false, consumedAt: null },
       { $set: { exhausted: true } },
     );
 
     const otpRecord = await OtpChallenge.create({
       challengeId,
       purpose,
-      identifier: cleanEmail,
-      identifierType: 'email',
+      identifier: normalizedPhone,
+      identifierType: 'phone',
       otpHash,
       expiresAt,
     });
 
-    if (process.env.NODE_ENV !== 'production') {
-      try {
-        const logPath = path.resolve(process.cwd(), '.dev-otp-log');
-        const timestamp = new Date().toISOString();
-        const logEntry = `[${timestamp}] To: ${cleanEmail} | COD OTP: ${otp}\n`;
-        fs.appendFileSync(logPath, logEntry, 'utf8');
-        logger.info(`[DEV COD OTP] Verification code for ${cleanEmail}: ${otp}`);
-      } catch (err: any) {
-        logger.warn(`Failed to write to .dev-otp-log: ${err.message}`);
-      }
+    if (process.env.NODE_ENV === 'development') {
+      logger.info(`[DEV COD OTP] Verification code for ${normalizedPhone}: ${otp}`);
     }
 
-    try {
-      await sendDirectEmailProcessor({
-        email: cleanEmail,
-        subject: `${otp} is your Siri Arts & Crafts COD verification code`,
-        customHtml: getCodOtpEmailTemplate(otp, expiryMinutes),
-        type: 'security',
-        action: 'cod_otp',
-      });
-    } catch (err: any) {
-      if (process.env.NODE_ENV !== 'production') {
-        logger.warn(
-          `[DEV COD OTP] Email delivery failed in development (${err.message}), but OTP was saved and logged to .dev-otp-log: ${otp}`,
-        );
-        return { challengeId };
-      }
-      logger.error(
-        `[COD OTP ERROR] Failed to deliver COD OTP email for ${SecurityAuditService.hashIdentifier(cleanEmail)}:`,
-        err,
-      );
-      await OtpChallenge.updateOne({ _id: otpRecord._id }, { $set: { exhausted: true } });
-      throw new ApiError(500, `COD verification email delivery failed. Please try again.`);
+    const smsResult = await getSmsProvider().sendOtp(normalizedPhone, otp);
+    if (!smsResult.success) {
+      logger.error(`[COD OTP ERROR] Failed to send SMS via Fast2SMS: ${smsResult.error}`);
+      await OtpChallenge.updateOne({ _id: (otpRecord as any)._id }, { $set: { exhausted: true } });
+      throw new ApiError(500, 'Failed to send SMS verification code. Please try again.');
     }
 
-    return { challengeId }; // Stop returning raw OTP! Return challengeId instead.
+    SecurityAuditService.log({
+      eventType: 'OTP_REQUESTED',
+      success: true,
+      ip,
+      userAgent: 'checkout',
+      identifier: normalizedPhone,
+      challengeId,
+    });
+
+    return { success: true, challengeId, phone: maskPhone(normalizedPhone) };
   }
 
-  static async verifyCodOTP(identifierOrChallengeId: string, otp: string) {
-    if (!identifierOrChallengeId || !otp) {
-      throw new ApiError(400, 'Email or challenge ID and OTP are required');
+  static async verifyCodOTP(phoneOrChallengeId: string, otp: string, userId?: string) {
+    if (!phoneOrChallengeId || !otp) {
+      throw new ApiError(400, 'Delivery phone or challenge ID and OTP are required');
     }
 
-    const cleanIdentifier = identifierOrChallengeId.includes('@')
-      ? canonicalizeEmail(identifierOrChallengeId)
-      : identifierOrChallengeId;
+    let normalizedPhone = phoneOrChallengeId;
+    try {
+      if (!phoneOrChallengeId.includes('-') && phoneOrChallengeId.length <= 15) {
+        normalizedPhone = PhoneAuthService.normalizePhone(phoneOrChallengeId);
+      }
+    } catch {
+      // Retain as challengeId if not standard phone format
+    }
 
     const normalizedOtp = this.normalizeOtpInput(otp);
 
     const challenge = await OtpChallenge.findOneAndUpdate(
       {
-        $or: [{ challengeId: identifierOrChallengeId }, { identifier: cleanIdentifier }],
+        $or: [{ challengeId: phoneOrChallengeId }, { identifier: normalizedPhone }],
         purpose: 'COD_VERIFICATION',
       },
       { $inc: { attempts: 1 } },
       { sort: { createdAt: -1 }, new: true },
     );
+
     if (!challenge) {
       throw new ApiError(400, 'Invalid or expired verification session');
     }
@@ -582,7 +677,6 @@ class OtpAuthService {
     }
 
     const isMatch = await bcrypt.compare(normalizedOtp, challenge.otpHash);
-
     if (!isMatch) {
       if (challenge.attempts >= challenge.maxAttempts && !challenge.exhausted) {
         await OtpChallenge.updateOne({ _id: challenge._id }, { $set: { exhausted: true } });
@@ -591,25 +685,22 @@ class OtpAuthService {
       throw new ApiError(400, 'Invalid verification code');
     }
 
-    const updated = await OtpChallenge.findOneAndUpdate(
-      { _id: challenge._id, consumedAt: null },
-      { $set: { consumedAt: new Date() } },
-      { new: true },
-    );
-    if (!updated) {
-      logger.warn(
-        `[COD OTP RACE] OTP already consumed for ${SecurityAuditService.hashIdentifier(challenge.identifier)}`,
-      );
-      throw new ApiError(400, 'Verification code already used. Please request a new one.');
-    }
-
-    await OtpChallenge.deleteMany({
-      identifier: challenge.identifier,
-      purpose: 'COD_VERIFICATION',
-      _id: { $ne: challenge._id },
+    // Generate signed single-use COD verification token bound to normalizedPhone and userId
+    const payload = {
+      challengeId: challenge.challengeId,
+      phone: challenge.identifier,
+      userId: userId || null,
+      purpose: 'COD_ORDER_VERIFICATION',
+    };
+    const codVerificationToken = jwt.sign(payload, process.env.JWT_SECRET!, {
+      expiresIn: '15m',
     });
 
-    return true;
+    return {
+      success: true,
+      codVerificationToken,
+      phone: challenge.identifier,
+    };
   }
 }
 

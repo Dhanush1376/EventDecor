@@ -3,8 +3,10 @@ import dns from 'dns';
 
 dns.setDefaultResultOrder('ipv4first');
 try {
-  // Use public DNS resolvers to prevent querySrv ECONNREFUSED when local router DNS drops SRV packets
-  dns.setServers(['8.8.8.8', '1.1.1.1', '8.8.4.4']);
+  // Only override system DNS if explicitly configured (prevents ETIMEOUT when ISPs block port 53 to 8.8.8.8)
+  if (process.env.USE_PUBLIC_DNS === 'true') {
+    dns.setServers(['8.8.8.8', '1.1.1.1', '8.8.4.4']);
+  }
 } catch {
   // Ignore in environments where setting DNS servers is not permitted
 }

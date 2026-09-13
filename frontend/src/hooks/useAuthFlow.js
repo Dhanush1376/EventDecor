@@ -16,6 +16,9 @@ export function useAuthFlow(loginSuccess, isAuthModalOpen) {
   const [error, setError] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [isNewUser, setIsNewUser] = useState(false);
+  const [userName, setUserName] = useState('');
+  const [isUpdatingName, setIsUpdatingName] = useState(false);
+  const [pendingSessionData, setPendingSessionData] = useState(null);
 
   const otpRefs = useRef([]);
   const isSubmittingRef = useRef(false);
@@ -31,6 +34,9 @@ export function useAuthFlow(loginSuccess, isAuthModalOpen) {
     setTotpCode('');
     setPending2faUserId(null);
     setIsNewUser(false);
+    setUserName('');
+    setIsUpdatingName(false);
+    setPendingSessionData(null);
   }, []);
 
   const requestOTP = async (e) => {
@@ -82,6 +88,26 @@ export function useAuthFlow(loginSuccess, isAuthModalOpen) {
           const isNewlyCreated =
             user?.createdAt && Date.now() - new Date(user.createdAt).getTime() < 120000;
           setIsNewUser(!!response.data.isNewUser || !!isNewlyCreated);
+
+          const isStaffOrAdmin = [
+            'admin',
+            'staff',
+            'super_admin',
+            'designer',
+            'production_lead',
+          ].includes(user?.role);
+          const needsName = !isStaffOrAdmin && (!user?.name || user.name.trim() === '');
+
+          if (needsName) {
+            setPendingSessionData({
+              user,
+              accessToken: response.data.accessToken || response.data.token,
+              refreshToken: response.data.refreshToken,
+            });
+            setStep('name_prompt');
+            return;
+          }
+
           setStep('success');
           setTimeout(async () => {
             await loginSuccess(
@@ -287,6 +313,59 @@ export function useAuthFlow(loginSuccess, isAuthModalOpen) {
     }
   };
 
+  const handleNameSubmit = async (e) => {
+    e?.preventDefault();
+    if (!pendingSessionData || isSubmittingRef.current || isUpdatingName) return;
+    const trimmed = userName.trim();
+    if (!trimmed) {
+      toast.error('Please enter your name');
+      return;
+    }
+
+    isSubmittingRef.current = true;
+    setIsUpdatingName(true);
+    try {
+      await loginSuccess(
+        { ...pendingSessionData.user, name: trimmed },
+        pendingSessionData.accessToken,
+        pendingSessionData.refreshToken,
+        { keepModalOpen: true },
+      );
+      await authService.updateProfile({ name: trimmed });
+      toast.success(`Welcome, ${trimmed}!`);
+    } catch (err) {
+      logger.warn('[Auth] Failed to update user profile name:', err);
+    } finally {
+      isSubmittingRef.current = false;
+      setIsUpdatingName(false);
+      setStep('success');
+      setTimeout(async () => {
+        await loginSuccess(
+          { ...pendingSessionData.user, name: trimmed },
+          pendingSessionData.accessToken,
+          pendingSessionData.refreshToken,
+        );
+      }, 1200);
+    }
+  };
+
+  const handleNameSkip = async () => {
+    if (!pendingSessionData || isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+    try {
+      setStep('success');
+      setTimeout(async () => {
+        await loginSuccess(
+          pendingSessionData.user,
+          pendingSessionData.accessToken,
+          pendingSessionData.refreshToken,
+        );
+      }, 800);
+    } finally {
+      isSubmittingRef.current = false;
+    }
+  };
+
   return {
     step,
     setStep,
@@ -313,5 +392,10 @@ export function useAuthFlow(loginSuccess, isAuthModalOpen) {
     handleGoogleSuccess,
     handleGoogleError,
     isNewUser,
+    userName,
+    setUserName,
+    isUpdatingName,
+    handleNameSubmit,
+    handleNameSkip,
   };
 }

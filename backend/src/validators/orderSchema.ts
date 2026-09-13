@@ -49,6 +49,7 @@ export const createOrderSchema = z.object({
       orderType: z.string().optional(),
       isCustomOrder: z.boolean().optional(),
       customOrderId: z.string().optional(),
+      codVerificationToken: z.string().trim().optional(),
     })
     .strict(),
 });
@@ -96,33 +97,39 @@ export const validateTotalsSchema = z.object({
     .strict(),
 });
 
-const codOtpEmailSchema = z.object({
-  email: z
-    .string({ message: 'Email is required' })
+const codOtpPhoneSchema = z.object({
+  phone: z
+    .string({ message: 'Delivery phone number is required' })
     .trim()
-    .min(1, 'Email is required')
-    .email('Valid email required')
-    .transform((val) => canonicalizeEmail(val)),
+    .min(10, 'Valid delivery phone number is required')
+    .max(20, 'Phone number cannot exceed 20 characters'),
 });
 
-export const codOtpEmailBodySchema = z.object({
-  body: codOtpEmailSchema.strict(),
+export const codOtpPhoneBodySchema = z.object({
+  body: codOtpPhoneSchema.strict(),
 });
+
+// Backward-compatible alias
+export const codOtpEmailBodySchema = codOtpPhoneBodySchema;
 
 export const codOtpVerifySchema = z.object({
-  body: codOtpEmailSchema
-    .extend({
+  body: z
+    .object({
+      phone: z.string().trim().min(10).max(20).optional(),
+      challengeId: z.string().trim().optional(),
       otp: z
         .union([z.string(), z.number()])
         .transform((val) => String(val).trim())
         .refine((val) => val.length === 6, {
-          message: 'OTP must be exactly 6 digits. Check if your input was cut short.',
+          message: 'OTP must be exactly 6 digits.',
         })
         .refine((val) => /^\d+$/.test(val), {
           message: 'OTP must contain only numbers',
         }),
     })
-    .strict(),
+    .refine((data) => Boolean(data.phone || data.challengeId), {
+      message: 'Delivery phone or challenge ID is required',
+    }),
 });
 
 export const updateStatusSchema = z.object({

@@ -6,6 +6,8 @@ export interface IUser extends ISoftDeleted {
   name: string;
   email: string;
   phone?: string;
+  phoneVerified?: boolean;
+  emailVerified?: boolean;
   role:
     | 'user'
     | 'customer'

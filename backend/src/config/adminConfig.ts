@@ -57,6 +57,19 @@ export const STAFF_ROLES = [
 export type StaffRole = (typeof STAFF_ROLES)[number];
 
 /**
+ * Checks if a given role is administrative/staff (not a regular customer or user).
+ * Used to isolate customer login routes and prevent administrative privilege confusion.
+ */
+export const isAdministrativeRole = (role?: string): boolean => {
+  if (!role) return false;
+  return (
+    (STAFF_ROLES as readonly string[]).includes(role) ||
+    ['staff', 'designer', 'production_lead'].includes(role) ||
+    (role !== 'customer' && role !== 'user')
+  );
+};
+
+/**
  * Role weight hierarchy mapping for security access checks (higher = more privileged).
  */
 export const ROLE_HIERARCHY: Record<string, number> = {

@@ -143,16 +143,6 @@ export function AuthProvider({ children }) {
           return true;
         }
 
-        if (err.response?.status === 401) {
-          logger.warn(
-            '[Auth] Session invalid or expired (401) — logging out. Error:',
-            err.response?.data,
-          );
-          toast.error(`Session Error 1: ${JSON.stringify(err.response?.data || err.message)}`);
-          logout(true);
-          return false;
-        }
-
         try {
           const token = await refreshAccessToken();
           if (token) {
@@ -166,8 +156,8 @@ export function AuthProvider({ children }) {
                 return true;
               }
             } catch (retryErr) {
-              if (retryErr.response?.status === 401) {
-                logger.warn('[Auth] Retry session invalid (401) — logging out');
+              if (retryErr.response?.status === 401 || retryErr.response?.status === 403) {
+                logger.warn('[Auth] Retry session invalid (401/403) — logging out');
                 logout(true);
                 return false;
               }
@@ -178,17 +168,13 @@ export function AuthProvider({ children }) {
             }
           }
         } catch (refreshErr) {
-          logger.error('[Auth] Failed to refresh token in error recovery', refreshErr);
+          logger.warn('[Auth] Token refresh attempt failed during session restoration', refreshErr);
           if (
             refreshErr.name !== 'CanceledError' &&
             (refreshErr.response?.status === 401 ||
               refreshErr.response?.status === 403 ||
               refreshErr.code === 'ERR_NO_SESSION')
           ) {
-            logger.warn('[Auth] Refresh token invalid — logging out', refreshErr);
-            toast.error(
-              `Session Error 2: ${JSON.stringify(refreshErr.response?.data || refreshErr.message)}`,
-            );
             logout(true);
             return false;
           }
@@ -263,6 +249,25 @@ export function AuthProvider({ children }) {
     };
   }, [logout]);
 
+  // Proactive background silent refresh (every 12 minutes, before 15-minute access token expiry)
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const PROACTIVE_REFRESH_MS = 12 * 60 * 1000;
+    const timer = setInterval(async () => {
+      try {
+        await refreshAccessToken();
+      } catch (err) {
+        logger.warn(
+          '[Auth] Proactive token refresh failed (will auto-retry on next API call):',
+          err,
+        );
+      }
+    }, PROACTIVE_REFRESH_MS);
+
+    return () => clearInterval(timer);
+  }, [isAuthenticated]);
+
   useEffect(() => {
     import('../utils/core/observability')
       .then(({ setUserContext }) => {
@@ -292,7 +297,7 @@ export function AuthProvider({ children }) {
   );
 
   const loginSuccess = useCallback(
-    async (userData, token, refreshToken) => {
+    async (userData, token, refreshToken, options = {}) => {
       const accessToken = token || null;
       if (!accessToken) {
         logger.error('[Auth] loginSuccess called without access token');
@@ -309,6 +314,11 @@ export function AuthProvider({ children }) {
       setIsAuthInitialized(true);
       setLoading(false);
       saveCachedProfile(userData);
+
+      if (options?.keepModalOpen) {
+        return;
+      }
+
       setIsAuthModalOpen(false);
 
       toast.success('Welcome back to the Studio!');

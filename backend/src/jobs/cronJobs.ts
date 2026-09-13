@@ -498,5 +498,57 @@ export const initJobs = () => {
   const { startWhatsAppCronJobs } = require('./whatsappCronJobs');
   startWhatsAppCronJobs();
 
+  // 25. Marketing Campaign Scheduler (Every 1 minute)
+  cron.schedule('* * * * *', async () => {
+    await withCronLock('marketing-campaign-scheduler', 50, async () => {
+      try {
+        const EmailCampaign = require('../models/EmailCampaign').default;
+        const {
+          default: CampaignExecutionService,
+        } = require('../services/marketing/CampaignExecutionService');
+        const dueCampaigns = await EmailCampaign.find({
+          status: 'scheduled',
+          scheduledAt: { $lte: new Date() },
+          isDeleted: false,
+        }).select('_id');
+
+        for (const camp of dueCampaigns) {
+          CampaignExecutionService.executeCampaignDispatch(camp._id.toString()).catch(
+            (err: any) => {
+              logger.error(`[CRON] Error executing scheduled campaign ${camp._id}: ${err.message}`);
+            },
+          );
+        }
+      } catch (err: any) {
+        logger.error(`[CRON] Marketing campaign scheduler error: ${err.message}`);
+      }
+    });
+  });
+
+  // 26. Marketing Lifecycle Automation Runner (Every 2 minutes)
+  cron.schedule('*/2 * * * *', async () => {
+    await withCronLock('marketing-automation-runner', 110, async () => {
+      try {
+        const {
+          default: AutomationEngineService,
+        } = require('../services/marketing/AutomationEngineService');
+        await AutomationEngineService.scanAndEnrollAbandonedCarts();
+        await AutomationEngineService.processDueEnrollments();
+      } catch (err: any) {
+        logger.error(`[CRON] Marketing automation runner error: ${err.message}`);
+      }
+    });
+  });
+
+  // Startup: Initialize default system automations
+  (async () => {
+    try {
+      const {
+        default: AutomationEngineService,
+      } = require('../services/marketing/AutomationEngineService');
+      await AutomationEngineService.initializeDefaultAutomations();
+    } catch (_err) {}
+  })();
+
   logger.info('⏰ Background jobs initialized (distributed locks active when REDIS_URL is set)');
 };

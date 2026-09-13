@@ -521,7 +521,7 @@ export function AdminAnalytics() {
         orders: customCount,
         percentage: Math.round((customSales / grandTotal) * 100),
         color: THEME.sage,
-        icon: 'auto_awesome',
+        icon: 'design_services',
       },
     ];
   }, [orders, eventBookings]);

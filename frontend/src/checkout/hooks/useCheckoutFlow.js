@@ -106,8 +106,20 @@ export function useCheckoutFlow({
   const [codOtpSent, setCodOtpSent] = useState(false);
   const [codOtpCode, setCodOtpCode] = useState('');
   const [codVerified, setCodVerified] = useState(false);
+  const [codVerificationToken, setCodVerificationToken] = useState(null);
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [paymentError, setPaymentError] = useState('');
+
+  // Enforce address binding: changing address/phone resets prior COD verification!
+  const activeAddrId = shipping.activeSelectedAddress?._id || shipping.activeSelectedAddress?.id;
+  const activeAddrPhone = shipping.activeSelectedAddress?.phone;
+
+  useEffect(() => {
+    setCodVerified(false);
+    setCodVerificationToken(null);
+    setCodOtpSent(false);
+    setCodOtpCode('');
+  }, [activeAddrId, activeAddrPhone]);
 
   const buildShippingAddress = useCallback(
     () => ({
@@ -139,19 +151,17 @@ export function useCheckoutFlow({
   );
 
   const handleSendCodOtp = async () => {
-    const targetEmail = shipping.activeSelectedAddress?.email || user?.email;
-    if (!targetEmail) {
-      toast.error('An email address is required to receive verification OTP');
+    const targetPhone = shipping.activeSelectedAddress?.phone;
+    if (!targetPhone || !targetPhone.trim()) {
+      toast.error('Please add a phone number to this delivery address to place a COD order.');
       return;
     }
     setIsSendingOtp(true);
     try {
-      const res = await orderService.sendCodOtp(targetEmail);
+      const res = await orderService.sendCodOtp(targetPhone);
       if (res.success) {
         setCodOtpSent(true);
-        toast.success(
-          `Verification OTP sent successfully to ${targetEmail}. Please check your inbox or spam folder.`,
-        );
+        toast.success(`Verification OTP sent via SMS to ${res.data?.phone || targetPhone}.`);
       } else {
         toast.error(res.message || 'Failed to send verification OTP');
       }
@@ -166,22 +176,23 @@ export function useCheckoutFlow({
   };
 
   const handleVerifyCodOtp = async (overrideOtp) => {
-    const targetEmail = shipping.activeSelectedAddress?.email || user?.email;
-    if (!targetEmail) {
-      toast.error('An email address is required for verification');
+    const targetPhone = shipping.activeSelectedAddress?.phone;
+    if (!targetPhone || !targetPhone.trim()) {
+      toast.error('A delivery address phone number is required for COD verification');
       return false;
     }
-    const otpToVerify = overrideOtp;
-    if (!otpToVerify.trim()) {
+    const otpToVerify = overrideOtp || codOtpCode;
+    if (!otpToVerify || !otpToVerify.trim()) {
       toast.error('Please enter the verification code');
       return false;
     }
     setIsProcessing(true);
     try {
-      const res = await orderService.verifyCodOtp(targetEmail, otpToVerify);
-      if (res.success) {
+      const res = await orderService.verifyCodOtp(targetPhone, otpToVerify);
+      if (res.success && res.data?.codVerificationToken) {
         setCodVerified(true);
-        toast.success('Email verified successfully! Secure Cash on Delivery activated.');
+        setCodVerificationToken(res.data.codVerificationToken);
+        toast.success('Delivery phone verified successfully! Secure Cash on Delivery activated.');
         return true;
       } else {
         toast.error(res.message || 'Invalid verification code');
@@ -441,6 +452,7 @@ export function useCheckoutFlow({
         checkoutMode === 'custom'
           ? customOrder?._id || activeItems[0]?.id || activeItems[0]?._id
           : undefined,
+      codVerificationToken: paymentOption === 'cod' ? codVerificationToken : undefined,
     };
 
     if (paymentOption === 'razorpay') {
@@ -513,6 +525,7 @@ export function useCheckoutFlow({
     setCodOtpCode,
     codVerified,
     setCodVerified,
+    codVerificationToken,
     isSendingOtp,
     paymentError,
     setPaymentError,

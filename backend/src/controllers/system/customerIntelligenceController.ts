@@ -304,7 +304,9 @@ export const getCustomerList = async (req: Request, res: Response) => {
     sortOptions[sortField] = sortOrder;
 
     const customers = await User.find(query)
-      .select('name email phone loyaltyTier createdAt isVerified walletBalance siriCoins addresses')
+      .select(
+        'name email phone loyaltyTier createdAt isVerified walletBalance siriCoins addresses cart wishlist',
+      )
       .sort(sortOptions)
       .skip((page - 1) * limit)
       .limit(limit)
@@ -365,10 +367,20 @@ export const getCustomerList = async (req: Request, res: Response) => {
           (c.city && !['unknown', 'unknown city'].includes(c.city.toLowerCase()) ? c.city : null) ||
           null;
 
+        const cartItemsCount =
+          overview?.overview?.cartCount ?? (Array.isArray(c.cart) ? c.cart.length : 0);
+        const wishlistItemsCount =
+          overview?.overview?.wishlistCount ?? (Array.isArray(c.wishlist) ? c.wishlist.length : 0);
+
         return {
           ...c,
           totalSpent,
           orders: ordersCount,
+          ordersCount,
+          cartItemsCount,
+          wishlistItemsCount,
+          cartCount: cartItemsCount,
+          wishlistCount: wishlistItemsCount,
           segment,
           lastOrder: ordersCount > 0 ? totalSpent : null,
           health: health === 'Unknown' && ordersCount > 0 ? 'Good' : health,
@@ -407,7 +419,9 @@ export const exportCustomers = async (req: Request, res: Response) => {
     }
 
     const customers = await User.find(query)
-      .select('name email phone loyaltyTier createdAt isVerified walletBalance siriCoins')
+      .select(
+        'name email phone loyaltyTier createdAt isVerified walletBalance siriCoins cart wishlist',
+      )
       .sort({ createdAt: -1 })
       .lean();
 
@@ -415,9 +429,10 @@ export const exportCustomers = async (req: Request, res: Response) => {
       customers.map(async (c: any) => {
         let totalSpent = 0;
         let ordersCount = 0;
+        let overview: any = null;
 
         try {
-          const overview = await CustomerIntelligenceService.getCustomer360(c._id.toString());
+          overview = await CustomerIntelligenceService.getCustomer360(c._id.toString());
           totalSpent = overview?.overview?.totalSpent || 0;
           ordersCount = overview?.overview?.totalOrders || 0;
         } catch (_err) {
@@ -434,6 +449,11 @@ export const exportCustomers = async (req: Request, res: Response) => {
           }
         }
 
+        const cartItemsCount =
+          overview?.overview?.cartCount ?? (Array.isArray(c.cart) ? c.cart.length : 0);
+        const wishlistItemsCount =
+          overview?.overview?.wishlistCount ?? (Array.isArray(c.wishlist) ? c.wishlist.length : 0);
+
         return {
           Name: c.name,
           Email: c.email || '',
@@ -441,6 +461,8 @@ export const exportCustomers = async (req: Request, res: Response) => {
           Orders: ordersCount,
           Spent: totalSpent,
           Tier: c.loyaltyTier || 'Bronze',
+          'Cart Items': cartItemsCount,
+          'Wishlist Items': wishlistItemsCount,
           Joined: c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '',
         };
       }),

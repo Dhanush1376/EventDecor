@@ -59,12 +59,12 @@ export const orderService = {
     });
     return response.data;
   },
-  sendCodOtp: async (email) => {
-    const response = await api.post('/orders/send-cod-otp', { email }, { timeout: 30000 });
+  sendCodOtp: async (phone) => {
+    const response = await api.post('/orders/send-cod-otp', { phone }, { timeout: 30000 });
     return response.data;
   },
-  verifyCodOtp: async (email, otp) => {
-    const response = await api.post('/orders/verify-cod-otp', { email, otp });
+  verifyCodOtp: async (phone, otp) => {
+    const response = await api.post('/orders/verify-cod-otp', { phone, otp });
     return response.data;
   },
   updateNotes: async (id, notes) => {

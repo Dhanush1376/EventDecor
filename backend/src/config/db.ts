@@ -343,13 +343,15 @@ class DatabaseManager {
           err.message &&
           (err.message.includes('querySrv') || err.message.includes('ENOTFOUND'))
         ) {
-          try {
-            dns.setServers(['8.8.8.8', '1.1.1.1', '8.8.4.4']);
-            logger.info(
-              '[DATABASE] Configured public DNS servers (8.8.8.8/1.1.1.1) to resolve Atlas cluster',
-            );
-          } catch {
-            // Ignore if setting DNS servers is not supported
+          if (process.env.USE_PUBLIC_DNS === 'true') {
+            try {
+              dns.setServers(['8.8.8.8', '1.1.1.1', '8.8.4.4']);
+              logger.info(
+                '[DATABASE] Configured public DNS servers (8.8.8.8/1.1.1.1) to resolve Atlas cluster',
+              );
+            } catch {
+              // Ignore if setting DNS servers is not supported
+            }
           }
         }
 

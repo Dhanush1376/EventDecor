@@ -142,7 +142,7 @@ export class WebhookDeadLetterService {
 
     // Admin notification
     await createAdminNotification({
-      title: '⚠️ Webhook Dead Letter',
+      title: 'Webhook Dead Letter',
       message: `Payment webhook ${event.razorpayEventId} (${event.eventType}) failed after ${event.processingAttempts} attempts and has been moved to dead letter. Manual investigation required.`,
       type: 'payment',
       actionLink: `/admin/payments/webhooks?status=dead_letter`,

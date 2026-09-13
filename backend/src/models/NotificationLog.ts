@@ -4,6 +4,11 @@ export interface INotificationLog extends Document {
   userId?: mongoose.Types.ObjectId;
   recipientEmail: string;
   campaignId?: mongoose.Types.ObjectId;
+  automationId?: mongoose.Types.ObjectId;
+  stepNumber?: number;
+  revenueAttributed?: number;
+  conversionOrderId?: mongoose.Types.ObjectId;
+  isTestSend?: boolean;
   type: 'marketing' | 'order' | 'account' | 'engagement' | 'system' | 'security';
   channel: 'email' | 'sms' | 'push' | 'websocket';
   action: string; // e.g. welcome_email, otp_verification, order_placed, abandoned_cart
@@ -48,6 +53,11 @@ const NotificationLogSchema: Schema = new Schema(
     userId: { type: Schema.Types.ObjectId, ref: 'User' },
     recipientEmail: { type: String, required: true, lowercase: true, trim: true },
     campaignId: { type: Schema.Types.ObjectId, ref: 'EmailCampaign' },
+    automationId: { type: Schema.Types.ObjectId, ref: 'MarketingAutomation' },
+    stepNumber: { type: Number },
+    revenueAttributed: { type: Number, default: 0 },
+    conversionOrderId: { type: Schema.Types.ObjectId, ref: 'Order' },
+    isTestSend: { type: Boolean, default: false },
     type: {
       type: String,
       enum: ['marketing', 'order', 'account', 'engagement', 'system', 'security'],
@@ -108,11 +118,14 @@ const NotificationLogSchema: Schema = new Schema(
 
 NotificationLogSchema.index({ recipientEmail: 1 });
 NotificationLogSchema.index({ campaignId: 1 }, { sparse: true });
+NotificationLogSchema.index({ automationId: 1 }, { sparse: true });
 NotificationLogSchema.index({ type: 1 });
 NotificationLogSchema.index({ createdAt: -1 });
 
 // High-Performance Production Compound Indexes
 NotificationLogSchema.index({ userId: 1, createdAt: -1 }, { sparse: true });
+NotificationLogSchema.index({ campaignId: 1, status: 1 });
+NotificationLogSchema.index({ recipientEmail: 1, createdAt: -1 });
 NotificationLogSchema.index({ status: 1, type: 1, createdAt: -1 });
 
 // TTL: Auto-cleanup notification logs dynamically

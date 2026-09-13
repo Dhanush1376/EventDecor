@@ -44,8 +44,7 @@ export const registerApiRoutes = (
   apiRouter.use('/events', lazyRouter('./events/eventRoutes'));
   apiRouter.use('/orders', noCacheMiddleware, lazyRouter('./commerce/orderRoutes'));
   apiRouter.use('/cms', lazyRouter('./cms/cmsRoutes'));
-  apiRouter.use('/marketing', lazyRouter('./cms/marketingRoutes'));
-  apiRouter.use('/campaigns', lazyRouter('./marketing/campaignRoutes'));
+  apiRouter.use('/marketing', lazyRouter('./marketing/marketingHubRoutes'));
   apiRouter.use('/analytics', noCacheMiddleware, lazyRouter('./system/analyticsRoutes'));
   apiRouter.use('/gallery', lazyRouter('./cms/galleryRoutes'));
   apiRouter.use('/reviews', lazyRouter('./products/reviewRoutes'));

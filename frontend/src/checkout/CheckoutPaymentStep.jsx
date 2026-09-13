@@ -608,17 +608,26 @@ export default function CheckoutPaymentStep() {
 
                   {!codVerified ? (
                     <div className="space-y-3">
-                      {!codOtpSent ? (
+                      {!activeSelectedAddress?.phone ? (
+                        <div className="bg-amber-500/10 border border-amber-500/20 p-3.5 rounded-xl flex items-center gap-2.5 text-amber-800 dark:text-amber-200 text-[12px]">
+                          <span className="material-symbols-outlined text-[18px] text-amber-600 shrink-0">
+                            warning
+                          </span>
+                          <span>
+                            Please add a phone number to this delivery address to place a COD order.
+                          </span>
+                        </div>
+                      ) : !codOtpSent ? (
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/80 dark:bg-surface-bright/80 border border-primary/15 p-3.5 rounded-xl">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-[12px] text-secondary font-medium">
-                              Send code to:
+                              Send OTP to delivery phone:
                             </span>
                             <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/5 dark:bg-white/5 border border-outline-variant/30 text-[11.5px] font-semibold text-on-surface">
                               <span className="material-symbols-outlined text-[13px] text-primary">
-                                mail
+                                call
                               </span>
-                              <span>{activeSelectedAddress?.email || user?.email}</span>
+                              <span>{activeSelectedAddress.phone}</span>
                             </div>
                           </div>
                           <button
@@ -632,7 +641,7 @@ export default function CheckoutPaymentStep() {
                                 <span className="material-symbols-outlined text-[13px] animate-spin">
                                   progress_activity
                                 </span>
-                                <span>Sending...</span>
+                                <span>Sending SMS...</span>
                               </>
                             ) : (
                               <>
@@ -648,13 +657,13 @@ export default function CheckoutPaymentStep() {
                         <div className="space-y-4 bg-white/80 dark:bg-surface-bright/80 border border-primary/15 p-4 sm:p-5 rounded-xl">
                           <div className="text-center sm:text-left">
                             <p className="text-[12px] text-on-surface font-medium">
-                              Enter the 6-digit code sent to{' '}
+                              Enter the 6-digit OTP sent to your delivery phone number{' '}
                               <span className="font-bold text-primary">
-                                {activeSelectedAddress?.email || user?.email}
+                                {activeSelectedAddress.phone}
                               </span>
                             </p>
                             <p className="text-[10px] text-secondary mt-0.5">
-                              Please check your inbox or spam folder.
+                              Please check your mobile SMS messages.
                             </p>
                           </div>
 

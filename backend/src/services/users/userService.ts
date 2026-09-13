@@ -448,8 +448,30 @@ export class UserService {
       }
     }
 
+    if (updateData.phone) {
+      const { PhoneAuthService } = require('../PhoneAuthService');
+      let normalizedPhone: string;
+      try {
+        normalizedPhone = PhoneAuthService.normalizePhone(updateData.phone);
+      } catch {
+        throw new ApiError(400, 'Invalid phone number format');
+      }
+      const existingUserWithPhone = await User.findOne({
+        phone: normalizedPhone,
+        _id: { $ne: userId },
+      });
+      if (existingUserWithPhone) {
+        throw new ApiError(409, 'This phone number is already associated with another account');
+      }
+      updateData.phone = normalizedPhone;
+    }
+
     const user = await User.findById(userId);
     if (!user) throw new ApiError(404, 'User not found');
+
+    if (updateData.phone && user.phone !== updateData.phone) {
+      user.phoneVerified = false;
+    }
 
     // Fields that should never be updated via mass assignment
     const protectedFields = [
@@ -462,6 +484,8 @@ export class UserService {
       'siriCoins',
       'loyaltyTier',
       'isVerified',
+      'phoneVerified',
+      'emailVerified',
       'googleId',
       'providers',
       'createdAt',

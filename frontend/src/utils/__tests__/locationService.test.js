@@ -293,6 +293,117 @@ describe('locationService', () => {
       expect(res.data.city).toBe('Chennai');
     });
 
+    it('requests enableHighAccuracy: true and maximumAge: 0 for pinpoint precision', async () => {
+      vi.stubGlobal('window', {
+        isSecureContext: true,
+        location: { hostname: 'example.com' },
+      });
+
+      let passedOptions = null;
+      vi.stubGlobal('navigator', {
+        geolocation: {
+          getCurrentPosition: vi.fn((success, _error, options) => {
+            passedOptions = options;
+            success({
+              coords: { latitude: 15.5057, longitude: 80.0499, accuracy: 12 },
+            });
+          }),
+        },
+      });
+
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: async () => ({
+            address: {
+              road: 'Kurnool Road',
+              suburb: 'Santhapet',
+              city: 'Ongole',
+              state: 'Andhra Pradesh',
+              postcode: '523001',
+            },
+          }),
+        }),
+      );
+
+      const res = await detectAndResolveAddress();
+      expect(passedOptions).toBeDefined();
+      expect(passedOptions.enableHighAccuracy).toBe(true);
+      expect(passedOptions.maximumAge).toBe(0);
+      expect(res.success).toBe(true);
+      expect(res.isPinpoint).toBe(true);
+      expect(res.accuracy).toBe(12);
+      expect(res.data.city).toBe('Ongole');
+    });
+
+    it('handles explicit user permission denial cleanly without false IP address fabrication', async () => {
+      vi.stubGlobal('window', {
+        isSecureContext: true,
+        location: { hostname: 'example.com' },
+      });
+
+      vi.stubGlobal('navigator', {
+        geolocation: {
+          getCurrentPosition: vi.fn((_success, error) => {
+            const err = new Error('User denied Geolocation');
+            err.code = 1; // PERMISSION_DENIED
+            error(err);
+          }),
+        },
+      });
+
+      const res = await detectAndResolveAddress();
+      expect(res.success).toBe(false);
+      expect(res.permissionDenied).toBe(true);
+      expect(res.error).toContain('permission was denied');
+    });
+
+    it('progressively locks pinpoint coordinates with watchPosition when accuracy sharpens', async () => {
+      vi.stubGlobal('window', {
+        isSecureContext: true,
+        location: { hostname: 'example.com' },
+      });
+
+      vi.stubGlobal('navigator', {
+        geolocation: {
+          watchPosition: vi.fn((success) => {
+            // First send coarse reading (>35m) then immediately sharp pinpoint (15m)
+            success({
+              coords: { latitude: 15.5057, longitude: 80.0499, accuracy: 250 },
+            });
+            setTimeout(() => {
+              success({
+                coords: { latitude: 15.506, longitude: 80.05, accuracy: 15 },
+              });
+            }, 10);
+            return 101;
+          }),
+          clearWatch: vi.fn(),
+        },
+      });
+
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: async () => ({
+            address: {
+              city: 'Ongole',
+              state: 'Andhra Pradesh',
+              postcode: '523001',
+            },
+          }),
+        }),
+      );
+
+      const res = await detectAndResolveAddress();
+      expect(res.success).toBe(true);
+      expect(res.isPinpoint).toBe(true);
+      expect(res.accuracy).toBe(15);
+      expect(res.data.city).toBe('Ongole');
+    });
+
     it('handles total failure gracefully when both GPS and IP geolocation fail', async () => {
       vi.stubGlobal('window', {
         isSecureContext: false,

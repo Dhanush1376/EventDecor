@@ -84,7 +84,7 @@ export class InventoryReconciliationService {
     if (discrepancies > 0) {
       const { createAdminNotification } = require('./notificationService');
       await createAdminNotification({
-        title: `⚠️ Inventory Drift Detected`,
+        title: `Inventory Drift Detected`,
         message: `Found ${discrepancies} inventory drift issues. Auto-corrected ${fixed}. Check logs for CRITICAL/HIGH/MEDIUM severity details.`,
         type: 'system',
       }).catch((e: any) => logger.error('Failed to create admin notification', e));

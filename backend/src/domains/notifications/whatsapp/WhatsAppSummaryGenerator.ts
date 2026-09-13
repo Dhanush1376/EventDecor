@@ -53,15 +53,15 @@ async function buildSummary(start: Date, end: Date, heading: string): Promise<st
   const reviewCount = reviewAgg[0]?.count || 0;
   const reviewAvg = reviewAgg[0]?.avg ? reviewAgg[0].avg.toFixed(1) : '—';
 
-  return `📊 *${heading}*
+  return `*${heading}*
 ━━━━━━━━━━━━━━━━━━━━━
-📦 Orders: ${newOrders} New | ${shippedOrders} Shipped | ${deliveredOrders} Delivered
-💰 Revenue: ${currency}${revenue.toLocaleString('en-IN')}
-💳 Payments: ${paidCount} Paid | ${codPendingCount} COD Pending
-📦 Inventory: ${lowStockCount} Low Stock Alerts
-⭐ Reviews: ${reviewCount} New (Avg: ${reviewAvg}★)
-👥 Customers: ${newCustomers} New Registrations
-🔄 Returns: ${returnsRequested} Requested
+Orders: ${newOrders} New | ${shippedOrders} Shipped | ${deliveredOrders} Delivered
+Revenue: ${currency}${revenue.toLocaleString('en-IN')}
+Payments: ${paidCount} Paid | ${codPendingCount} COD Pending
+Inventory: ${lowStockCount} Low Stock Alerts
+Reviews: ${reviewCount} New (Avg: ${reviewAvg}/5)
+Customers: ${newCustomers} New Registrations
+Returns: ${returnsRequested} Requested
 ━━━━━━━━━━━━━━━━━━━━━
 ${storeName} • Auto-generated`;
 }

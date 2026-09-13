@@ -7,9 +7,11 @@ import { IUser } from '../types/user';
 
 const UserSchema: Schema = new Schema(
   {
-    name: { type: String, default: 'Customer', trim: true },
+    name: { type: String, default: '', trim: true },
     email: { type: String, unique: true, sparse: true, lowercase: true, trim: true },
     phone: { type: String, trim: true },
+    phoneVerified: { type: Boolean, default: false },
+    emailVerified: { type: Boolean, default: false },
     role: {
       type: String,
       enum: [

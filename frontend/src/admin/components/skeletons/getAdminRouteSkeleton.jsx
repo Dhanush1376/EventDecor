@@ -25,8 +25,6 @@ import {
   AdminAnalyticsSkeleton,
   AdminPaymentsSkeleton,
   AdminNotificationsSkeleton,
-  AdminCampaignsSkeleton,
-  AdminLoyaltySkeleton,
   AdminCouponsSkeleton,
   AdminCreateCouponSkeleton,
   AdminContentSkeleton,
@@ -196,23 +194,6 @@ export function getAdminRouteSkeleton(pathname = '') {
   // 20. Notifications
   if (cleanPath === '/admin/notifications') {
     return <AdminNotificationsSkeleton />;
-  }
-
-  // 21. Campaigns & Loyalty
-  if (cleanPath.startsWith('/admin/reward-campaigns/') && cleanPath.includes('/rules')) {
-    return <AdminLoyaltySkeleton isRuleBuilder />;
-  }
-  if (cleanPath === '/admin/reward-campaigns') {
-    return <AdminLoyaltySkeleton />;
-  }
-  if (cleanPath.startsWith('/admin/campaigns/templates/')) {
-    return <AdminAddShowcaseSkeleton />;
-  }
-  if (cleanPath === '/admin/campaigns/add') {
-    return <AdminProductWizardSkeleton />;
-  }
-  if (cleanPath.startsWith('/admin/campaigns')) {
-    return <AdminCampaignsSkeleton />;
   }
 
   // 22. Team

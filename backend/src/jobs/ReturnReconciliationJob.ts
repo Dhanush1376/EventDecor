@@ -52,7 +52,7 @@ export class ReturnReconciliationJob {
 
     if (repairedCount > 0) {
       await createAdminNotification({
-        title: '🛠️ Auto-repair: Orphaned Refunds',
+        title: 'Auto-repair: Orphaned Refunds',
         message: `Reconciliation job auto-repaired ${repairedCount} order statuses for completed returns.`,
         type: 'system',
         actionLink: '/admin/returns/all',
@@ -93,7 +93,7 @@ export class ReturnReconciliationJob {
 
         // Notify admin
         await createAdminNotification({
-          title: '⚠️ SLA Breach: Return Request Overdue',
+          title: 'SLA Breach: Return Request Overdue',
           message: `Return ${ret.returnId} has been in ${ret.status} for over ${maxHours} hours.`,
           type: 'system',
           actionLink: `/admin/returns/requests/${ret._id}`,
@@ -122,7 +122,7 @@ export class ReturnReconciliationJob {
 
     if (stalledReturns.length > 0) {
       await createAdminNotification({
-        title: '🚨 Stalled Refunds',
+        title: 'Stalled Refunds',
         message: `Found ${stalledReturns.length} returns where inspection passed over 24h ago but refund was not triggered.`,
         type: 'system',
         actionLink: '/admin/returns/all?status=inspection_passed',

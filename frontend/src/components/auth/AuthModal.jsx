@@ -12,6 +12,7 @@ import {
   OtpVerificationForm,
   AuthSuccessScreen,
   LinkRequiredScreen,
+  NamePromptForm,
 } from './AuthForms';
 
 export function AuthModal() {
@@ -44,6 +45,11 @@ export function AuthModal() {
     handleGoogleSuccess,
     handleGoogleError,
     isNewUser,
+    userName,
+    setUserName,
+    isUpdatingName,
+    handleNameSubmit,
+    handleNameSkip,
   } = useAuthFlow(loginSuccess, isAuthModalOpen);
 
   const [isFocused, setIsFocused] = useState(false);
@@ -185,13 +191,20 @@ export function AuthModal() {
                             ? 'Enter Authenticator Code'
                             : step === 'otp'
                               ? 'Verification Code'
-                              : 'Login or Sign Up'}
+                              : step === 'name_prompt'
+                                ? "What's your name?"
+                                : 'Login or Sign Up'}
                         </h2>
-                        {step !== 'otp' && step !== 'account_exists' && (
+                        {step !== 'otp' && step !== 'account_exists' && step !== 'name_prompt' && (
                           <p className="text-on-surface-variant/60 text-[13px] font-light leading-relaxed">
                             {step === '2fa'
                               ? 'Enter the 6-digit code from your authenticator app.'
-                              : `Log in or register with your email`}
+                              : `Log in or register with your phone number or email`}
+                          </p>
+                        )}
+                        {step === 'name_prompt' && (
+                          <p className="text-on-surface-variant/60 text-[13px] font-light leading-relaxed">
+                            Help us personalize your orders and account experience.
                           </p>
                         )}
                         {step === 'otp' && (
@@ -256,6 +269,21 @@ export function AuthModal() {
                                 verify2FA={verify2FA}
                                 isLoading={isLoading}
                                 resetState={resetState}
+                              />
+                            </motion.div>
+                          ) : step === 'name_prompt' ? (
+                            <motion.div
+                              key="name-prompt-step"
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -10 }}
+                            >
+                              <NamePromptForm
+                                name={userName}
+                                setName={setUserName}
+                                onSubmit={handleNameSubmit}
+                                onSkip={handleNameSkip}
+                                isLoading={isUpdatingName}
                               />
                             </motion.div>
                           ) : (

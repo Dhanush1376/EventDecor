@@ -256,7 +256,7 @@ export function HomePageControllerEditor({ content, onUpdate }) {
     },
     recommendedProducts: {
       title: 'Smart Recommendations',
-      icon: 'auto_awesome',
+      icon: 'recommend',
       tabKey: 'recommended',
     },
     galleryInspiration: {
@@ -274,7 +274,7 @@ export function HomePageControllerEditor({ content, onUpdate }) {
     { id: 'trending', label: 'Trending', icon: 'trending_up' },
     { id: 'occasions', label: 'Occasions', icon: 'celebration' },
     { id: 'featured', label: 'Featured', icon: 'star' },
-    { id: 'recommended', label: 'Recommended', icon: 'auto_awesome' },
+    { id: 'recommended', label: 'Recommended', icon: 'recommend' },
     { id: 'gallery', label: 'Gallery', icon: 'photo_library' },
   ];
 
@@ -522,7 +522,7 @@ export function HomePageControllerEditor({ content, onUpdate }) {
                   : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
               }`}
             >
-              <span className="material-symbols-outlined text-[15px]">auto_awesome_motion</span>
+              <span className="material-symbols-outlined text-[15px]">view_carousel</span>
               <span>
                 Showcases ({showcases?.filter((s) => s.featured).length || 0}/
                 {showcases ? showcases.length : '0'})

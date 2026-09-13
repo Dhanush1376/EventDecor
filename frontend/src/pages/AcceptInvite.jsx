@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import toast from 'react-hot-toast';
-import Sparkles from 'lucide-react/dist/esm/icons/sparkles';
+import ShieldCheck from 'lucide-react/dist/esm/icons/shield-check';
 import { SEO } from '../components/seo/SEO';
 
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
@@ -95,7 +95,7 @@ export function AcceptInvite() {
         {/* Logo/Branding Header */}
         <motion.div variants={fadeUp} className="mb-8">
           <div className="text-primary mb-3 flex justify-center">
-            <Sparkles className="w-6 h-6" />
+            <ShieldCheck className="w-6 h-6" />
           </div>
           <h2 className="text-[28px] font-bold text-on-surface font-display tracking-[0.2em] uppercase leading-none">
             Siri Arts & Crafts

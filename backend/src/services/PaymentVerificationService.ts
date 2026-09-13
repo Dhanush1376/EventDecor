@@ -419,6 +419,18 @@ export class PaymentVerificationService {
               user: userId,
               items: orderData.orderItems,
               shippingAddress: orderData.shippingAddress,
+              customerName: orderData.customerName || orderData.shippingAddress?.name || '',
+              customerEmail: orderData.customerEmail || orderData.shippingAddress?.email || '',
+              customerPhone: orderData.customerPhone || orderData.shippingPhone || '',
+              shippingPhone: orderData.shippingPhone || orderData.shippingAddress?.phone || '',
+              codPhoneVerified: false,
+              paymentDetails: {
+                provider: 'Razorpay',
+                paymentId: razorpay_payment_id,
+                orderId: razorpay_order_id,
+                method: fetchedPayment?.method || 'online',
+                upiVpa: fetchedPayment?.vpa || undefined,
+              },
               subtotal: orderData.subtotal,
               shippingFee: orderData.shippingFee,
               discount: orderData.discount,
@@ -456,7 +468,7 @@ export class PaymentVerificationService {
             },
           ],
           { session },
-        ).then((res) => res[0] as any);
+        ).then((res: any) => res?.[0]);
 
         await OutboxEvent.create(
           [
@@ -683,6 +695,14 @@ export class PaymentVerificationService {
 
     AnalyticsService.clearCache();
     logger.info(`Payment verified and entity created successfully: ${finalOrder._id}`);
+
+    if (attempt.type === 'purchase' && finalOrder) {
+      try {
+        const { default: AutomationEngineService } = require('./marketing/AutomationEngineService');
+        AutomationEngineService.cancelUserEnrollments(finalOrder.user, 'purchased').catch(() => {});
+        AutomationEngineService.attributeOrderConversion(finalOrder).catch(() => {});
+      } catch (_mktErr) {}
+    }
 
     return finalOrder;
   }

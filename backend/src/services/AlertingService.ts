@@ -168,8 +168,12 @@ export class AlertingService {
       const recipients = getAdminEmails();
       if (recipients.length === 0) return;
 
-      const severityEmoji =
-        payload.severity === 'critical' ? '🚨' : payload.severity === 'high' ? '⚠️' : 'ℹ️';
+      const severityPrefix =
+        payload.severity === 'critical'
+          ? '[CRITICAL]'
+          : payload.severity === 'high'
+            ? '[HIGH]'
+            : '[INFO]';
 
       const metadataHtml = payload.metadata
         ? `<h4>Details:</h4><pre style="background:#f5f5f5;padding:10px;border-radius:4px;font-size:12px;">${JSON.stringify(payload.metadata, null, 2)}</pre>`
@@ -181,7 +185,7 @@ export class AlertingService {
           subject: `System Alert [${payload.severity.toUpperCase()}]: ${payload.title}`,
           customHtml: `
             <div style="font-family:sans-serif;max-width:600px;">
-              <h2 style="color:${payload.severity === 'critical' ? '#dc2626' : '#f59e0b'};">${severityEmoji} ${payload.title}</h2>
+              <h2 style="color:${payload.severity === 'critical' ? '#dc2626' : '#f59e0b'};">${severityPrefix} ${payload.title}</h2>
               <p><strong>Severity:</strong> ${payload.severity.toUpperCase()}</p>
               <p><strong>Category:</strong> ${payload.category}</p>
               <p><strong>Message:</strong> ${payload.message}</p>
@@ -211,7 +215,7 @@ export class AlertingService {
             type: 'header',
             text: {
               type: 'plain_text',
-              text: `${payload.severity === 'critical' ? '🚨' : '⚠️'} ${payload.title}`,
+              text: `[${payload.severity.toUpperCase()}] ${payload.title}`,
             },
           },
           {
@@ -251,7 +255,7 @@ export class AlertingService {
   private static async sendAdminNotification(payload: AlertPayload): Promise<void> {
     try {
       await createAdminNotificationHandler({
-        title: `${payload.severity === 'critical' ? '🚨' : '⚠️'} ${payload.title}`,
+        title: `[${payload.severity.toUpperCase()}] ${payload.title}`,
         message: payload.message,
         type: payload.category === 'payment' ? 'payment' : 'system',
       });

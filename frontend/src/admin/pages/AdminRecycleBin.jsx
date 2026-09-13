@@ -11,7 +11,7 @@ import { AdminFilterDrawer } from '../components/ui';
 import toast from 'react-hot-toast';
 
 const ENTITY_TYPE_CONFIG = {
-  all: { label: 'All Items', icon: 'auto_awesome', variant: 'neutral' },
+  all: { label: 'All Items', icon: 'layers', variant: 'neutral' },
   Product: { label: 'Products', icon: 'inventory_2', variant: 'info' },
   Category: { label: 'Categories', icon: 'category', variant: 'neutral' },
   Order: { label: 'Orders', icon: 'shopping_bag', variant: 'primary' },

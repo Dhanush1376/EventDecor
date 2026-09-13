@@ -266,7 +266,7 @@ export function PolicyModalDrawer({ isOpen, onClose, policy = null, onSuccess })
                   className="h-7 px-2.5 rounded-[4px] bg-[var(--admin-accent)]/10 hover:bg-[var(--admin-accent)]/20 text-[var(--admin-accent)] text-[11px] font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
                   title="Generate with AI"
                 >
-                  <span className="material-symbols-outlined text-[14px]">auto_awesome</span>
+                  <span className="material-symbols-outlined text-[14px]">bolt</span>
                   <span>AI Fill</span>
                 </button>
                 <button
@@ -318,9 +318,7 @@ export function PolicyModalDrawer({ isOpen, onClose, policy = null, onSuccess })
                           </>
                         ) : (
                           <>
-                            <span className="material-symbols-outlined text-[15px]">
-                              magic_button
-                            </span>
+                            <span className="material-symbols-outlined text-[15px]">bolt</span>
                             <span>Generate</span>
                           </>
                         )}

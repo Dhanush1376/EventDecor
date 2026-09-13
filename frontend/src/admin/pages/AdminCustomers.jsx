@@ -1,42 +1,51 @@
 import { m as motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect, useCallback } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { useAdmin } from '../context/AdminContext';
 import { useConfirm } from '../../context/ConfirmProvider';
 import { customerIntelligenceService } from '../../services/domainServices';
 import {
   PageHeader,
   EmptyState,
-  AdminStatusPill,
-  formatCurrency,
-  fadeUp,
   stagger,
-  SkeletonCard,
-  smoothScrollCardIntoView,
+  fadeUp,
+  AdminFilterDrawer,
 } from '../components/AdminUIKit';
-import { formatDistanceToNow } from 'date-fns';
-import { EXTERNAL_URLS } from '../../config/constants';
+import { AdminActiveFilterChips } from '../components/filters/AdminActiveFilterChips';
+import { AdminCustomerDetailDrawer } from '../components/AdminCustomerDetailDrawer';
 import { getAccessToken } from '../../services/api';
-import { getApiRootUrl } from '../../config/apiConfig';
 import { acquireAdminSocket, releaseAdminSocket } from '../services/adminSocket';
-import AdminCustomerProfileModal from '../components/AdminCustomerProfileModal';
-import { WhatsAppIcon } from '../../components/ui/WhatsAppIcon';
 
 export function AdminCustomers() {
+  const navigate = useNavigate();
   const { customerId: routeCustomerId } = useParams();
   const [searchParams] = useSearchParams();
   const queryCustomerId =
     routeCustomerId || searchParams.get('id') || searchParams.get('customerId');
 
-  const { searchQuery, setSearchQuery } = useAdmin();
   const confirm = useConfirm();
 
-  const [tierFilter, setTierFilter] = useState('All');
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(50);
+  // Core Data States
+  const [customers, setCustomers] = useState([]);
+  const [dataLoading, setDataLoading] = useState(true);
+  const [pagination, setPagination] = useState({ page: 1, limit: 50, total: 0, pages: 1 });
+
+  // Selection state
+  const [selectedCustomerIds, setSelectedCustomerIds] = useState([]);
   const [selectedCustomerId, setSelectedCustomerId] = useState(null);
-  const [expandedCardIds, setExpandedCardIds] = useState(new Set());
+
+  // Search & Filters state (Orders page UI style)
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showFiltersMenu, setShowFiltersMenu] = useState(false);
+  const [filterState, setFilterState] = useState({
+    tier: 'all',
+    wishlist: 'all',
+    cart: 'all',
+    orders: 'all',
+    minSpend: '',
+    maxSpend: '',
+  });
+  const [sortBy, setSortBy] = useState('newest');
 
   useEffect(() => {
     if (queryCustomerId) {
@@ -44,79 +53,53 @@ export function AdminCustomers() {
     }
   }, [queryCustomerId]);
 
-  const [customers, setCustomers] = useState([]);
-  const [meta, setMeta] = useState({});
-  const [dataLoading, setDataLoading] = useState(true);
-
-  const [, setKpi] = useState(null);
-  const [, setKpiLoading] = useState(true);
-  const [isExporting, setIsExporting] = useState(false);
-
-  const toggleExpandCard = (id) => {
-    setExpandedCardIds((prev) => {
-      const next = new Set(prev);
-      const isExpanding = !next.has(id);
-      if (isExpanding) {
-        next.add(id);
-        smoothScrollCardIntoView(`customer-card-${id}`);
-      } else {
-        next.delete(id);
-      }
-      return next;
-    });
-  };
-
+  // Fetch Customers with marketing & cart metrics
   const fetchCustomers = useCallback(async () => {
     setDataLoading(true);
     try {
       const res = await customerIntelligenceService.getCustomers({
-        page,
-        limit: pageSize,
-        search: searchQuery,
-        tier: tierFilter === 'All' ? undefined : tierFilter,
+        page: pagination.page,
+        limit: pagination.limit,
       });
-      setCustomers(res?.data || []);
-      setMeta(res?.meta || {});
-    } catch {
+
+      const list = res?.data || [];
+      const fetchedCustomers = list.map((c) => ({
+        ...c,
+        ordersCount: c.ordersCount ?? c.orders ?? 0,
+        totalSpent: c.totalSpent || 0,
+        cartItemsCount: c.cartItemsCount ?? c.cartCount ?? (c.cart?.length || 0),
+        wishlistItemsCount: c.wishlistItemsCount ?? c.wishlistCount ?? (c.wishlist?.length || 0),
+      }));
+
+      setCustomers(fetchedCustomers);
+      setPagination((prev) => ({
+        ...prev,
+        total: res?.meta?.total || fetchedCustomers.length,
+        pages: res?.meta?.pages || 1,
+      }));
+    } catch (err) {
+      console.error('Failed to load customers:', err);
       toast.error('Failed to load customers');
     } finally {
       setDataLoading(false);
     }
-  }, [page, pageSize, searchQuery, tierFilter]);
-
-  const fetchKpis = useCallback(async () => {
-    setKpiLoading(true);
-    try {
-      const res = await customerIntelligenceService.getOverview();
-      setKpi(res?.snapshot?.metrics || null);
-    } catch (err) {
-      console.error('KPI fetch error:', err);
-    } finally {
-      setKpiLoading(false);
-    }
-  }, []);
+  }, [pagination.page, pagination.limit]);
 
   useEffect(() => {
     fetchCustomers();
   }, [fetchCustomers]);
 
-  useEffect(() => {
-    fetchKpis();
-  }, [fetchKpis]);
-
+  // Real-time socket integration
   useEffect(() => {
     const token = getAccessToken();
     if (!token) return;
 
     const socket = acquireAdminSocket();
-
     const onCustomerUpdated = () => {
       fetchCustomers();
-      fetchKpis();
     };
     const onOrderUpdate = () => {
       fetchCustomers();
-      fetchKpis();
     };
 
     socket.on('customer_updated', onCustomerUpdated);
@@ -127,54 +110,217 @@ export function AdminCustomers() {
       socket.off('order_update', onOrderUpdate);
       releaseAdminSocket();
     };
-  }, [fetchCustomers, fetchKpis]);
+  }, [fetchCustomers]);
 
-  const handleExport = async () => {
-    if (isExporting) return;
-    setIsExporting(true);
-    try {
-      const token = getAccessToken();
-      const res = await fetch(
-        `${getApiRootUrl()}/customer-intelligence/customers/export?search=${searchQuery}&tier=${tierFilter}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
+  // Dynamic filter & sort
+  const filteredCustomers = useMemo(() => {
+    let result = [...customers];
+
+    // 1. Search Query
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      result = result.filter((c) => {
+        const name = (c.name || '').toLowerCase();
+        const email = (c.email || '').toLowerCase();
+        const phone = (c.phone || '').toLowerCase();
+        const city = (c.city || '').toLowerCase();
+        return name.includes(q) || email.includes(q) || phone.includes(q) || city.includes(q);
+      });
+    }
+
+    // 2. Loyalty Tier
+    if (filterState.tier !== 'all') {
+      result = result.filter(
+        (c) => (c.loyaltyTier || 'bronze').toLowerCase() === filterState.tier.toLowerCase(),
       );
-      const data = await res.json();
+    }
 
-      if (data.success && data.data) {
-        const headers = 'Name,Email,Phone,Orders,Spent,Tier,Joined\n';
-        const rows = data.data
-          .map(
-            (c) =>
-              `"${c.Name}","${c.Email}","${c.Phone}",${c.Orders},${c.Spent},"${c.Tier}","${c.Joined}"`,
-          )
-          .join('\n');
+    // 3. Wishlist Status
+    if (filterState.wishlist === 'has_wishlist') {
+      result = result.filter(
+        (c) => (c.wishlistItemsCount ?? c.wishlistCount ?? c.wishlist?.length ?? 0) > 0,
+      );
+    } else if (filterState.wishlist === 'empty_wishlist') {
+      result = result.filter(
+        (c) => (c.wishlistItemsCount ?? c.wishlistCount ?? c.wishlist?.length ?? 0) === 0,
+      );
+    }
 
-        const blob = new Blob([headers + rows], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.setAttribute('href', url);
-        link.setAttribute(
-          'download',
-          `EventDecor_Customers_${new Date().toISOString().slice(0, 10)}.csv`,
-        );
-        link.click();
-        toast.success('Customers export completed');
+    // 4. Cart Status
+    if (filterState.cart === 'has_cart') {
+      result = result.filter((c) => (c.cartItemsCount ?? c.cart?.length ?? 0) > 0);
+    } else if (filterState.cart === 'empty_cart') {
+      result = result.filter((c) => (c.cartItemsCount ?? c.cart?.length ?? 0) === 0);
+    }
+
+    // 5. Orders Count / Segment
+    if (filterState.orders === 'repeat') {
+      result = result.filter((c) => (c.ordersCount ?? c.orders ?? 0) > 1);
+    } else if (filterState.orders === 'first_time') {
+      result = result.filter((c) => (c.ordersCount ?? c.orders ?? 0) === 1);
+    } else if (filterState.orders === 'prospect') {
+      result = result.filter((c) => (c.ordersCount ?? c.orders ?? 0) === 0);
+    }
+
+    // 6. Spend Range
+    if (filterState.minSpend !== '' && !isNaN(Number(filterState.minSpend))) {
+      result = result.filter((c) => (c.totalSpent || 0) >= Number(filterState.minSpend));
+    }
+    if (filterState.maxSpend !== '' && !isNaN(Number(filterState.maxSpend))) {
+      result = result.filter((c) => (c.totalSpent || 0) <= Number(filterState.maxSpend));
+    }
+
+    // 7. Sort
+    result.sort((a, b) => {
+      switch (sortBy) {
+        case 'oldest':
+          return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
+        case 'spend_high':
+          return (b.totalSpent || 0) - (a.totalSpent || 0);
+        case 'spend_low':
+          return (a.totalSpent || 0) - (b.totalSpent || 0);
+        case 'most_orders':
+          return (b.ordersCount ?? b.orders ?? 0) - (a.ordersCount ?? a.orders ?? 0);
+        case 'newest':
+        default:
+          return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
       }
-    } catch {
-      toast.error('Export failed');
-    } finally {
-      setIsExporting(false);
+    });
+
+    return result;
+  }, [customers, searchQuery, filterState, sortBy]);
+
+  // Active Filter Chips calculation
+  const activeChips = useMemo(() => {
+    const chips = [];
+    if (filterState.tier !== 'all') {
+      chips.push({
+        key: 'tier',
+        label: `Tier: ${filterState.tier.toUpperCase()}`,
+        onRemove: () => setFilterState((prev) => ({ ...prev, tier: 'all' })),
+      });
+    }
+    if (filterState.wishlist !== 'all') {
+      chips.push({
+        key: 'wishlist',
+        label: `Wishlist: ${filterState.wishlist === 'has_wishlist' ? 'Has Items' : 'Empty'}`,
+        onRemove: () => setFilterState((prev) => ({ ...prev, wishlist: 'all' })),
+      });
+    }
+    if (filterState.cart !== 'all') {
+      chips.push({
+        key: 'cart',
+        label: `Cart: ${filterState.cart === 'has_cart' ? 'Active Cart' : 'Empty Cart'}`,
+        onRemove: () => setFilterState((prev) => ({ ...prev, cart: 'all' })),
+      });
+    }
+    if (filterState.orders !== 'all') {
+      chips.push({
+        key: 'orders',
+        label: `Orders: ${
+          filterState.orders === 'repeat'
+            ? 'Repeat'
+            : filterState.orders === 'first_time'
+              ? '1st Time'
+              : 'Prospect'
+        }`,
+        onRemove: () => setFilterState((prev) => ({ ...prev, orders: 'all' })),
+      });
+    }
+    if (filterState.minSpend !== '' || filterState.maxSpend !== '') {
+      chips.push({
+        key: 'spend',
+        label: `Spend: ₹${filterState.minSpend || '0'} - ₹${filterState.maxSpend || '∞'}`,
+        onRemove: () => setFilterState((prev) => ({ ...prev, minSpend: '', maxSpend: '' })),
+      });
+    }
+    return chips;
+  }, [filterState]);
+
+  const activeCount = activeChips.length;
+
+  const resetAllFilters = () => {
+    setFilterState({
+      tier: 'all',
+      wishlist: 'all',
+      cart: 'all',
+      orders: 'all',
+      minSpend: '',
+      maxSpend: '',
+    });
+    setSearchQuery('');
+    setSortBy('newest');
+  };
+
+  // Multi-select helpers
+  const handleSelectAll = (checked) => {
+    if (checked) {
+      setSelectedCustomerIds(filteredCustomers.map((c) => c._id));
+    } else {
+      setSelectedCustomerIds([]);
     }
   };
 
+  const handleSelectCustomer = (id) => {
+    setSelectedCustomerIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
+    );
+  };
+
+  // Export to CSV
+  const handleExportCSV = () => {
+    try {
+      const headers = [
+        'Name',
+        'Email',
+        'Phone',
+        'City',
+        'Loyalty Tier',
+        'Total Spend (₹)',
+        'Orders Count',
+        'Cart Items',
+        'Wishlist Items',
+        'Joined Date',
+      ];
+      const rows = filteredCustomers.map((c) => [
+        `"${(c.name || '').replace(/"/g, '""')}"`,
+        `"${(c.email || '').replace(/"/g, '""')}"`,
+        `"${(c.phone || '').replace(/"/g, '""')}"`,
+        `"${(c.city || '').replace(/"/g, '""')}"`,
+        (c.loyaltyTier || 'Bronze').toUpperCase(),
+        c.totalSpent || 0,
+        c.ordersCount ?? c.orders ?? 0,
+        c.cartItemsCount ?? c.cartCount ?? (c.cart?.length || 0),
+        c.wishlistItemsCount ?? c.wishlistCount ?? (c.wishlist?.length || 0),
+        c.createdAt ? new Date(c.createdAt).toLocaleDateString('en-IN') : '',
+      ]);
+
+      const csvContent =
+        'data:text/csv;charset=utf-8,' +
+        [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement('a');
+      link.setAttribute('href', encodedUri);
+      link.setAttribute(
+        'download',
+        `customers_export_${new Date().toISOString().slice(0, 10)}.csv`,
+      );
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success(`Exported ${filteredCustomers.length} customers to CSV`);
+    } catch {
+      toast.error('Failed to export customers to CSV');
+    }
+  };
+
+  // Delete / Soft Delete customer
   const handleDeleteCustomer = async (customerToDelete) => {
     if (!customerToDelete?._id) return;
 
     const confirmed = await confirm({
       title: 'Move Customer to Recycle Bin?',
-      message: `Are you sure you want to move "${customerToDelete.name || 'this customer'}" to the recycle bin? Customer access will be revoked, and their record will be safely held in the Recycle Bin for 30 days where it can be restored or permanently removed.`,
+      message: `Are you sure you want to move "${customerToDelete.name || 'this customer'}" to the recycle bin? Customer access will be revoked, and their record will be held for 30 days in the Recycle Bin.`,
       confirmText: 'Move to Recycle Bin',
       cancelText: 'Cancel',
       type: 'danger',
@@ -185,32 +331,32 @@ export function AdminCustomers() {
     try {
       await customerIntelligenceService.deleteCustomer(
         customerToDelete._id,
-        'Moved to recycle bin from Customers dashboard',
+        'Moved to recycle bin from Customers page',
       );
       toast.success(`"${customerToDelete.name || 'Customer'}" moved to Recycle Bin`);
       if (selectedCustomerId === customerToDelete._id) {
         setSelectedCustomerId(null);
       }
+      setSelectedCustomerIds((prev) => prev.filter((id) => id !== customerToDelete._id));
       fetchCustomers();
-      fetchKpis();
     } catch (err) {
-      console.error('Failed to soft delete customer:', err);
       toast.error(err?.response?.data?.message || 'Failed to move customer to recycle bin');
     }
   };
 
-  const getTierLabel = (tier) => {
-    return (tier || 'BRONZE').toUpperCase();
-  };
-
-  const tierCounts = {
-    All: meta.total || customers.length,
-    Platinum: customers.filter((c) => (c.loyaltyTier || '').toLowerCase() === 'platinum').length,
-    Gold: customers.filter((c) => (c.loyaltyTier || '').toLowerCase() === 'gold').length,
-    Silver: customers.filter((c) => (c.loyaltyTier || '').toLowerCase() === 'silver').length,
-    Bronze: customers.filter(
-      (c) => !c.loyaltyTier || (c.loyaltyTier || '').toLowerCase() === 'bronze',
-    ).length,
+  const getTierBadgeStyle = (tier) => {
+    const t = (tier || 'BRONZE').toUpperCase();
+    switch (t) {
+      case 'PLATINUM':
+        return 'bg-cyan-50 text-cyan-800 border-cyan-300 dark:bg-cyan-950/40 dark:text-cyan-300 dark:border-cyan-700';
+      case 'GOLD':
+        return 'bg-yellow-50 text-yellow-800 border-yellow-300 dark:bg-yellow-950/40 dark:text-yellow-300 dark:border-yellow-700';
+      case 'SILVER':
+        return 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700';
+      case 'BRONZE':
+      default:
+        return 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800';
+    }
   };
 
   return (
@@ -218,550 +364,696 @@ export function AdminCustomers() {
       initial="hidden"
       animate="show"
       variants={stagger}
-      className="space-y-6 pb-12 sm:pb-8"
+      className="space-y-4 sm:space-y-5 pb-14 sm:pb-8"
     >
+      {/* ─── Page Header (Orders Page Style) ─── */}
       <PageHeader
         title="Customers"
         subtitle={
           dataLoading ? (
-            <span>Loading customers...</span>
+            <div className="flex items-center gap-2 animate-pulse py-0.5">
+              <div className="w-28 h-4 bg-stone-200 dark:bg-stone-800 rounded" />
+              <div className="w-20 h-4 bg-stone-200 dark:bg-stone-800 rounded" />
+              <div className="w-20 h-4 bg-stone-200 dark:bg-stone-800 rounded" />
+            </div>
           ) : (
-            <div className="flex flex-wrap items-center gap-1.5 text-[13px]">
+            <div className="flex flex-wrap items-center gap-1.5 text-[12.5px] sm:text-[13px]">
               <span className="font-semibold text-[var(--admin-text-primary)]">
-                {meta.total !== undefined ? meta.total : customers.length || 0} Total Customers
+                {customers.length} Total Customers
               </span>
-              {tierCounts.Platinum > 0 && (
-                <span className="inline-flex items-center gap-1 font-semibold text-cyan-600 dark:text-cyan-400">
-                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-500" />
-                  {tierCounts.Platinum} Platinum
-                </span>
-              )}
-              {tierCounts.Gold > 0 && (
-                <span className="inline-flex items-center gap-1 font-semibold text-amber-600 dark:text-amber-400">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                  {tierCounts.Gold} Gold
-                </span>
-              )}
-              {tierCounts.Bronze > 0 && (
-                <span className="inline-flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  {tierCounts.Bronze} Bronze
-                </span>
-              )}
+              <span className="inline-flex items-center gap-1 font-semibold text-rose-600 dark:text-rose-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                {
+                  customers.filter(
+                    (c) => (c.wishlistItemsCount ?? c.wishlistCount ?? c.wishlist?.length ?? 0) > 0,
+                  ).length
+                }{' '}
+                Active Wishlists
+              </span>
+              <span className="inline-flex items-center gap-1 font-semibold text-amber-600 dark:text-amber-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                {
+                  customers.filter(
+                    (c) => (c.cartItemsCount ?? c.cartCount ?? c.cart?.length ?? 0) > 0,
+                  ).length
+                }{' '}
+                Active Carts
+              </span>
             </div>
           )
         }
       />
 
-      {/* Sticky 42px Search & Controls Bar */}
-      <div className="sticky top-[var(--admin-topbar-height,56px)] z-20 -my-2 py-2.5 bg-[var(--admin-bg)]/95 backdrop-blur-md mb-5">
-        <motion.div variants={fadeUp} className="flex flex-row items-center gap-2 w-full">
-          {/* Search Bar */}
-          <div className="relative flex-1 min-w-0 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] flex items-center px-2.5 sm:px-3 h-[42px] min-h-[42px] max-h-[42px]">
-            <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] shrink-0">
-              search
-            </span>
-            <input
-              type="text"
-              placeholder="Search customers by name, email, phone, or location..."
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setPage(1);
-              }}
-              className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-full min-w-0"
-            />
-            {searchQuery && (
+      {/* ─── STICKY SEARCH & ACTIONS BAR (Orders Page UI Style) ─── */}
+      <div className="sticky top-[var(--admin-topbar-height,56px)] z-20 -my-2 py-2.5 bg-[var(--admin-bg)]/95 backdrop-blur-md mb-2 sm:mb-4">
+        <div className="relative w-full min-h-[42px]">
+          <motion.div variants={fadeUp} className="flex flex-row items-center gap-2 w-full">
+            {/* Search Bar */}
+            <div className="relative flex-1 min-w-0 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] flex items-center px-2.5 sm:px-3 h-[42px] min-h-[42px] max-h-[42px]">
+              <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] shrink-0">
+                search
+              </span>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search customers by name, email, phone, or city..."
+                className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-full min-w-0"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] cursor-pointer p-1 flex items-center justify-center"
+                  title="Clear search"
+                >
+                  <span className="material-symbols-outlined text-[16px]">close</span>
+                </button>
+              )}
+            </div>
+
+            {/* Action Controls Group */}
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+              {/* Filters Button & Drawer */}
+              <div className="relative shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setShowFiltersMenu(!showFiltersMenu)}
+                  className={`h-[42px] min-h-[42px] max-h-[42px] px-2.5 sm:px-3.5 flex items-center justify-center gap-1.5 rounded-[4px] border transition-colors shrink-0 cursor-pointer ${
+                    showFiltersMenu || activeCount > 0
+                      ? 'bg-[var(--admin-accent)] text-white border-transparent shadow-sm'
+                      : 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] border-[var(--admin-border)] hover:border-[var(--admin-border-strong)]'
+                  }`}
+                  title="Customer Filters"
+                >
+                  <span className="material-symbols-outlined text-[18px]">tune</span>
+                  <span className="font-semibold text-[13px] hidden sm:inline">
+                    {activeCount > 0 ? `${activeCount} Filters` : 'Filters'}
+                  </span>
+                  {activeCount > 0 && (
+                    <span className="min-w-[16px] h-4 px-1 rounded-full bg-white text-[var(--admin-accent)] text-[10px] font-bold flex items-center justify-center">
+                      {activeCount}
+                    </span>
+                  )}
+                </button>
+
+                <AdminFilterDrawer
+                  isOpen={showFiltersMenu}
+                  onClose={() => setShowFiltersMenu(false)}
+                  title="Filter Customers"
+                  icon="tune"
+                  activeCount={activeCount}
+                  onClearAll={resetAllFilters}
+                  clearAllLabel="Reset"
+                  onApply={() => setShowFiltersMenu(false)}
+                >
+                  {/* 1. Loyalty Tier */}
+                  <div>
+                    <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                      Loyalty Tier
+                    </label>
+                    <select
+                      value={filterState.tier}
+                      onChange={(e) =>
+                        setFilterState((prev) => ({ ...prev, tier: e.target.value }))
+                      }
+                      className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                    >
+                      <option value="all">All Loyalty Tiers</option>
+                      <option value="platinum">Platinum Tier</option>
+                      <option value="gold">Gold Tier</option>
+                      <option value="silver">Silver Tier</option>
+                      <option value="bronze">Bronze Tier</option>
+                    </select>
+                  </div>
+
+                  {/* 2. Wishlist Activity */}
+                  <div>
+                    <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                      Wishlist Activity
+                    </label>
+                    <select
+                      value={filterState.wishlist}
+                      onChange={(e) =>
+                        setFilterState((prev) => ({ ...prev, wishlist: e.target.value }))
+                      }
+                      className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                    >
+                      <option value="all">All Wishlist Statuses</option>
+                      <option value="has_wishlist">Has Saved Items in Wishlist</option>
+                      <option value="empty_wishlist">Wishlist Empty</option>
+                    </select>
+                  </div>
+
+                  {/* 3. Shopping Cart Activity */}
+                  <div>
+                    <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                      Shopping Cart Activity
+                    </label>
+                    <select
+                      value={filterState.cart}
+                      onChange={(e) =>
+                        setFilterState((prev) => ({ ...prev, cart: e.target.value }))
+                      }
+                      className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                    >
+                      <option value="all">All Cart Statuses</option>
+                      <option value="has_cart">Has Unpurchased Items in Cart</option>
+                      <option value="empty_cart">Cart Empty</option>
+                    </select>
+                  </div>
+
+                  {/* 4. Customer Segment */}
+                  <div>
+                    <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                      Customer Lifecycle Segment
+                    </label>
+                    <select
+                      value={filterState.orders}
+                      onChange={(e) =>
+                        setFilterState((prev) => ({ ...prev, orders: e.target.value }))
+                      }
+                      className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                    >
+                      <option value="all">All Customer Accounts</option>
+                      <option value="repeat">Repeat Buyers (&gt; 1 Order)</option>
+                      <option value="first_time">First-Time Buyers (1 Order)</option>
+                      <option value="prospect">Leads / Prospects (0 Orders)</option>
+                    </select>
+                  </div>
+
+                  {/* 5. Lifetime Spend Range (₹) */}
+                  <div>
+                    <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                      Lifetime Spend Range (₹)
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <input
+                        type="number"
+                        placeholder="Min ₹"
+                        value={filterState.minSpend}
+                        onChange={(e) =>
+                          setFilterState((prev) => ({ ...prev, minSpend: e.target.value }))
+                        }
+                        className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-2.5 py-1.5 text-[12px] outline-none text-[var(--admin-text-primary)]"
+                      />
+                      <input
+                        type="number"
+                        placeholder="Max ₹"
+                        value={filterState.maxSpend}
+                        onChange={(e) =>
+                          setFilterState((prev) => ({ ...prev, maxSpend: e.target.value }))
+                        }
+                        className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-2.5 py-1.5 text-[12px] outline-none text-[var(--admin-text-primary)]"
+                      />
+                    </div>
+                  </div>
+
+                  {/* 6. Sort Order */}
+                  <div>
+                    <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                      Sort Order
+                    </label>
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-text-primary)] cursor-pointer"
+                    >
+                      <option value="newest">Newest Members First</option>
+                      <option value="oldest">Oldest Members First</option>
+                      <option value="spend_high">Lifetime Spend: High to Low</option>
+                      <option value="spend_low">Lifetime Spend: Low to High</option>
+                      <option value="most_orders">Most Orders</option>
+                    </select>
+                  </div>
+                </AdminFilterDrawer>
+              </div>
+
+              {/* Export CSV Button */}
               <button
                 type="button"
-                onClick={() => {
-                  setSearchQuery('');
-                  setPage(1);
-                }}
-                className="text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] cursor-pointer p-1 flex items-center justify-center shrink-0"
-                title="Clear search"
+                onClick={handleExportCSV}
+                className="h-[42px] min-h-[42px] max-h-[42px] w-[42px] sm:w-auto px-0 sm:px-3.5 bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-border-subtle)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] rounded-[4px] flex items-center justify-center cursor-pointer transition-all active:scale-95 border border-[var(--admin-border)] shrink-0 gap-1.5 font-semibold text-[13px]"
+                title="Export Customers CSV"
               >
-                <span className="material-symbols-outlined text-[16px]">close</span>
+                <span className="material-symbols-outlined text-[18px]">download</span>
+                <span className="hidden sm:inline">Export</span>
               </button>
-            )}
-          </div>
+            </div>
+          </motion.div>
 
-          {/* Controls Group */}
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {/* Tier Segmented Pill Switcher (Desktop & Tablet) */}
-            <div className="hidden sm:flex items-center gap-1 p-1 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] h-[42px] min-h-[42px] max-h-[42px] box-border">
-              {['All', 'Platinum', 'Gold', 'Silver', 'Bronze'].map((tier) => {
-                const isActive = tierFilter === tier;
-                const count = tierCounts[tier] || 0;
+          {/* ─── Overlapped Multi-Select Banner (Overlaps the search bar directly) ─── */}
+          <AnimatePresence>
+            {selectedCustomerIds.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: -4, scale: 0.99 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -4, scale: 0.99 }}
+                transition={{ duration: 0.15 }}
+                className="absolute inset-0 z-30 flex items-center justify-between gap-3 bg-[var(--admin-surface)] px-3 sm:px-4 rounded-[4px] border border-[var(--admin-accent)] shadow-sm"
+              >
+                <div className="text-[13px] font-bold text-[var(--admin-text-primary)] flex items-center gap-2 min-w-0">
+                  <span className="material-symbols-outlined text-[18px] text-[var(--admin-accent)] shrink-0">
+                    check_circle
+                  </span>
+                  <span className="truncate">
+                    {selectedCustomerIds.length} Customer
+                    {selectedCustomerIds.length === 1 ? '' : 's'} Selected
+                  </span>
+                </div>
 
-                return (
+                <div className="flex items-center gap-2 shrink-0">
                   <button
-                    key={tier}
                     type="button"
-                    onClick={() => {
-                      setTierFilter(tier);
-                      setPage(1);
-                    }}
-                    className={`h-[32px] min-h-[32px] max-h-[32px] px-2.5 sm:px-3 rounded-[3px] text-[12px] font-semibold cursor-pointer transition-all flex items-center gap-1.5 whitespace-nowrap box-border ${
-                      isActive
-                        ? 'bg-white dark:bg-stone-800 text-[var(--admin-accent)] shadow-xs font-bold'
-                        : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
-                    }`}
+                    onClick={() => setSelectedCustomerIds([])}
+                    className="h-[34px] px-2.5 sm:px-3 text-[12px] font-semibold text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] cursor-pointer underline underline-offset-2"
                   >
-                    <span>{tier}</span>
-                    <span
-                      className={`min-w-[16px] h-4 px-1 rounded-full text-[10px] font-bold flex items-center justify-center ${
-                        isActive
-                          ? 'bg-[var(--admin-accent)] text-white'
-                          : 'bg-[var(--admin-surface)] text-[var(--admin-text-tertiary)] border border-[var(--admin-border-subtle)]'
-                      }`}
-                    >
-                      {count}
-                    </span>
+                    Clear Selection
                   </button>
-                );
-              })}
-            </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
-            {/* Mobile Tier Select Dropdown */}
-            <div className="sm:hidden relative shrink-0">
-              <select
-                value={tierFilter}
-                onChange={(e) => {
-                  setTierFilter(e.target.value);
-                  setPage(1);
-                }}
-                className="h-[42px] px-2.5 bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] border border-[var(--admin-border)] rounded-[4px] text-[12px] font-semibold outline-none cursor-pointer"
-              >
-                {['All', 'Platinum', 'Gold', 'Silver', 'Bronze'].map((tier) => (
-                  <option key={tier} value={tier}>
-                    {tier} ({tierCounts[tier] || 0})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Export CSV Button */}
-            <button
-              type="button"
-              onClick={handleExport}
-              disabled={isExporting}
-              className="h-[42px] min-h-[42px] max-h-[42px] px-3 sm:px-3.5 bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-border-subtle)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] rounded-[4px] border border-[var(--admin-border)] flex items-center justify-center cursor-pointer transition-all active:scale-95 shadow-xs shrink-0 gap-1.5 font-semibold text-[13px] disabled:opacity-50"
-              title="Export Customers CSV"
-            >
-              <span
-                className={`material-symbols-outlined text-[18px] ${isExporting ? 'animate-spin' : ''}`}
-              >
-                {isExporting ? 'sync' : 'download'}
-              </span>
-              <span className="hidden md:inline">{isExporting ? 'Exporting...' : 'Export'}</span>
-            </button>
-          </div>
-        </motion.div>
+        {/* Active Filter Chips Row */}
+        <AdminActiveFilterChips
+          activeChips={activeChips}
+          totalCount={customers.length}
+          matchCount={filteredCustomers.length}
+          onClearAll={resetAllFilters}
+          itemName="customers"
+          className="mt-2 mb-1"
+        />
       </div>
 
-      <AnimatePresence mode="wait">
+      {/* ─── Desktop & Laptop Table View ─── */}
+      <div className="hidden md:block admin-card overflow-x-auto">
+        <table className="admin-table admin-table-compact w-full text-left text-[13px]">
+          <thead className="bg-[var(--admin-surface-muted)] text-[var(--admin-text-tertiary)] border-b border-[var(--admin-border)] text-[11px] font-bold uppercase tracking-wider">
+            <tr>
+              <th className="py-3 px-3 w-10">
+                <input
+                  type="checkbox"
+                  checked={
+                    filteredCustomers.length > 0 &&
+                    selectedCustomerIds.length === filteredCustomers.length
+                  }
+                  onChange={(e) => handleSelectAll(e.target.checked)}
+                  className="rounded-[3px] accent-[var(--admin-accent)] cursor-pointer"
+                />
+              </th>
+              <th className="py-3 px-3">Customer</th>
+              <th className="py-3 px-3">Tier</th>
+              <th className="py-3 px-3">Lifetime Spend</th>
+              <th className="py-3 px-3">Orders</th>
+              <th className="py-3 px-3">Cart Status</th>
+              <th className="py-3 px-3">Wishlist</th>
+              <th className="py-3 px-4 text-left">Customer 360</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[var(--admin-border-subtle)]">
+            {dataLoading ? (
+              Array.from({ length: 8 }).map((_, idx) => (
+                <tr key={idx} className="animate-pulse">
+                  <td className="py-3.5 px-3">
+                    <div className="w-4 h-4 bg-stone-200 dark:bg-stone-800 rounded-[3px]" />
+                  </td>
+                  <td className="py-3.5 px-3">
+                    <div className="w-32 h-4 bg-stone-200 dark:bg-stone-800 rounded mb-1.5" />
+                    <div className="w-44 h-3 bg-stone-100 dark:bg-stone-800/60 rounded" />
+                  </td>
+                  <td className="py-3.5 px-3">
+                    <div className="w-16 h-5 bg-stone-100 dark:bg-stone-800 rounded-full" />
+                  </td>
+                  <td className="py-3.5 px-3">
+                    <div className="w-20 h-4 bg-stone-200 dark:bg-stone-800 rounded" />
+                  </td>
+                  <td className="py-3.5 px-3">
+                    <div className="w-8 h-4 bg-stone-100 dark:bg-stone-800 rounded" />
+                  </td>
+                  <td className="py-3.5 px-3">
+                    <div className="w-20 h-4 bg-stone-100 dark:bg-stone-800 rounded" />
+                  </td>
+                  <td className="py-3.5 px-3">
+                    <div className="w-20 h-5 bg-stone-100 dark:bg-stone-800 rounded-full" />
+                  </td>
+                  <td className="py-3.5 px-4 text-left">
+                    <div className="w-20 h-4 bg-stone-100 dark:bg-stone-800 rounded" />
+                  </td>
+                </tr>
+              ))
+            ) : customers.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="py-16 text-center">
+                  <EmptyState
+                    icon="group"
+                    title="No Customer Accounts Yet"
+                    description="When customers register or place orders, they will appear here."
+                  />
+                </td>
+              </tr>
+            ) : filteredCustomers.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="py-14 text-center">
+                  <EmptyState
+                    icon="search_off"
+                    title="No Matching Customers Found"
+                    description="Try adjusting your search keywords or filter criteria."
+                    action={
+                      <button
+                        type="button"
+                        onClick={resetAllFilters}
+                        className="admin-btn admin-btn-outline px-3 h-8 text-xs cursor-pointer mt-2"
+                      >
+                        Reset All Filters
+                      </button>
+                    }
+                  />
+                </td>
+              </tr>
+            ) : (
+              filteredCustomers.map((cust) => {
+                const isSelected = selectedCustomerIds.includes(cust._id);
+                const tier = (cust.loyaltyTier || 'Bronze').toUpperCase();
+                const ordersCount = cust.ordersCount ?? cust.orders ?? 0;
+                const cartCount = cust.cartItemsCount ?? cust.cartCount ?? (cust.cart?.length || 0);
+                const wishlistCount =
+                  cust.wishlistItemsCount ?? cust.wishlistCount ?? (cust.wishlist?.length || 0);
+
+                return (
+                  <tr
+                    key={cust._id}
+                    onClick={() => setSelectedCustomerId(cust._id)}
+                    className="hover:bg-[var(--admin-surface-hover)] transition-colors cursor-pointer"
+                  >
+                    <td className="py-3.5 px-3">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={() => handleSelectCustomer(cust._id)}
+                        className="rounded-[3px] accent-[var(--admin-accent)] cursor-pointer"
+                      />
+                    </td>
+                    <td className="py-3.5 px-3">
+                      <div
+                        onClick={() => setSelectedCustomerId(cust._id)}
+                        className="font-bold text-[var(--admin-text-primary)] hover:text-[var(--admin-accent)] cursor-pointer transition-colors"
+                      >
+                        {cust.name || 'Valued Customer'}
+                      </div>
+                      <div className="text-[11px] text-[var(--admin-text-secondary)] font-mono">
+                        {cust.email}
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-3">
+                      <span
+                        className={`rounded-[4px] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border shadow-2xs ${getTierBadgeStyle(
+                          tier,
+                        )}`}
+                      >
+                        {tier}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-3 font-bold text-[var(--admin-text-primary)] font-mono">
+                      ₹{(cust.totalSpent || 0).toLocaleString('en-IN')}
+                    </td>
+                    <td className="py-3.5 px-3 text-[var(--admin-text-secondary)] font-mono">
+                      {ordersCount}
+                    </td>
+                    <td className="py-3.5 px-3">
+                      {cartCount > 0 ? (
+                        <span
+                          className="inline-flex items-center gap-1 rounded-[4px] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border shadow-2xs bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-700"
+                          title={`${cartCount} item(s) in active cart`}
+                        >
+                          <span className="material-symbols-outlined text-[13px]">
+                            shopping_cart
+                          </span>
+                          <span>
+                            {cartCount} {cartCount === 1 ? 'Item' : 'Items'}
+                          </span>
+                        </span>
+                      ) : (
+                        <span
+                          className="inline-flex items-center gap-1 rounded-[4px] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border shadow-2xs bg-stone-100 text-stone-700 border-stone-300 dark:bg-stone-800 dark:text-stone-300 dark:border-stone-700"
+                          title="Cart is empty"
+                        >
+                          <span className="material-symbols-outlined text-[13px]">
+                            remove_shopping_cart
+                          </span>
+                          <span>Empty</span>
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-3.5 px-3">
+                      {wishlistCount > 0 ? (
+                        <span
+                          className="inline-flex items-center gap-1 rounded-[4px] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border shadow-2xs bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800"
+                          title={`${wishlistCount} item(s) saved in customer wishlist`}
+                        >
+                          <span className="material-symbols-outlined text-[13px]">favorite</span>
+                          <span>
+                            {wishlistCount} {wishlistCount === 1 ? 'Item' : 'Items'}
+                          </span>
+                        </span>
+                      ) : (
+                        <span
+                          className="inline-flex items-center gap-1 rounded-[4px] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border shadow-2xs bg-stone-100 text-stone-700 border-stone-300 dark:bg-stone-800 dark:text-stone-300 dark:border-stone-700"
+                          title="Wishlist is empty"
+                        >
+                          <span className="material-symbols-outlined text-[13px]">
+                            favorite_border
+                          </span>
+                          <span>Empty</span>
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-3.5 px-4 text-left">
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedCustomerId(cust._id)}
+                          className="text-[12px] font-semibold text-[var(--admin-accent)] hover:underline cursor-pointer flex items-center justify-start gap-1"
+                        >
+                          <span>Journey Log</span>
+                          <span className="material-symbols-outlined text-[14px]">
+                            arrow_forward
+                          </span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* ─── Mobile & Tablet Responsive Touch Cards ─── */}
+      <div className="flex md:hidden flex-col gap-3 px-0.5 py-1">
         {dataLoading ? (
-          <motion.div
-            key="loading"
-            initial="hidden"
-            animate="show"
-            exit="hidden"
-            variants={stagger}
-            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"
-          >
-            {[...Array(6)].map((_, i) => (
-              <SkeletonCard key={i} className="h-[280px]" />
-            ))}
-          </motion.div>
+          Array.from({ length: 6 }).map((_, idx) => (
+            <div
+              key={idx}
+              className="admin-card p-4 space-y-3 border border-stone-200 dark:border-stone-800 animate-pulse bg-white dark:bg-[#211f1b]"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-2.5 flex-1">
+                  <div className="w-4 h-4 rounded-[3px] bg-stone-200 dark:bg-stone-800 shrink-0" />
+                  <div className="space-y-1.5 flex-1">
+                    <div className="w-28 h-4 bg-stone-200 dark:bg-stone-800 rounded" />
+                    <div className="w-40 h-3 bg-stone-100 dark:bg-stone-800/60 rounded" />
+                  </div>
+                </div>
+                <div className="w-16 h-5 rounded-[4px] bg-stone-200 dark:bg-stone-800 shrink-0" />
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 py-2 px-3 bg-stone-100/60 dark:bg-stone-800/40 rounded-[4px] text-center">
+                <div className="space-y-1">
+                  <div className="w-10 h-2.5 mx-auto bg-stone-200 dark:bg-stone-700 rounded" />
+                  <div className="w-14 h-4 mx-auto bg-stone-200 dark:bg-stone-700 rounded" />
+                </div>
+                <div className="space-y-1">
+                  <div className="w-10 h-2.5 mx-auto bg-stone-200 dark:bg-stone-700 rounded" />
+                  <div className="w-8 h-4 mx-auto bg-stone-200 dark:bg-stone-700 rounded" />
+                </div>
+                <div className="space-y-1">
+                  <div className="w-10 h-2.5 mx-auto bg-stone-200 dark:bg-stone-700 rounded" />
+                  <div className="w-12 h-4 mx-auto bg-stone-200 dark:bg-stone-700 rounded" />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-1 border-t border-stone-100 dark:border-stone-800">
+                <div className="w-20 h-4 bg-stone-200 dark:bg-stone-700 rounded" />
+                <div className="w-24 h-4 bg-stone-200 dark:bg-stone-700 rounded" />
+              </div>
+            </div>
+          ))
         ) : customers.length === 0 ? (
-          <motion.div
-            key="empty"
-            initial="hidden"
-            animate="show"
-            exit="hidden"
-            variants={fadeUp}
-            className="admin-card py-16 flex justify-center"
-          >
+          <div className="py-12 text-center flex flex-col items-center justify-center admin-card">
             <EmptyState
-              icon={searchQuery || tierFilter !== 'All' ? 'search_off' : 'group'}
-              title={searchQuery || tierFilter !== 'All' ? 'No Matches Found' : 'No Customers Yet'}
-              description={
-                searchQuery || tierFilter !== 'All'
-                  ? 'No customers match the search or filter criteria.'
-                  : 'When customers create accounts or place orders, they will appear here.'
-              }
+              icon="group"
+              title="No Customer Accounts Yet"
+              description="When customers register or place orders, they will appear here."
+            />
+          </div>
+        ) : filteredCustomers.length === 0 ? (
+          <div className="py-12 text-center flex flex-col items-center justify-center admin-card">
+            <EmptyState
+              icon="search_off"
+              title="No Matching Customers Found"
+              description="Try adjusting your search keywords or filter criteria."
               action={
-                searchQuery || tierFilter !== 'All' ? (
-                  <button
-                    onClick={() => {
-                      setTierFilter('All');
-                      setPage(1);
-                    }}
-                    className="admin-btn admin-btn-outline rounded-[6px]"
-                  >
-                    Clear Filters
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => window.location.reload()}
-                    className="admin-btn admin-btn-outline rounded-[6px]"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">refresh</span>
-                    Refresh Page
-                  </button>
-                )
+                <button
+                  type="button"
+                  onClick={resetAllFilters}
+                  className="admin-btn admin-btn-outline px-3 h-8 text-xs cursor-pointer mt-2"
+                >
+                  Reset All Filters
+                </button>
               }
             />
-          </motion.div>
-        ) : (
-          <motion.div
-            key="grid"
-            initial="hidden"
-            animate="show"
-            exit="hidden"
-            variants={stagger}
-            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"
-          >
-            {customers.map((c) => {
-              const cId = c._id;
-              const isExpanded = expandedCardIds.has(cId);
-              const tier = c.loyaltyTier || 'Bronze';
-              const isVip = c.segment === 'VIP';
-              const isNew = c.segment === 'New';
-              const initials =
-                c.name
-                  ?.split(' ')
-                  .filter(Boolean)
-                  .map((n) => n[0])
-                  .join('')
-                  .slice(0, 2)
-                  .toUpperCase() || 'CU';
-
-              const customerCity =
-                (c.city && !['unknown', 'unknown city'].includes(c.city.toLowerCase())
-                  ? c.city
-                  : null) ||
-                c.addresses?.find(
-                  (a) => a.city && !['unknown', 'unknown city'].includes(a.city.toLowerCase()),
-                )?.city ||
-                (c.shippingAddress?.city &&
-                !['unknown', 'unknown city'].includes(c.shippingAddress.city.toLowerCase())
-                  ? c.shippingAddress.city
-                  : null) ||
-                (c.location &&
-                !['unknown', 'unknown city', 'location unknown'].includes(c.location.toLowerCase())
-                  ? c.location
-                  : null) ||
-                (c.state ? `${c.state}` : null) ||
-                null;
-
-              return (
-                <motion.div
-                  key={cId}
-                  id={`customer-card-${cId}`}
-                  variants={fadeUp}
-                  className="relative overflow-hidden rounded-[8px] p-3.5 shadow-xs border border-stone-200/90 dark:border-stone-700/80 bg-white dark:bg-stone-900 flex flex-col gap-3 transition-all hover:border-stone-300 dark:hover:border-stone-600 hover:shadow-sm"
-                >
-                  {/* Header: Name + Badges + Subtitle + Tier Status Pill */}
-                  <div className="flex justify-between items-start gap-2">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="font-bold text-[var(--admin-text-primary)] text-[14px] truncate">
-                          {c.name || 'Anonymous Customer'}
-                        </span>
-
-                        {isVip && (
-                          <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 uppercase">
-                            VIP
-                          </span>
-                        )}
-
-                        {isNew && (
-                          <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase">
-                            NEW
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-[12px] font-medium text-[var(--admin-text-secondary)] block mt-0.5 truncate">
-                        {customerCity || 'Location not specified'} {c.email ? `• ${c.email}` : ''}
-                      </span>
-                    </div>
-                    <AdminStatusPill
-                      status={tier}
-                      label={getTierLabel(tier)}
-                      className="shrink-0"
-                    />
-                  </div>
-
-                  {/* 3. Customer Profile & Wallet Snapshot Box */}
-                  <div className="bg-[#FAF9F5] dark:bg-stone-800/60 p-2.5 rounded-[6px] border border-stone-200/80 dark:border-stone-700/60 flex items-center gap-2.5">
-                    <div className="w-11 h-11 rounded-[4px] border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 flex items-center justify-center shrink-0 shadow-2xs font-extrabold text-amber-700 dark:text-amber-400 text-[13px]">
-                      {initials}
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-1">
-                        <span className="text-[9px] font-extrabold text-amber-700 uppercase tracking-wider block leading-tight">
-                          CUSTOMER WALLET
-                        </span>
-                        <span className="text-[9px] font-bold text-stone-600 bg-white dark:bg-stone-700 px-1.5 py-0.5 rounded border border-stone-200 dark:border-stone-600 shrink-0 uppercase">
-                          {tier} Tier
-                        </span>
-                      </div>
-                      <p className="text-[12px] font-bold text-[var(--admin-text-primary)] truncate mt-0.5">
-                        Balance: {formatCurrency(c.walletBalance || 0)}
-                        <span className="ml-1.5 font-semibold text-amber-600 dark:text-amber-400">
-                          ({c.siriCoins || 0} Coins)
-                        </span>
-                      </p>
-                      <span className="text-[10px] text-stone-500 dark:text-stone-400 truncate block mt-0.5 flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[12px]">schedule</span>
-                        {c.lastLogin
-                          ? `Active ${formatDistanceToNow(new Date(c.lastLogin), { addSuffix: true })}`
-                          : 'New Member'}
-                        {c.health ? ` • Health: ${c.health}` : ''}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* 4. Financial Total Spent & Orders Strip */}
-                  <div className="flex items-center justify-between pt-0.5 text-xs">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-[11px] text-[var(--admin-text-secondary)] font-medium">
-                        Total Spent:
-                      </span>
-                      <span className="font-extrabold text-[var(--admin-text-primary)] text-[13px]">
-                        {formatCurrency(c.totalSpent || 0)}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                      <span className="inline-flex items-center gap-0.5 text-[9.5px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-[4px] border bg-emerald-50 text-emerald-700 border-emerald-200">
-                        <span className="material-symbols-outlined text-[11px]">shopping_bag</span>
-                        {c.orders || 0} Order{c.orders === 1 ? '' : 's'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* 5. Symmetrical Action Controls (Equal 36px Height, 6px Radius) */}
-                  <div
-                    className="grid grid-cols-2 gap-2 pt-2 border-t border-stone-200/70 dark:border-stone-700/60 w-full"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {/* Box 1: Quick View Profile Button */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedCustomerId(cId);
-                      }}
-                      className="w-full h-9 !min-h-[36px] !max-h-[36px] rounded-[6px] bg-[var(--admin-accent)] hover:opacity-90 active:opacity-100 text-white text-[11px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
-                    >
-                      <span className="material-symbols-outlined text-[15px]">visibility</span>
-                      <span>Quick View</span>
-                    </button>
-
-                    {/* Box 2: Details Toggle */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleExpandCard(cId);
-                      }}
-                      className={`w-full h-9 !min-h-[36px] !max-h-[36px] rounded-[6px] border text-[11px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                        isExpanded
-                          ? 'bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-400'
-                          : 'border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white'
-                      }`}
-                    >
-                      <span>Details</span>
-                      <span
-                        className={`material-symbols-outlined text-[16px] transition-transform duration-200 ${
-                          isExpanded ? 'rotate-180 text-amber-600' : ''
-                        }`}
-                      >
-                        expand_more
-                      </span>
-                    </button>
-                  </div>
-
-                  {/* 6. Expandable Details Panel */}
-                  <AnimatePresence>
-                    {isExpanded && (
-                      <motion.div
-                        key={`customer-card-expanded-${cId}`}
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                        className="overflow-hidden"
-                      >
-                        <div
-                          className="pt-3 border-t border-stone-200/80 dark:border-stone-700/80 space-y-3"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {/* Customer Contact Box (2 equal columns sideways aligned with icons) */}
-                          <div className="grid grid-cols-2 gap-2">
-                            <a
-                              href={`tel:${c.phone || ''}`}
-                              onClick={(e) => {
-                                if (!c.phone) {
-                                  e.preventDefault();
-                                  toast.error('No phone number recorded');
-                                }
-                              }}
-                              className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-[6px] border border-stone-200 dark:border-stone-700 bg-[#FAF9F5] dark:bg-stone-800 text-stone-700 dark:text-stone-200 text-[11px] font-semibold hover:border-stone-300 dark:hover:border-stone-600 transition-colors"
-                            >
-                              <span className="material-symbols-outlined !text-[15px] !leading-none text-stone-500 shrink-0">
-                                call
-                              </span>
-                              <span className="truncate">{c.phone || 'No phone'}</span>
-                            </a>
-
-                            <a
-                              href={`${EXTERNAL_URLS.WHATSAPP_BASE}/${(c.phone || '').replace(/[^0-9]/g, '')}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => {
-                                if (!c.phone) {
-                                  e.preventDefault();
-                                  toast.error('No phone number recorded');
-                                }
-                              }}
-                              className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-[6px] border border-emerald-200/80 dark:border-emerald-800/80 bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 text-[11px] font-semibold hover:bg-emerald-100/60 dark:hover:bg-emerald-950/50 transition-colors"
-                            >
-                              <WhatsAppIcon className="w-3.5 h-3.5 shrink-0" />
-                              <span>WhatsApp</span>
-                            </a>
-                          </div>
-
-                          {/* Customer Stats 4-Box Grid */}
-                          <div className="grid grid-cols-2 gap-2 text-[11px]">
-                            <div className="bg-[#FAF9F5] dark:bg-stone-800/50 p-2 rounded-[6px] border border-stone-200/70 dark:border-stone-700/60">
-                              <span className="text-[9.5px] uppercase font-bold text-stone-400 block">
-                                Total Orders
-                              </span>
-                              <span className="text-[12px] font-bold text-[var(--admin-text-primary)]">
-                                {c.orders || 0}
-                              </span>
-                            </div>
-
-                            <div className="bg-[#FAF9F5] dark:bg-stone-800/50 p-2 rounded-[6px] border border-stone-200/70 dark:border-stone-700/60">
-                              <span className="text-[9.5px] uppercase font-bold text-stone-400 block">
-                                Lifetime Spent
-                              </span>
-                              <span className="text-[12px] font-bold text-emerald-600 dark:text-emerald-400">
-                                {formatCurrency(c.totalSpent || 0)}
-                              </span>
-                            </div>
-
-                            <div className="bg-[#FAF9F5] dark:bg-stone-800/50 p-2 rounded-[6px] border border-stone-200/70 dark:border-stone-700/60">
-                              <span className="text-[9.5px] uppercase font-bold text-stone-400 block">
-                                Wallet Cash
-                              </span>
-                              <span className="text-[12px] font-bold text-[var(--admin-text-primary)]">
-                                {formatCurrency(c.walletBalance || 0)}
-                              </span>
-                            </div>
-
-                            <div className="bg-[#FAF9F5] dark:bg-stone-800/50 p-2 rounded-[6px] border border-stone-200/70 dark:border-stone-700/60">
-                              <span className="text-[9.5px] uppercase font-bold text-stone-400 block">
-                                Reward Coins
-                              </span>
-                              <span className="text-[12px] font-bold text-amber-600 dark:text-amber-400">
-                                {c.siriCoins || 0}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Account & Location Info Callout */}
-                          <div className="bg-stone-50 dark:bg-stone-800/40 p-2.5 rounded-[6px] border border-stone-200/70 dark:border-stone-700/60 space-y-1 text-[11px]">
-                            <div className="flex items-center justify-between text-stone-600 dark:text-stone-300">
-                              <span className="font-medium flex items-center gap-1">
-                                <span className="material-symbols-outlined !text-[14px] text-stone-400">
-                                  mail
-                                </span>
-                                Email:
-                              </span>
-                              <span className="font-bold text-stone-800 dark:text-stone-100 truncate max-w-[180px]">
-                                {c.email || 'None'}
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between text-stone-600 dark:text-stone-300">
-                              <span className="font-medium flex items-center gap-1">
-                                <span className="material-symbols-outlined !text-[14px] text-stone-400">
-                                  location_on
-                                </span>
-                                City:
-                              </span>
-                              <span className="font-bold text-stone-800 dark:text-stone-100">
-                                {customerCity || 'Not specified'}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Footer Actions: Email Link & Delete Button */}
-                          <div className="flex items-center justify-between pt-1">
-                            {c.email ? (
-                              <a
-                                href={`mailto:${c.email}`}
-                                className="h-7 px-2.5 rounded-[5px] border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 hover:bg-stone-50 transition-colors"
-                              >
-                                <span className="material-symbols-outlined text-[13px]">mail</span>
-                                Email
-                              </a>
-                            ) : (
-                              <span className="text-[10px] text-stone-400">No email</span>
-                            )}
-
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteCustomer(c);
-                              }}
-                              className="h-7 px-2.5 rounded-[5px] border border-rose-200 dark:border-rose-900/60 bg-rose-50/60 dark:bg-rose-950/30 hover:bg-rose-100 text-rose-600 dark:text-rose-400 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-all cursor-pointer"
-                              title="Move customer to recycle bin"
-                            >
-                              <span className="material-symbols-outlined text-[13px]">delete</span>
-                              Delete
-                            </button>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </motion.div>
-              );
-            })}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Pagination Controls */}
-      {!dataLoading && (meta.pages > 1 || customers.length > 0) && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-4 border-t border-[var(--admin-border-subtle)]">
-          <div className="text-xs text-[var(--admin-text-secondary)]">
-            Showing{' '}
-            <span className="font-semibold text-[var(--admin-text-primary)]">
-              {customers.length}
-            </span>{' '}
-            of{' '}
-            <span className="font-semibold text-[var(--admin-text-primary)]">
-              {meta.total || customers.length}
-            </span>{' '}
-            customers
           </div>
+        ) : (
+          filteredCustomers.map((cust) => {
+            const isSelected = selectedCustomerIds.includes(cust._id);
+            const tier = (cust.loyaltyTier || 'Bronze').toUpperCase();
+            const ordersCount = cust.ordersCount ?? cust.orders ?? 0;
+            const cartCount = cust.cartItemsCount ?? cust.cartCount ?? (cust.cart?.length || 0);
+            const wishlistCount =
+              cust.wishlistItemsCount ?? cust.wishlistCount ?? (cust.wishlist?.length || 0);
+
+            return (
+              <div
+                key={cust._id}
+                onClick={() => setSelectedCustomerId(cust._id)}
+                className={`admin-card p-4 space-y-3 border transition-all shadow-xs cursor-pointer hover:border-[var(--admin-accent)]/70 ${
+                  isSelected
+                    ? 'border-[var(--admin-accent)] ring-1 ring-[var(--admin-accent)]'
+                    : 'border-[var(--admin-border)]'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={() => handleSelectCustomer(cust._id)}
+                      className="rounded-[3px] accent-[var(--admin-accent)] cursor-pointer shrink-0"
+                    />
+                    <div className="min-w-0">
+                      <div className="font-bold text-[14px] text-[var(--admin-text-primary)] hover:text-[var(--admin-accent)] truncate">
+                        {cust.name || 'Valued Customer'}
+                      </div>
+                      <div className="text-[11px] text-[var(--admin-text-secondary)] font-mono truncate">
+                        {cust.email}
+                      </div>
+                    </div>
+                  </div>
+                  <span
+                    className={`rounded-[4px] px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wider border shrink-0 ${getTierBadgeStyle(
+                      tier,
+                    )}`}
+                  >
+                    {tier}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 py-2 px-3 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border-subtle)] text-center">
+                  <div>
+                    <div className="text-[9.5px] font-bold uppercase tracking-wider text-[var(--admin-text-tertiary)]">
+                      Spend
+                    </div>
+                    <div className="text-[13px] font-bold font-mono text-[var(--admin-text-primary)] mt-0.5">
+                      ₹{(cust.totalSpent || 0).toLocaleString('en-IN')}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[9.5px] font-bold uppercase tracking-wider text-[var(--admin-text-tertiary)]">
+                      Orders
+                    </div>
+                    <div className="text-[13px] font-bold font-mono text-[var(--admin-text-secondary)] mt-0.5">
+                      {ordersCount}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[9.5px] font-bold uppercase tracking-wider text-[var(--admin-text-tertiary)]">
+                      Cart Status
+                    </div>
+                    <div className="mt-1 flex justify-center">
+                      {cartCount > 0 ? (
+                        <span className="inline-flex items-center gap-1 rounded-[4px] px-1.5 py-0.5 text-[9.5px] font-bold uppercase border bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-700">
+                          <span className="material-symbols-outlined text-[12px]">
+                            shopping_cart
+                          </span>
+                          <span>{cartCount} in cart</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-[4px] px-1.5 py-0.5 text-[9.5px] font-bold uppercase border bg-stone-100 text-stone-700 border-stone-300 dark:bg-stone-800 dark:text-stone-300 dark:border-stone-700">
+                          <span className="material-symbols-outlined text-[12px]">
+                            remove_shopping_cart
+                          </span>
+                          <span>Empty</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-1 border-t border-[var(--admin-border-subtle)] text-[11.5px]">
+                  {wishlistCount > 0 ? (
+                    <span
+                      className="inline-flex items-center gap-1 rounded-[4px] px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wider border shadow-2xs bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800"
+                      title={`${wishlistCount} item(s) saved in wishlist`}
+                    >
+                      <span className="material-symbols-outlined text-[12px]">favorite</span>
+                      <span>
+                        {wishlistCount} {wishlistCount === 1 ? 'ITEM' : 'ITEMS'} IN WISHLIST
+                      </span>
+                    </span>
+                  ) : (
+                    <span
+                      className="inline-flex items-center gap-1 rounded-[4px] px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wider border shadow-2xs bg-stone-100 text-stone-700 border-stone-300 dark:bg-stone-800 dark:text-stone-300 dark:border-stone-700"
+                      title="Wishlist is empty"
+                    >
+                      <span className="material-symbols-outlined text-[12px]">favorite_border</span>
+                      <span>EMPTY WISHLIST</span>
+                    </span>
+                  )}
+
+                  <div className="text-[12px] font-semibold text-[var(--admin-accent)] hover:underline flex items-center gap-1">
+                    <span>Customer Journey Log</span>
+                    <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* ─── Pagination Footer ─── */}
+      {!dataLoading && customers.length > 0 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-[var(--admin-border)]">
+          <span className="text-xs text-[var(--admin-text-secondary)]">
+            Showing {filteredCustomers.length} of {customers.length} loaded records
+          </span>
 
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5 text-xs text-[var(--admin-text-secondary)]">
               <span>Per page:</span>
               <select
-                value={pageSize}
+                value={pagination.limit}
                 onChange={(e) => {
-                  setPageSize(Number(e.target.value));
-                  setPage(1);
+                  setPagination((prev) => ({
+                    ...prev,
+                    limit: Number(e.target.value),
+                    page: 1,
+                  }));
                 }}
                 className="bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] rounded px-2 py-1 text-xs font-semibold text-[var(--admin-text-primary)] outline-none cursor-pointer"
               >
@@ -771,22 +1063,29 @@ export function AdminCustomers() {
               </select>
             </div>
 
-            {meta.pages > 1 && (
+            {pagination.pages > 1 && (
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                  className="admin-btn admin-btn-outline px-3 h-8 text-xs disabled:opacity-50 cursor-pointer rounded-[6px]"
+                  onClick={() =>
+                    setPagination((prev) => ({ ...prev, page: Math.max(1, prev.page - 1) }))
+                  }
+                  disabled={pagination.page === 1}
+                  className="admin-btn admin-btn-outline px-3 h-8 text-xs disabled:opacity-50 cursor-pointer rounded-[4px]"
                 >
                   Previous
                 </button>
                 <span className="text-xs font-medium text-[var(--admin-text-secondary)] px-1">
-                  Page {page} of {meta.pages}
+                  Page {pagination.page} of {pagination.pages}
                 </span>
                 <button
-                  onClick={() => setPage((p) => Math.min(meta.pages, p + 1))}
-                  disabled={page === meta.pages}
-                  className="admin-btn admin-btn-outline px-3 h-8 text-xs disabled:opacity-50 cursor-pointer rounded-[6px]"
+                  onClick={() =>
+                    setPagination((prev) => ({
+                      ...prev,
+                      page: Math.min(pagination.pages, prev.page + 1),
+                    }))
+                  }
+                  disabled={pagination.page === pagination.pages}
+                  className="admin-btn admin-btn-outline px-3 h-8 text-xs disabled:opacity-50 cursor-pointer rounded-[4px]"
                 >
                   Next
                 </button>
@@ -796,13 +1095,13 @@ export function AdminCustomers() {
         </div>
       )}
 
-      {/* Slide-over Profile */}
+      {/* ─── Customer Detail App Drawer & Popup ─── */}
       <AnimatePresence>
         {selectedCustomerId && (
-          <AdminCustomerProfileModal
-            customer={
-              customers.find((c) => c._id === selectedCustomerId) || { _id: selectedCustomerId }
-            }
+          <AdminCustomerDetailDrawer
+            customerId={selectedCustomerId}
+            customerData={customers.find((c) => c._id === selectedCustomerId)}
+            isOpen={!!selectedCustomerId}
             onClose={() => setSelectedCustomerId(null)}
             onDelete={handleDeleteCustomer}
           />
@@ -811,3 +1110,5 @@ export function AdminCustomers() {
     </motion.div>
   );
 }
+
+export default AdminCustomers;

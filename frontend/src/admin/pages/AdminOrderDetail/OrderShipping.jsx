@@ -14,9 +14,14 @@ export function OrderShipping({ order }) {
     (typeof order.userId === 'string' && order.userId);
 
   const customerName =
-    order.user?.name || order.customer || order.shippingAddress?.name || 'Customer';
-  const customerPhone = order.user?.phone || order.phone || order.shippingAddress?.phone || '';
-  const customerEmail = order.user?.email || order.email || order.shippingAddress?.email || '';
+    order.customerName ||
+    order.user?.name ||
+    order.customer ||
+    order.shippingAddress?.name ||
+    'Customer';
+  const customerPhone = order.customerPhone || order.user?.phone || order.phone || '';
+  const customerEmail = order.customerEmail || order.user?.email || order.email || '';
+  const shippingPhone = order.shippingPhone || order.shippingAddress?.phone || '';
 
   const resolvedCustomer = {
     _id: customerId,
@@ -80,11 +85,11 @@ export function OrderShipping({ order }) {
             <div className="text-[12px] text-[var(--admin-text-secondary)] mt-0.5 flex flex-col gap-0.5">
               <span className="flex items-center gap-1.5">
                 <span className="material-symbols-outlined text-[14px]">phone</span>{' '}
-                {order.phone || order.shippingAddress?.phone}
+                {customerPhone || 'Phone not provided'}
               </span>
               <span className="flex items-center gap-1.5">
                 <span className="material-symbols-outlined text-[14px]">mail</span>{' '}
-                {order.email || order.shippingAddress?.email || order.user?.email}
+                {customerEmail || order.shippingAddress?.email || 'Email not provided'}
               </span>
             </div>
           </div>
@@ -143,6 +148,30 @@ export function OrderShipping({ order }) {
                     {order.shipping?.pincode || order.shippingAddress?.pincode || 'N/A'}
                   </span>
                 </p>
+              )}
+              {shippingPhone && (
+                <p className="mt-1 text-[12px] font-semibold text-[var(--admin-text-secondary)] flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[14px]">call</span>
+                  Shipping Contact: {shippingPhone}
+                </p>
+              )}
+              {order.paymentMethod?.toLowerCase() === 'cod' && (
+                <div className="mt-2">
+                  {order.codPhoneVerified ? (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                      <span className="material-symbols-outlined text-[14px]">verified</span>
+                      COD Phone Verified{' '}
+                      {order.codVerifiedAt
+                        ? `(${new Date(order.codVerifiedAt).toLocaleDateString()})`
+                        : ''}
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                      <span className="material-symbols-outlined text-[14px]">warning</span>
+                      COD Phone Not Verified
+                    </span>
+                  )}
+                </div>
               )}
             </div>
           </div>

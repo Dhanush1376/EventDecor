@@ -131,7 +131,7 @@ const WhatsAppAutomationSchema = new Schema(
       reminderMessage: {
         type: String,
         default:
-          '⏰ ORDER {{order_number}} has been pending for {{timeout}} minutes. Please process immediately.',
+          'ORDER {{order_number}} has been pending for {{timeout}} minutes. Please process immediately.',
       },
     },
 

@@ -41,6 +41,19 @@ export interface IOrder extends ISoftDeleted {
   user: mongoose.Types.ObjectId;
   items: IOrderItem[];
   shippingAddress: IShippingAddress;
+  customerName?: string;
+  customerEmail?: string;
+  customerPhone?: string;
+  shippingPhone?: string;
+  codPhoneVerified?: boolean;
+  codVerifiedAt?: Date;
+  paymentDetails?: {
+    provider?: string;
+    paymentId?: string;
+    orderId?: string;
+    method?: string;
+    upiVpa?: string;
+  };
   paymentMethod: string;
   isCustomOrder?: boolean;
   customOrderId?: mongoose.Types.ObjectId;

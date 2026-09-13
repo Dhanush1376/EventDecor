@@ -97,7 +97,8 @@ async function run() {
 
   // 6. Test email provider directly
   console.log('[6] TESTING EMAIL PROVIDER DIRECTLY');
-  const testRecipient = process.env.SMTP_USER || 'dhanush1376@gmail.com';
+  const testRecipient =
+    process.env.SMTP_USER || process.env.TEST_MARKETING_RECIPIENT || 'test@example.com';
   try {
     const { sendEmail } = require('../services/emailProvider');
     const result = await sendEmail({
@@ -105,7 +106,7 @@ async function run() {
       subject: '[TEST] EventDecor Email System Diagnostic',
       html: `
         <div style="font-family: sans-serif; padding: 20px; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #111827;">🔧 Email System Test</h2>
+          <h2 style="color: #111827;">Email System Test</h2>
           <p>This is a diagnostic email sent by the EventDecor email system test script.</p>
           <p>If you receive this, the email provider is working correctly.</p>
           <p style="color: #6b7280; font-size: 12px;">Sent at: ${new Date().toISOString()}</p>

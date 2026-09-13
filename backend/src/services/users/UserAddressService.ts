@@ -1,5 +1,20 @@
 import ApiError from '../../utils/ApiError';
 import Address from '../../models/Address';
+import User from '../../models/User';
+import { invalidateUserSessionCaches } from '../../utils/cache/userSessionCache';
+
+async function syncProfileNameFromAddress(userId: string, name?: string) {
+  if (!name || typeof name !== 'string') return;
+  const trimmed = name.trim();
+  if (!trimmed || trimmed.toLowerCase() === 'customer') return;
+
+  const user = await User.findById(userId);
+  if (user && (!user.name || user.name === 'Customer' || user.name.trim() === '')) {
+    user.name = trimmed;
+    await user.save();
+    await invalidateUserSessionCaches(String(userId));
+  }
+}
 
 export class UserAddressService {
   static async getAddresses(userId: string) {
@@ -24,6 +39,8 @@ export class UserAddressService {
       user: userId,
       isDefault: shouldBeDefault,
     });
+
+    await syncProfileNameFromAddress(userId, data.name);
 
     return Address.find({ user: userId });
   }
@@ -50,6 +67,8 @@ export class UserAddressService {
     });
 
     if (!address) throw new ApiError(404, 'Address not found');
+
+    await syncProfileNameFromAddress(userId, data.name);
 
     return Address.find({ user: userId });
   }

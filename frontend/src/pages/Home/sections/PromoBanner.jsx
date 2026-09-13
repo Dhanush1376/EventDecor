@@ -4,7 +4,7 @@ import { useWebsiteContent } from '../../../hooks/useWebsiteContent';
 import { useCart } from '../../../context/CartContext';
 import { useActiveCoupons } from '../../../hooks/useActiveCoupons';
 import toast from 'react-hot-toast';
-import Sparkles from 'lucide-react/dist/esm/icons/sparkles';
+import Tag from 'lucide-react/dist/esm/icons/tag';
 
 /**
  * A slim, elegant promotional banner that highlights an offer or campaign.
@@ -363,7 +363,7 @@ export function PromoBanner({ previewContent }) {
         key={`${prefix}-${i}`}
         className="inline-flex items-center gap-6 sm:gap-8 shrink-0 cursor-pointer group/item py-0.5 select-none"
       >
-        <Sparkles className="w-3.5 h-3.5 text-[var(--color-primary-variant)] shrink-0 pointer-events-none" />
+        <Tag className="w-3.5 h-3.5 text-[var(--color-primary-variant)] shrink-0 pointer-events-none" />
         <span className="text-neutral-900 font-label-sm text-[10px] sm:text-[10.5px] tracking-[0.22em] uppercase font-bold whitespace-nowrap select-none pointer-events-none">
           {promoText}
         </span>

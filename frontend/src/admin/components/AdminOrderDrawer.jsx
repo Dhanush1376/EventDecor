@@ -248,33 +248,76 @@ export function AdminOrderDrawer({
             <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-[12px] pt-4 border-t border-[var(--admin-border-subtle)]">
               <div>
                 <p className="text-[var(--admin-text-tertiary)] font-medium mb-0.5 text-[10px] uppercase">
-                  Phone
+                  Customer Phone
                 </p>
                 <p className="font-bold text-[var(--admin-text-primary)] flex items-center gap-1">
                   <span className="material-symbols-outlined text-[14px] text-[var(--admin-text-tertiary)]">
                     call
                   </span>
-                  {selectedOrder.phone}
+                  {selectedOrder.customerPhone || selectedOrder.phone || 'N/A'}
                 </p>
               </div>
               <div>
                 <p className="text-[var(--admin-text-tertiary)] font-medium mb-1 text-[10px] uppercase">
                   Payment Mode
                 </p>
-                <span
-                  className={`inline-flex items-center px-2 py-0.5 rounded-[4px] text-[11px] font-bold border ${
-                    selectedOrder.payment?.toLowerCase().includes('pending') ||
-                    selectedOrder.payment?.toLowerCase().includes('cod')
-                      ? 'bg-amber-50 text-amber-700 border-amber-200'
-                      : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                  }`}
-                >
-                  {selectedOrder.payment?.toLowerCase().includes('pending') && (
-                    <span className="material-symbols-outlined text-[14px] mr-1">schedule</span>
+                <div className="flex flex-col gap-1 items-start">
+                  <span
+                    className={`inline-flex items-center px-2 py-0.5 rounded-[4px] text-[11px] font-bold border ${
+                      selectedOrder.payment?.toLowerCase().includes('pending') ||
+                      selectedOrder.payment?.toLowerCase().includes('cod')
+                        ? 'bg-amber-50 text-amber-700 border-amber-200'
+                        : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    }`}
+                  >
+                    {selectedOrder.payment?.toLowerCase().includes('pending') && (
+                      <span className="material-symbols-outlined text-[14px] mr-1">schedule</span>
+                    )}
+                    {selectedOrder.payment}
+                  </span>
+                  {selectedOrder.codPhoneVerified && (
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                      ✓ COD Phone Verified
+                    </span>
                   )}
-                  {selectedOrder.payment}
-                </span>
+                  {selectedOrder.paymentMethod?.toLowerCase() === 'cod' &&
+                    !selectedOrder.codPhoneVerified && (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                        ⚠ COD Unverified
+                      </span>
+                    )}
+                </div>
               </div>
+
+              {(selectedOrder.razorpayPaymentId || selectedOrder.paymentDetails?.paymentId) && (
+                <div>
+                  <p className="text-[var(--admin-text-tertiary)] font-medium mb-0.5 text-[10px] uppercase">
+                    Payment ID
+                  </p>
+                  <p
+                    className="font-mono text-[11px] font-bold text-[var(--admin-text-primary)] truncate"
+                    title={
+                      selectedOrder.paymentDetails?.paymentId || selectedOrder.razorpayPaymentId
+                    }
+                  >
+                    {selectedOrder.paymentDetails?.paymentId || selectedOrder.razorpayPaymentId}
+                  </p>
+                </div>
+              )}
+              {selectedOrder.upiVpa && (
+                <div>
+                  <p className="text-[var(--admin-text-tertiary)] font-medium mb-0.5 text-[10px] uppercase">
+                    UPI VPA
+                  </p>
+                  <p
+                    className="font-mono text-[11px] font-bold text-indigo-600 truncate"
+                    title={selectedOrder.upiVpa}
+                  >
+                    {selectedOrder.upiVpa}
+                  </p>
+                </div>
+              )}
+
               <div>
                 <p className="text-[var(--admin-text-tertiary)] font-medium mb-0.5 text-[10px] uppercase">
                   Invoice Date
@@ -304,10 +347,18 @@ export function AdminOrderDrawer({
             </div>
 
             {/* Delivery Address Row */}
-            <div className="pt-2 border-t border-[var(--admin-border-subtle)] mt-1">
-              <p className="text-[var(--admin-text-tertiary)] font-medium mb-0.5 text-[10px] uppercase">
-                Delivery Address
-              </p>
+            <div className="pt-2 border-t border-[var(--admin-border-subtle)] mt-1 space-y-1">
+              <div className="flex items-center justify-between">
+                <p className="text-[var(--admin-text-tertiary)] font-medium text-[10px] uppercase">
+                  Delivery Address & Shipping Contact
+                </p>
+                {selectedOrder.shippingPhone && (
+                  <span className="text-[11px] font-bold text-[var(--admin-text-secondary)] flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[13px]">local_shipping</span>
+                    {selectedOrder.shippingPhone}
+                  </span>
+                )}
+              </div>
               <p className="font-bold text-[var(--admin-text-primary)] flex items-start gap-1.5 mt-1">
                 <span className="material-symbols-outlined text-[14px] text-[var(--admin-text-tertiary)] mt-0.5">
                   location_on

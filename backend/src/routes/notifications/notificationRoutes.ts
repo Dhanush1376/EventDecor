@@ -5,9 +5,6 @@ import {
   trackEmailOpen,
   trackEmailClick,
   unsubscribeRecipient,
-  createCampaign,
-  getCampaigns,
-  triggerCampaignSend,
   getTemplates,
   createTemplate,
   updateTemplate,
@@ -47,12 +44,8 @@ router.get('/track/open/:token', trackEmailOpen);
 router.get('/track/click/:token', trackEmailClick);
 
 // ==========================================
-// PROTECTED ADMIN NOTIFICATION CAMPAIGNS & ANALYTICS
+// PROTECTED ADMIN NOTIFICATIONS & ANALYTICS
 // ==========================================
-router.post('/admin/campaigns', requireAuth, requireAdmin, createCampaign);
-router.get('/admin/campaigns', requireAuth, requireAdmin, getCampaigns);
-router.post('/admin/campaigns/:id/send', requireAuth, requireAdmin, triggerCampaignSend);
-
 router.get('/admin/templates', requireAuth, requireAdmin, getTemplates);
 router.post('/admin/templates', requireAuth, requireAdmin, createTemplate);
 router.patch('/admin/templates/:id', requireAuth, requireAdmin, updateTemplate);

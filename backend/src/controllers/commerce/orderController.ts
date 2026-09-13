@@ -182,27 +182,34 @@ export const handleRazorpayWebhook = asyncHandler(async (req: Request, res: Resp
 });
 
 export const sendCodOtp = asyncHandler(async (req: Request, res: Response) => {
-  const { email } = req.body;
-  if (!email) {
-    throw new ApiError(400, 'Email address is required');
+  const { phone } = req.body;
+  if (!phone) {
+    throw new ApiError(400, 'Delivery phone number is required to receive verification OTP');
   }
 
-  logger.info(`[ORDER COD] Generating OTP for COD verification: ${email}`);
-  await OtpAuthService.generateCodOTP(email, req.ip);
+  const userId = req.user?.id;
+  logger.info(`[ORDER COD] Generating SMS OTP for COD delivery phone verification`);
+  const result = await OtpAuthService.generateCodOTP(phone, userId, req.ip);
 
-  res.status(200).json(new ApiResponse(true, 'Verification code sent to your email successfully'));
+  res
+    .status(200)
+    .json(new ApiResponse(true, 'Verification code sent to your delivery phone number', result));
 });
 
 export const verifyCodOtp = asyncHandler(async (req: Request, res: Response) => {
-  const { email, otp } = req.body;
-  if (!email || !otp) {
-    throw new ApiError(400, 'Email and OTP are required');
+  const { phone, challengeId, otp } = req.body;
+  const identifier = phone || challengeId;
+  if (!identifier || !otp) {
+    throw new ApiError(400, 'Delivery phone or challenge ID and OTP are required');
   }
 
-  logger.info(`[ORDER COD] Verifying OTP for COD: ${email}`);
-  await OtpAuthService.verifyCodOTP(email, otp);
+  const userId = req.user?.id;
+  logger.info(`[ORDER COD] Verifying OTP for COD delivery phone`);
+  const result = await OtpAuthService.verifyCodOTP(identifier, otp, userId);
 
-  res.status(200).json(new ApiResponse(true, 'Email verified successfully'));
+  res
+    .status(200)
+    .json(new ApiResponse(true, 'Delivery phone verified successfully for COD order', result));
 });
 
 export const getOrderTimeline = asyncHandler(async (req: Request, res: Response) => {

@@ -9,7 +9,6 @@ import User from '../../models/User';
 import asyncHandler from '../../utils/asyncHandler';
 import ApiResponse from '../../utils/ApiResponse';
 import ApiError from '../../utils/ApiError';
-import { runCampaignDispatch } from '../../services/notificationService';
 import logger from '../../config/logger';
 import { getFrontendUrl } from '../../utils/getFrontendUrl';
 import { EmailAdapter } from '../../services/notifications/adapters/EmailAdapter';
@@ -213,72 +212,16 @@ export const unsubscribeRecipient = asyncHandler(async (req: Request, res: Respo
 
   // Redirect to a beautiful confirmation screen or send clean styled confirmation
   res.send(`
-    <div style="background-color: #faf9f6; font-family: 'Playfair Display', serif; max-width: 500px; margin: 50px auto; padding: 40px; border: 1px solid #efeeeb; border-radius: 12px; text-align: center; color: #2d2b29; box-shadow: 0 10px 30px rgba(0,0,0,0.03);">
-      <h2 style="color: #735c00; font-weight: 300; letter-spacing: 2px;">✦ Unsubscribed ✦</h2>
-      <p style="font-family: sans-serif; font-size: 14px; color: #7f7663; line-height: 1.6; margin-top: 15px;">
-        Your preference has been logged successfully. You have been removed from our marketing newsletter list and will no longer receive curations or offers from Siri Arts.
+    <div style="background-color: #f9fafb; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 500px; margin: 50px auto; padding: 40px; border: 1px solid #e5e7eb; border-radius: 12px; text-align: center; color: #111827;">
+      <h2 style="color: #111827; font-size: 20px; font-weight: 700; margin: 0 0 12px 0;">Unsubscribed</h2>
+      <p style="font-size: 14px; color: #4b5563; line-height: 1.6; margin: 0 0 24px 0;">
+        Your preference has been logged successfully. You have been removed from our marketing newsletter list and will no longer receive marketing emails from Siri Arts & Crafts.
       </p>
-      <div style="margin-top: 25px;">
-        <a href="${getFrontendUrl()}" style="display: inline-block; background-color: #735c00; color: #ffffff; text-decoration: none; padding: 10px 25px; border-radius: 50px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; font-family: sans-serif;">Return to Storefront</a>
+      <div>
+        <a href="${getFrontendUrl()}" style="display: inline-block; background-color: #111827; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-size: 13px; font-weight: 500;">Return to Storefront</a>
       </div>
     </div>
   `);
-});
-
-/**
- * ADMIN: Create Custom Email Campaign
- */
-export const createCampaign = asyncHandler(async (req: Request, res: Response) => {
-  const { title, subject, templateId, customHtml, targetAudience, scheduledAt } = req.body;
-
-  const campaign = new EmailCampaign({
-    title,
-    subject,
-    templateId: templateId ? new mongoose.Types.ObjectId(templateId) : undefined,
-    customHtml,
-    targetAudience: {
-      role: targetAudience?.role || 'all',
-      consentedOnly: targetAudience?.consentedOnly !== false, // default true
-    },
-    scheduledAt: scheduledAt ? new Date(scheduledAt) : undefined,
-    status: scheduledAt ? 'scheduled' : 'draft',
-  });
-
-  await campaign.save();
-  res.status(201).json(new ApiResponse(true, 'Campaign created successfully', campaign));
-});
-
-/**
- * ADMIN: Fetch All Campaigns
- */
-export const getCampaigns = asyncHandler(async (req: Request, res: Response) => {
-  const campaigns = await EmailCampaign.find()
-    .populate('templateId')
-    .sort({ createdAt: -1 })
-    .lean();
-  res.status(200).json(new ApiResponse(true, 'Campaigns fetched', campaigns));
-});
-
-/**
- * ADMIN: Trigger Campaign Dispatch (instant)
- */
-export const triggerCampaignSend = asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const campaign = await EmailCampaign.findById(id);
-  if (!campaign) {
-    throw new ApiError(404, 'Campaign not found');
-  }
-
-  if (campaign.status === 'sending' || campaign.status === 'sent') {
-    throw new ApiError(400, 'Campaign is already sending or has been processed');
-  }
-
-  // Trigger dispatch in background asynchronously
-  runCampaignDispatch(campaign.id).catch((err) => {
-    logger.error(`Error dispatched in background for campaign ${campaign.id}:`, err);
-  });
-
-  res.status(200).json(new ApiResponse(true, 'Campaign dispatch initiated in background'));
 });
 
 /**

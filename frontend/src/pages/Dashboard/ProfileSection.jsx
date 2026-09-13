@@ -10,7 +10,7 @@ import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 
 export function ProfileSection() {
-  const { user: dashboardUser, checkAuth } = useDashboard();
+  const { user: dashboardUser, checkAuth, addresses } = useDashboard();
   const { user, refreshUser } = useAuth();
 
   // Profile Form state
@@ -34,8 +34,18 @@ export function ProfileSection() {
 
   useEffect(() => {
     if (dashboardUser) {
+      let initialName = dashboardUser.name || '';
+      if (!initialName || initialName === 'Customer') {
+        const addrWithName = addresses?.find(
+          (a) => a.name && a.name.trim() && a.name.trim().toLowerCase() !== 'customer',
+        );
+        if (addrWithName) {
+          initialName = addrWithName.name.trim();
+        }
+      }
+
       setProfileForm({
-        name: dashboardUser.name || '',
+        name: initialName,
         phone: dashboardUser.phone || '',
         gender: dashboardUser.gender || '',
       });
@@ -43,7 +53,7 @@ export function ProfileSection() {
         setPhoneToLink(dashboardUser.phone);
       }
     }
-  }, [dashboardUser, phoneToLink]);
+  }, [dashboardUser, phoneToLink, addresses]);
 
   const fetchProviders = async () => {
     try {

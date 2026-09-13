@@ -15,7 +15,7 @@ export const Header = (logoUrl?: string, brandName: string = 'Siri Arts & Crafts
     <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 30px; border-bottom: 2px solid #735c00; padding-bottom: 20px;">
       <tr>
         <td align="center" style="font-family: 'Georgia', serif; font-size: 24px; font-weight: bold; color: #735c00; letter-spacing: 2px;">
-          ✦ ${brandName.toUpperCase()} ✦
+          ${brandName.toUpperCase()}
         </td>
       </tr>
     </table>

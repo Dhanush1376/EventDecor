@@ -21,7 +21,7 @@ export class SlackAdapter {
               type: 'header',
               text: {
                 type: 'plain_text',
-                text: `${priority === 'critical' ? '🚨' : 'ℹ️'} ${payload.subject}`,
+                text: `[${priority.toUpperCase()}] ${payload.subject}`,
               },
             },
             {

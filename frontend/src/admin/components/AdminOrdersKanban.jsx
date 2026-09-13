@@ -29,6 +29,7 @@ export function AdminOrdersKanban({
   openOrderDrawer,
   updateOrderStatus,
   deleteOrder,
+  onResetFilters,
 }) {
   return (
     <>
@@ -37,10 +38,19 @@ export function AdminOrdersKanban({
           <span className="material-symbols-outlined text-[36px] text-[var(--admin-text-tertiary)] mb-2">
             search_off
           </span>
-          <p className="text-[12px] font-bold text-[var(--admin-text-secondary)]">Data Not Found</p>
-          <p className="text-[11px] mt-0.5 text-[var(--admin-text-tertiary)]">
-            Try adjusting your active search keywords or status tabs.
+          <p className="text-[13px] font-bold text-[var(--admin-text-primary)]">No Orders Found</p>
+          <p className="text-[11.5px] mt-0.5 text-[var(--admin-text-secondary)] max-w-sm">
+            Try adjusting your active search keywords or resetting status filters.
           </p>
+          {onResetFilters && (
+            <button
+              type="button"
+              onClick={onResetFilters}
+              className="mt-3 admin-btn admin-btn-outline text-xs h-8 px-3 cursor-pointer"
+            >
+              Reset Filters
+            </button>
+          )}
         </div>
       ) : (
         allStatuses.slice(0, 5).map((status) => {

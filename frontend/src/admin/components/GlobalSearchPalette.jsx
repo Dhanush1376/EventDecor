@@ -111,13 +111,6 @@ const NAV_ITEMS = [
     keywords: 'revenues, insights, views, sales graphs',
   },
   {
-    label: 'Marketing Campaigns',
-    path: '/admin/campaigns',
-    category: 'Navigation',
-    icon: 'campaign',
-    keywords: 'emails, subscribers, newsletters, push notifications',
-  },
-  {
     label: 'Staff Team Management',
     path: '/admin/team',
     category: 'Navigation',

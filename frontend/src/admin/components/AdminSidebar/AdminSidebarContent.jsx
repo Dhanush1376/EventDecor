@@ -5,6 +5,7 @@ import { SiriLogo } from '../../../components/ui/SiriLogo';
 import { useAuth } from '../../../context/AuthContext';
 import { useAdmin } from '../../context/AdminContext';
 
+// Admin sidebar content renderer with dynamic section role filtering and active path highlights
 export function AdminSidebarContent({
   sidebarOpen,
   setSidebarMobileOpen,
@@ -93,7 +94,13 @@ export function AdminSidebarContent({
         className="flex-1 overflow-y-auto py-2 px-2 custom-scrollbar space-y-3"
       >
         {allowedSections.map((section, si) => {
-          const isCollapsed = collapsedSections[si] && sidebarOpen && !sidebarSearch;
+          const hasActiveChild = section.items.some((item) =>
+            item.path.includes('?')
+              ? location.pathname + location.search === item.path
+              : item.path !== '/admin' && location.pathname.startsWith(item.path),
+          );
+          const isCollapsed =
+            collapsedSections[si] && sidebarOpen && !sidebarSearch && !hasActiveChild;
           return (
             <div key={si} className="space-y-0.5">
               {sidebarOpen && (

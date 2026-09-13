@@ -32,6 +32,10 @@ const NO_CACHE_PATHS = [
   '/notifications',
   '/health',
   '/admin',
+  '/coupons',
+  '/marketing',
+  '/customer-intelligence',
+  '/customers',
 ];
 
 const resolveTtl = (url = '') => {

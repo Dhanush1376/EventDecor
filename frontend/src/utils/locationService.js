@@ -98,7 +98,11 @@ function createNormalizedAddress({
 /**
  * Attempts to retrieve coordinates via browser navigator.geolocation (Tier 1).
  */
-function getBrowserCoordinates() {
+/**
+ * Attempts to retrieve high-precision pinpoint coordinates via browser navigator.geolocation (Tier 1).
+ * Employs enableHighAccuracy: true, maximumAge: 0, and progressive accuracy filtering.
+ */
+function getBrowserCoordinates(options = {}) {
   return new Promise((resolve, reject) => {
     if (typeof window === 'undefined' || typeof navigator === 'undefined') {
       return reject(new Error('Browser environment unavailable'));
@@ -118,43 +122,152 @@ function getBrowserCoordinates() {
       return reject(new Error('Insecure context: geolocation requires HTTPS or localhost'));
     }
 
-    const options = {
-      enableHighAccuracy: false,
-      timeout: 10000,
-      maximumAge: 300000, // 5 minutes cache for fast response
+    let resolved = false;
+    let watchId = null;
+    let bestCoords = null;
+    let timer = null;
+    let progressiveTimer = null;
+
+    const cleanup = () => {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+      if (progressiveTimer) {
+        clearTimeout(progressiveTimer);
+        progressiveTimer = null;
+      }
+      if (watchId !== null && typeof navigator.geolocation.clearWatch === 'function') {
+        try {
+          navigator.geolocation.clearWatch(watchId);
+        } catch (_) {}
+        watchId = null;
+      }
     };
 
-    let resolved = false;
-    const timer = setTimeout(() => {
-      if (!resolved) {
-        resolved = true;
-        reject(new Error('Geolocation request timed out'));
-      }
-    }, options.timeout + 1000);
+    const targetAccuracyMeters = options.targetAccuracy || 35; // Pinpoint if <= 35m
+    const timeoutMs = options.timeout || 12000;
 
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        if (resolved) return;
-        resolved = true;
-        clearTimeout(timer);
-        if (pos?.coords) {
-          resolve({
-            latitude: pos.coords.latitude,
-            longitude: pos.coords.longitude,
-            source: 'gps',
-          });
-        } else {
-          reject(new Error('No coordinates returned by GPS'));
-        }
-      },
-      (err) => {
-        if (resolved) return;
-        resolved = true;
-        clearTimeout(timer);
+    timer = setTimeout(() => {
+      if (resolved) return;
+      resolved = true;
+      cleanup();
+
+      if (bestCoords) {
+        resolve(bestCoords);
+      } else {
+        const err = new Error('Geolocation request timed out');
+        err.code = 3;
         reject(err);
-      },
-      options,
-    );
+      }
+    }, timeoutMs);
+
+    const handleSuccess = (pos) => {
+      if (resolved) return;
+      if (!pos?.coords) return;
+
+      const acc = typeof pos.coords.accuracy === 'number' ? pos.coords.accuracy : 25;
+      const reading = {
+        latitude: pos.coords.latitude,
+        longitude: pos.coords.longitude,
+        accuracy: acc,
+        source: 'gps',
+        timestamp: pos.timestamp || Date.now(),
+      };
+
+      if (!bestCoords || acc < bestCoords.accuracy) {
+        bestCoords = reading;
+      }
+
+      // If pinpoint accuracy is achieved (<= 35m), resolve immediately without waiting
+      if (acc <= targetAccuracyMeters) {
+        resolved = true;
+        cleanup();
+        resolve(reading);
+        return;
+      }
+
+      // If we got a decent reading (> 35m, but <= 200m), wait at most 2.5s for GPS satellite lock to sharpen
+      if (!progressiveTimer) {
+        progressiveTimer = setTimeout(() => {
+          if (!resolved && bestCoords) {
+            resolved = true;
+            cleanup();
+            resolve(bestCoords);
+          }
+        }, 2500);
+      }
+    };
+
+    const handleError = (err) => {
+      if (resolved) return;
+      if (bestCoords) {
+        resolved = true;
+        cleanup();
+        resolve(bestCoords);
+        return;
+      }
+      resolved = true;
+      cleanup();
+      reject(err);
+    };
+
+    const geoOptions = {
+      enableHighAccuracy: true, // Force GPS hardware and active Wi-Fi triangulation
+      timeout: timeoutMs,
+      maximumAge: 0, // Never use stale cached coordinates
+    };
+
+    if (typeof navigator.geolocation.watchPosition === 'function') {
+      try {
+        watchId = navigator.geolocation.watchPosition(handleSuccess, handleError, geoOptions);
+      } catch (_) {
+        if (typeof navigator.geolocation.getCurrentPosition === 'function') {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              if (resolved) return;
+              resolved = true;
+              cleanup();
+              if (pos?.coords) {
+                resolve({
+                  latitude: pos.coords.latitude,
+                  longitude: pos.coords.longitude,
+                  accuracy: typeof pos.coords.accuracy === 'number' ? pos.coords.accuracy : 25,
+                  source: 'gps',
+                });
+              } else {
+                reject(new Error('No coordinates returned by GPS'));
+              }
+            },
+            handleError,
+            geoOptions,
+          );
+        }
+      }
+    } else if (typeof navigator.geolocation.getCurrentPosition === 'function') {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          if (resolved) return;
+          resolved = true;
+          cleanup();
+          if (pos?.coords) {
+            resolve({
+              latitude: pos.coords.latitude,
+              longitude: pos.coords.longitude,
+              accuracy: typeof pos.coords.accuracy === 'number' ? pos.coords.accuracy : 25,
+              source: 'gps',
+            });
+          } else {
+            reject(new Error('No coordinates returned by GPS'));
+          }
+        },
+        handleError,
+        geoOptions,
+      );
+    } else {
+      cleanup();
+      reject(new Error('Geolocation method not found'));
+    }
   });
 }
 
@@ -767,60 +880,34 @@ export async function reverseGeocodeCoords(latitude, longitude) {
 /**
  * Unified detector that resolves the current user/device location into normalized address parameters.
  *
- * Tier 1: Attempts GPS/device geolocation.
- * Tier 2: Falls back seamlessly to IP geolocation on non-secure contexts, timeouts, or permission errors.
+ * Tier 1: Pinpoint GPS/device geolocation (High accuracy, hardware GPS, active Wi-Fi triangulation).
+ * Tier 2: Secure IP-based geolocation fallback ONLY for approximate regional bias when GPS is unavailable.
  *
- * @returns {Promise<{ success: boolean, data?: object, error?: string, source?: string }>}
+ * @returns {Promise<{ success: boolean, data?: object, error?: string, source?: string, isPinpoint?: boolean, isApproximate?: boolean, accuracy?: number }>}
  */
 export async function detectAndResolveAddress() {
   let coords = null;
+  let gpsErr = null;
   let tierSource = 'gps';
 
-  // Attempt Tier 1 (Browser geolocation)
+  // Attempt Tier 1: Pinpoint High-Accuracy GPS
   try {
-    coords = await getBrowserCoordinates();
-  } catch (geoErr) {
+    coords = await getBrowserCoordinates({ timeout: 12000, targetAccuracy: 35 });
+  } catch (err) {
+    gpsErr = err;
     log.info(
-      'Browser geolocation unavailable or denied, falling back to IP detection:',
-      geoErr.message,
+      'Browser high-accuracy geolocation unavailable or denied, evaluating fallback:',
+      err.message,
     );
   }
 
-  // Attempt Tier 2 (IP Fallback) if Tier 1 failed
-  if (!coords) {
-    try {
-      const ipResult = await getIPLocation();
-      if (ipResult && ipResult.latitude && ipResult.longitude) {
-        tierSource = 'network';
-        // If IP result already has good address fields (city, state, pincode), reverse geocode to enrich
-        const reverseRes = await reverseGeocodeCoords(ipResult.latitude, ipResult.longitude);
-        if (reverseRes.success && reverseRes.data) {
-          return {
-            success: true,
-            source: tierSource,
-            data: {
-              ...reverseRes.data,
-              city: reverseRes.data.city || ipResult.city,
-              state: reverseRes.data.state || ipResult.state,
-              pincode: reverseRes.data.pincode || ipResult.pincode,
-              source: tierSource,
-            },
-          };
-        }
+  // If GPS coordinates were successfully obtained
+  if (coords && typeof coords.latitude === 'number' && typeof coords.longitude === 'number') {
+    tierSource = 'gps';
+    const accuracy = typeof coords.accuracy === 'number' ? coords.accuracy : null;
+    const isPinpoint = accuracy !== null ? accuracy <= 1500 : true;
 
-        return {
-          success: true,
-          source: tierSource,
-          data: ipResult,
-        };
-      }
-    } catch (ipErr) {
-      log.warn('IP geolocation fallback failed:', ipErr.message);
-    }
-  }
-
-  // If we obtained GPS coordinates, reverse geocode them
-  if (coords) {
+    // Deep reverse-geocode to extract street, building, POI, locality, city, pincode
     const reverseRes = await reverseGeocodeCoords(coords.latitude, coords.longitude);
     if (reverseRes.success && reverseRes.data) {
       const hasDetails = Boolean(
@@ -831,31 +918,96 @@ export async function detectAndResolveAddress() {
       );
       return {
         success: true,
-        source: tierSource,
+        source: 'gps',
+        isPinpoint,
+        accuracy,
         hasDetails,
         data: {
           ...reverseRes.data,
-          source: tierSource,
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+          source: 'gps',
         },
       };
     }
 
-    // Even if reverse geocoding was partial, return the coordinates
+    // Even if reverse geocoding was partial, return exact coordinates
     return {
       success: true,
-      source: tierSource,
+      source: 'gps',
+      isPinpoint,
+      accuracy,
       hasDetails: false,
       data: createNormalizedAddress({
         latitude: coords.latitude,
         longitude: coords.longitude,
-        source: tierSource,
+        source: 'gps',
       }),
     };
   }
 
+  // Check if user actively denied permission
+  const isPermissionDenied =
+    gpsErr?.code === 1 ||
+    /permission denied/i.test(gpsErr?.message || '') ||
+    /denied/i.test(gpsErr?.message || '');
+
+  // If user denied permission, inform them clearly rather than fabricating a false IP address 100km away
+  if (isPermissionDenied) {
+    return {
+      success: false,
+      permissionDenied: true,
+      error:
+        'Location permission was denied. Please allow location access in your browser to get exact pin-point location, or search your address below.',
+    };
+  }
+
+  // Tier 2: IP Fallback - for cases where GPS is not supported, non-secure context, or timed out.
+  // Marked explicitly as approximate so the UI and user are never misled by distant ISP gateways.
+  try {
+    const ipResult = await getIPLocation();
+    if (ipResult && ipResult.latitude && ipResult.longitude) {
+      tierSource = 'network';
+      const reverseRes = await reverseGeocodeCoords(ipResult.latitude, ipResult.longitude);
+      if (reverseRes.success && reverseRes.data) {
+        return {
+          success: true,
+          source: 'network',
+          isPinpoint: false,
+          isApproximate: true,
+          accuracy: 50000, // ~50 km approximate ISP region
+          warning:
+            'Approximate region detected from network. Please drag the pin or search your landmark for exact delivery.',
+          data: {
+            ...reverseRes.data,
+            city: reverseRes.data.city || ipResult.city,
+            state: reverseRes.data.state || ipResult.state,
+            pincode: reverseRes.data.pincode || ipResult.pincode,
+            source: 'network',
+          },
+        };
+      }
+
+      return {
+        success: true,
+        source: 'network',
+        isPinpoint: false,
+        isApproximate: true,
+        accuracy: 50000,
+        warning:
+          'Approximate region detected from network. Please drag the pin or search your landmark for exact delivery.',
+        data: ipResult,
+      };
+    }
+  } catch (ipErr) {
+    log.warn('IP geolocation fallback failed:', ipErr.message);
+  }
+
   return {
     success: false,
-    error: 'Unable to detect location from GPS or network. Please enter address manually.',
+    error: gpsErr?.message?.includes('timed out')
+      ? 'GPS request timed out. Please drag the pin on the map or enter your address manually.'
+      : 'Unable to detect location. Please enter address manually or search a nearby landmark.',
   };
 }
 

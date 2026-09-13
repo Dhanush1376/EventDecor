@@ -27,10 +27,10 @@ export class ReturnNotificationService {
       let type: 'user' | 'system' | 'order' | 'custom_request' | 'payment' | 'inquiry' = 'order';
 
       if (isHighRisk) {
-        title = `🚨 High Risk ${isExchange ? 'Exchange' : 'Return'} Request`;
+        title = `High Risk ${isExchange ? 'Exchange' : 'Return'} Request`;
         type = 'system';
       } else if (isHighValue) {
-        title = `💰 High Value ${isExchange ? 'Exchange' : 'Return'} Request`;
+        title = `High Value ${isExchange ? 'Exchange' : 'Return'} Request`;
         type = 'payment';
       }
 
@@ -167,7 +167,7 @@ export class ReturnNotificationService {
 
   static async alertSlaBreach(returnRequest: IReturnRequest) {
     await createAdminNotification({
-      title: '⚠️ SLA Breach: Return Request Overdue',
+      title: 'SLA Breach: Return Request Overdue',
       message: `Return ${returnRequest.returnId} is overdue in stage: ${returnRequest.sla?.currentStage}`,
       type: 'system',
       actionLink: `/admin/returns/requests/${returnRequest._id}`,

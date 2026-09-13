@@ -12,14 +12,14 @@ export const seedDefaultEmailTemplates = async (): Promise<void> => {
     const defaultTemplates = [
       {
         name: 'Welcome Email',
-        subjectLine: 'Welcome to Siri Arts & Crafts, {{name}} ✦ Discover Timeless Decor',
+        subjectLine: 'Welcome to Siri Arts & Crafts, {{name}} — Discover Timeless Decor',
         htmlContent: getWelcomeEmailTemplate('{{name}}', '{{frontend_url}}'),
         type: 'marketing',
         isActive: true,
       },
       {
         name: 'Suspicious Login Alert',
-        subjectLine: 'Security Alert: New Login Detected ✦ Siri Arts & Crafts',
+        subjectLine: 'Security Alert: New Login Detected — Siri Arts & Crafts',
         htmlContent: getSuspiciousLoginEmailTemplate('{{name}}', '{{loginTime}}', '{{deviceInfo}}'),
         type: 'system',
         isActive: true,

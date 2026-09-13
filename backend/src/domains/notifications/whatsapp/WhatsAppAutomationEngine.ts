@@ -55,7 +55,9 @@ export class WhatsAppAutomationEngine {
     const context = await this.enrichContext(payload);
 
     const priorityResult = await PriorityEngine.evaluate(context);
-    const allBadges = [...priorityResult.badges.map((b) => `${b.emoji} ${b.label}`)];
+    const allBadges = [
+      ...priorityResult.badges.map((b) => (b.emoji ? `${b.emoji} ${b.label}` : b.label)),
+    ];
 
     const { SmartRouter } = require('./SmartRouter');
     const provider = await SmartRouter.getRoute(automation.category || 'utility');

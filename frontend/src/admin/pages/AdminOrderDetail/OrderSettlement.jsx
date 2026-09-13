@@ -83,9 +83,29 @@ export function OrderSettlement({
               <span className="material-symbols-outlined text-[16px] text-gray-500">
                 {order.payment === 'Cash_on_Delivery' ? 'money' : 'credit_card'}
               </span>
-              {order.payment.replace('_', ' ')}
+              {order.payment?.replace('_', ' ')}
             </span>
           </div>
+
+          {(order.paymentDetails?.paymentId || order.razorpayPaymentId) && (
+            <div className="flex items-center justify-between">
+              <span className="text-[13px] text-[var(--admin-text-secondary)]">
+                Razorpay Payment ID
+              </span>
+              <span className="text-[12px] font-mono font-medium text-[var(--admin-text-primary)]">
+                {order.paymentDetails?.paymentId || order.razorpayPaymentId}
+              </span>
+            </div>
+          )}
+
+          {(order.paymentDetails?.upiVpa || order.upiVpa) && (
+            <div className="flex items-center justify-between">
+              <span className="text-[13px] text-[var(--admin-text-secondary)]">UPI VPA</span>
+              <span className="text-[12px] font-mono font-medium text-indigo-600">
+                {order.paymentDetails?.upiVpa || order.upiVpa}
+              </span>
+            </div>
+          )}
         </div>
 
         {hasRental && (

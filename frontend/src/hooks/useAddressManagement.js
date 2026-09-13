@@ -182,7 +182,7 @@ export function useAddressManagement({
   }, []);
 
   const handleFetchCurrentLocation = useCallback(async () => {
-    toast.loading('Detecting your location...', { id: 'gps' });
+    toast.loading('Acquiring pinpoint GPS location...', { id: 'gps' });
     setIsDetectingLocation(true);
 
     try {
@@ -192,6 +192,9 @@ export function useAddressManagement({
         if (d.latitude && d.longitude) {
           setMapPosition({ lat: d.latitude, lng: d.longitude });
         }
+        const resolvedAddressLine =
+          d.address || [d.locality, d.landmark, d.city].filter(Boolean).join(', ');
+
         setAddressFormData((prev) => ({
           ...prev,
           latitude: d.latitude ?? prev.latitude,
@@ -200,16 +203,28 @@ export function useAddressManagement({
           city: d.city || prev.city,
           state: d.state || prev.state,
           locality: d.locality || prev.locality,
-          addressString: d.address || prev.addressString,
+          addressString: res.isPinpoint
+            ? resolvedAddressLine || prev.addressString
+            : prev.addressString || resolvedAddressLine,
           landmark: d.landmark || prev.landmark,
         }));
-        const successMsg =
-          res.source === 'gps'
-            ? 'Location auto-filled from GPS!'
-            : 'Location detected from network!';
-        toast.success(successMsg, { id: 'gps' });
+
+        if (res.isPinpoint && res.source === 'gps') {
+          const accText = res.accuracy ? ` (~${Math.round(res.accuracy)}m)` : '';
+          toast.success(`Exact pinpoint GPS locked${accText}!`, { id: 'gps' });
+        } else if (res.isApproximate) {
+          toast('Approximate region detected from network. Please drag pin to your exact spot.', {
+            id: 'gps',
+            duration: 5000,
+          });
+        } else {
+          toast.success('Location locked!', { id: 'gps' });
+        }
       } else {
-        toast.error(res.error || 'Could not detect location. Please fill manually.', { id: 'gps' });
+        toast.error(res.error || 'Could not detect location. Please fill manually.', {
+          id: 'gps',
+          duration: 5000,
+        });
       }
     } catch (_err) {
       toast.error('Could not detect location. Please fill manually.', { id: 'gps' });

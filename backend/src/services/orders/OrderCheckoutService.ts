@@ -29,6 +29,7 @@ export class OrderCheckoutService {
       idempotencyKey,
       isCustomOrder,
       customOrderId,
+      codVerificationToken,
     } = orderData;
     const isCod = paymentMethod === 'cod';
 
@@ -243,6 +244,74 @@ export class OrderCheckoutService {
             `Maximum order amount for COD is ₹${settings.payments.codMaxOrder}`,
           );
         }
+
+        // --- STRICT COD PHONE VERIFICATION VALIDATION ---
+        if (!shippingAddress || !shippingAddress.phone) {
+          throw new ApiError(
+            400,
+            'A delivery address with a valid phone number is required for Cash on Delivery.',
+          );
+        }
+
+        const { PhoneAuthService } = require('../PhoneAuthService');
+        let normalizedShippingPhone: string;
+        try {
+          normalizedShippingPhone = PhoneAuthService.normalizePhone(shippingAddress.phone);
+        } catch {
+          throw new ApiError(400, 'Invalid delivery address phone number format.');
+        }
+
+        if (!codVerificationToken) {
+          throw new ApiError(
+            400,
+            'Cash on Delivery phone verification is required. Please verify with OTP.',
+          );
+        }
+
+        const jwt = require('jsonwebtoken');
+        let decodedCodToken: any;
+        try {
+          decodedCodToken = jwt.verify(codVerificationToken, process.env.JWT_SECRET!);
+        } catch {
+          throw new ApiError(
+            400,
+            'Invalid or expired COD phone verification session. Please verify again.',
+          );
+        }
+
+        if (decodedCodToken.purpose !== 'COD_ORDER_VERIFICATION') {
+          throw new ApiError(400, 'Invalid COD verification token purpose.');
+        }
+
+        if (decodedCodToken.userId && decodedCodToken.userId.toString() !== userId.toString()) {
+          throw new ApiError(403, 'COD verification does not match the active customer account.');
+        }
+
+        if (decodedCodToken.phone !== normalizedShippingPhone) {
+          throw new ApiError(
+            400,
+            'Verified COD phone does not match the selected delivery address phone. Please re-verify with OTP.',
+          );
+        }
+
+        // Atomic single-use consumption of OtpChallenge to prevent replay
+        const OtpChallenge = require('../../models/OtpChallenge').default;
+        const consumedChallenge = await OtpChallenge.findOneAndUpdate(
+          {
+            challengeId: decodedCodToken.challengeId,
+            purpose: 'COD_VERIFICATION',
+            consumedAt: null,
+          },
+          { $set: { consumedAt: new Date(), exhausted: true } },
+          { session },
+        );
+
+        if (!consumedChallenge) {
+          throw new ApiError(
+            400,
+            'COD verification code has already been used or expired. Please verify again.',
+          );
+        }
       } else if (paymentMethod === 'razorpay') {
         if (!settings.payments.enableRazorpay) {
           throw new ApiError(400, 'Online payments are currently disabled.');
@@ -345,11 +414,32 @@ export class OrderCheckoutService {
           );
         }
 
+        if (shippingAddress?.name && typeof shippingAddress.name === 'string') {
+          const trimmedName = shippingAddress.name.trim();
+          if (trimmedName && trimmedName.toLowerCase() !== 'customer') {
+            if (user && (!user.name || user.name === 'Customer' || user.name.trim() === '')) {
+              user.name = trimmedName;
+              await user.save({ session });
+            }
+          }
+        }
+
+        const { PhoneAuthService } = require('../PhoneAuthService');
+        const normalizedShippingPhone = shippingAddress?.phone
+          ? PhoneAuthService.normalizePhone(shippingAddress.phone)
+          : '';
+
         order = new Order({
           _id: pendingOrderId,
           user: userId,
           items: orderItems,
           shippingAddress,
+          customerName: user?.name || shippingAddress?.name || '',
+          customerEmail: user?.email || shippingAddress?.email || '',
+          customerPhone: user?.phone || normalizedShippingPhone,
+          shippingPhone: normalizedShippingPhone,
+          codPhoneVerified: isCod,
+          codVerifiedAt: isCod ? new Date() : undefined,
           orderType: 'purchase',
           depositTotal,
           subtotal,
@@ -480,6 +570,15 @@ export class OrderCheckoutService {
           logger.error('Failed to trigger WhatsApp notification', e);
         }
 
+        // Marketing lifecycle cancellation & conversion attribution
+        try {
+          const {
+            default: AutomationEngineService,
+          } = require('../marketing/AutomationEngineService');
+          AutomationEngineService.cancelUserEnrollments(userId, 'purchased').catch(() => {});
+          AutomationEngineService.attributeOrderConversion(order).catch(() => {});
+        } catch (_mktErr) {}
+
         return resultInstant;
       } else {
         // FOR RAZORPAY: Do NOT save the Order, do NOT increment coupon usage, do NOT deduct wallet.
@@ -507,9 +606,18 @@ export class OrderCheckoutService {
           );
         }
 
+        const { PhoneAuthService: PhoneAuthSvc } = require('../PhoneAuthService');
+        const normalizedAttemptShippingPhone = shippingAddress?.phone
+          ? PhoneAuthSvc.normalizePhone(shippingAddress.phone)
+          : '';
+
         const attemptData = {
           pendingOrderId,
           userId,
+          customerName: user?.name || shippingAddress?.name || '',
+          customerEmail: user?.email || shippingAddress?.email || '',
+          customerPhone: user?.phone || normalizedAttemptShippingPhone,
+          shippingPhone: normalizedAttemptShippingPhone,
           orderItems,
           shippingAddress,
           orderType: 'purchase',

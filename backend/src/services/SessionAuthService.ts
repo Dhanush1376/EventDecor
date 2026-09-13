@@ -70,7 +70,7 @@ class SessionAuthService {
 
       if (timeSinceUsedMs < GRACE_PERIOD_MS) {
         logger.warn(
-          `[AUTH] Grace period overlap (${Math.round(timeSinceUsedMs / 1000)}s) detected for userId: ${isUsed.userId}. Returning 409 Conflict without revoking sessions.`,
+          `[AUTH] Grace period overlap (${Math.round(timeSinceUsedMs / 1000)}s) detected for userId: ${isUsed.userId}. Servicing concurrent request safely via 409 retry.`,
         );
         throw new ApiError(409, 'Session refreshed concurrently in another tab.');
       }

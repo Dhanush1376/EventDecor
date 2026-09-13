@@ -95,6 +95,7 @@ desktop.ini
 *.sw?
 .history/
 .cursor/
+.claude/
 
 # ------------------------------------------
 # 8. Agent & IDE Artifacts

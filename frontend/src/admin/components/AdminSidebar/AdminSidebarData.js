@@ -136,14 +136,13 @@ export const navSections = [
 
   {
     label: 'Promotions',
-    subtitle: 'Manage discounts and marketing campaigns',
-    roles: ['owner', 'manager', 'support', 'website_manager'],
+    subtitle: 'Manage discount coupons and promotional offers',
     items: [
       {
         label: 'Discount Coupons',
         icon: 'local_offer',
         path: '/admin/coupons',
-        keywords: 'promo, discount, sale, coupon',
+        keywords: 'promo, discount, sale, coupon, vouchers, discount coupons, offers',
         domain: 'orders',
       },
     ],

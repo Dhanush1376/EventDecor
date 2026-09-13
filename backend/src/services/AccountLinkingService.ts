@@ -88,17 +88,28 @@ export class AccountLinkingService {
     }
 
     const normalizedPhone = PhoneAuthService.normalizePhone(phone);
+    const rawDigits = normalizedPhone.replace(/\D/g, '').slice(-10);
 
-    const existing = await AuthIdentity.findOne({
+    const existingIdentity = await AuthIdentity.findOne({
       provider: 'phone',
-      providerSubjectId: normalizedPhone,
+      $or: [{ providerSubjectId: normalizedPhone }, { providerSubjectId: rawDigits }],
     });
 
-    if (existing && existing.userId.toString() !== userId) {
+    if (existingIdentity && existingIdentity.userId.toString() !== userId) {
       throw new ApiError(409, 'This phone number is already connected to another account.');
     }
-    if (existing && existing.userId.toString() === userId) {
+    if (existingIdentity && existingIdentity.userId.toString() === userId) {
       throw new ApiError(400, 'This phone number is already connected to your account.');
+    }
+
+    const existingUser = await User.findOne({
+      $or: [{ phone: normalizedPhone }, { phone: rawDigits }],
+      _id: { $ne: userId },
+      isDeleted: { $ne: true },
+    });
+
+    if (existingUser) {
+      throw new ApiError(409, 'This phone number is already connected to another account.');
     }
 
     const purpose = 'LINK_PHONE';
@@ -182,6 +193,26 @@ export class AccountLinkingService {
     );
 
     const normalizedPhone = challenge.identifier;
+    const rawDigits = normalizedPhone.replace(/\D/g, '').slice(-10);
+
+    const existingIdentity = await AuthIdentity.findOne({
+      provider: 'phone',
+      $or: [{ providerSubjectId: normalizedPhone }, { providerSubjectId: rawDigits }],
+    });
+
+    if (existingIdentity && existingIdentity.userId.toString() !== userId) {
+      throw new ApiError(409, 'This phone number is already connected to another account.');
+    }
+
+    const existingUser = await User.findOne({
+      $or: [{ phone: normalizedPhone }, { phone: rawDigits }],
+      _id: { $ne: userId },
+      isDeleted: { $ne: true },
+    });
+
+    if (existingUser) {
+      throw new ApiError(409, 'This phone number is already connected to another account.');
+    }
 
     try {
       await mongoose.connection.transaction(async (txSession) => {

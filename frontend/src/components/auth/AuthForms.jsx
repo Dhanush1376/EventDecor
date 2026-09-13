@@ -33,8 +33,8 @@ export function UnifiedAuthForm({
             >
               {identifier.length === 0 ? (
                 <>
-                  <Mail className="w-3.5 h-3.5" strokeWidth={1.5} />
-                  Email
+                  <Smartphone className="w-3.5 h-3.5" strokeWidth={1.5} />
+                  Phone or Email
                 </>
               ) : isPhone ? (
                 <>
@@ -54,7 +54,7 @@ export function UnifiedAuthForm({
                 type={isPhone ? 'tel' : 'text'}
                 required
                 className="form-field text-[16px] sm:!text-[12px] !rounded-full !px-5"
-                placeholder="e.g. name@example.com "
+                placeholder="e.g. 9876543210 or name@example.com"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
               />
@@ -318,5 +318,51 @@ export function LinkRequiredScreen({ setStep }) {
         </button>
       </div>
     </div>
+  );
+}
+
+export function NamePromptForm({ name, setName, onSubmit, onSkip, isLoading }) {
+  return (
+    <form onSubmit={onSubmit} className="space-y-6">
+      <div className="space-y-2">
+        <label
+          htmlFor="auth-name-input"
+          className="flex items-center gap-1.5 text-[10px] font-bold text-on-surface-variant/70 tracking-[0.2em] uppercase"
+        >
+          Your Name
+        </label>
+        <input
+          id="auth-name-input"
+          type="text"
+          autoFocus
+          className="form-field text-[16px] sm:!text-[13px] !rounded-full !px-5"
+          placeholder="e.g. Priya Sharma"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+        <p className="text-[11px] text-on-surface-variant/50 font-light pl-1">
+          Help us personalize your experience and order delivery.
+        </p>
+      </div>
+
+      <div className="space-y-3 pt-2">
+        <LoadingButton
+          type="submit"
+          loading={isLoading}
+          disabled={!name || !name.trim()}
+          fullWidth
+          icon="arrow_forward"
+        >
+          Continue
+        </LoadingButton>
+        <button
+          type="button"
+          onClick={onSkip}
+          className="w-full text-center font-label-sm text-[11px] text-on-surface-variant/60 hover:text-on-surface uppercase tracking-[0.18em] font-bold py-2 transition-colors cursor-pointer"
+        >
+          Skip for now
+        </button>
+      </div>
+    </form>
   );
 }

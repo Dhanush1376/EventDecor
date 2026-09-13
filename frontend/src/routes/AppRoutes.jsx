@@ -223,11 +223,6 @@ const AdminPayments = lazy(() =>
 const AdminNotifications = lazy(() =>
   import('../admin/pages/AdminNotifications').then((m) => ({ default: m.AdminNotifications })),
 );
-const AdminCampaigns = lazy(() =>
-  import('../admin/pages/AdminCampaigns').then((m) => ({ default: m.AdminCampaigns })),
-);
-const CampaignManager = lazy(() => import('../admin/pages/Loyalty/CampaignManager'));
-const RuleBuilder = lazy(() => import('../admin/pages/Loyalty/RuleBuilder'));
 const AdminContent = lazy(() =>
   import('../admin/pages/AdminContent').then((m) => ({ default: m.AdminContent })),
 );
@@ -242,13 +237,6 @@ const AdminCategories = lazy(() =>
 );
 const AdminAddCategory = lazy(() =>
   import('../admin/pages/AdminAddCategory').then((m) => ({ default: m.AdminAddCategory })),
-);
-
-const AdminCampaignCreate = lazy(() =>
-  import('../admin/pages/AdminCampaignCreate').then((m) => ({ default: m.AdminCampaignCreate })),
-);
-const AdminTemplateCreate = lazy(() =>
-  import('../admin/pages/AdminTemplateCreate').then((m) => ({ default: m.AdminTemplateCreate })),
 );
 
 const AdminReviews = lazy(() =>
@@ -440,12 +428,6 @@ export function AppRoutes() {
               <Route path="payments" element={<AdminPayments />} />
 
               <Route path="notifications" element={<AdminNotifications />} />
-              <Route path="campaigns" element={<AdminCampaigns />} />
-              <Route path="reward-campaigns" element={<CampaignManager />} />
-              <Route path="reward-campaigns/:campaignId/rules" element={<RuleBuilder />} />
-              <Route path="campaigns/add" element={<AdminCampaignCreate />} />
-              <Route path="campaigns/templates/add" element={<AdminTemplateCreate />} />
-              <Route path="campaigns/templates/edit/:id" element={<AdminTemplateCreate />} />
               <Route path="content" element={<AdminContent />} />
               <Route path="team" element={<AdminTeam />} />
 

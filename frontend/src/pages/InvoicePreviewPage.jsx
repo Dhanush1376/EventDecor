@@ -14,7 +14,7 @@ const sampleReferenceOrder = {
   customer: 'Dhanush Atmakuri',
   shippingAddress: {
     name: 'Dhanush Atmakuri',
-    email: 'dhanush1376@gmail.com',
+    email: 'customer@example.com',
     phone: '9154691315',
     address: '28-1-50, Near enugu chettu, Ongole,',
     city: 'Ongole',

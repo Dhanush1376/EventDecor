@@ -573,6 +573,10 @@ export function AdminOrders({ hideHeader = false }) {
                 openOrderDrawer={openOrderDrawer}
                 updateOrderStatus={updateOrderStatus}
                 deleteOrder={deleteOrder}
+                onResetFilters={() => {
+                  resetAllFilters();
+                  setSearchQuery('');
+                }}
               />
             </motion.div>
           )}

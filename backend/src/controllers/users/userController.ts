@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import crypto from 'crypto';
 import User from '../../models/User';
+import Address from '../../models/Address';
 import asyncHandler from '../../utils/asyncHandler';
 import ApiResponse from '../../utils/ApiResponse';
 import ApiError from '../../utils/ApiError';
@@ -130,6 +131,25 @@ export const getProductCategories = asyncHandler(async (req: Request, res: Respo
 export const getProfile = asyncHandler(async (req: any, res: Response) => {
   const user = await User.findById(req.user.id).select('-password').lean();
   if (!user) throw new ApiError(404, 'User not found');
+
+  // Auto-sync profile name from address if still placeholder 'Customer' or empty
+  if (!user.name || user.name === 'Customer' || user.name.trim() === '') {
+    const address = await Address.findOne({ user: req.user.id })
+      .sort({ isDefault: -1, createdAt: -1 })
+      .lean();
+    if (
+      address &&
+      address.name &&
+      typeof address.name === 'string' &&
+      address.name.trim().toLowerCase() !== 'customer'
+    ) {
+      const realName = address.name.trim();
+      await User.findByIdAndUpdate(req.user.id, { name: realName });
+      user.name = realName;
+      await invalidateUserSessionCaches(String(req.user.id));
+    }
+  }
+
   res.status(200).json(new ApiResponse(true, 'Profile fetched', user));
 });
 

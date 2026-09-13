@@ -3,8 +3,9 @@ import { PhoneAuthService } from '../../services/PhoneAuthService';
 import asyncHandler from '../../utils/asyncHandler';
 import ApiResponse from '../../utils/ApiResponse';
 import { invalidateUserSessionCaches } from '../../utils/cache/userSessionCache';
-import { STAFF_ROLES } from '../../config/adminConfig';
-import { setAdminRefreshCookie, setCustomerRefreshCookie } from '../../utils/security/authCookies';
+import ApiError from '../../utils/ApiError';
+import { isAdministrativeRole } from '../../config/adminConfig';
+import { setCustomerRefreshCookie } from '../../utils/security/authCookies';
 import { regenerateCsrfToken } from '../../middleware/csrfMiddleware';
 
 export const requestPhoneOtp = asyncHandler(async (req: Request, res: Response) => {
@@ -13,13 +14,11 @@ export const requestPhoneOtp = asyncHandler(async (req: Request, res: Response) 
 
   const { challengeId } = await PhoneAuthService.requestOtp(phone, clientIp);
 
-  res
-    .status(200)
-    .json(
-      new ApiResponse(true, 'If the number is valid, you will receive a verification code.', {
-        challengeId,
-      }),
-    );
+  res.status(200).json(
+    new ApiResponse(true, 'If the number is valid, you will receive a verification code.', {
+      challengeId,
+    }),
+  );
 });
 
 export const verifyPhoneOtp = asyncHandler(async (req: Request, res: Response) => {
@@ -34,6 +33,10 @@ export const verifyPhoneOtp = asyncHandler(async (req: Request, res: Response) =
     userAgent,
   );
 
+  if (isAdministrativeRole(result.user?.role)) {
+    throw new ApiError(403, 'Administrative accounts must sign in via the Admin Portal.');
+  }
+
   if (result.requires2FA) {
     return res.status(200).json(
       new ApiResponse(true, 'Two-factor authentication required', {
@@ -46,11 +49,7 @@ export const verifyPhoneOtp = asyncHandler(async (req: Request, res: Response) =
 
   await invalidateUserSessionCaches(String(result.user._id));
 
-  if ((STAFF_ROLES as readonly string[]).includes(result.user.role)) {
-    setAdminRefreshCookie(res, result.refreshToken);
-  } else {
-    setCustomerRefreshCookie(res, result.refreshToken);
-  }
+  setCustomerRefreshCookie(res, result.refreshToken);
 
   const csrfToken = regenerateCsrfToken(res);
 

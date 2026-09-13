@@ -9,8 +9,9 @@ import asyncHandler from '../../utils/asyncHandler';
 import ApiResponse from '../../utils/ApiResponse';
 import ApiError from '../../utils/ApiError';
 import User from '../../models/User';
+import Address from '../../models/Address';
 import { canonicalizeEmail } from '../../utils/email/emailHelper';
-import { STAFF_ROLES } from '../../config/adminConfig';
+import { STAFF_ROLES, isAdministrativeRole } from '../../config/adminConfig';
 import logger from '../../config/logger';
 import {
   cacheProfile,
@@ -63,13 +64,11 @@ export const requestUnifiedOtp = asyncHandler(async (req: Request, res: Response
     }
   }
 
-  res
-    .status(200)
-    .json(
-      new ApiResponse(true, "If the information is valid, we'll send you a verification code.", {
-        challengeId,
-      }),
-    );
+  res.status(200).json(
+    new ApiResponse(true, "If the information is valid, we'll send you a verification code.", {
+      challengeId,
+    }),
+  );
 });
 
 export const verifyOTP = asyncHandler(async (req: Request, res: Response) => {
@@ -101,6 +100,10 @@ export const verifyOTP = asyncHandler(async (req: Request, res: Response) => {
     throw new ApiError(400, 'Invalid verification purpose');
   }
 
+  if (isAdministrativeRole(result.user?.role)) {
+    throw new ApiError(403, 'Administrative accounts must sign in via the Admin Portal.');
+  }
+
   if ((result as { requires2FA?: boolean }).requires2FA) {
     logger.info(`[AUTH] OTP verified — awaiting 2FA for user: ${result.user._id}`);
     return res.status(200).json(
@@ -115,11 +118,7 @@ export const verifyOTP = asyncHandler(async (req: Request, res: Response) => {
   logger.info(`[AUTH] Session created for user ${result.user._id}`);
   await invalidateUserSessionCaches(String(result.user._id));
 
-  if ((STAFF_ROLES as readonly string[]).includes(result.user.role)) {
-    setAdminRefreshCookie(res, result.refreshToken);
-  } else {
-    setCustomerRefreshCookie(res, result.refreshToken);
-  }
+  setCustomerRefreshCookie(res, result.refreshToken);
 
   // Regenerate CSRF token post-login to prevent session fixation
   const csrfToken = regenerateCsrfToken(res);
@@ -144,9 +143,8 @@ export const refreshSession = asyncHandler(async (req: Request, res: Response) =
   ).trim();
   const bodyToken = String(req.body?.refreshToken || req.headers['x-refresh-token'] || '').trim();
 
-  // Prefer bodyToken over cookieToken because the JS client explicitly manages
-  // the fallback token, which avoids issues with corrupted/stale browser cookies.
-  const refreshToken = bodyToken || cookieToken;
+  // Prioritize authoritative HttpOnly cookie over client fallback token
+  const refreshToken = cookieToken || bodyToken;
 
   if (!refreshToken) {
     logger.warn('[AUTH] Refresh attempted without refresh token cookie/body');
@@ -156,10 +154,12 @@ export const refreshSession = asyncHandler(async (req: Request, res: Response) =
   const userAgent = req.headers['user-agent'] || '';
   const result = await SessionAuthService.refreshSession(refreshToken, userAgent);
 
-  if ((STAFF_ROLES as readonly string[]).includes(result.user.role)) {
-    setAdminRefreshCookie(res, result.refreshToken);
-  } else {
-    setCustomerRefreshCookie(res, result.refreshToken);
+  if (result.refreshToken) {
+    if ((STAFF_ROLES as readonly string[]).includes(result.user.role)) {
+      setAdminRefreshCookie(res, result.refreshToken);
+    } else {
+      setCustomerRefreshCookie(res, result.refreshToken);
+    }
   }
 
   // Only echo the rotated refresh token in the JSON body for clients that
@@ -257,7 +257,7 @@ export const getProfile = asyncHandler(async (req: Request, res: Response) => {
   const cacheKey = sessionKeys.profile(userId);
 
   const cached = await getCachedSessionJson<Record<string, unknown>>(cacheKey);
-  if (cached) {
+  if (cached && cached.name && cached.name !== 'Customer') {
     res.setHeader('Cache-Control', 'private, no-store');
     res.setHeader('X-Session-Cache', 'HIT');
     return res.status(200).json(new ApiResponse(true, 'Profile fetched', cached));
@@ -266,6 +266,24 @@ export const getProfile = asyncHandler(async (req: Request, res: Response) => {
   const user = await User.findById(userId).select('-password -twoFactorSecret').lean();
   if (!user) {
     throw new ApiError(404, 'User session not found in database');
+  }
+
+  // Auto-sync profile name from address if still placeholder 'Customer' or empty
+  if (!user.name || user.name === 'Customer' || user.name.trim() === '') {
+    const address = await Address.findOne({ user: userId })
+      .sort({ isDefault: -1, createdAt: -1 })
+      .lean();
+    if (
+      address &&
+      address.name &&
+      typeof address.name === 'string' &&
+      address.name.trim().toLowerCase() !== 'customer'
+    ) {
+      const realName = address.name.trim();
+      await User.findByIdAndUpdate(userId, { name: realName });
+      user.name = realName;
+      await invalidateUserSessionCaches(userId);
+    }
   }
 
   await cacheProfile(userId, user);

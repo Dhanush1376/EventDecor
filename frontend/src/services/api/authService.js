@@ -28,6 +28,10 @@ export const authService = {
     const response = await api.get('/auth/profile', options);
     return response.data;
   },
+  updateProfile: async (data) => {
+    const response = await api.patch('/users/profile', data);
+    return response.data;
+  },
   requestOTP: async (identifier) => {
     const response = await api.post('/auth/request-otp', { identifier });
     return response.data;

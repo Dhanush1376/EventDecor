@@ -30,8 +30,6 @@ export { AdminAnalyticsSkeleton } from './AdminAnalyticsSkeleton';
 export { AdminOperationsAnalyticsSkeleton } from './AdminOperationsAnalyticsSkeleton';
 export { AdminPaymentsSkeleton } from './AdminPaymentsSkeleton';
 export { AdminNotificationsSkeleton } from './AdminNotificationsSkeleton';
-export { AdminCampaignsSkeleton } from './AdminCampaignsSkeleton';
-export { AdminLoyaltySkeleton } from './AdminLoyaltySkeleton';
 export { AdminCouponsSkeleton, AdminCouponCardsSkeleton } from './AdminCouponsSkeleton';
 export { AdminCreateCouponSkeleton } from './AdminCreateCouponSkeleton';
 export { AdminContentSkeleton } from './AdminContentSkeleton';

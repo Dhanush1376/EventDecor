@@ -4,8 +4,11 @@ import { hasSessionMarker } from '../../utils/auth/authStorage';
 const checkAuthLocal = () => hasSessionMarker();
 
 export const couponService = {
-  getAll: async () => {
-    const response = await api.get('/coupons');
+  getAll: async (params = {}) => {
+    const response = await api.get('/coupons', {
+      params: { limit: 100, ...params },
+      _bypassCache: true,
+    });
     return response.data;
   },
   getProductCoupons: async (productId) => {

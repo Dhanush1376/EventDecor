@@ -20,11 +20,23 @@ export class CustomerIntelligenceService {
     return analyticsCache.getOrSet(
       cacheKey,
       async () => {
-        const uId = new mongoose.Types.ObjectId(userId);
-        const userIdStr = userId.toString();
+        const isValidId = mongoose.Types.ObjectId.isValid(userId);
+        const uId = isValidId ? new mongoose.Types.ObjectId(userId) : null;
+        const userIdStr = String(userId);
+
+        let user = isValidId ? await User.findById(uId).lean() : null;
+        if (!user) {
+          user = await User.findOne({
+            $or: [{ email: userIdStr }, { phone: userIdStr }],
+          }).lean();
+        }
+
+        if (!user) throw new Error('Customer not found');
+
+        const targetUId = user._id;
+        const targetIdStr = user._id.toString();
 
         const [
-          user,
           orders,
           rentals,
           reviews,
@@ -37,26 +49,29 @@ export class CustomerIntelligenceService {
           intents,
           firstEvent,
         ] = await Promise.all([
-          User.findById(uId).lean(),
-          Order.find({ $or: [{ user: uId }, { user: userIdStr }] }).lean(),
-          RentalOrder.find({ $or: [{ user: uId }, { user: userIdStr }] }).lean(),
-          Review.find({ $or: [{ customer: uId }, { customer: userIdStr }] }).lean(),
-          Address.find({ $or: [{ user: uId }, { user: userIdStr }] }).lean(),
-          this.getEngagementScore(uId),
-          this.getHealthScore(uId),
-          this.getRevenueAttribution(uId),
-          this.getFraudRiskSignals(uId),
-          this.getCustomerFunnelMetrics(userId),
-          this.getCustomerSearchIntents(userId),
-          AnalyticsEvent.findOne({ $or: [{ userId: uId }, { userId: userIdStr }] })
+          Order.find({
+            $or: [
+              { user: targetUId },
+              { user: targetIdStr },
+              { 'shippingAddress.email': user.email },
+            ],
+          }).lean(),
+          RentalOrder.find({ $or: [{ user: targetUId }, { user: targetIdStr }] }).lean(),
+          Review.find({ $or: [{ customer: targetUId }, { customer: targetIdStr }] }).lean(),
+          Address.find({ $or: [{ user: targetUId }, { user: targetIdStr }] }).lean(),
+          this.getEngagementScore(targetUId),
+          this.getHealthScore(targetUId),
+          this.getRevenueAttribution(targetUId),
+          this.getFraudRiskSignals(targetUId),
+          this.getCustomerFunnelMetrics(targetIdStr),
+          this.getCustomerSearchIntents(targetIdStr),
+          AnalyticsEvent.findOne({ $or: [{ userId: targetUId }, { userId: targetIdStr }] })
             .sort({ timestamp: 1 })
             .lean(),
         ]);
 
-        if (!user) throw new Error('Customer not found');
-
         // Now that engagementScore is resolved, we can get predictions
-        const predictions = await this.getPredictions(uId, engagementScore.score);
+        const predictions = await this.getPredictions(targetUId, engagementScore.score);
 
         const totalOrders = orders.length;
         const totalRentals = rentals.length;
@@ -95,7 +110,9 @@ export class CustomerIntelligenceService {
           firstTouch: firstEvent?.page || 'Homepage',
         };
 
-        const topInterests = await this.getCustomerTopInterests(uId);
+        const topInterests = await this.getCustomerTopInterests(
+          targetUId as mongoose.Types.ObjectId,
+        );
 
         return {
           identity: {

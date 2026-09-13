@@ -367,7 +367,7 @@ export function LocationSelectorModal({
   // Fetch Device Current Location with Multi-Tier GPS & Network IP fallback
   const handleUseCurrentLocation = async () => {
     setIsDetectingGPS(true);
-    const gpsId = toast.loading('Acquiring location...');
+    const gpsId = toast.loading('Acquiring pinpoint GPS location...');
 
     try {
       const result = await detectUserLocation();
@@ -377,8 +377,10 @@ export function LocationSelectorModal({
       if (result.success && result.data && result.data.latitude && result.data.longitude) {
         const { latitude: lat, longitude: lng } = result.data;
 
+        // Pinpoint zoom level: 17 for GPS, 14 for approximate
+        const zoomLevel = result.isPinpoint ? 17 : 14;
         if (mapInstanceRef.current && markerInstanceRef.current) {
-          mapInstanceRef.current.setView([lat, lng], 16);
+          mapInstanceRef.current.setView([lat, lng], zoomLevel);
           markerInstanceRef.current.setLatLng([lat, lng]);
         }
 
@@ -404,13 +406,21 @@ export function LocationSelectorModal({
         setSelectedLocation(locDetails);
         setSearchQuery(locDetails.address || locDetails.name);
 
-        if (result.source === 'gps') {
-          toast.success('Current GPS location detected!');
+        if (result.isPinpoint && result.source === 'gps') {
+          const accText = result.accuracy ? ` (~${Math.round(result.accuracy)}m accuracy)` : '';
+          toast.success(`Exact pinpoint GPS location locked${accText}!`);
+        } else if (result.isApproximate) {
+          toast(
+            'Approximate area detected via network. Please drag the gold pin to your exact venue!',
+            { duration: 5000 },
+          );
         } else {
-          toast.success('Approximate location detected via network!');
+          toast.success('Location detected!');
         }
       } else {
-        toast.error(result.error || 'Failed to detect location. Please search or tap on the map.');
+        toast.error(result.error || 'Failed to detect location. Please search or tap on the map.', {
+          duration: 5000,
+        });
       }
     } catch (err) {
       toast.dismiss(gpsId);

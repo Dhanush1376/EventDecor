@@ -49,8 +49,9 @@ export const sendViaBrevo = async (payload: EmailPayload): Promise<{ messageId: 
   const apiKey = process.env.BREVO_API_KEY;
   if (!apiKey) throw new Error('BREVO_API_KEY missing');
 
-  const senderEmail = 'noreply@siriartsandcrafts.com';
-  const senderName = 'Siri Arts & Crafts';
+  const senderEmail =
+    payload.from || process.env.BREVO_SENDER_EMAIL || 'noreply@siriartsandcrafts.com';
+  const senderName = payload.fromName || 'Siri Arts & Crafts';
 
   const body: any = {
     sender: { name: senderName, email: senderEmail },
@@ -118,8 +119,8 @@ export const sendViaSMTP = async (payload: EmailPayload): Promise<{ messageId: s
 
   const transporter = cachedTransporter;
 
-  const senderEmail = process.env.SMTP_USER || 'noreply@siriartsandcrafts.com';
-  const senderName = 'Siri Arts & Crafts';
+  const senderEmail = payload.from || process.env.SMTP_USER || 'noreply@siriartsandcrafts.com';
+  const senderName = payload.fromName || 'Siri Arts & Crafts';
 
   const info = await transporter.sendMail({
     from: `"${senderName}" <${senderEmail}>`,
@@ -135,9 +136,92 @@ export const sendViaSMTP = async (payload: EmailPayload): Promise<{ messageId: s
 };
 
 /**
+ * Authoritative Recipient Resolution & Test Safety Gate
+ * Every email passing through the application boundary must resolve here.
+ * When MARKETING_EMAIL_TEST_MODE is enabled, all emails are strictly intercepted
+ * and redirected to TEST_MARKETING_RECIPIENT if configured.
+ */
+export const resolveAuthoritativeRecipient = (
+  payload: EmailPayload,
+): { resolvedPayload: EmailPayload; isRedirected: boolean; originalRecipient: string } => {
+  const isMarketingTestMode = process.env.MARKETING_EMAIL_TEST_MODE === 'true';
+  const testRecipient = (process.env.TEST_MARKETING_RECIPIENT || process.env.SMTP_USER || '')
+    .trim()
+    .toLowerCase();
+  const originalRecipient = (payload.to || '').trim().toLowerCase();
+
+  if (isMarketingTestMode && testRecipient && originalRecipient !== testRecipient) {
+    const safetyBanner = `
+      <div style="background-color: #fef2f2; border: 2px solid #ef4444; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: #991b1b; text-align: left;">
+        <div style="font-weight: 700; margin-bottom: 4px;">MARKETING SAFETY GATE ACTIVE</div>
+        <div>Original Target Recipient: <strong>${originalRecipient}</strong></div>
+        <div style="font-size: 11px; color: #b91c1c; margin-top: 4px;">Development safety mode is active. This message was intercepted and redirected to authorized test inbox: <strong>${testRecipient}</strong>. No actual customer was contacted.</div>
+      </div>
+    `;
+
+    return {
+      resolvedPayload: {
+        ...payload,
+        to: testRecipient,
+        subject: `[TEST MODE] ${payload.subject}`,
+        html: `${safetyBanner}${payload.html}`,
+        headers: {
+          ...payload.headers,
+          'X-Marketing-Test-Mode': 'true',
+          'X-Original-Recipient': originalRecipient,
+        },
+      },
+      isRedirected: true,
+      originalRecipient,
+    };
+  }
+
+  return {
+    resolvedPayload: payload,
+    isRedirected: false,
+    originalRecipient,
+  };
+};
+
+/**
+ * Get current configured provider status and diagnostics
+ */
+export const getProviderStatus = () => {
+  const hasBrevo = Boolean(process.env.BREVO_API_KEY);
+  const hasSMTP = Boolean(process.env.SMTP_USER && process.env.SMTP_PASS);
+  let activeProvider = 'ethereal_dev';
+  if (hasBrevo) {
+    activeProvider = 'brevo_https';
+  } else if (hasSMTP) {
+    activeProvider = 'smtp';
+  }
+
+  return {
+    activeProvider,
+    brevoConfigured: hasBrevo,
+    smtpConfigured: hasSMTP,
+    nodeEnv: process.env.NODE_ENV || 'development',
+    marketingTestMode: process.env.MARKETING_EMAIL_TEST_MODE === 'true',
+    testRecipient: (process.env.TEST_MARKETING_RECIPIENT || process.env.SMTP_USER || '').trim(),
+  };
+};
+
+/**
  * Smart Email Sender: Tries Resend -> SendGrid -> Brevo -> SMTP fallback
  */
-export const sendEmail = async (payload: EmailPayload): Promise<{ messageId: string }> => {
+export const sendEmail = async (
+  rawPayload: EmailPayload,
+): Promise<{ messageId: string; redirected?: boolean; originalRecipient?: string }> => {
+  const { resolvedPayload, isRedirected, originalRecipient } =
+    resolveAuthoritativeRecipient(rawPayload);
+
+  if (isRedirected) {
+    logger.warn(
+      `[MARKETING SAFETY GATE] Intercepted email to "${originalRecipient}" -> Authoritatively redirected to "${resolvedPayload.to}"`,
+    );
+  }
+
+  const payload = resolvedPayload;
   const errors: string[] = [];
 
   if (process.env.BREVO_API_KEY) {

@@ -65,13 +65,18 @@ export function AdminSidebar() {
     const q = sidebarSearch.toLowerCase().trim();
     return navSections
       .map((section) => {
+        const sectionMatches =
+          section.label.toLowerCase().includes(q) ||
+          (section.subtitle && section.subtitle.toLowerCase().includes(q));
         const matchedItems = section.items.filter(
-          (item) => item.label.toLowerCase().includes(q) || item.keywords.toLowerCase().includes(q),
+          (item) =>
+            item.label.toLowerCase().includes(q) ||
+            (item.keywords && item.keywords.toLowerCase().includes(q)),
         );
-        return { ...section, items: matchedItems };
+        return { ...section, items: sectionMatches ? section.items : matchedItems };
       })
       .filter((section) => section.items.length > 0);
-  }, [sidebarSearch]);
+  }, [sidebarSearch, navSections]);
 
   // Recently edited products
   const recentlyEdited = useMemo(() => {

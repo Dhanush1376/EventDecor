@@ -134,7 +134,7 @@ export class WhatsAppTemplateEngine {
             const product = ctx.products?.find((p: any) => String(p._id) === String(i.productId));
             const slug = product?.slug ? product.slug : i.productId;
             const link = `${ctx.storeSettings?.general?.baseUrl || process.env.FRONTEND_URL || 'https://example.com'}/product/${slug}`;
-            return `- ${i.quantity}x ${i.title}\n  🔗 ${link}`;
+            return `- ${i.quantity}x ${i.title}\n  Link: ${link}`;
           })
           .join('\n\n');
       },

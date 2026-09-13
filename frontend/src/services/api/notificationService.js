@@ -28,19 +28,6 @@ export const notificationService = {
     return response.data;
   },
 
-  // ADMIN Campaign Methods
-  createCampaign: async (campaignData) => {
-    const response = await api.post('/notifications/admin/campaigns', campaignData);
-    return response.data;
-  },
-  getCampaigns: async () => {
-    const response = await api.get('/notifications/admin/campaigns');
-    return response.data;
-  },
-  sendCampaign: async (id) => {
-    const response = await api.post(`/notifications/admin/campaigns/${id}/send`);
-    return response.data;
-  },
   getTemplates: async () => {
     const response = await api.get('/notifications/admin/templates');
     return response.data;

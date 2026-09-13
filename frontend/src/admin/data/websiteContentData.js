@@ -256,7 +256,7 @@ export const initialWebsiteContent = {
         desc: 'Glamorous evening ballrooms',
       },
       { id: 'Haldi', label: 'Haldi', icon: 'wb_sunny', desc: 'Vibrant yellow heritage blooms' },
-      { id: 'Mehendi', label: 'Mehendi', icon: 'auto_awesome', desc: 'Bohemian pastels & swings' },
+      { id: 'Mehendi', label: 'Mehendi', icon: 'palette', desc: 'Bohemian pastels & swings' },
       { id: 'Pooja', label: 'Pooja', icon: 'self_improvement', desc: 'Sacred tranquil devotion' },
       { id: 'Birthday', label: 'Birthday', icon: 'cake', desc: 'Gilded milestone soirees' },
       {
