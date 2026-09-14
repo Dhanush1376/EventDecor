@@ -1,9 +1,9 @@
 import mongoose from 'mongoose';
-import EventJob from '../../domains/event_operations/models/EventJob';
+import EventJob from '../../models/EventJob';
 import Event from '../../models/Event';
 import User from '../../models/User';
 import ApiError from '../../utils/ApiError';
-import { generateUniqueBookingId } from '../../utils/bookingId';
+import { generateUniqueBookingId } from './bookingId';
 import { RazorpayGateway } from '../../utils/payment/RazorpayGateway';
 import crypto from 'crypto';
 import logger from '../../config/logger';

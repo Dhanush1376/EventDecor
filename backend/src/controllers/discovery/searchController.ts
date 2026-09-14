@@ -9,7 +9,7 @@ import {
   getDiscoveryData,
   learnSearchPatterns,
 } from '../../services/search/SearchAnalyticsService';
-import { EnterpriseSearchService } from '../../domains/search/services/EnterpriseSearchService';
+import { EnterpriseSearchService } from '../../services/search/EnterpriseSearchService';
 import { reindexAll } from '../../services/search/searchIndexer';
 import logger from '../../config/logger';
 

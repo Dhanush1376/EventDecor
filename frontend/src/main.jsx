@@ -41,6 +41,14 @@ window.addEventListener(
     // Intercept broken images site-wide and apply clean Image Unavailable fallback
     const target = event.target;
     if (target && target.tagName === 'IMG') {
+      // Never intercept Leaflet map tiles
+      if (
+        target.classList?.contains('leaflet-tile') ||
+        target.closest?.('.leaflet-container') ||
+        target.closest?.('.leaflet-tile-container')
+      ) {
+        return;
+      }
       handleImageError(event);
       return;
     }

@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 import Review from '../../models/Review';
 import Product from '../../models/Product';
 import Order from '../../models/Order';
-import EventJob from '../../domains/event_operations/models/EventJob';
+import EventJob from '../../models/EventJob';
 import ShowcaseCollection from '../../models/ShowcaseCollection';
 import User from '../../models/User';
 import asyncHandler from '../../utils/asyncHandler';

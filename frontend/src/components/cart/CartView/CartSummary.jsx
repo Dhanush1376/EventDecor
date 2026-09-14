@@ -1,7 +1,9 @@
-import { Info, ShieldCheck, Shield } from 'lucide-react';
+import { Info, ShieldCheck, Shield, Lock } from 'lucide-react';
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Skeleton } from '../../ui/Skeleton';
+import { useConfig } from '../../../context/ConfigContext';
+import toast from 'react-hot-toast';
 
 export const CartSummary = ({
   loading,
@@ -21,6 +23,7 @@ export const CartSummary = ({
   runProtectedAction,
   navigate,
 }) => {
+  const { isStoreClosed } = useConfig();
   return (
     <div className="bg-surface-bright border border-outline-variant/40 rounded-lg shadow-xs relative overflow-hidden">
       {loading && (
@@ -160,19 +163,36 @@ export const CartSummary = ({
           {/* Desktop Place Order Button */}
           <button
             onClick={() =>
-              runProtectedAction(() => {
-                sessionStorage.removeItem('siri_checkout_step');
-                navigate('/checkout', {
-                  state: {
-                    checkoutMode: activeCartMode,
-                    couponCode: appliedCoupon?.code,
-                  },
-                });
-              })
+              isStoreClosed
+                ? toast(
+                    'Online checkout is currently paused while the store is in catalog-only mode.',
+                  )
+                : runProtectedAction(() => {
+                    sessionStorage.removeItem('siri_checkout_step');
+                    navigate('/checkout', {
+                      state: {
+                        checkoutMode: activeCartMode,
+                        couponCode: appliedCoupon?.code,
+                      },
+                    });
+                  })
             }
-            className="w-full mt-6 bg-black text-white hover:bg-[#8c7335] hover:text-white py-3.5 rounded-full text-[11px] font-bold uppercase tracking-widest shadow-md transition-all text-center hidden lg:block cursor-pointer active:scale-[0.98]"
+            className={`w-full mt-6 py-3.5 rounded-full text-[11px] font-bold uppercase tracking-widest shadow-md transition-all text-center hidden lg:flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] ${
+              isStoreClosed
+                ? 'bg-stone-200 text-stone-600 hover:bg-stone-300/80 border border-stone-300'
+                : 'bg-black text-white hover:bg-[#8c7335] hover:text-white'
+            }`}
           >
-            {activeCartMode === 'rental' ? 'Continue Rental Booking' : 'Checkout'}
+            {isStoreClosed ? (
+              <>
+                <Lock className="w-3.5 h-3.5 text-stone-500" />
+                <span>Orders Paused (View Only)</span>
+              </>
+            ) : activeCartMode === 'rental' ? (
+              'Continue Rental Booking'
+            ) : (
+              'Checkout'
+            )}
           </button>
         </div>
       </div>

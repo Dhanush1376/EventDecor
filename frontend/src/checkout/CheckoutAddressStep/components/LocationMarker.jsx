@@ -69,21 +69,12 @@ export function LocationMarker({ position, setPosition, fetchAddressFromCoords }
         attributionControl: false,
       }).setView([safeLat, safeLng], initialZoom);
 
-      // CartoDB Voyager tiles (crisp, highly reliable, global fast CDN)
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        subdomains: 'abcd',
-        maxZoom: 20,
+      // OpenStreetMap standard tiles (reliable, global fast CDN, permitted in CSP)
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        subdomains: ['a', 'b', 'c'],
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors',
       }).addTo(map);
-
-      // Fallback OpenStreetMap tile layer if ever needed
-      map.on('tileerror', (error) => {
-        if (error?.tile?.src?.includes('cartocdn')) {
-          error.tile.src = error.tile.src.replace(
-            /https:\/\/.*\.basemaps\.cartocdn\.com\/rastertiles\/voyager/,
-            'https://tile.openstreetmap.org',
-          );
-        }
-      });
 
       const customIcon = createCustomMarkerIcon();
       const marker = L.marker([safeLat, safeLng], {

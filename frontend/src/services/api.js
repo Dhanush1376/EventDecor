@@ -106,9 +106,8 @@ export const refreshAccessToken = async (retryCount = 0) => {
     return null;
   }
   if (retryCount >= 3) {
-    logger.error('[API] Max refresh retry attempts reached (409 conflict loops).');
-    dispatchUnauthorized();
-    throw new Error('Max refresh retry attempts reached');
+    logger.warn('[API] Max refresh retry attempts reached. Preserving session.');
+    return getAccessToken() || null;
   }
   if (!refreshPromise) {
     refreshPromise = api
@@ -119,32 +118,16 @@ export const refreshAccessToken = async (retryCount = 0) => {
       })
       .catch(async (err) => {
         if (err.response?.status === 409) {
-          const oldToken = getFallbackRefreshToken();
-          if (oldToken) {
-            logger.warn(`[API] 409 Conflict. Waiting for other tab to update token...`);
-            for (let i = 0; i < 10; i++) {
-              await new Promise((r) => setTimeout(r, 500));
-              const newToken = getFallbackRefreshToken();
-              if (newToken && newToken !== oldToken) {
-                logger.info(`[API] Picked up new token from other tab. Retrying...`);
-                refreshPromise = null;
-                return refreshAccessToken(retryCount + 1);
-              }
-            }
-            logger.error('[API] Refresh token desynced (response lost). Logging out.');
-            dispatchUnauthorized();
-            throw new Error('Refresh token desync');
-          } else {
-            if (retryCount >= 1) {
-              logger.error('[API] Max refresh retry attempts reached (409 conflict loops).');
-              dispatchUnauthorized();
-              throw new Error('Max refresh retry attempts reached');
-            }
-            logger.warn(`[API] Concurrent refresh (409). Retrying in 1s...`);
-            await new Promise((r) => setTimeout(r, 1000));
-            refreshPromise = null;
-            return refreshAccessToken(retryCount + 1);
+          logger.warn(
+            `[API] 409 Conflict (concurrent refresh). Retrying attempt ${retryCount + 1}/3...`,
+          );
+          await new Promise((r) => setTimeout(r, 300 * (retryCount + 1)));
+          refreshPromise = null;
+          const currentToken = getAccessToken();
+          if (currentToken) {
+            return currentToken;
           }
+          return refreshAccessToken(retryCount + 1);
         }
         if (err.response?.status === 401 || err.response?.status === 403) {
           dispatchUnauthorized();

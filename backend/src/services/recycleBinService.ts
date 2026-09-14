@@ -118,11 +118,7 @@ export class RecycleBinService {
       try {
         Model = require(`../models/${modelName}`).default;
       } catch (_err) {
-        try {
-          Model = require(`../domains/event_operations/models/${modelName}`).default;
-        } catch (_err2) {
-          // ignore
-        }
+        // ignore
       }
     }
     return Model || null;

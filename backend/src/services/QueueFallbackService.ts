@@ -318,13 +318,7 @@ export class QueueFallbackService {
           // Since it's a fallback, if we need it, we'd call the service. We can leave it as a no-op if nothing vital is there.
           break;
         }
-        case 'whatsapp-retry': {
-          const {
-            WhatsAppRetryService,
-          } = require('../domains/notifications/whatsapp/WhatsAppRetryService');
-          await WhatsAppRetryService.processRetry({ id: jobName, data } as any);
-          break;
-        }
+
         case 'recommendationQueue':
           logger.warn(
             `[QUEUE FALLBACK] Ignoring recommendation task ${jobName} since it is heavy for memory queue`,

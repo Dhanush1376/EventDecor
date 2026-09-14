@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import api from '../services/api';
 import storeSettingsService from '../services/api/storeSettingsService';
 // socket.io is imported dynamically inside the useEffect to keep it out of the initial bundle
@@ -73,18 +73,51 @@ export const ConfigProvider = ({ children }) => {
         logger.warn('[ConfigContext] Failed to load socket.io-client module:', err);
       });
 
+    const handleSettingsSync = async () => {
+      try {
+        const settingsRes = await storeSettingsService.getPublicSettings();
+        if (settingsRes) {
+          setStoreSettings(settingsRes);
+        }
+      } catch (_e) {
+        // Ignored
+      }
+    };
+
+    window.addEventListener('store-settings-updated', handleSettingsSync);
+    const handleStorageEvent = (e) => {
+      if (e.key === 'store_settings_sync_time') {
+        handleSettingsSync();
+      }
+    };
+    window.addEventListener('storage', handleStorageEvent);
+
     return () => {
+      window.removeEventListener('store-settings-updated', handleSettingsSync);
+      window.removeEventListener('storage', handleStorageEvent);
       if (socketRef) {
         socketRef.disconnect();
       }
     };
   }, []);
 
-  return (
-    <ConfigContext.Provider value={{ config, categories, storeSettings, loading, error }}>
-      {children}
-    </ConfigContext.Provider>
+  const isMaintenanceMode = storeSettings?.general?.maintenanceMode === true;
+  const isStoreClosed = storeSettings?.general?.storeEnabled === false && !isMaintenanceMode;
+
+  const contextValue = useMemo(
+    () => ({
+      config,
+      categories,
+      storeSettings,
+      loading,
+      error,
+      isStoreClosed,
+      isMaintenanceMode,
+    }),
+    [config, categories, storeSettings, loading, error, isStoreClosed, isMaintenanceMode],
   );
+
+  return <ConfigContext.Provider value={contextValue}>{children}</ConfigContext.Provider>;
 };
 
 export const useConfig = () => {

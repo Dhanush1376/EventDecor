@@ -19,7 +19,7 @@ import { cacheOtpSession } from '../utils/cache/otpVerifyCache';
 import { recordOtpVerifyFailure } from '../utils/security/otpRateLimit';
 import SessionAuthService from './SessionAuthService';
 import { getFrontendUrl } from '../utils/getFrontendUrl';
-import { getOtpEmailTemplate } from '../utils/email/emailTemplates';
+import { getOtpEmailTemplate, getCodOtpEmailTemplate } from '../utils/email/emailTemplates';
 import jwt from 'jsonwebtoken';
 import { getSmsProvider, maskPhone } from './SmsProviderService';
 import { PhoneAuthService } from './PhoneAuthService';
@@ -564,7 +564,135 @@ class OtpAuthService {
     return session;
   }
 
-  static async generateCodOTP(phone: string, userId?: string, ip: string = '127.0.0.1') {
+  static async generateCodOTP(
+    phoneOrOptions:
+      | string
+      | {
+          phone?: string;
+          email?: string;
+          channel?: 'phone' | 'email';
+          userId?: string;
+          ip?: string;
+        },
+    legacyUserId?: string,
+    legacyIp: string = '127.0.0.1',
+  ) {
+    let phone: string | undefined;
+    let email: string | undefined;
+    let channel: 'phone' | 'email' = 'phone';
+    let _userId: string | undefined = legacyUserId;
+    let ip: string = legacyIp;
+
+    if (typeof phoneOrOptions === 'string') {
+      phone = phoneOrOptions;
+      channel = 'phone';
+    } else if (typeof phoneOrOptions === 'object' && phoneOrOptions !== null) {
+      phone = phoneOrOptions.phone;
+      email = phoneOrOptions.email;
+      channel = phoneOrOptions.channel || (email && !phone ? 'email' : 'phone');
+      _userId = phoneOrOptions.userId || legacyUserId;
+      ip = phoneOrOptions.ip || legacyIp;
+    }
+
+    if (channel === 'email') {
+      if (!email || !email.trim()) {
+        throw new ApiError(400, 'A valid delivery email address is required for COD verification');
+      }
+      const cleanEmail = canonicalizeEmail(email.trim());
+      const purpose = 'COD_VERIFICATION';
+
+      // Anti-bombing / cooldown (30 seconds)
+      const recentChallenge = await OtpChallenge.findOne({
+        identifier: cleanEmail,
+        purpose,
+        createdAt: { $gt: new Date(Date.now() - 30 * 1000) },
+      });
+      if (recentChallenge) {
+        throw new ApiError(429, 'Please wait before requesting another verification code');
+      }
+
+      // Hourly rate limit (5 per hour)
+      const hourlyCount = await OtpChallenge.countDocuments({
+        identifier: cleanEmail,
+        purpose,
+        createdAt: { $gt: new Date(Date.now() - 60 * 60 * 1000) },
+      });
+      if (hourlyCount >= 5) {
+        throw new ApiError(429, 'Too many verification attempts. Please try again later.');
+      }
+
+      const otp = crypto.randomInt(100000, 999999).toString();
+      const salt = await bcrypt.genSalt(12);
+      const otpHash = await bcrypt.hash(otp, salt);
+
+      const expiryMinutes = 5;
+      const expiresAt = new Date(Date.now() + expiryMinutes * 60 * 1000);
+      const challengeId = crypto.randomUUID();
+
+      await OtpChallenge.updateMany(
+        { identifier: cleanEmail, purpose, exhausted: false, consumedAt: null },
+        { $set: { exhausted: true } },
+      );
+
+      const otpRecord = await OtpChallenge.create({
+        challengeId,
+        purpose,
+        identifier: cleanEmail,
+        identifierType: 'email',
+        otpHash,
+        expiresAt,
+      });
+
+      if (process.env.NODE_ENV === 'development') {
+        logger.info(`[DEV COD OTP] Email verification code for ${cleanEmail}: ${otp}`);
+      }
+
+      try {
+        await sendDirectEmailProcessor({
+          email: cleanEmail,
+          subject: `${otp} is your COD Order Verification Code`,
+          customHtml: getCodOtpEmailTemplate(otp, expiryMinutes),
+          type: 'security',
+          action: 'cod_otp',
+        });
+      } catch (err: any) {
+        logger.error(
+          `[COD OTP EMAIL ERROR] Failed to send email to ${SecurityAuditService.hashIdentifier(cleanEmail)}:`,
+          err?.message || err,
+        );
+        await OtpChallenge.updateOne(
+          { _id: (otpRecord as any)._id },
+          { $set: { exhausted: true } },
+        );
+        throw new ApiError(500, 'Failed to send email verification code. Please try again.');
+      }
+
+      SecurityAuditService.log({
+        eventType: 'OTP_REQUESTED',
+        success: true,
+        ip,
+        userAgent: 'checkout',
+        identifier: cleanEmail,
+        challengeId,
+      });
+
+      const maskEmail = (str: string) => {
+        const [l, d] = str.split('@');
+        if (!d) return str;
+        const maskedL = l.length <= 2 ? `${l[0]}*` : `${l[0]}***${l[l.length - 1]}`;
+        return `${maskedL}@${d}`;
+      };
+
+      return {
+        success: true,
+        challengeId,
+        channel: 'email',
+        email: maskEmail(cleanEmail),
+        deliveryTarget: maskEmail(cleanEmail),
+      };
+    }
+
+    // Phone channel
     if (!phone) {
       throw new ApiError(400, 'A valid delivery phone number is required for COD verification');
     }
@@ -634,28 +762,60 @@ class OtpAuthService {
       challengeId,
     });
 
-    return { success: true, challengeId, phone: maskPhone(normalizedPhone) };
+    return {
+      success: true,
+      challengeId,
+      channel: 'phone',
+      phone: maskPhone(normalizedPhone),
+      deliveryTarget: maskPhone(normalizedPhone),
+    };
   }
 
-  static async verifyCodOTP(phoneOrChallengeId: string, otp: string, userId?: string) {
-    if (!phoneOrChallengeId || !otp) {
-      throw new ApiError(400, 'Delivery phone or challenge ID and OTP are required');
+  static async verifyCodOTP(
+    phoneOrOptions:
+      | string
+      | {
+          phone?: string;
+          email?: string;
+          channel?: 'phone' | 'email';
+          challengeId?: string;
+        },
+    otp: string,
+    userId?: string,
+  ) {
+    let target = '';
+    if (typeof phoneOrOptions === 'string') {
+      target = phoneOrOptions;
+    } else if (typeof phoneOrOptions === 'object' && phoneOrOptions !== null) {
+      target = phoneOrOptions.challengeId || phoneOrOptions.email || phoneOrOptions.phone || '';
     }
 
-    let normalizedPhone = phoneOrChallengeId;
-    try {
-      if (!phoneOrChallengeId.includes('-') && phoneOrChallengeId.length <= 15) {
-        normalizedPhone = PhoneAuthService.normalizePhone(phoneOrChallengeId);
+    if (!target || !otp) {
+      throw new ApiError(400, 'Delivery phone, email, or challenge ID and OTP are required');
+    }
+
+    let normalizedIdentifier = target;
+    if (target.includes('@')) {
+      normalizedIdentifier = canonicalizeEmail(target);
+    } else {
+      try {
+        if (!target.includes('-') && target.length <= 15) {
+          normalizedIdentifier = PhoneAuthService.normalizePhone(target);
+        }
+      } catch {
+        // Retain as challengeId if not standard phone format
       }
-    } catch {
-      // Retain as challengeId if not standard phone format
     }
 
     const normalizedOtp = this.normalizeOtpInput(otp);
 
     const challenge = await OtpChallenge.findOneAndUpdate(
       {
-        $or: [{ challengeId: phoneOrChallengeId }, { identifier: normalizedPhone }],
+        $or: [
+          { challengeId: target },
+          { identifier: normalizedIdentifier },
+          { identifier: target },
+        ],
         purpose: 'COD_VERIFICATION',
       },
       { $inc: { attempts: 1 } },
@@ -685,10 +845,13 @@ class OtpAuthService {
       throw new ApiError(400, 'Invalid verification code');
     }
 
-    // Generate signed single-use COD verification token bound to normalizedPhone and userId
+    // Generate signed single-use COD verification token bound to identifier and userId
+    const isEmail = challenge.identifierType === 'email' || challenge.identifier.includes('@');
     const payload = {
       challengeId: challenge.challengeId,
-      phone: challenge.identifier,
+      channel: isEmail ? 'email' : 'phone',
+      phone: isEmail ? null : challenge.identifier,
+      email: isEmail ? challenge.identifier : null,
       userId: userId || null,
       purpose: 'COD_ORDER_VERIFICATION',
     };
@@ -699,7 +862,9 @@ class OtpAuthService {
     return {
       success: true,
       codVerificationToken,
-      phone: challenge.identifier,
+      channel: isEmail ? 'email' : 'phone',
+      phone: isEmail ? undefined : challenge.identifier,
+      email: isEmail ? challenge.identifier : undefined,
     };
   }
 }

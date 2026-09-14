@@ -100,4 +100,41 @@ describe('computeOrderTotals', () => {
     expect(t.walletDeduction).toBe(500);
     expect(t.total).toBe(1290);
   });
+
+  it('waives COD fee when order is fully covered by wallet balance', () => {
+    const t = computeOrderTotals({
+      subtotal: 3698,
+      discount: 0,
+      depositTotal: 0,
+      isCod: true,
+      codFee: 30,
+      freeShippingThreshold: 500,
+      deliveryCharge: 100,
+      useWallet: true,
+      walletBalance: 4872,
+    });
+    // preliminary = 3698 + 0 shipping - 0 discount = 3698 (no COD fee because no cash collected)
+    expect(t.shippingFee).toBe(0);
+    expect(t.codFee).toBe(0);
+    expect(t.preliminaryTotal).toBe(3698);
+    expect(t.walletDeduction).toBe(3698);
+    expect(t.total).toBe(0);
+  });
+
+  it('waives COD fee when 100% discount coupon reduces payable to zero', () => {
+    const t = computeOrderTotals({
+      subtotal: 1000,
+      discount: 1000,
+      depositTotal: 0,
+      isCod: true,
+      codFee: 50,
+      freeShippingThreshold: 2000,
+      deliveryCharge: 0,
+      useWallet: false,
+      walletBalance: 0,
+    });
+    expect(t.codFee).toBe(0);
+    expect(t.preliminaryTotal).toBe(0);
+    expect(t.total).toBe(0);
+  });
 });

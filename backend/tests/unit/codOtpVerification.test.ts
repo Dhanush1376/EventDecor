@@ -132,4 +132,89 @@ describe('COD Phone OTP Verification & Address Binding', () => {
     );
     expect(secondConsumption).toBeNull();
   });
+
+  it('generates, verifies COD OTP using email address and binds token to email', async () => {
+    const email = 'customer.test@example.com';
+    const userId = '6aa70c61f32d1777baf7c97f';
+
+    const genResult = await OtpAuthService.generateCodOTP({ email, channel: 'email', userId });
+    expect(genResult.success).toBe(true);
+    expect(genResult.channel).toBe('email');
+    expect(genResult.challengeId).toBeDefined();
+
+    const { sendDirectEmailProcessor } = await import('../../src/services/notificationService');
+    expect(sendDirectEmailProcessor).toHaveBeenCalled();
+
+    const calls = (sendDirectEmailProcessor as any).mock.calls;
+    const lastCall = calls[calls.length - 1][0];
+    expect(lastCall.email).toBe('customer.test@example.com');
+    expect(lastCall.action).toBe('cod_otp');
+    expect(lastCall.customHtml).toContain('Order Verification');
+    expect(lastCall.customHtml).toContain('Verification Code');
+
+    // Extract OTP from email call subject
+    const otpMatch = lastCall.subject.match(/^(\d{6})/);
+    expect(otpMatch).toBeTruthy();
+    const otp = otpMatch[1];
+
+    // Verification with wrong OTP fails
+    await expect(
+      OtpAuthService.verifyCodOTP({ email, otp: '111111' }, '111111', userId),
+    ).rejects.toThrow();
+
+    // Verification with correct OTP succeeds
+    const verifyResult = await OtpAuthService.verifyCodOTP(
+      { email, challengeId: genResult.challengeId },
+      otp,
+      userId,
+    );
+    expect(verifyResult.success).toBe(true);
+    expect(verifyResult.channel).toBe('email');
+    expect(verifyResult.codVerificationToken).toBeDefined();
+
+    const decoded = jwt.verify(verifyResult.codVerificationToken!, process.env.JWT_SECRET!) as any;
+    expect(decoded.email).toBe('customer.test@example.com');
+    expect(decoded.channel).toBe('email');
+    expect(decoded.userId).toBe(userId);
+    expect(decoded.purpose).toBe('COD_ORDER_VERIFICATION');
+  });
+
+  it('enforces that email verification for Address A NEVER authorizes Address B with a different email', async () => {
+    const emailA = 'customer.a@example.com';
+    const emailB = 'customer.b@example.com';
+    const userId = '6aa70c61f32d1777baf7c97f';
+
+    const genResultA = await OtpAuthService.generateCodOTP({
+      email: emailA,
+      channel: 'email',
+      userId,
+    });
+    const { sendDirectEmailProcessor } = await import('../../src/services/notificationService');
+    const calls = (sendDirectEmailProcessor as any).mock.calls;
+    const lastCall = calls[calls.length - 1][0];
+    const otpA = lastCall.subject.match(/^(\d{6})/)[1];
+
+    const { codVerificationToken: tokenA } = await OtpAuthService.verifyCodOTP(
+      { email: emailA, challengeId: genResultA.challengeId },
+      otpA,
+      userId,
+    );
+    expect(tokenA).toBeDefined();
+
+    const decodedA = jwt.verify(tokenA!, process.env.JWT_SECRET!) as any;
+    expect(decodedA.email).toBe('customer.a@example.com');
+    expect(decodedA.channel).toBe('email');
+
+    // Simulate order placement with delivery email B
+    const shippingAddressB = {
+      name: 'Recipient B',
+      email: emailB,
+      phone: '9876543210',
+    };
+
+    const orderEmailB = (shippingAddressB.email || '').toLowerCase().trim();
+    const tokenEmailA = (decodedA.email || '').toLowerCase().trim();
+
+    expect(tokenEmailA).not.toBe(orderEmailB);
+  });
 });

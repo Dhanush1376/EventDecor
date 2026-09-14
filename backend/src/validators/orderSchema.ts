@@ -43,7 +43,7 @@ export const createOrderSchema = z.object({
       couponCode: z.string().trim().max(50).optional().or(z.literal('')),
 
       needByDate: z.string().trim().max(50).optional().or(z.literal('')),
-      paymentMethod: z.enum(['razorpay', 'cod']).default('razorpay'),
+      paymentMethod: z.enum(['razorpay', 'cod', 'wallet']).default('razorpay'),
       useWallet: z.boolean().optional(),
       idempotencyKey: z.string().trim().max(120).optional(),
       orderType: z.string().optional(),
@@ -97,16 +97,23 @@ export const validateTotalsSchema = z.object({
     .strict(),
 });
 
-const codOtpPhoneSchema = z.object({
-  phone: z
-    .string({ message: 'Delivery phone number is required' })
-    .trim()
-    .min(10, 'Valid delivery phone number is required')
-    .max(20, 'Phone number cannot exceed 20 characters'),
-});
+const codOtpPhoneSchema = z
+  .object({
+    phone: z
+      .string()
+      .trim()
+      .min(10, 'Valid delivery phone number is required')
+      .max(20, 'Phone number cannot exceed 20 characters')
+      .optional(),
+    email: z.string().trim().email('Valid delivery email address is required').optional(),
+    channel: z.enum(['phone', 'email']).optional(),
+  })
+  .refine((data) => Boolean(data.phone || data.email), {
+    message: 'Delivery phone number or email is required',
+  });
 
 export const codOtpPhoneBodySchema = z.object({
-  body: codOtpPhoneSchema.strict(),
+  body: codOtpPhoneSchema,
 });
 
 // Backward-compatible alias
@@ -116,6 +123,8 @@ export const codOtpVerifySchema = z.object({
   body: z
     .object({
       phone: z.string().trim().min(10).max(20).optional(),
+      email: z.string().trim().email().optional(),
+      channel: z.enum(['phone', 'email']).optional(),
       challengeId: z.string().trim().optional(),
       otp: z
         .union([z.string(), z.number()])
@@ -127,8 +136,8 @@ export const codOtpVerifySchema = z.object({
           message: 'OTP must contain only numbers',
         }),
     })
-    .refine((data) => Boolean(data.phone || data.challengeId), {
-      message: 'Delivery phone or challenge ID is required',
+    .refine((data) => Boolean(data.phone || data.email || data.challengeId), {
+      message: 'Delivery phone, email, or challenge ID is required',
     }),
 });
 

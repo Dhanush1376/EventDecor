@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import EventJob from '../../domains/event_operations/models/EventJob';
+import EventJob from '../../models/EventJob';
 import Event from '../../models/Event';
 import User from '../../models/User';
 import ApiError from '../../utils/ApiError';

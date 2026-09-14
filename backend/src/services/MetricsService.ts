@@ -1,6 +1,6 @@
 import logger from '../config/logger';
 import Order from '../models/Order';
-import EventJob from '../domains/event_operations/models/EventJob';
+import EventJob from '../models/EventJob';
 import RentalOrder from '../models/RentalOrder';
 import * as Sentry from '@sentry/node';
 

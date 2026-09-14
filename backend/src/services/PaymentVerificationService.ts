@@ -12,18 +12,17 @@ import Product from '../models/Product';
 import User from '../models/User';
 import AnalyticsService from './analyticsService';
 import PaymentAttempt from '../models/PaymentAttempt';
-import PaymentEvent from '../domains/payments/models/PaymentEvent';
+import PaymentEvent from '../models/PaymentEvent';
 import Coupon from '../models/Coupon';
 import { generateUuid } from '../shared/utils/uuidGenerator';
 import WalletTransaction from '../models/WalletTransaction';
 import { debitWalletBalance } from '../utils/payment/walletMutations';
 import RentalOrder from '../models/RentalOrder';
 import { RentalAvailabilityService } from './rentals/RentalAvailabilityService';
-import EventJob from '../domains/event_operations/models/EventJob';
+import EventJob from '../models/EventJob';
 import { EventResourcePlanningService } from './eventBooking/EventResourcePlanningService';
 import BookingMessage from '../models/BookingMessage';
 import { PaymentRefundService } from './PaymentRefundService';
-import { RuleEngine } from '../domains/rules/services/RuleEngine';
 import { TransactionalEmailService } from './TransactionalEmailService';
 
 export class PaymentVerificationService {
@@ -378,24 +377,13 @@ export class PaymentVerificationService {
           { session },
         );
 
-        // Apply rules engine
-        let initialStatus = 'Confirmed';
-        let initialNote = 'Payment verified and order confirmed';
-        const evalResult = await RuleEngine.evaluate(orderData, 'Order', session);
-        if (evalResult.requiresApproval) {
-          initialStatus = 'On Hold';
-          initialNote = 'Order flagged by business rules. Placed On Hold pending admin approval.';
+        // Payment verified and confirmed
+        const initialStatus = 'Confirmed';
+        const initialNote = 'Payment verified and order confirmed';
 
-          if (orderData.reservationIds && orderData.reservationIds.length > 0) {
-            for (const resId of orderData.reservationIds) {
-              await InventoryService.freezeReservation(resId.toString(), 7, session);
-            }
-          }
-        } else {
-          if (orderData.reservationIds && orderData.reservationIds.length > 0) {
-            for (const resId of orderData.reservationIds) {
-              await InventoryService.confirmReservation(resId.toString(), session);
-            }
+        if (orderData.reservationIds && orderData.reservationIds.length > 0) {
+          for (const resId of orderData.reservationIds) {
+            await InventoryService.confirmReservation(resId.toString(), session);
           }
         }
 
@@ -490,13 +478,8 @@ export class PaymentVerificationService {
         // --- RENTAL VERIFICATION ---
         await RentalAvailabilityService.confirmDates(orderData.pendingOrderId.toString(), session);
 
-        let initialStatus = 'confirmed';
-        let initialNote = 'Payment verified and rental order confirmed';
-        const evalResult = await RuleEngine.evaluate(orderData, 'RentalOrder', session);
-        if (evalResult.requiresApproval) {
-          initialStatus = 'pending_approval';
-          initialNote = 'Rental flagged by business rules. Pending admin approval.';
-        }
+        const initialStatus = 'confirmed';
+        const initialNote = 'Payment verified and rental order confirmed';
 
         if (orderData.walletDeduction && orderData.walletDeduction > 0) {
           const user = await User.findById(userId).session(session);

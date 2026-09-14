@@ -492,9 +492,6 @@ export const initWorkers = async () => {
     mediaWorker = createMediaWorker(connection as any);
     cleanupWorker = createCleanupWorker(connection as any);
 
-    // Initialize WhatsApp Workers
-    require('./whatsappWorkers');
-
     workersInitialized = true;
     logger.info('[WORKER] Background workers initialized successfully');
   } catch (err: any) {

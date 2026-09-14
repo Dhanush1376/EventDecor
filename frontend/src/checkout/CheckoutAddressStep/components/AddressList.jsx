@@ -34,7 +34,7 @@ export function AddressList({
             <div
               key={addrId}
               onClick={() => setSelectedAddressId(addrId)}
-              className={`relative p-5 rounded-xl border transition-all duration-300 cursor-pointer overflow-hidden ${
+              className={`relative p-5 rounded-lg border transition-all duration-300 cursor-pointer overflow-hidden ${
                 isSelected
                   ? 'border-outline-variant/50 bg-surface-bright shadow-md'
                   : 'border-outline-variant/40 bg-surface-bright hover:border-outline-variant/60 hover:shadow-sm'

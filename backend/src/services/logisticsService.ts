@@ -1,8 +1,5 @@
 import jwt from 'jsonwebtoken';
 import Order from '../models/Order';
-import Package from '../domains/warehouse/models/Package';
-import Shipment from '../domains/shipping/models/Shipment';
-import ShipmentEvent from '../domains/shipping/models/ShipmentEvent';
 import ApiError from '../utils/ApiError';
 
 export class LogisticsService {
@@ -42,46 +39,7 @@ export class LogisticsService {
    * Safe basic fields for public tracking scans, enriched with package/shipment data
    */
   static async formatPublicTrackingData(order: any) {
-    const packages = await Package.find({ orderId: order._id }).lean();
-
-    // For each package, fetch shipment details if dispatched
-    const enrichedPackages = await Promise.all(
-      packages.map(async (pkg: any) => {
-        let shipmentData = null;
-        let shipmentEvents: any[] = [];
-        if (pkg.shipmentId) {
-          const shipment = await Shipment.findById(pkg.shipmentId).lean();
-          if (shipment) {
-            shipmentData = {
-              awbNumber: shipment.awbNumber,
-              courierPartner: shipment.courierPartner,
-              status: shipment.status,
-              estimatedDeliveryDate: shipment.estimatedDeliveryDate,
-              actualDeliveryDate: shipment.actualDeliveryDate,
-              trackingUrl: shipment.trackingUrl,
-            };
-            shipmentEvents = await ShipmentEvent.find({ shipmentId: shipment._id })
-              .sort({ timestamp: -1 })
-              .lean();
-          }
-        }
-
-        return {
-          packageId: pkg.packageId,
-          packageNumber: pkg.packageNumber,
-          totalPackages: pkg.totalPackages,
-          status: pkg.status,
-          updatedAt: pkg.updatedAt,
-          items: pkg.items.map((i: any) => ({ sku: i.sku, quantity: i.quantity })),
-          shipment: shipmentData,
-          events: shipmentEvents.map((e: any) => ({
-            status: e.status,
-            timestamp: e.timestamp,
-            location: e.location?.city || e.location?.hubName || 'Unknown',
-          })),
-        };
-      }),
-    );
+    const enrichedPackages: any[] = [];
 
     return {
       _id: order._id,

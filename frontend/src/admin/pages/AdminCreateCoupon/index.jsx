@@ -1,5 +1,4 @@
-import { m as motion } from 'framer-motion';
-import { AdminCreateCouponSkeleton, fadeUp } from '../../components/AdminUIKit';
+import { AdminCreateCouponSkeleton } from '../../components/AdminUIKit';
 import { DraftStatusIndicator } from '../../components/DraftStatusIndicator';
 import { DraftRestoreModal } from '../../components/DraftRestoreModal';
 import { UnsavedChangesGuard } from '../../components/UnsavedChangesGuard';
@@ -53,9 +52,9 @@ export function AdminCreateCoupon() {
 
   const formElement = (
     <div
-      className={`bg-[var(--admin-surface)] rounded-[4px] border border-[var(--admin-border)] shadow-xs p-4 sm:p-6 min-h-0 lg:min-h-[480px] flex-col justify-between relative overflow-hidden ${mobileTab === 'form' ? 'flex' : 'hidden lg:flex'}`}
+      className={`bg-[var(--admin-surface)] rounded-[4px] border border-[var(--admin-border)] shadow-xs p-4 sm:p-6 min-h-0 lg:min-h-[480px] flex-col justify-between relative ${mobileTab === 'form' ? 'flex' : 'hidden lg:flex'}`}
     >
-      <motion.form
+      <form
         onSubmit={(e) => {
           e.preventDefault();
           if (currentStep === STEPS.length - 1) {
@@ -64,7 +63,6 @@ export function AdminCreateCoupon() {
             handleNext();
           }
         }}
-        variants={fadeUp}
         className="space-y-6 sm:space-y-8 flex-1 flex flex-col justify-between"
       >
         <div className="space-y-6">
@@ -127,7 +125,7 @@ export function AdminCreateCoupon() {
             )}
           </div>
         </div>
-      </motion.form>
+      </form>
 
       <DraftRestoreModal
         isOpen={showRestoreModal}
@@ -142,7 +140,7 @@ export function AdminCreateCoupon() {
   );
 
   return (
-    <div className="flex flex-col gap-4 sm:gap-6 max-w-7xl mx-auto pb-16 sm:pb-0">
+    <div className="flex flex-col gap-4 sm:gap-6 max-w-7xl mx-auto pb-36 lg:pb-8">
       {/* Mobile Merged Header & Progress Card */}
       <div className="lg:hidden bg-[var(--admin-surface)] p-3 rounded-[4px] border border-[var(--admin-border)] shadow-xs flex flex-col gap-2.5">
         <div className="flex items-center justify-between gap-3">

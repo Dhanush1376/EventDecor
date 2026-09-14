@@ -52,7 +52,7 @@ export const ensureIndexes = async (): Promise<void> => {
     '../models/User',
     '../models/Product',
     '../models/Order',
-    '../domains/event_operations/models/EventJob',
+    '../models/EventJob',
     '../models/Event',
     '../models/Gallery',
     '../models/ContentSection',

@@ -76,11 +76,15 @@ class StoreSettingsService {
         estimatedDeliveryDays: settings.shipping.estimatedDeliveryDays,
       },
       payments: {
-        enableCOD: settings.payments.enableCOD,
+        enableCOD: settings.payments.enableCOD ?? true,
         codFee: settings.payments.codFee,
         codMinOrder: settings.payments.codMinOrder,
         codMaxOrder: settings.payments.codMaxOrder,
-        enableRazorpay: settings.payments.enableRazorpay,
+        codOtpChannel: settings.payments.codOtpChannel || 'phone',
+        enableRazorpay:
+          !settings.payments.enableCOD && !settings.payments.enableRazorpay
+            ? true
+            : (settings.payments.enableRazorpay ?? true),
       },
       returnsExchanges: {
         enableReturns: settings.returnsExchanges.enableReturns,
@@ -161,10 +165,22 @@ class StoreSettingsService {
     }
 
     // Merge new data
-    (settings as any)[section] = {
+    const updatedSectionData = {
       ...(settings as any)[section],
       ...data,
     };
+
+    if (section === 'payments') {
+      const isRazorpay = Boolean(updatedSectionData.enableRazorpay);
+      const isCod = Boolean(updatedSectionData.enableCOD);
+      if (!isRazorpay && !isCod) {
+        throw new Error(
+          'At least one payment method (Razorpay or Cash on Delivery) must remain active.',
+        );
+      }
+    }
+
+    (settings as any)[section] = updatedSectionData;
     settings.markModified(section);
 
     // Bump version and update metadata

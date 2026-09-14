@@ -1,13 +1,14 @@
-import { Lock } from 'lucide-react';
+import { Lock, Clock, ArrowRight } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { SEO } from '../components/seo/SEO';
 import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
 import { BookingWizardSkeleton } from '../components/ui/Skeleton';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { eventService, bookingService, uploadService } from '../services/domainServices';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
+import { useConfig } from '../context/ConfigContext';
 import logger from '../utils/core/logger';
 import { EXTERNAL_URLS } from '../config/constants';
 import { CustomerContactGate } from '../components/shared/CustomerContactGate';
@@ -32,6 +33,7 @@ const loadRazorpayScript = () => {
 
 export function EventBookingWizard() {
   const { isAuthenticated, runProtectedAction } = useAuth();
+  const { isStoreClosed } = useConfig();
   const navigate = useNavigate();
   const location = useLocation();
   const [currentStep, setCurrentStep] = useState(1);
@@ -104,6 +106,33 @@ export function EventBookingWizard() {
 
   if (loading) {
     return <BookingWizardSkeleton />;
+  }
+
+  if (isStoreClosed) {
+    return (
+      <div className="min-h-[75vh] bg-surface-container-low flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-surface border border-outline-variant/30 rounded-2xl p-6 sm:p-8 text-center shadow-md">
+          <div className="w-12 h-12 rounded-full bg-amber-500/10 text-amber-700 flex items-center justify-center mx-auto mb-4">
+            <Clock className="w-6 h-6" strokeWidth={1.75} />
+          </div>
+          <h2 className="font-display text-2xl text-on-surface mb-2 font-medium">
+            Bookings Temporarily Paused
+          </h2>
+          <p className="font-body text-on-surface-variant text-sm mb-6 leading-relaxed">
+            Our event booking portal is currently paused while our storefront is in view-only mode.
+            You are warmly invited to browse our event showcases and design inspirations in the
+            meantime.
+          </p>
+          <Link
+            to="/events"
+            className="inline-flex items-center justify-center gap-2 w-full py-3.5 px-6 rounded-full bg-black hover:bg-stone-800 text-white text-xs font-bold uppercase tracking-wider transition-colors shadow-sm cursor-pointer"
+          >
+            <span>Explore Event Showcases</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   const handleEventTypeSelect = (type) => {

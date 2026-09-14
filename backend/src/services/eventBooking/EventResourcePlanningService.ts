@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import ApiError from '../../utils/ApiError';
+import EventJob from '../../models/EventJob';
 
 export interface IDailyEventCapacity extends Document {
   dateStr: string; // YYYY-MM-DD
@@ -119,8 +120,6 @@ export class EventResourcePlanningService {
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(date);
     endOfDay.setHours(23, 59, 59, 999);
-
-    const EventJob = require('../../domains/event_operations/models/EventJob').default;
 
     // Normalize venue string for robust matching: alphanumeric only
     const normalizedVenue = venueAddress.toLowerCase().replace(/[^a-z0-9]/g, '');

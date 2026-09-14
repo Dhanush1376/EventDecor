@@ -245,23 +245,23 @@ export function AddAddressModal({
             exit={{ opacity: 0, scale: isMobile ? 1 : 0.95, y: isMobile ? '100%' : 16 }}
             transition={sheetTransition}
             {...dragProps}
-            className="pointer-events-auto relative z-10 bg-surface-bright dark:bg-surface-container-low rounded-t-3xl lg:rounded-2xl w-full max-w-[760px] max-h-[92dvh] lg:max-h-[90vh] shadow-2xl flex flex-col overflow-hidden border border-outline-variant/20 modern-sans-headings font-body"
+            className="pointer-events-auto relative z-10 bg-surface-bright dark:bg-surface-container-low rounded-t-3xl lg:rounded-2xl w-full max-w-[760px] max-h-[95dvh] lg:max-h-[90vh] shadow-2xl flex flex-col overflow-hidden border border-outline-variant/20 modern-sans-headings font-body"
           >
             {isMobile && (
               <DrawerDragHandle
                 onClick={() => setIsAddingNewAddress(false)}
-                className="pt-2 pb-0.5"
+                className="pt-1.5 pb-0"
               />
             )}
 
             {/* Modal Header */}
-            <div className="bg-surface-bright z-10 pt-1.5 pb-2.5 sm:py-3.5 px-4 sm:px-6 flex justify-between items-center border-b border-outline-variant/20 shrink-0">
+            <div className="bg-surface-bright z-10 py-1.5 sm:py-2.5 px-4 sm:px-6 flex justify-between items-center border-b border-outline-variant/20 shrink-0">
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[18px] sm:text-[20px] text-primary">
+                <span className="material-symbols-outlined text-[17px] sm:text-[19px] text-primary">
                   add_location_alt
                 </span>
                 <h2
-                  className="font-sans text-[12px] sm:text-[13px] font-bold text-on-surface uppercase tracking-wider"
+                  className="font-sans text-[11.5px] sm:text-[13px] font-bold text-on-surface uppercase tracking-wider"
                   style={{ fontFamily: 'var(--font-body)' }}
                 >
                   {newAddress?.id ? 'Edit Address' : 'Add New Address'}
@@ -273,7 +273,7 @@ export function AddAddressModal({
                 className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-surface-container-low hover:bg-surface-container flex items-center justify-center border border-outline-variant/30 text-secondary hover:text-on-surface transition-all cursor-pointer"
                 aria-label="Close modal"
               >
-                <span className="material-symbols-outlined text-[16px] sm:text-[18px]">close</span>
+                <span className="material-symbols-outlined text-[15px] sm:text-[17px]">close</span>
               </button>
             </div>
 
@@ -281,7 +281,7 @@ export function AddAddressModal({
             <div
               ref={formContainerRef}
               onFocusCapture={handleFocusCapture}
-              className="flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y p-4 sm:p-6 pb-6"
+              className="flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y px-4 sm:px-6 pt-2 pb-6"
             >
               <form id="address-form" onSubmit={handleSaveNewAddress}>
                 <div className="space-y-4">

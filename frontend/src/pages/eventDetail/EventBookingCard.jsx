@@ -1,7 +1,9 @@
-import { Calendar, Truck, Ban, BadgeCheck, ChevronRight, Heart } from 'lucide-react';
+import { Calendar, Truck, Ban, BadgeCheck, ChevronRight, Heart, Lock } from 'lucide-react';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { WhatsAppIcon } from '../../components/ui/WhatsAppIcon';
+import { useConfig } from '../../context/ConfigContext';
+import toast from 'react-hot-toast';
 
 export function EventBookingCard({
   event,
@@ -11,6 +13,7 @@ export function EventBookingCard({
   reserveButtonRef,
 }) {
   const navigate = useNavigate();
+  const { isStoreClosed } = useConfig();
 
   return (
     <div className="md:col-span-5 lg:col-span-5 flex flex-col gap-6">
@@ -98,11 +101,33 @@ export function EventBookingCard({
           <div className="flex flex-row gap-3 pt-2">
             <button
               ref={reserveButtonRef}
-              onClick={() => setIsDrawerOpen(true)}
-              className="flex-1 bg-black text-white hover:bg-stone-900 hover:text-white py-3 px-6 rounded-full font-label text-[11px] uppercase tracking-widest font-bold transition-all active:scale-95 shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
+              onClick={() => {
+                if (isStoreClosed) {
+                  toast.error(
+                    'Event bookings are temporarily paused while our store is in view-only mode.',
+                  );
+                  return;
+                }
+                setIsDrawerOpen(true);
+              }}
+              disabled={isStoreClosed}
+              className={`flex-1 py-3 px-6 rounded-full font-label text-[11px] uppercase tracking-widest font-bold transition-all shadow-md flex items-center justify-center gap-1.5 ${
+                isStoreClosed
+                  ? 'bg-stone-200 text-stone-500 cursor-not-allowed border border-stone-300'
+                  : 'bg-black text-white hover:bg-stone-900 hover:text-white active:scale-95 cursor-pointer'
+              }`}
             >
-              <span>Book</span>
-              <ChevronRight className="text-[14px]" strokeWidth={1.5} />
+              {isStoreClosed ? (
+                <>
+                  <Lock className="w-3.5 h-3.5 text-stone-500" strokeWidth={1.5} />
+                  <span>Bookings Paused</span>
+                </>
+              ) : (
+                <>
+                  <span>Book</span>
+                  <ChevronRight className="text-[14px]" strokeWidth={1.5} />
+                </>
+              )}
             </button>
             <button
               onClick={() => toggleItem({ ...event, image: event.image })}

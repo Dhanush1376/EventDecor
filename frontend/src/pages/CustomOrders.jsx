@@ -1,5 +1,6 @@
 import { MandalaElement } from '../components/ui/MandalaElement';
 import { SEO } from '../components/seo/SEO';
+import { Clock } from 'lucide-react';
 
 import { CustomOrderWizard } from '../components/customOrders/CustomOrderWizard';
 import { CustomOrderTracker } from '../components/customOrders/CustomOrderTracker';
@@ -10,6 +11,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useProduct } from '../hooks/useProductQueries';
 
 import { useAuth } from '../context/AuthContext';
+import { useConfig } from '../context/ConfigContext';
 import { useWebsiteContent } from '../hooks/useWebsiteContent';
 
 // Direct Image URL Check
@@ -19,7 +21,8 @@ const isDirectImageUrl = (url) => {
 };
 
 export function CustomOrders() {
-  const { user, isAuthenticated, runProtectedAction } = useAuth();
+  const { user, isAuthenticated, runProtectedAction, openAuthModal } = useAuth();
+  const { isStoreClosed } = useConfig();
   const [searchParams] = useSearchParams();
   const productIdQuery = searchParams.get('product');
   const eventIdQuery = searchParams.get('event');
@@ -157,17 +160,47 @@ export function CustomOrders() {
         </div>
 
         {/* ─── ACTIVE VIEW: MULTI-STEP REQUEST WIZARD ─── */}
-        {activeTab === 'wizard' && (
-          <CustomOrderWizard
-            isAuthenticated={isAuthenticated}
-            runProtectedAction={runProtectedAction}
-            linkedProduct={linkedProduct}
-            setLinkedProduct={setLinkedProduct}
-            setActiveTab={setActiveTab}
-            loadWorkspaceData={loadWorkspaceData}
-            eventIdQuery={eventIdQuery}
-          />
-        )}
+        {activeTab === 'wizard' &&
+          (isStoreClosed ? (
+            <div className="max-w-xl mx-auto my-12 bg-surface border border-outline-variant/30 rounded-2xl p-6 sm:p-8 text-center shadow-xs">
+              <div className="w-12 h-12 rounded-full bg-amber-500/10 text-amber-700 flex items-center justify-center mx-auto mb-4">
+                <Clock className="w-6 h-6" strokeWidth={1.75} />
+              </div>
+              <h3 className="font-display text-2xl text-on-surface mb-2 font-medium">
+                Custom Orders Temporarily Paused
+              </h3>
+              <p className="font-body text-on-surface-variant text-sm mb-6 leading-relaxed">
+                We are currently not accepting new custom decor requests or quotation submissions.
+                Existing custom orders can still be tracked in the &apos;Track My Custom
+                Orders&apos; tab above.
+              </p>
+              {isAuthenticated ? (
+                <button
+                  onClick={() => setActiveTab('tracker')}
+                  className="inline-flex items-center justify-center gap-2 py-3 px-6 rounded-full bg-black hover:bg-stone-800 text-white text-xs font-bold uppercase tracking-wider transition-colors shadow-sm cursor-pointer"
+                >
+                  <span>Track Existing Orders</span>
+                </button>
+              ) : (
+                <button
+                  onClick={openAuthModal}
+                  className="inline-flex items-center justify-center gap-2 py-3 px-6 rounded-full bg-black hover:bg-stone-800 text-white text-xs font-bold uppercase tracking-wider transition-colors shadow-sm cursor-pointer"
+                >
+                  <span>Sign In to View Orders</span>
+                </button>
+              )}
+            </div>
+          ) : (
+            <CustomOrderWizard
+              isAuthenticated={isAuthenticated}
+              runProtectedAction={runProtectedAction}
+              linkedProduct={linkedProduct}
+              setLinkedProduct={setLinkedProduct}
+              setActiveTab={setActiveTab}
+              loadWorkspaceData={loadWorkspaceData}
+              eventIdQuery={eventIdQuery}
+            />
+          ))}
 
         {/* ─── ACTIVE VIEW: CLIENT WORKSPACE TRACKING PORTAL ─── */}
         {activeTab === 'tracker' && (

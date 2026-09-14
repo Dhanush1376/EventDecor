@@ -7,7 +7,7 @@ import Address from '../../models/Address';
 import AnalyticsEvent from '../../models/AnalyticsEvent';
 import NotificationLog from '../../models/NotificationLog';
 import CustomerNote from '../../models/CustomerNote';
-import EventJob from '../../domains/event_operations/models/EventJob';
+import EventJob from '../../models/EventJob';
 import Product from '../../models/Product';
 import { analyticsCache } from '../../utils/cache/MemoryCache';
 

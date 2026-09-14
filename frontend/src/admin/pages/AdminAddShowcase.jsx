@@ -157,7 +157,7 @@ export function AdminAddShowcase() {
   }
 
   return (
-    <div className="max-w-[1280px] mx-auto flex flex-col gap-4 sm:gap-6 pb-16 sm:pb-0">
+    <div className="max-w-[1280px] mx-auto flex flex-col gap-4 sm:gap-6 pb-36 lg:pb-8">
       {/* Mobile Merged Header & Progress Card */}
       <div className="lg:hidden bg-[var(--admin-surface)] p-3 rounded-[4px] border border-[var(--admin-border)] shadow-xs flex flex-col gap-2.5">
         <div className="flex items-center justify-between gap-3">

@@ -45,7 +45,7 @@ export const issueManualRefund = [
         throw new ApiError(400, 'Rental Order does not have a captured Razorpay payment');
       originalTransactionId = rental.razorpayPaymentId;
     } else if (entityType === 'EventJob') {
-      const EventJob = require('../../domains/event_operations/models/EventJob').default;
+      const EventJob = require('../../models/EventJob').default;
       const booking = await EventJob.findById(entityId).select('razorpayPaymentId').lean();
       if (!booking) throw new ApiError(404, 'Event Booking not found');
       if (!booking.razorpayPaymentId)
@@ -112,7 +112,7 @@ export const getRefundStatus = asyncHandler(async (req: Request, res: Response) 
       const rental = await RentalOrder.findById(entityId).select('user').lean();
       if (rental && String(rental.user) === String(req.user?.id)) isAuthorized = true;
     } else if (entityType === 'EventJob') {
-      const EventJob = require('../../domains/event_operations/models/EventJob').default;
+      const EventJob = require('../../models/EventJob').default;
       const booking = await EventJob.findById(entityId).select('user').lean();
       if (booking && String(booking.user) === String(req.user?.id)) isAuthorized = true;
     }

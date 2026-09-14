@@ -240,14 +240,24 @@ export class OrderValidationService {
         : settings.shipping.deliveryCharge;
     const platformFee = settings.orders.platformFee;
 
+    const preliminaryWithoutCod = Math.max(0, subtotal + shippingFee + depositTotal - discount);
+    const isFullyCoveredByWallet = Boolean(
+      useWallet && settings.loyalty.walletEnabled && availableWallet >= preliminaryWithoutCod,
+    );
+
     let codFee = 0;
-    if (paymentMethod && paymentMethod.toLowerCase() === 'cod') {
+    if (
+      paymentMethod &&
+      paymentMethod.toLowerCase() === 'cod' &&
+      !isFullyCoveredByWallet &&
+      preliminaryWithoutCod > 0
+    ) {
       codFee = settings.payments.codFee;
     }
 
-    const preliminaryTotal = Math.max(0, subtotal + shippingFee + codFee + depositTotal - discount);
+    const preliminaryTotal = Math.max(0, preliminaryWithoutCod + codFee);
 
-    const orderValueForLimits = preliminaryTotal - depositTotal;
+    const orderValueForLimits = Math.max(0, subtotal - discount);
     if (settings.orders.minOrderValue && orderValueForLimits < settings.orders.minOrderValue) {
       throw new ApiError(400, `Minimum order value must be ₹${settings.orders.minOrderValue}`);
     }

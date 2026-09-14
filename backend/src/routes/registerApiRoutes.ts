@@ -44,7 +44,6 @@ export const registerApiRoutes = (
   apiRouter.use('/events', lazyRouter('./events/eventRoutes'));
   apiRouter.use('/orders', noCacheMiddleware, lazyRouter('./commerce/orderRoutes'));
   apiRouter.use('/cms', lazyRouter('./cms/cmsRoutes'));
-  apiRouter.use('/marketing', lazyRouter('./marketing/marketingHubRoutes'));
   apiRouter.use('/analytics', noCacheMiddleware, lazyRouter('./system/analyticsRoutes'));
   apiRouter.use('/gallery', lazyRouter('./cms/galleryRoutes'));
   apiRouter.use('/reviews', lazyRouter('./products/reviewRoutes'));
@@ -52,17 +51,6 @@ export const registerApiRoutes = (
   apiRouter.use('/users', noCacheMiddleware, lazyRouter('./users/userRoutes'));
   apiRouter.use('/inquiries', lazyRouter('./customer/inquiryRoutes'));
   apiRouter.use('/notifications', lazyRouter('./notifications/notificationRoutes'));
-  apiRouter.use(
-    '/notifications/whatsapp',
-    noCacheMiddleware,
-    lazyRouter('./notifications/whatsappAutomationRoutes'),
-  );
-  apiRouter.use(
-    '/notifications/whatsapp-rbac',
-    noCacheMiddleware,
-    lazyRouter('./notifications/whatsappRBACRoutes'),
-  );
-  apiRouter.use('/webhooks', lazyRouter('./notifications/whatsappWebhookRoutes'));
   apiRouter.use('/notification-center', lazyRouter('./notifications/notificationCenterRoutes'));
   apiRouter.use('/policies', lazyRouter('./customer/policyRoutes'));
   apiRouter.use('/custom-orders', lazyRouter('./commerce/customOrderRoutes'));
@@ -71,20 +59,8 @@ export const registerApiRoutes = (
   apiRouter.use('/showcases', lazyRouter('./cms/showcaseRoutes'));
   apiRouter.use('/admin', noCacheMiddleware, lazyRouter('./system/adminSystemRoutes'));
   apiRouter.use('/admin/invites', noCacheMiddleware, lazyRouter('./auth/adminInviteRoutes'));
-  apiRouter.use('/admin/approvals', noCacheMiddleware, lazyRouter('./system/approvalRoutes'));
-  apiRouter.use('/admin/rules', noCacheMiddleware, lazyRouter('./system/businessRuleRoutes'));
   apiRouter.use('/admin/catalog', noCacheMiddleware, lazyRouter('./products/catalogHealthRoutes'));
   apiRouter.use('/admin/search', noCacheMiddleware, lazyRouter('./admin/synonymRoutes'));
-  apiRouter.use(
-    '/admin/operations-center',
-    noCacheMiddleware,
-    lazyRouter('./admin/operationsCenterRoutes'),
-  );
-  apiRouter.use(
-    '/admin/serviceability',
-    noCacheMiddleware,
-    lazyRouter('./admin/serviceabilityRoutes'),
-  );
   apiRouter.use('/returns', noCacheMiddleware, lazyRouter('./returns/returnRoutes'));
   apiRouter.use('/exchanges', noCacheMiddleware, lazyRouter('./returns/exchangeRoutes'));
   apiRouter.use('/recommendations', lazyRouter('./discovery/recommendationRoutes'));
@@ -99,8 +75,6 @@ export const registerApiRoutes = (
     noCacheMiddleware,
     lazyRouter('./system/customerIntelligenceRoutes'),
   );
-
-  apiRouter.use('/customer/tracking', noCacheMiddleware, lazyRouter('./customer/trackingRoutes'));
 
   apiRouter.use('/contact', noCacheMiddleware, lazyRouter('./commerce/contactRoutes'));
   apiRouter.use('/refunds', noCacheMiddleware, lazyRouter('./commerce/refundRoutes'));
@@ -140,13 +114,6 @@ export const registerApiRoutes = (
 
   // Enterprise Backup & DR Routes
   apiRouter.use('/admin/backup', noCacheMiddleware, lazyRouter('./system/backupRoutes'));
-
-  // Enterprise Domain Routes
-  apiRouter.use('/warehouse', lazyRouter('./warehouse/warehouseRoutes'));
-  apiRouter.use('/shipping/couriers', lazyRouter('./shipping/courierRoutes'));
-  apiRouter.use('/production', lazyRouter('./production/productionRoutes'));
-  apiRouter.use('/shipping', lazyRouter('./shipping/shippingRoutes'));
-  apiRouter.use('/documents', lazyRouter('./documents/documentRoutes'));
 
   app.use(prefix, apiRouter);
 };

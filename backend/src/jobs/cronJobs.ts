@@ -13,13 +13,9 @@ import { InventoryService } from '../services/InventoryService';
 import { WebhookDeadLetterService } from '../services/WebhookDeadLetterService';
 import { initHealthMonitorJob } from './healthMonitorJob';
 import { initBackupJobs } from './backupJob';
-import { initRestoreDrills } from './RestoreDrillJob';
-import { initDataMonitorJob } from './DataMonitorJob';
 import { runMediaIntegrityCheck } from './mediaIntegrityJob';
-import { startDocumentBackupJob } from './S3SyncJob';
 import { runRecycleBinAutoPurge } from './recycleBinPurgeJob';
 import { sweepPendingDeletes } from './pendingDeleteSweeper';
-import { runDeadDataScan } from './deadDataDetector';
 import { CatalogHealthJob } from './catalogHealthJob';
 
 export const initJobs = () => {
@@ -114,11 +110,6 @@ export const initJobs = () => {
   // 1d. Pending Delete Sweeper every night at 4 AM
   cron.schedule('0 4 * * *', async () => {
     await sweepPendingDeletes();
-  });
-
-  // 1e. Dead Data Scan every Sunday at 1 AM
-  cron.schedule('0 1 * * 0', async () => {
-    await runDeadDataScan();
   });
 
   // 2. Release stock for stale pending orders and rentals (every 15 minutes)
@@ -426,9 +417,6 @@ export const initJobs = () => {
   // 14. Database Backup (daily, weekly, monthly managed via backupJob)
   initBackupJobs();
 
-  // 14b. Automated Restore Drills
-  initRestoreDrills();
-
   // 15. Business Metrics Reporting (Hourly)
   cron.schedule('0 * * * *', async () => {
     await withCronLock('metrics-hourly-report', 55 * 60, async () => {
@@ -472,9 +460,6 @@ export const initJobs = () => {
   // 19. Initialize Health Monitor Job
   initHealthMonitorJob();
 
-  // 20. Initialize Real-Time Data Drop Monitor
-  initDataMonitorJob();
-
   // 21. Daily Customer Intelligence Snapshot (00:05 AM)
   cron.schedule('5 0 * * *', async () => {
     await withCronLock('analytics-daily-snapshot', 3600, async () => {
@@ -490,65 +475,6 @@ export const initJobs = () => {
       await ReturnReconciliationJob.run();
     });
   });
-
-  // 23. S3 Disaster Recovery Sync
-  startDocumentBackupJob();
-
-  // 24. WhatsApp Automation Cron Jobs
-  const { startWhatsAppCronJobs } = require('./whatsappCronJobs');
-  startWhatsAppCronJobs();
-
-  // 25. Marketing Campaign Scheduler (Every 1 minute)
-  cron.schedule('* * * * *', async () => {
-    await withCronLock('marketing-campaign-scheduler', 50, async () => {
-      try {
-        const EmailCampaign = require('../models/EmailCampaign').default;
-        const {
-          default: CampaignExecutionService,
-        } = require('../services/marketing/CampaignExecutionService');
-        const dueCampaigns = await EmailCampaign.find({
-          status: 'scheduled',
-          scheduledAt: { $lte: new Date() },
-          isDeleted: false,
-        }).select('_id');
-
-        for (const camp of dueCampaigns) {
-          CampaignExecutionService.executeCampaignDispatch(camp._id.toString()).catch(
-            (err: any) => {
-              logger.error(`[CRON] Error executing scheduled campaign ${camp._id}: ${err.message}`);
-            },
-          );
-        }
-      } catch (err: any) {
-        logger.error(`[CRON] Marketing campaign scheduler error: ${err.message}`);
-      }
-    });
-  });
-
-  // 26. Marketing Lifecycle Automation Runner (Every 2 minutes)
-  cron.schedule('*/2 * * * *', async () => {
-    await withCronLock('marketing-automation-runner', 110, async () => {
-      try {
-        const {
-          default: AutomationEngineService,
-        } = require('../services/marketing/AutomationEngineService');
-        await AutomationEngineService.scanAndEnrollAbandonedCarts();
-        await AutomationEngineService.processDueEnrollments();
-      } catch (err: any) {
-        logger.error(`[CRON] Marketing automation runner error: ${err.message}`);
-      }
-    });
-  });
-
-  // Startup: Initialize default system automations
-  (async () => {
-    try {
-      const {
-        default: AutomationEngineService,
-      } = require('../services/marketing/AutomationEngineService');
-      await AutomationEngineService.initializeDefaultAutomations();
-    } catch (_err) {}
-  })();
 
   logger.info('⏰ Background jobs initialized (distributed locks active when REDIS_URL is set)');
 };

@@ -60,7 +60,8 @@ export function CheckoutProvider({ children }) {
       const data = await storeSettingsService.getPublicSettings();
       return data;
     },
-    staleTime: 10 * 60 * 1000,
+    staleTime: 30 * 1000,
+    refetchOnMount: 'always',
   });
   const settings = settingsData || {};
 
@@ -127,6 +128,19 @@ export function CheckoutProvider({ children }) {
     });
   });
 
+  const isRazorpayEnabled = settings?.payments?.enableRazorpay ?? true;
+  const isCodEnabled = settings?.payments?.enableCOD ?? true;
+
+  React.useEffect(() => {
+    if (settings?.payments) {
+      if (!isRazorpayEnabled && paymentOption === 'razorpay' && isCodEnabled) {
+        setPaymentOption('cod');
+      } else if (!isCodEnabled && paymentOption === 'cod' && isRazorpayEnabled) {
+        setPaymentOption('razorpay');
+      }
+    }
+  }, [isRazorpayEnabled, isCodEnabled, paymentOption, settings?.payments]);
+
   React.useEffect(() => {
     persistentStorage.setItem('siri_checkout_payment_option', paymentOption, { session: true });
   }, [paymentOption]);
@@ -168,6 +182,10 @@ export function CheckoutProvider({ children }) {
     isSendingOtp,
     paymentError,
     setPaymentError,
+    configuredCodChannel,
+    effectiveCodChannel,
+    selectedCodChannel,
+    setSelectedCodChannel,
     handleSendCodOtp,
     handleVerifyCodOtp,
     handleConfirmOrder,
@@ -248,6 +266,10 @@ export function CheckoutProvider({ children }) {
     isSendingOtp,
     paymentError,
     setPaymentError,
+    configuredCodChannel,
+    effectiveCodChannel,
+    selectedCodChannel,
+    setSelectedCodChannel,
     handleSendCodOtp,
     handleVerifyCodOtp,
     handleConfirmOrder,

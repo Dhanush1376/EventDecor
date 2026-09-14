@@ -228,7 +228,32 @@ export class OrderCheckoutService {
 
       const user = await User.findById(userId).session(session);
 
-      if (isCod) {
+      const totals = computeOrderTotals({
+        subtotal,
+        discount,
+        depositTotal,
+        isCod,
+        codFee: settings.payments.codFee,
+        freeShippingThreshold: settings.shipping.enableFreeShipping
+          ? settings.shipping.freeShippingThreshold
+          : Infinity,
+        deliveryCharge: settings.shipping.deliveryCharge,
+        useWallet: Boolean(useWallet && user && settings.loyalty.walletEnabled),
+        walletBalance: user?.walletBalance || 0,
+      });
+
+      const { shippingFee, codFee, total } = totals;
+      const isZeroTotalOrder = total === 0;
+
+      const orderValueForLimits = Math.max(0, subtotal - discount);
+      if (settings.orders.minOrderValue && orderValueForLimits < settings.orders.minOrderValue) {
+        throw new ApiError(400, `Minimum order value must be ₹${settings.orders.minOrderValue}`);
+      }
+      if (settings.orders.maxOrderValue && orderValueForLimits > settings.orders.maxOrderValue) {
+        throw new ApiError(400, `Maximum order value must be ₹${settings.orders.maxOrderValue}`);
+      }
+
+      if (isCod && !isZeroTotalOrder) {
         if (!settings.payments.enableCOD) {
           throw new ApiError(400, 'Cash on Delivery is currently disabled.');
         }
@@ -264,7 +289,7 @@ export class OrderCheckoutService {
         if (!codVerificationToken) {
           throw new ApiError(
             400,
-            'Cash on Delivery phone verification is required. Please verify with OTP.',
+            'Cash on Delivery verification is required. Please verify with OTP.',
           );
         }
 
@@ -275,7 +300,7 @@ export class OrderCheckoutService {
         } catch {
           throw new ApiError(
             400,
-            'Invalid or expired COD phone verification session. Please verify again.',
+            'Invalid or expired COD verification session. Please verify again.',
           );
         }
 
@@ -287,11 +312,25 @@ export class OrderCheckoutService {
           throw new ApiError(403, 'COD verification does not match the active customer account.');
         }
 
-        if (decodedCodToken.phone !== normalizedShippingPhone) {
-          throw new ApiError(
-            400,
-            'Verified COD phone does not match the selected delivery address phone. Please re-verify with OTP.',
-          );
+        if (
+          decodedCodToken.channel === 'email' ||
+          (!decodedCodToken.phone && decodedCodToken.email)
+        ) {
+          const orderEmail = (shippingAddress.email || user?.email || '').toLowerCase().trim();
+          const tokenEmail = (decodedCodToken.email || '').toLowerCase().trim();
+          if (!tokenEmail || tokenEmail !== orderEmail) {
+            throw new ApiError(
+              400,
+              'Verified COD email does not match the customer delivery email. Please re-verify with OTP.',
+            );
+          }
+        } else {
+          if (decodedCodToken.phone !== normalizedShippingPhone) {
+            throw new ApiError(
+              400,
+              'Verified COD phone does not match the selected delivery address phone. Please re-verify with OTP.',
+            );
+          }
         }
 
         // Atomic single-use consumption of OtpChallenge to prevent replay
@@ -312,34 +351,10 @@ export class OrderCheckoutService {
             'COD verification code has already been used or expired. Please verify again.',
           );
         }
-      } else if (paymentMethod === 'razorpay') {
+      } else if (paymentMethod === 'razorpay' && !isZeroTotalOrder) {
         if (!settings.payments.enableRazorpay) {
           throw new ApiError(400, 'Online payments are currently disabled.');
         }
-      }
-
-      const totals = computeOrderTotals({
-        subtotal,
-        discount,
-        depositTotal,
-        isCod,
-        codFee: settings.payments.codFee,
-        freeShippingThreshold: settings.shipping.enableFreeShipping
-          ? settings.shipping.freeShippingThreshold
-          : Infinity,
-        deliveryCharge: settings.shipping.deliveryCharge,
-        useWallet: Boolean(useWallet && user && settings.loyalty.walletEnabled),
-        walletBalance: user?.walletBalance || 0,
-      });
-
-      const { shippingFee, codFee, total } = totals;
-
-      const orderValueForLimits = total - depositTotal;
-      if (settings.orders.minOrderValue && orderValueForLimits < settings.orders.minOrderValue) {
-        throw new ApiError(400, `Minimum order value must be ₹${settings.orders.minOrderValue}`);
-      }
-      if (settings.orders.maxOrderValue && orderValueForLimits > settings.orders.maxOrderValue) {
-        throw new ApiError(400, `Maximum order value must be ₹${settings.orders.maxOrderValue}`);
       }
 
       walletDeduction = totals.walletDeduction;
@@ -363,25 +378,10 @@ export class OrderCheckoutService {
       // the warehouse creates a Package (PKG-) and courier assigns an AWB.
       // This ensures every barcode/tracking number maps to a real database entity.
 
-      // --- RULE ENGINE INTEGRATION ---
-      const { RuleEngine } = require('../../domains/rules/services/RuleEngine');
-      const orderPayloadForRules = {
-        _id: pendingOrderId,
-        user: userId,
-        items: orderItems,
-        subtotal,
-        total,
-        discount,
-        couponCode,
-        paymentMethod: isCod ? 'cod' : 'razorpay',
-      };
+      const requiresApproval = false;
 
-      const ruleResult = await RuleEngine.evaluate(orderPayloadForRules, 'Order', session);
-      const requiresApproval = ruleResult.requiresApproval;
-      // -------------------------------
-
-      const isInstantWallet = !isCod && total === 0 && walletDeduction > 0;
-      const isInstantCheckout = isCod || isInstantWallet;
+      const _isInstantWallet = isZeroTotalOrder && walletDeduction > 0;
+      const isInstantCheckout = (isCod && !isZeroTotalOrder) || isZeroTotalOrder;
 
       if (isInstantCheckout) {
         // FOR COD: Perform all actual database mutations (Coupon, Wallet, Order)
@@ -438,8 +438,8 @@ export class OrderCheckoutService {
           customerEmail: user?.email || shippingAddress?.email || '',
           customerPhone: user?.phone || normalizedShippingPhone,
           shippingPhone: normalizedShippingPhone,
-          codPhoneVerified: isCod,
-          codVerifiedAt: isCod ? new Date() : undefined,
+          codPhoneVerified: isCod && !isZeroTotalOrder,
+          codVerifiedAt: isCod && !isZeroTotalOrder ? new Date() : undefined,
           orderType: 'purchase',
           depositTotal,
           subtotal,
@@ -449,17 +449,27 @@ export class OrderCheckoutService {
           walletDeduction,
           total,
           couponCode: couponValid ? couponCode.toUpperCase() : undefined,
-          paymentMethod: isCod ? 'cod' : 'wallet',
-          paymentStatus: isCod ? 'Pending COD' : 'Paid',
+          paymentMethod: isZeroTotalOrder
+            ? walletDeduction > 0
+              ? 'wallet'
+              : 'coupon'
+            : isCod
+              ? 'cod'
+              : 'razorpay',
+          paymentStatus: isZeroTotalOrder ? 'paid' : isCod ? 'Pending COD' : 'paid',
           orderStatus: requiresApproval ? 'Pending Approval' : 'Confirmed',
           statusHistory: [
             {
               status: requiresApproval ? 'Pending Approval' : 'Confirmed',
               note: requiresApproval
                 ? 'Order requires manual approval based on business rules'
-                : isCod
-                  ? 'Cash on Delivery order successfully placed'
-                  : 'Order successfully placed and fully paid using wallet balance',
+                : isZeroTotalOrder
+                  ? walletDeduction > 0
+                    ? 'Order successfully placed and fully paid using wallet balance'
+                    : 'Order successfully placed (100% discount applied)'
+                  : isCod
+                    ? 'Cash on Delivery order successfully placed'
+                    : 'Order successfully placed',
             },
           ],
           reservationIds,
@@ -529,7 +539,7 @@ export class OrderCheckoutService {
               payload: {
                 orderId: order._id.toString(),
                 userId: userId,
-                type: 'cod',
+                type: isZeroTotalOrder ? 'wallet' : isCod ? 'cod' : 'razorpay',
               },
             },
           ],
@@ -541,7 +551,7 @@ export class OrderCheckoutService {
           const userForRule = await User.findById(userId).lean().session(session);
           await RuleEngine.evaluateTrigger('on_checkout', { user: userForRule, order });
         } catch (ruleErr) {
-          logger.error('Failed to evaluate checkout rules (COD):', ruleErr);
+          logger.error('Failed to evaluate checkout rules (instant):', ruleErr);
         }
 
         await session.commitTransaction();
@@ -550,25 +560,19 @@ export class OrderCheckoutService {
           const { emitAdminEvent } = require('../../socket');
           emitAdminEvent('order_update', { orderId: pendingOrderId });
         } catch (e) {
-          logger.warn('Failed to emit admin order_update event for COD order', e);
+          logger.warn('Failed to emit admin order_update event for instant order', e);
         }
 
-        const resultInstant = { order, type: isCod ? 'cod' : 'wallet', isInstantCheckout: true };
+        const resultInstant = {
+          order,
+          type: isZeroTotalOrder ? 'wallet' : isCod ? 'cod' : 'razorpay',
+          isInstantCheckout: true,
+        };
         await OrderIdempotencyManager.cacheResponseAndReleaseLock(
           userId,
           idempotencyKey,
           resultInstant,
         );
-
-        // Fire WhatsApp Notification for Order
-        try {
-          const {
-            WhatsAppTriggers,
-          } = require('../../domains/notifications/whatsapp/whatsappTriggerHooks');
-          await WhatsAppTriggers.onOrderCreated(order);
-        } catch (e) {
-          logger.error('Failed to trigger WhatsApp notification', e);
-        }
 
         // Marketing lifecycle cancellation & conversion attribution
         try {

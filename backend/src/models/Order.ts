@@ -59,6 +59,7 @@ const OrderSchema: Schema = new Schema(
         'authorized',
         'captured',
         'paid',
+        'Paid',
         'failed',
         'Pending COD',
         'COD Collected',

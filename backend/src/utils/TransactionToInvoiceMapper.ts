@@ -1,7 +1,7 @@
 import { ITransaction } from '../types/transaction';
 import Order from '../models/Order';
 import RentalOrder from '../models/RentalOrder';
-import EventJob from '../domains/event_operations/models/EventJob';
+import EventJob from '../models/EventJob';
 import CustomOrder from '../models/CustomOrder';
 
 import { IInvoiceLineItem } from '../models/Invoice';

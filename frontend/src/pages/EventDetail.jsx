@@ -1,4 +1,4 @@
-import { ChevronRight, Star } from 'lucide-react';
+import { ChevronRight, Star, Lock } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
@@ -7,6 +7,8 @@ import { EventDetailSkeleton } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/ui/FeedbackStates';
 import { useWishlist } from '../context/WishlistContext';
 import { useAuth } from '../context/AuthContext';
+import { useConfig } from '../context/ConfigContext';
+import toast from 'react-hot-toast';
 import { useRecommendationTracker } from '../hooks/useRecommendationTracker';
 import { eventService, showcaseService } from '../services/domainServices';
 import logger from '../utils/core/logger';
@@ -34,6 +36,7 @@ export function EventDetail() {
   const navigate = useNavigate();
   const { user, isAuthenticated, runProtectedAction } = useAuth();
   const { toggleItem, isWishlisted } = useWishlist();
+  const { isStoreClosed } = useConfig();
 
   const [event, setEvent] = useState(null);
   const [_relatedEvents, setRelatedEvents] = useState([]);
@@ -317,10 +320,29 @@ export function EventDetail() {
               </p>
             </div>
             <button
-              onClick={() => bookingActions.setIsDrawerOpen(true)}
-              className="bg-black text-white h-10 px-5 rounded-full font-label text-[10px] uppercase tracking-widest font-bold flex items-center gap-1.5"
+              onClick={() => {
+                if (isStoreClosed) {
+                  toast.error(
+                    'Event bookings are temporarily paused while our store is in view-only mode.',
+                  );
+                  return;
+                }
+                bookingActions.setIsDrawerOpen(true);
+              }}
+              className={`h-10 px-5 rounded-full font-label text-[10px] uppercase tracking-widest font-bold flex items-center gap-1.5 transition-all ${
+                isStoreClosed
+                  ? 'bg-stone-200 text-stone-500 cursor-not-allowed border border-stone-300'
+                  : 'bg-black text-white active:scale-95'
+              }`}
             >
-              <span>Book Now</span>
+              {isStoreClosed ? (
+                <>
+                  <Lock className="w-3 h-3 text-stone-500" strokeWidth={1.5} />
+                  <span>Bookings Paused</span>
+                </>
+              ) : (
+                <span>Book Now</span>
+              )}
             </button>
           </motion.div>
         )}

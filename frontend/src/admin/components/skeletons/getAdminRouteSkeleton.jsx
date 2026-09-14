@@ -20,8 +20,6 @@ import {
   AdminPoliciesSkeleton,
   AdminInventorySkeleton,
   AdminCatalogRegistrySkeleton,
-  AdminBusinessRulesSkeleton,
-  AdminApprovalsQueueSkeleton,
   AdminAnalyticsSkeleton,
   AdminPaymentsSkeleton,
   AdminNotificationsSkeleton,
@@ -31,8 +29,6 @@ import {
   AdminTeamSkeleton,
   AdminSettingsSkeleton,
   AdminReviewsSkeleton,
-  AdminWarehouseSkeleton,
-  AdminProductionSkeleton,
   AdminReturnsHubSkeleton,
   AdminReturnDetailSkeleton,
   AdminRecycleBinSkeleton,
@@ -204,24 +200,6 @@ export function getAdminRouteSkeleton(pathname = '') {
   // 23. Reviews
   if (cleanPath === '/admin/reviews') {
     return <AdminReviewsSkeleton />;
-  }
-
-  // 24. Warehouse
-  if (cleanPath.startsWith('/admin/warehouse')) {
-    return <AdminWarehouseSkeleton />;
-  }
-
-  // 25. Production
-  if (cleanPath.startsWith('/admin/production')) {
-    return <AdminProductionSkeleton />;
-  }
-
-  // 26. Business Rules & Approvals
-  if (cleanPath === '/admin/rules') {
-    return <AdminBusinessRulesSkeleton />;
-  }
-  if (cleanPath === '/admin/approvals') {
-    return <AdminApprovalsQueueSkeleton />;
   }
 
   // 27. System Hub

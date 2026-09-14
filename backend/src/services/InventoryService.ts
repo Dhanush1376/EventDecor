@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import Product from '../models/Product';
 import InventoryReservation from '../models/InventoryReservation';
-import InventoryEvent from '../domains/inventory/models/InventoryEvent';
+import InventoryEvent from '../models/InventoryEvent';
 import ApiError from '../utils/ApiError';
 import logger from '../config/logger';
 import * as Sentry from '@sentry/node';

@@ -3,6 +3,7 @@ import { Request, Response } from 'express';
 import asyncHandler from '../../utils/asyncHandler';
 import { ReturnService } from '../../services/returns/ReturnService';
 import ReturnRequest from '../../models/ReturnRequest';
+import ExchangeRequest from '../../models/ExchangeRequest';
 
 import '../../models/Product';
 import ApiError from '../../utils/ApiError';
@@ -80,7 +81,6 @@ export const getReturnById = asyncHandler(async (req: Request, res: Response) =>
     .populate('items.productId', 'title imageSrc');
 
   if (!returnRequest) {
-    const ExchangeRequest = require('../../models/ExchangeRequest').default;
     const linkedExchange = await ExchangeRequest.findOne(
       isObjectId ? { _id: paramId } : { exchangeId: paramId },
     );
@@ -98,7 +98,6 @@ export const getReturnById = asyncHandler(async (req: Request, res: Response) =>
   // Fetch exchange details if applicable
   let exchangeDetails = null;
   if (returnRequest.returnType === 'exchange') {
-    const ExchangeRequest = require('../../models/ExchangeRequest').default;
     exchangeDetails = await ExchangeRequest.findOne({
       returnRequestId: returnRequest._id,
     }).populate('replacementItem.productId', 'title imageSrc price');

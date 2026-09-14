@@ -164,12 +164,7 @@ const AdminCustomers = lazy(() =>
   import('../admin/pages/AdminCustomers').then((m) => ({ default: m.AdminCustomers })),
 );
 
-const AdminWarehouseHub = lazy(() => import('../admin/pages/AdminWarehouseHub'));
-const AdminProductionHub = lazy(() => import('../admin/pages/AdminProductionHub'));
-const AdminBusinessRules = lazy(() => import('../admin/pages/AdminBusinessRules'));
 const AdminCatalogRegistry = lazy(() => import('../admin/pages/AdminCatalogRegistry'));
-
-const AdminApprovalsQueue = lazy(() => import('../admin/pages/AdminApprovalsQueue'));
 
 const AdminExecutiveDashboard = lazy(() => import('../admin/pages/ExecutiveDashboard'));
 // const CustomerProfile360 = lazy(() => import('../admin/pages/CustomerProfile360'));
@@ -432,23 +427,6 @@ export function AppRoutes() {
               <Route path="team" element={<AdminTeam />} />
 
               <Route path="reviews" element={<AdminReviews />} />
-
-              {/* Warehouse Routes */}
-              <Route path="warehouse" element={<AdminWarehouseHub />} />
-              <Route path="warehouse/receive" element={<AdminWarehouseHub />} />
-              <Route path="warehouse/pick" element={<AdminWarehouseHub />} />
-              <Route path="warehouse/pack" element={<AdminWarehouseHub />} />
-              <Route path="warehouse/dispatch" element={<AdminWarehouseHub />} />
-              <Route path="warehouse/count" element={<AdminWarehouseHub />} />
-
-              {/* Production Routes */}
-              <Route path="production" element={<AdminProductionHub />} />
-              <Route path="production/qa" element={<AdminProductionHub />} />
-              <Route path="production/ready" element={<AdminProductionHub />} />
-
-              {/* Operations Routes */}
-              <Route path="rules" element={<AdminBusinessRules />} />
-              <Route path="approvals" element={<AdminApprovalsQueue />} />
 
               {/* System Routes */}
               <Route path="system" element={<AdminSystemHub />} />

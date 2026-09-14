@@ -1,14 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useConfig } from '../../context/ConfigContext';
 import { MaintenanceScreen } from './MaintenanceScreen';
+import { StoreClosedOverlay } from './StoreClosedOverlay';
+import { StoreClosedBanner } from './StoreClosedBanner';
 import { Outlet } from 'react-router-dom';
 
 export function MaintenanceGate() {
-  const { storeSettings, loading } = useConfig();
+  const { loading, isStoreClosed, isMaintenanceMode } = useConfig();
+  const [isOverlayOpen, setIsOverlayOpen] = useState(() => {
+    try {
+      return sessionStorage.getItem('siri_store_closed_dismissed') !== 'true';
+    } catch {
+      return true;
+    }
+  });
 
-  // If loading settings, we can return null to avoid flash of content,
-  // or return children if we want an optimistic render.
-  // Returning null is safer to ensure we don't flash the public store if maintenance is on.
   if (loading) {
     return (
       <div className="fixed inset-0 z-[9999] overflow-hidden bg-surface flex items-center justify-center">
@@ -17,10 +23,27 @@ export function MaintenanceGate() {
     );
   }
 
-  // If maintenance mode is active, render the Maintenance Screen instead of the storefront
-  if (storeSettings?.general?.maintenanceMode === true) {
+  // Hard technical maintenance mode
+  if (isMaintenanceMode) {
     return <MaintenanceScreen />;
   }
 
-  return <Outlet />;
+  const handleCloseOverlay = () => {
+    setIsOverlayOpen(false);
+    try {
+      sessionStorage.setItem('siri_store_closed_dismissed', 'true');
+    } catch {}
+  };
+
+  return (
+    <>
+      {isStoreClosed && (
+        <>
+          <StoreClosedBanner onShowDetails={() => setIsOverlayOpen(true)} />
+          <StoreClosedOverlay isOpen={isOverlayOpen} onClose={handleCloseOverlay} />
+        </>
+      )}
+      <Outlet />
+    </>
+  );
 }

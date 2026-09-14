@@ -5,18 +5,22 @@ import { OrderCheckoutService } from '../../services/orders/OrderCheckoutService
 import { OrderFulfillmentService } from '../../services/orders/OrderFulfillmentService';
 import { OrderValidationService } from '../../services/orderValidation';
 import { LogisticsService } from '../../services/logisticsService';
-import { PaymentService, PaymentWebhookService } from '../../services/paymentService';
+import { PaymentWebhookService } from '../../services/PaymentWebhookService';
+import { PaymentVerificationService } from '../../services/PaymentVerificationService';
 import OtpAuthService from '../../services/OtpAuthService';
 import asyncHandler from '../../utils/asyncHandler';
 import ApiError from '../../utils/ApiError';
 import ApiResponse from '../../utils/ApiResponse';
+import storeSettingsService from '../../services/StoreSettingsService';
 import Order from '../../models/Order';
 import { STAFF_ROLES } from '../../config/adminConfig';
 import { AdminAuditService } from '../../services/AdminAuditService';
-import { OrderTimelineService } from '../../domains/search/services/OrderTimelineService';
+import { OrderTimelineService } from '../../services/orders/OrderTimelineService';
 
 export const createOrder = asyncHandler(async (req: Request, res: Response) => {
-  const idempotencyKey = req.headers['idempotency-key'] as string;
+  const idempotencyKey = (req.headers['idempotency-key'] ||
+    req.headers['x-idempotency-key'] ||
+    req.body?.idempotencyKey) as string;
   if (!idempotencyKey) {
     throw new ApiError(400, 'Idempotency-Key header is required for order creation');
   }
@@ -30,7 +34,11 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const verifyPayment = asyncHandler(async (req: Request, res: Response) => {
-  const order = await PaymentService.verifyPayment(req.body, req.user!.id, req.user!.role);
+  const order = await PaymentVerificationService.verifyPayment(
+    req.body,
+    req.user!.id,
+    req.user!.role,
+  );
   res.status(200).json(new ApiResponse(true, 'Payment verified successfully', order));
 });
 
@@ -182,34 +190,67 @@ export const handleRazorpayWebhook = asyncHandler(async (req: Request, res: Resp
 });
 
 export const sendCodOtp = asyncHandler(async (req: Request, res: Response) => {
-  const { phone } = req.body;
-  if (!phone) {
-    throw new ApiError(400, 'Delivery phone number is required to receive verification OTP');
+  const { phone, email, channel } = req.body;
+  const settings = await storeSettingsService.getSettings();
+  const configuredChannel = settings?.payments?.codOtpChannel || 'phone';
+
+  const effectiveChannel: 'phone' | 'email' =
+    configuredChannel === 'email'
+      ? 'email'
+      : configuredChannel === 'both'
+        ? channel === 'email' || (email && !phone)
+          ? 'email'
+          : 'phone'
+        : 'phone';
+
+  const targetPhone = phone || (req.user as any)?.phone;
+  const targetEmail = email || req.user?.email;
+
+  if (effectiveChannel === 'email') {
+    if (!targetEmail) {
+      throw new ApiError(400, 'Delivery email address is required to receive verification OTP');
+    }
+  } else {
+    if (!targetPhone) {
+      throw new ApiError(400, 'Delivery phone number is required to receive verification OTP');
+    }
   }
 
   const userId = req.user?.id;
-  logger.info(`[ORDER COD] Generating SMS OTP for COD delivery phone verification`);
-  const result = await OtpAuthService.generateCodOTP(phone, userId, req.ip);
+  logger.info(`[ORDER COD] Generating ${effectiveChannel.toUpperCase()} OTP for COD verification`);
+  const result = await OtpAuthService.generateCodOTP({
+    channel: effectiveChannel,
+    phone: targetPhone,
+    email: targetEmail,
+    userId,
+    ip: req.ip,
+  });
 
-  res
-    .status(200)
-    .json(new ApiResponse(true, 'Verification code sent to your delivery phone number', result));
+  const message =
+    effectiveChannel === 'email'
+      ? 'Verification code sent to your email address'
+      : 'Verification code sent to your delivery phone number';
+
+  res.status(200).json(new ApiResponse(true, message, result));
 });
 
 export const verifyCodOtp = asyncHandler(async (req: Request, res: Response) => {
-  const { phone, challengeId, otp } = req.body;
-  const identifier = phone || challengeId;
+  const { phone, email, challengeId, otp } = req.body;
+  const identifier = challengeId || phone || email;
   if (!identifier || !otp) {
-    throw new ApiError(400, 'Delivery phone or challenge ID and OTP are required');
+    throw new ApiError(400, 'Delivery phone, email, or challenge ID and OTP are required');
   }
 
   const userId = req.user?.id;
-  logger.info(`[ORDER COD] Verifying OTP for COD delivery phone`);
-  const result = await OtpAuthService.verifyCodOTP(identifier, otp, userId);
+  logger.info(`[ORDER COD] Verifying OTP for COD verification`);
+  const result = await OtpAuthService.verifyCodOTP({ phone, email, challengeId }, otp, userId);
 
-  res
-    .status(200)
-    .json(new ApiResponse(true, 'Delivery phone verified successfully for COD order', result));
+  const message =
+    result.channel === 'email'
+      ? 'Email verified successfully for COD order'
+      : 'Delivery phone verified successfully for COD order';
+
+  res.status(200).json(new ApiResponse(true, message, result));
 });
 
 export const getOrderTimeline = asyncHandler(async (req: Request, res: Response) => {

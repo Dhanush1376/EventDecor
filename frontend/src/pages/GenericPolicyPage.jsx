@@ -3,18 +3,14 @@ import { m as motion } from 'framer-motion';
 import { PolicySidebar, MobilePolicyNav } from '../components/layout/PolicySidebar';
 import { SEO } from '../components/seo/SEO';
 import { Skeleton } from '../components/ui';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { policyService } from '../services/domainServices';
 import { createSafeHtml } from '../utils/security/sanitize';
-import { useEffect } from 'react';
-import { getWebSocketUrl } from '../config/apiConfig';
-import logger from '../utils/core/logger';
 import { MandalaElement } from '../components/ui/MandalaElement';
 
 export function GenericPolicyPage({ slug: propSlug, defaultTitle }) {
   const { slug: paramSlug } = useParams();
   const slug = propSlug || paramSlug;
-  const queryClient = useQueryClient();
   const {
     data: response,
     isLoading,
@@ -26,43 +22,6 @@ export function GenericPolicyPage({ slug: propSlug, defaultTitle }) {
     staleTime: 5 * 60 * 1000, // 5 minutes
     enabled: !!slug,
   });
-
-  useEffect(() => {
-    if (!slug) return;
-    // Live policy sync rides the public /visitor socket. It is opt-in: when the
-    // visitor socket is disabled we rely on the 5-minute query staleTime instead
-    // of holding an idle socket open (which long-polls when it can't upgrade).
-    if (import.meta.env.VITE_ENABLE_VISITOR_SOCKET !== 'true') return;
-
-    // Connect directly to the backend origin (not the same-origin proxy) so the
-    // transport can upgrade to a real WebSocket instead of looping on HTTP polling.
-    const socketServerUrl = getWebSocketUrl();
-
-    let socket;
-
-    import('socket.io-client')
-      .then(({ io }) => {
-        socket = io(`${socketServerUrl}/visitor`, {
-          transports: ['websocket', 'polling'],
-          reconnectionAttempts: 5,
-          reconnectionDelay: 5000,
-        });
-
-        socket.on('policy-updated', (data) => {
-          if (data?.slug === slug) {
-            logger.info(`[PolicySync] Real-time update received for ${slug}, invalidating cache.`);
-            queryClient.invalidateQueries({ queryKey: ['policy', slug] });
-          }
-        });
-      })
-      .catch((err) => {
-        logger.warn('[PolicySync] Failed to load socket.io-client', err);
-      });
-
-    return () => {
-      if (socket) socket.disconnect();
-    };
-  }, [slug, queryClient]);
 
   const policy = response?.data || {
     title: defaultTitle,

@@ -1,7 +1,7 @@
 import './setup';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import mongoose from 'mongoose';
-import EventJob from '../../src/domains/event_operations/models/EventJob';
+import EventJob from '../../src/models/EventJob';
 import { EventBookingManagementService } from '../../src/services/eventBooking/EventBookingManagementService';
 import {
   EventResourcePlanningService,

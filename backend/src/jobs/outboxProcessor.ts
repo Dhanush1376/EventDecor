@@ -5,7 +5,7 @@ import * as Sentry from '@sentry/node';
 import { TransactionalEmailService } from '../services/TransactionalEmailService';
 import Order from '../models/Order';
 import CustomOrder from '../models/CustomOrder';
-import EventJob from '../domains/event_operations/models/EventJob';
+import EventJob from '../models/EventJob';
 import ReturnRequest from '../models/ReturnRequest';
 import RentalOrder from '../models/RentalOrder';
 import ShowcaseCollection from '../models/ShowcaseCollection';

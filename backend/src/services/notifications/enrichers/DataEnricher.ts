@@ -1,6 +1,6 @@
 import User from '../../../models/User';
 import Order from '../../../models/Order';
-import EventJob from '../../../domains/event_operations/models/EventJob';
+import EventJob from '../../../models/EventJob';
 import RentalOrder from '../../../models/RentalOrder';
 import logger from '../../../config/logger';
 

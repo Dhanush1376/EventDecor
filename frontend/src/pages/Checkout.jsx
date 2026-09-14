@@ -1,10 +1,11 @@
-import { MapPin, ArrowRight } from 'lucide-react';
+import { Clock, MapPin, ArrowRight } from 'lucide-react';
 import { Suspense, useState } from 'react';
 import { lazyWithRetry as lazy } from '../utils/performance/lazyWithRetry';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SEO } from '../components/seo/SEO';
 import { CheckoutProvider, useCheckout } from '../checkout/CheckoutProvider';
+import { useConfig } from '../context/ConfigContext';
 import {
   CheckoutSidebarSkeleton,
   CheckoutStepSkeleton,
@@ -30,6 +31,7 @@ function StepFallback({ mode = 'address' }) {
 const CheckoutSidebar = lazy(() => import('../checkout/CheckoutSidebar'));
 
 function CheckoutContent() {
+  const { isStoreClosed } = useConfig();
   const {
     activeStep,
     setActiveStep,
@@ -42,6 +44,32 @@ function CheckoutContent() {
   } = useCheckout();
 
   const [isAddressDropdownOpen, setIsAddressDropdownOpen] = useState(false);
+
+  if (isStoreClosed) {
+    return (
+      <div className="min-h-[75vh] bg-surface-container-low flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-surface border border-outline-variant/30 rounded-2xl p-6 sm:p-8 text-center shadow-md">
+          <div className="w-12 h-12 rounded-full bg-amber-500/10 text-amber-700 flex items-center justify-center mx-auto mb-4">
+            <Clock className="w-6 h-6" strokeWidth={1.75} />
+          </div>
+          <h2 className="font-display text-2xl text-on-surface mb-2 font-medium">
+            Checkout Temporarily Paused
+          </h2>
+          <p className="font-body text-on-surface-variant text-sm mb-6 leading-relaxed">
+            Our store is currently in catalog-browsing mode. New order submissions and checkout are
+            temporarily paused. Your bag items remain saved for when ordering resumes.
+          </p>
+          <Link
+            to="/collections"
+            className="inline-flex items-center justify-center gap-2 w-full py-3.5 px-6 rounded-full bg-black hover:bg-stone-800 text-white text-xs font-bold uppercase tracking-wider transition-colors shadow-sm"
+          >
+            <span>Explore Collections</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-surface-container-low min-h-screen pb-32 font-body text-on-surface modern-sans-headings">
@@ -83,7 +111,7 @@ function CheckoutContent() {
             <div className="max-w-[1240px] mx-auto px-4 sm:px-6 relative">
               <div
                 onClick={() => setIsAddressDropdownOpen(!isAddressDropdownOpen)}
-                className="flex items-center justify-between sm:justify-start py-2 cursor-pointer select-none"
+                className="flex items-center justify-between md:justify-center py-2 cursor-pointer select-none"
               >
                 <div className="flex items-center gap-2.5 min-w-0 max-w-2xl">
                   <span className="hidden sm:inline-flex items-center gap-1 bg-primary/10 text-primary text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded shrink-0">
@@ -117,7 +145,7 @@ function CheckoutContent() {
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="absolute top-full left-4 right-4 mt-1 bg-white border border-black/10 rounded-2xl shadow-xl z-50 p-3 max-h-60 overflow-y-auto"
+                    className="absolute top-full left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-xl mt-1 bg-white border border-black/10 rounded-2xl shadow-xl z-50 p-3 max-h-60 overflow-y-auto"
                   >
                     <div className="text-[9px] uppercase tracking-wider font-bold text-black/40 px-2.5 pb-2 mb-1 border-b border-black/5">
                       Select Destination
@@ -180,7 +208,13 @@ function CheckoutContent() {
       <div className="max-w-[1240px] mx-auto w-full pt-6 lg:pt-10 px-4 sm:px-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-6 items-start">
           {/* Left Column: Active Step Form Details */}
-          <div className="col-span-1 lg:col-span-7 xl:col-span-8 w-full">
+          <div
+            className={`w-full ${
+              checkoutSteps[activeStep] === 'CUSTOMIZATION'
+                ? 'col-span-12 max-w-2xl mx-auto'
+                : 'col-span-1 lg:col-span-7 xl:col-span-8'
+            }`}
+          >
             <Suspense fallback={<StepFallback mode="address" />}>
               {checkoutSteps[activeStep] === 'DURATION' && <CheckoutRentalDurationStep />}
               {checkoutSteps[activeStep] === 'ADDRESS' && <CheckoutAddressStep />}

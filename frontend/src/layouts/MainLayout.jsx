@@ -1,6 +1,7 @@
 import { useEffect, Suspense } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useConfig } from '../context/ConfigContext';
 import { TopNavbar } from '../components/layout/TopNavbar';
 import { GlobalAnnouncementBanner } from '../components/layout/GlobalAnnouncementBanner';
 import { Footer } from '../components/layout/Footer';
@@ -34,6 +35,7 @@ const AdminInviteModal = lazy(() =>
 
 export function MainLayout() {
   const { pathname } = useLocation();
+  const { isStoreClosed } = useConfig();
   const {
     isCartOpen,
     setIsCartOpen,
@@ -112,7 +114,13 @@ export function MainLayout() {
       <Suspense fallback={null}>
         <FloatingOfferCard />
       </Suspense>
-      <div className="fixed bottom-[calc(80px+var(--safe-area-bottom,env(safe-area-inset-bottom,0px)))] lg:bottom-8 right-4 lg:right-10 z-[40] flex flex-col gap-4 items-center pointer-events-none">
+      <div
+        className={`fixed ${
+          isStoreClosed
+            ? 'bottom-[calc(118px+var(--safe-area-bottom,env(safe-area-inset-bottom,0px)))]'
+            : 'bottom-[calc(80px+var(--safe-area-bottom,env(safe-area-inset-bottom,0px)))]'
+        } lg:bottom-8 right-4 lg:right-10 z-[40] flex flex-col gap-4 items-center pointer-events-none transition-all duration-300`}
+      >
         <ScrollToTopButton />
         <Suspense fallback={null}>
           <WhatsAppWidget />

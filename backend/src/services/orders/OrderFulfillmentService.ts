@@ -10,7 +10,6 @@ import { PaymentRefundService } from '../PaymentRefundService';
 import { OrderRollbackService } from './OrderRollbackService';
 import OutboxEvent from '../../models/OutboxEvent';
 import storeSettingsService from '../../services/StoreSettingsService';
-import { RuleEngine } from '../../domains/rules/services/RuleEngine';
 
 export class OrderFulfillmentService {
   static async updateOrderStatus(
@@ -54,17 +53,6 @@ export class OrderFulfillmentService {
         // State Machine Validation
         const oldStatus = OrderStateMachine.normalizeState(order.orderStatus as string);
         finalStatus = OrderStateMachine.normalizeState(finalStatus as string);
-
-        // Evaluate rules before confirming
-        if (finalStatus === 'Confirmed' && oldStatus === 'Pending') {
-          const { requiresApproval } = await RuleEngine.evaluate(order, 'Order', session);
-          if (requiresApproval) {
-            finalStatus = 'Pending';
-            order.isOnHold = true;
-            order.holdReason = 'Order flagged by business rules pending admin approval.';
-            note = 'Order flagged by business rules. Placed On Hold pending admin approval.';
-          }
-        }
 
         OrderStateMachine.validateTransition(id, oldStatus, finalStatus as any, isPrivileged);
 
@@ -300,7 +288,7 @@ export class OrderFulfillmentService {
           { session },
         );
 
-        const { OrderEventService } = require('../../domains/orders/services/OrderEventService');
+        const { OrderEventService } = require('./OrderEventService');
         await OrderEventService.recordEvent(
           order._id,
           (order as any).orderType || 'purchase',

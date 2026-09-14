@@ -50,11 +50,20 @@ export const computeOrderTotals = (input: OrderTotalsInput): OrderTotals => {
     walletBalance,
   } = input;
 
-  const codFee = isCod ? configuredCodFee : 0;
   const shippingFee = subtotal > freeShippingThreshold ? 0 : deliveryCharge;
 
+  // Preliminary payable amount before COD fee
+  const preliminaryWithoutCod = Math.max(0, subtotal + shippingFee + depositTotal - discount);
+  const isFullyCoveredByWallet = Boolean(
+    useWallet && (walletBalance || 0) >= preliminaryWithoutCod,
+  );
+
+  // If order is completely free or fully covered by wallet, no cash is collected on delivery, so COD fee is waived
+  const codFee =
+    isCod && !isFullyCoveredByWallet && preliminaryWithoutCod > 0 ? configuredCodFee : 0;
+
   // Never let discounts/wallet drive the payable below zero.
-  const preliminaryTotal = Math.max(0, subtotal + shippingFee + codFee + depositTotal - discount);
+  const preliminaryTotal = Math.max(0, preliminaryWithoutCod + codFee);
 
   let walletDeduction = 0;
   if (useWallet) {

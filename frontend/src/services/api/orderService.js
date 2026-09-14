@@ -5,12 +5,13 @@ const checkAuthLocal = () => hasSessionMarker();
 
 export const orderService = {
   create: async (orderData, options = {}) => {
+    const key = options.idempotencyKey || orderData?.idempotencyKey;
     const response = await api.post('/orders', orderData, {
       ...options,
       _disableRetry: true,
       headers: {
         ...(options.headers || {}),
-        ...(options.idempotencyKey ? { 'Idempotency-Key': options.idempotencyKey } : {}),
+        ...(key ? { 'Idempotency-Key': key } : {}),
       },
     });
     return response.data;
@@ -59,12 +60,17 @@ export const orderService = {
     });
     return response.data;
   },
-  sendCodOtp: async (phone) => {
-    const response = await api.post('/orders/send-cod-otp', { phone }, { timeout: 30000 });
+  sendCodOtp: async (payload) => {
+    const body = typeof payload === 'string' ? { phone: payload } : payload;
+    const response = await api.post('/orders/send-cod-otp', body, { timeout: 30000 });
     return response.data;
   },
-  verifyCodOtp: async (phone, otp) => {
-    const response = await api.post('/orders/verify-cod-otp', { phone, otp });
+  verifyCodOtp: async (payloadOrPhone, otp) => {
+    const body =
+      typeof payloadOrPhone === 'object' && payloadOrPhone !== null
+        ? payloadOrPhone
+        : { phone: payloadOrPhone, otp };
+    const response = await api.post('/orders/verify-cod-otp', body);
     return response.data;
   },
   updateNotes: async (id, notes) => {

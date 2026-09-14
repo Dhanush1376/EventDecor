@@ -24,6 +24,8 @@ import { couponService } from '../../services/domainServices';
 import { MandalaArtDecor } from './MandalaArtDecor';
 import { ProductCoupons } from './ProductCoupons';
 import { WhatsAppIcon } from './WhatsAppIcon';
+import { useConfig } from '../../context/ConfigContext';
+import toast from 'react-hot-toast';
 
 export function ProductInfo({
   product,
@@ -32,6 +34,7 @@ export function ProductInfo({
   setLocalAppliedCoupon,
   _maxQuantity = 10,
 }) {
+  const { isStoreClosed } = useConfig();
   const navigate = useNavigate();
   const { attemptAddToCart, claimedCoupon } = useCart();
   const { toggleItem, isWishlisted } = useWishlist();
@@ -412,17 +415,35 @@ export function ProductInfo({
           {canPurchase && (
             <button
               ref={atcRef}
-              onClick={product.stock <= 0 || added ? undefined : handleAddToCart}
-              disabled={product.stock <= 0 || added}
-              className={`!py-3 rounded-full flex items-center justify-center gap-2 group shadow-xl transition-all font-bold px-4 ${
-                product.stock <= 0
-                  ? 'bg-stone-200 text-stone-400 cursor-not-allowed'
-                  : added
-                    ? 'bg-[#e0d6b8] text-[#1a1c1a] cursor-pointer'
-                    : 'bg-black text-white hover:bg-stone-800 hover:text-white cursor-pointer'
+              onClick={
+                isStoreClosed
+                  ? () =>
+                      toast(
+                        'Online ordering is temporarily paused while the store is in catalog-only mode.',
+                      )
+                  : product.stock <= 0 || added
+                    ? undefined
+                    : handleAddToCart
+              }
+              disabled={!isStoreClosed && (product.stock <= 0 || added)}
+              className={`!py-3 rounded-full flex items-center justify-center gap-2 group shadow-sm transition-all font-bold px-4 ${
+                isStoreClosed
+                  ? 'bg-stone-100 text-stone-600 hover:bg-stone-200/80 border border-stone-300/80 cursor-pointer'
+                  : product.stock <= 0
+                    ? 'bg-stone-200 text-stone-400 cursor-not-allowed'
+                    : added
+                      ? 'bg-[#e0d6b8] text-[#1a1c1a] cursor-pointer'
+                      : 'bg-black text-white hover:bg-stone-800 hover:text-white cursor-pointer'
               }`}
             >
-              {added ? (
+              {isStoreClosed ? (
+                <>
+                  <Lock className="w-3.5 h-3.5 text-stone-500 shrink-0" strokeWidth={2} />
+                  <span className="text-[11px] uppercase tracking-widest font-semibold">
+                    Orders Paused
+                  </span>
+                </>
+              ) : added ? (
                 <>
                   <Check className="text-[16px] shrink-0" strokeWidth={1.5} />
                   <span className="text-[11px] uppercase tracking-widest">Added</span>
@@ -467,20 +488,42 @@ export function ProductInfo({
               const maxRentalStock = product.rentalStock > 0 ? product.rentalStock : product.stock;
               return (
                 <button
-                  onClick={maxRentalStock <= 0 ? undefined : handleRentNow}
-                  disabled={maxRentalStock <= 0}
-                  className={`!py-3 rounded-full flex items-center justify-center gap-2 group shadow-xl transition-all font-bold px-4 ${
-                    maxRentalStock <= 0
-                      ? 'bg-stone-200 text-stone-400 cursor-not-allowed'
-                      : 'bg-[#8c7335] text-white hover:bg-[#725c29] cursor-pointer'
+                  onClick={
+                    isStoreClosed
+                      ? () =>
+                          toast(
+                            'Rental bookings are temporarily paused while the store is in catalog-only mode.',
+                          )
+                      : maxRentalStock <= 0
+                        ? undefined
+                        : handleRentNow
+                  }
+                  disabled={!isStoreClosed && maxRentalStock <= 0}
+                  className={`!py-3 rounded-full flex items-center justify-center gap-2 group shadow-sm transition-all font-bold px-4 ${
+                    isStoreClosed
+                      ? 'bg-stone-100 text-stone-600 hover:bg-stone-200/80 border border-stone-300/80 cursor-pointer'
+                      : maxRentalStock <= 0
+                        ? 'bg-stone-200 text-stone-400 cursor-not-allowed'
+                        : 'bg-[#8c7335] text-white hover:bg-[#725c29] cursor-pointer'
                   } ${canPurchase && canRent ? 'col-span-2' : ''}`}
                 >
-                  <span className="material-symbols-outlined text-[16px] group-hover:scale-110 transition-transform shrink-0">
-                    {maxRentalStock <= 0 ? 'event_busy' : 'event_available'}
-                  </span>
-                  <span className="text-[11px] uppercase tracking-widest">
-                    {maxRentalStock <= 0 ? 'No Rental Stock' : 'Rent'}
-                  </span>
+                  {isStoreClosed ? (
+                    <>
+                      <Lock className="w-3.5 h-3.5 text-stone-500 shrink-0" strokeWidth={2} />
+                      <span className="text-[11px] uppercase tracking-widest font-semibold">
+                        Rentals Paused
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-[16px] group-hover:scale-110 transition-transform shrink-0">
+                        {maxRentalStock <= 0 ? 'event_busy' : 'event_available'}
+                      </span>
+                      <span className="text-[11px] uppercase tracking-widest">
+                        {maxRentalStock <= 0 ? 'No Rental Stock' : 'Rent'}
+                      </span>
+                    </>
+                  )}
                 </button>
               );
             })()}

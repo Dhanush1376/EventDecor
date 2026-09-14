@@ -10,18 +10,6 @@ export function AdminMobileBottomNav({ isFabOpen, setIsFabOpen, fabActions }) {
   const { user } = useAuth();
   const { activeRole } = useAdmin();
 
-  // Hide global mobile bottom nav on full-screen creation wizards / editors
-  // to maximize viewport space and prevent collision with wizard sticky action bars
-  const isWizardRoute =
-    location.pathname.startsWith('/admin/gallery/add') ||
-    location.pathname.startsWith('/admin/gallery/edit') ||
-    location.pathname.startsWith('/admin/products/add') ||
-    location.pathname.startsWith('/admin/products/edit');
-
-  if (isWizardRoute) {
-    return null;
-  }
-
   const effectiveRole = activeRole || user?.role || 'owner';
 
   let navItems = [];

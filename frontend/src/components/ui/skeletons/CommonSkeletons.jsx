@@ -6,12 +6,12 @@ import { Skeleton } from '../SkeletonBase';
 export function AddressBarSkeleton() {
   return (
     <div className="w-full bg-[#fbf9f6] border-b border-black/10 relative py-3.5 hover:bg-[#f6f2ea] transition-colors">
-      <div className="max-w-[1240px] mx-auto px-4 sm:px-8 flex items-center justify-between">
-        <div className="flex items-center gap-2.5 flex-1 min-w-0">
+      <div className="max-w-[1240px] mx-auto px-4 sm:px-8 flex items-center justify-between md:justify-center">
+        <div className="flex items-center gap-2.5 flex-1 md:flex-initial min-w-0 md:w-96">
           <MapPin className="text-[18px] text-[#8c7335]/30 animate-pulse" strokeWidth={1.5} />
-          <Skeleton className="h-[12px] w-[50%] rounded-md" />
+          <Skeleton className="h-[12px] w-[50%] md:w-full rounded-md" />
         </div>
-        <ChevronDown className="text-[18px] text-black/10" strokeWidth={1.5} />
+        <ChevronDown className="text-[18px] text-black/10 md:ml-4" strokeWidth={1.5} />
       </div>
     </div>
   );

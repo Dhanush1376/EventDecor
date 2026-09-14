@@ -74,7 +74,14 @@ const mapDbEventToFrontend = (e) => {
   };
 };
 
-const AdminContext = createContext(null);
+// Persist AdminContext instance across Vite HMR to avoid Fast Refresh context desync
+const AdminContext =
+  (typeof window !== 'undefined' && window.__ADMIN_CONTEXT__) ||
+  (function () {
+    const ctx = createContext(null);
+    if (typeof window !== 'undefined') window.__ADMIN_CONTEXT__ = ctx;
+    return ctx;
+  })();
 
 export function AdminProvider({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -94,7 +101,6 @@ export function AdminProvider({ children }) {
     logAdminAction: security.logAdminAction,
     autoPublish: security.autoPublish,
     setSafetyLock: security.setSafetyLock,
-    setMaintenanceMode: security.setMaintenanceMode,
     setMaintenanceMode: security.setMaintenanceMode,
     setIdleTimeoutMinutes: security.setIdleTimeoutMinutes,
     setAutoPublish: security.setAutoPublish,

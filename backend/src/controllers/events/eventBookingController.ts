@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import EventJob from '../../domains/event_operations/models/EventJob';
+import EventJob from '../../models/EventJob';
 import { createAdminNotification } from '../../services/notificationService';
 import BookingMessage from '../../models/BookingMessage';
 import logger from '../../config/logger';

@@ -4,6 +4,7 @@ import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
 import { DraftRestoreModal } from '../components/DraftRestoreModal';
 import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
 import { useState, useEffect, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { userService, cmsService, notificationService } from '../../services/domainServices';
 import storeSettingsService from '../../services/api/storeSettingsService';
 import { useAuth } from '../../context/AuthContext';
@@ -65,6 +66,7 @@ const DEFAULT_STORE_SETTINGS = {
     codFee: 30,
     codMinOrder: 500,
     codMaxOrder: 50000,
+    codOtpChannel: 'phone',
     enableRazorpay: true,
     enableWallet: true,
     enableUPI: true,
@@ -184,6 +186,7 @@ const mergeSettingsWithDefaults = (fetched) => {
 };
 
 export function AdminSettings({ hideHeader = false }) {
+  const queryClient = useQueryClient();
   const { user: authUser, updateUser, setUser: setAuthUser } = useAuth();
   const {
     activeRole,
@@ -483,6 +486,13 @@ export function AdminSettings({ hideHeader = false }) {
 
   const handleStoreSettingsSave = (sectionId) => async (e) => {
     if (e) e.preventDefault();
+    if (sectionId === 'payments') {
+      const p = storeSettings.payments || {};
+      if (!p.enableRazorpay && !p.enableCOD) {
+        toast.error('At least one payment method must remain active.');
+        return;
+      }
+    }
     setSaving(true);
     try {
       const formData = storeSettings[sectionId];
@@ -495,6 +505,7 @@ export function AdminSettings({ hideHeader = false }) {
           ...updatedSection,
         },
       }));
+      queryClient.invalidateQueries({ queryKey: ['storeSettings'] });
       toast.success(`${sectionId.charAt(0).toUpperCase() + sectionId.slice(1)} settings saved`);
     } catch (err) {
       toast.error(getErrorMessage(err, 'Failed to save settings.'));
@@ -505,6 +516,17 @@ export function AdminSettings({ hideHeader = false }) {
 
   const handleStoreSettingsChange = (sectionId) => (e) => {
     const { name, value, type, checked } = e.target;
+    if (sectionId === 'payments' && type === 'checkbox') {
+      const p = storeSettings.payments || {};
+      if (name === 'enableRazorpay' && !checked && !p.enableCOD) {
+        toast.error('At least one payment method must remain active.');
+        return;
+      }
+      if (name === 'enableCOD' && !checked && !p.enableRazorpay) {
+        toast.error('At least one payment method must remain active.');
+        return;
+      }
+    }
     setStoreSettings((prev) => ({
       ...prev,
       [sectionId]: {
@@ -515,6 +537,17 @@ export function AdminSettings({ hideHeader = false }) {
   };
 
   const handleStoreSettingsCustomChange = (sectionId) => (name, value) => {
+    if (sectionId === 'payments') {
+      const p = storeSettings.payments || {};
+      if (name === 'enableRazorpay' && !value && !p.enableCOD) {
+        toast.error('At least one payment method must remain active.');
+        return;
+      }
+      if (name === 'enableCOD' && !value && !p.enableRazorpay) {
+        toast.error('At least one payment method must remain active.');
+        return;
+      }
+    }
     setStoreSettings((prev) => ({
       ...prev,
       [sectionId]: {

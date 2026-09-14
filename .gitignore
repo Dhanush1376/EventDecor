@@ -69,7 +69,6 @@ playwright-report/
 test-results/
 cypress/videos/
 cypress/screenshots/
-backend/test-*.ts
 
 # ------------------------------------------
 # 7. Operating System & IDE Files
@@ -184,7 +183,7 @@ backend/backfill_notifications.ts
 scanDeps.js
 
 # ------------------------------------------
-# 14. Additional Production Safeguards & Scratch Scripts
+# 14. Additional Production Safeguards & Scratch Files
 # ------------------------------------------
 *.pem
 *.key
@@ -213,24 +212,6 @@ frontend/eslint-results.json
 backend/.eslintcache
 frontend/.eslintcache
 backend/cms*.json
-backend/test-*.js
-backend/test-*.ts
-backend/test_*.js
-backend/test_*.ts
-backend/verify_*.js
-backend/verify_*.ts
-backend/scratch_*.js
-backend/scratch_*.ts
-backend/simulate_*.js
-backend/simulate_*.ts
-backend/fix-*.js
-backend/fix.js
-backend/clear_cache.ts
-backend/restore_put_service.ts
-backend/seed_notifications.*
-backend/server_traced.*
-backend/grantAdmin.*
-backend/FINAL_ACCEPTANCE_REPORT.md
-backend/.env.production.checklist.md
+scratch/
 .gemini/
-.antigravity/
+.antigravity/

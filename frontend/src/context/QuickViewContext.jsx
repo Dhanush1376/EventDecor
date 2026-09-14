@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import { QuickViewModal } from '../components/ui/QuickViewModal';
 
 const QuickViewContext = createContext();
@@ -28,8 +28,13 @@ export function QuickViewProvider({ children }) {
     setIsOpen(false);
   }, []);
 
+  const contextValue = useMemo(
+    () => ({ openQuickView, closeQuickView }),
+    [openQuickView, closeQuickView],
+  );
+
   return (
-    <QuickViewContext.Provider value={{ openQuickView, closeQuickView }}>
+    <QuickViewContext.Provider value={contextValue}>
       {children}
       {isOpen && activeProduct && (
         <QuickViewModal product={activeProduct} isOpen={isOpen} onClose={closeQuickView} />

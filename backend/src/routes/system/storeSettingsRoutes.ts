@@ -76,6 +76,17 @@ router.patch('/:section', requireAuth, requireRole([...ADMIN_ROLES]), async (req
       });
     }
 
+    if (section === 'payments' && data && typeof data === 'object') {
+      const isRazorpay = Boolean(data.enableRazorpay);
+      const isCod = Boolean(data.enableCOD);
+      if (!isRazorpay && !isCod) {
+        return res.status(400).json({
+          success: false,
+          message: 'At least one payment method (Razorpay or Cash on Delivery) must remain active.',
+        });
+      }
+    }
+
     const updatedSettings = await storeSettingsService.updateSection(
       section as any,
       data,

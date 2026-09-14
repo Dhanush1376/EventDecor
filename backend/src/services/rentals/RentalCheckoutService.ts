@@ -218,8 +218,9 @@ export class RentalCheckoutService {
           walletDeduction = Math.min(grossAmount, availableWallet);
         }
         const finalAmount = Math.round((grossAmount - walletDeduction) * 100) / 100;
-        const isInstantWallet = !isCod && finalAmount === 0 && walletDeduction > 0;
-        const isDirectOrder = isCod || isInstantWallet;
+        const isZeroRental = finalAmount === 0;
+        const _isInstantWallet = isZeroRental && walletDeduction > 0;
+        const isDirectOrder = isCod || isZeroRental;
 
         try {
           const availabilityCheck = await RentalAvailabilityService.checkAvailability(
@@ -269,8 +270,8 @@ export class RentalCheckoutService {
                   walletDeduction,
                   totalAmount: finalAmount,
                   status: 'confirmed',
-                  paymentMethod: isInstantWallet ? 'wallet' : 'cod',
-                  paymentStatus: isInstantWallet ? 'paid' : 'Pending COD',
+                  paymentMethod: isZeroRental ? 'wallet' : isCod ? 'cod' : 'razorpay',
+                  paymentStatus: isZeroRental ? 'paid' : isCod ? 'Pending COD' : 'pending',
                   shippingAddress,
                   identityDocuments: identityDocuments || [],
                   aadhaarNumber: aadhaarNumber || '',
@@ -278,9 +279,11 @@ export class RentalCheckoutService {
                   statusHistory: [
                     {
                       status: 'confirmed',
-                      note: isInstantWallet
+                      note: isZeroRental
                         ? 'Rental order fully paid with Siri Pay wallet'
-                        : 'Rental COD order placed',
+                        : isCod
+                          ? 'Rental COD order placed'
+                          : 'Rental order confirmed',
                     },
                   ],
                 },

@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import EventJob from '../../domains/event_operations/models/EventJob';
+import EventJob from '../../models/EventJob';
 import PaymentAudit from '../../models/PaymentAudit';
 import OutboxEvent from '../../models/OutboxEvent';
 import BookingMessage from '../../models/BookingMessage';

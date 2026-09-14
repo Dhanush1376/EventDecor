@@ -110,16 +110,33 @@ export function useCheckoutFlow({
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [paymentError, setPaymentError] = useState('');
 
+  const configuredCodChannel = settings?.payments?.codOtpChannel || 'phone';
+  const [selectedCodChannel, setSelectedCodChannel] = useState(() => {
+    return configuredCodChannel === 'email' ? 'email' : 'phone';
+  });
+
+  useEffect(() => {
+    if (configuredCodChannel === 'email') {
+      setSelectedCodChannel('email');
+    } else if (configuredCodChannel === 'phone') {
+      setSelectedCodChannel('phone');
+    }
+  }, [configuredCodChannel]);
+
+  const effectiveCodChannel =
+    configuredCodChannel === 'both' ? selectedCodChannel : configuredCodChannel;
+
   // Enforce address binding: changing address/phone resets prior COD verification!
   const activeAddrId = shipping.activeSelectedAddress?._id || shipping.activeSelectedAddress?.id;
   const activeAddrPhone = shipping.activeSelectedAddress?.phone;
+  const activeAddrEmail = shipping.activeSelectedAddress?.email;
 
   useEffect(() => {
     setCodVerified(false);
     setCodVerificationToken(null);
     setCodOtpSent(false);
     setCodOtpCode('');
-  }, [activeAddrId, activeAddrPhone]);
+  }, [activeAddrId, activeAddrPhone, activeAddrEmail, effectiveCodChannel]);
 
   const buildShippingAddress = useCallback(
     () => ({
@@ -151,17 +168,40 @@ export function useCheckoutFlow({
   );
 
   const handleSendCodOtp = async () => {
-    const targetPhone = shipping.activeSelectedAddress?.phone;
-    if (!targetPhone || !targetPhone.trim()) {
-      toast.error('Please add a phone number to this delivery address to place a COD order.');
-      return;
+    const targetPhone = shipping.activeSelectedAddress?.phone || user?.phone;
+    const targetEmail = shipping.activeSelectedAddress?.email || user?.email;
+
+    if (effectiveCodChannel === 'email') {
+      if (!targetEmail || !targetEmail.trim()) {
+        toast.error('A valid email address is required for COD email verification.');
+        return;
+      }
+    } else {
+      if (!targetPhone || !targetPhone.trim()) {
+        toast.error('Please add a phone number to this delivery address to place a COD order.');
+        return;
+      }
     }
+
     setIsSendingOtp(true);
     try {
-      const res = await orderService.sendCodOtp(targetPhone);
+      const payload =
+        effectiveCodChannel === 'email'
+          ? { email: targetEmail.trim(), channel: 'email' }
+          : { phone: targetPhone.trim(), channel: 'phone' };
+
+      const res = await orderService.sendCodOtp(payload);
       if (res.success) {
         setCodOtpSent(true);
-        toast.success(`Verification OTP sent via SMS to ${res.data?.phone || targetPhone}.`);
+        if (effectiveCodChannel === 'email') {
+          toast.success(
+            `Verification OTP sent to ${res.data?.email || res.data?.deliveryTarget || targetEmail}. Please check your email inbox.`,
+          );
+        } else {
+          toast.success(
+            `Verification OTP sent via SMS to ${res.data?.phone || res.data?.deliveryTarget || targetPhone}.`,
+          );
+        }
       } else {
         toast.error(res.message || 'Failed to send verification OTP');
       }
@@ -176,11 +216,21 @@ export function useCheckoutFlow({
   };
 
   const handleVerifyCodOtp = async (overrideOtp) => {
-    const targetPhone = shipping.activeSelectedAddress?.phone;
-    if (!targetPhone || !targetPhone.trim()) {
-      toast.error('A delivery address phone number is required for COD verification');
-      return false;
+    const targetPhone = shipping.activeSelectedAddress?.phone || user?.phone;
+    const targetEmail = shipping.activeSelectedAddress?.email || user?.email;
+
+    if (effectiveCodChannel === 'email') {
+      if (!targetEmail || !targetEmail.trim()) {
+        toast.error('A valid email address is required for COD verification');
+        return false;
+      }
+    } else {
+      if (!targetPhone || !targetPhone.trim()) {
+        toast.error('A delivery address phone number is required for COD verification');
+        return false;
+      }
     }
+
     const otpToVerify = overrideOtp || codOtpCode;
     if (!otpToVerify || !otpToVerify.trim()) {
       toast.error('Please enter the verification code');
@@ -188,11 +238,20 @@ export function useCheckoutFlow({
     }
     setIsProcessing(true);
     try {
-      const res = await orderService.verifyCodOtp(targetPhone, otpToVerify);
+      const payload =
+        effectiveCodChannel === 'email'
+          ? { email: targetEmail.trim(), channel: 'email', otp: otpToVerify }
+          : { phone: targetPhone.trim(), channel: 'phone', otp: otpToVerify };
+
+      const res = await orderService.verifyCodOtp(payload);
       if (res.success && res.data?.codVerificationToken) {
         setCodVerified(true);
         setCodVerificationToken(res.data.codVerificationToken);
-        toast.success('Delivery phone verified successfully! Secure Cash on Delivery activated.');
+        const successMsg =
+          res.data?.channel === 'email'
+            ? 'Email verified successfully! Secure Cash on Delivery activated.'
+            : 'Delivery phone verified successfully! Secure Cash on Delivery activated.';
+        toast.success(successMsg);
         return true;
       } else {
         toast.error(res.message || 'Invalid verification code');
@@ -239,7 +298,17 @@ export function useCheckoutFlow({
       toast.error('Please accept the rental agreement to proceed');
       return;
     }
-    if (paymentOption === 'cod') {
+    const grossRentalAmount = rentals.rentalCostBreakdown?.totalAmount || 0;
+    const availableWalletBalance =
+      (totals.backendTotals?.walletBalance ?? user?.walletBalance) || 0;
+    const rentalWalletDeduction =
+      totals.useWallet && availableWalletBalance > 0
+        ? Math.min(grossRentalAmount, availableWalletBalance)
+        : 0;
+    const netRentalPayable = Math.max(0, grossRentalAmount - rentalWalletDeduction);
+    const isRentalFullyPaid = netRentalPayable === 0;
+
+    if (!isRentalFullyPaid && paymentOption === 'cod') {
       const codMinOrder = settings?.payments?.codMinOrder ?? 500;
       const codMaxOrder = settings?.payments?.codMaxOrder ?? 50000;
       const isCodEnabled = settings?.payments?.enableCOD ?? true;
@@ -248,7 +317,7 @@ export function useCheckoutFlow({
         toast.error('Cash on Delivery is currently disabled.');
         return;
       }
-      if (totals.backendTotals.total < codMinOrder || totals.backendTotals.total > codMaxOrder) {
+      if (netRentalPayable < codMinOrder || netRentalPayable > codMaxOrder) {
         toast.error(
           `Cash on Delivery (COD) is only serviceable for order totals between ₹${codMinOrder} and ₹${codMaxOrder}.`,
         );
@@ -281,7 +350,11 @@ export function useCheckoutFlow({
         identityDocuments: rentals.identityDocuments.length > 0 ? rentals.identityDocuments : [],
         aadhaarNumber: rentals.aadhaarNumber,
         agreementAccepted: true,
-        paymentMethod: paymentOption === 'razorpay' ? 'razorpay' : 'cod',
+        paymentMethod: isRentalFullyPaid
+          ? 'wallet'
+          : paymentOption === 'razorpay'
+            ? 'razorpay'
+            : 'cod',
         useWallet: Boolean(totals.useWallet),
         customizationNote:
           customizationNotes[
@@ -299,11 +372,13 @@ export function useCheckoutFlow({
 
       const { rentalOrder, razorpayOrderId, razorpayKeyId, amount } = createRes.data;
 
-      if (paymentOption === 'cod' || !razorpayOrderId) {
+      if (isRentalFullyPaid || paymentOption === 'cod' || !razorpayOrderId) {
         toast.success(
-          paymentOption === 'cod'
-            ? 'Rental Cash on Delivery order placed successfully!'
-            : 'Rental order placed successfully with wallet payment!',
+          isRentalFullyPaid
+            ? 'Rental order placed successfully with wallet payment!'
+            : paymentOption === 'cod'
+              ? 'Rental Cash on Delivery order placed successfully!'
+              : 'Rental order placed successfully!',
         );
         orderCompleteRef.current = true;
         activeItems
@@ -404,7 +479,9 @@ export function useCheckoutFlow({
       return;
     }
 
-    if (paymentOption === 'cod') {
+    const isFullyPaid = (totals.backendTotals?.total ?? 0) === 0;
+
+    if (!isFullyPaid && paymentOption === 'cod') {
       const codMinOrder = settings?.payments?.codMinOrder ?? 500;
       const codMaxOrder = settings?.payments?.codMaxOrder ?? 50000;
       const isCodEnabled = settings?.payments?.enableCOD ?? true;
@@ -431,6 +508,12 @@ export function useCheckoutFlow({
 
     setIsProcessing(true);
 
+    const effectivePaymentMethod = isFullyPaid
+      ? 'wallet'
+      : paymentOption === 'razorpay'
+        ? 'razorpay'
+        : 'cod';
+
     const orderData = {
       items: activeItems.map((item) => {
         const key = `${item.id || item._id}-${item.variant || 'default'}`;
@@ -443,7 +526,7 @@ export function useCheckoutFlow({
       }),
       shippingAddress: buildShippingAddress(),
       couponCode: totals.appliedCoupon || undefined,
-      paymentMethod: paymentOption === 'razorpay' ? 'razorpay' : 'cod',
+      paymentMethod: effectivePaymentMethod,
       useWallet: totals.useWallet,
       needByDate: needByDate || undefined,
       idempotencyKey: createIdempotencyKey(),
@@ -452,8 +535,37 @@ export function useCheckoutFlow({
         checkoutMode === 'custom'
           ? customOrder?._id || activeItems[0]?.id || activeItems[0]?._id
           : undefined,
-      codVerificationToken: paymentOption === 'cod' ? codVerificationToken : undefined,
+      codVerificationToken:
+        !isFullyPaid && paymentOption === 'cod' ? codVerificationToken : undefined,
     };
+
+    if (isFullyPaid) {
+      try {
+        const response = await orderService.create(orderData, {
+          idempotencyKey: orderData.idempotencyKey,
+        });
+        if (response && response.success) {
+          orderCompleteRef.current = true;
+          const orderObj = response.data?.order || response.data || response;
+          activeItems.forEach((item) => removeItem(item.id || item._id, item.variant));
+          clearCheckoutSessionStorage();
+          toast.success(
+            totals.useWallet
+              ? 'Order successfully placed and fully paid using wallet balance!'
+              : 'Order successfully placed!',
+          );
+          navigate('/order-success', { state: { orderDetails: orderObj }, replace: true });
+        } else {
+          toast.error(response?.message || 'Failed to place order');
+        }
+      } catch (err) {
+        logger.error('Failed to place fully paid order:', err);
+        toast.error(err.response?.data?.message || err.message || 'Failed to place order');
+      } finally {
+        setIsProcessing(false);
+      }
+      return;
+    }
 
     if (paymentOption === 'razorpay') {
       processPayment(
@@ -529,6 +641,10 @@ export function useCheckoutFlow({
     isSendingOtp,
     paymentError,
     setPaymentError,
+    configuredCodChannel,
+    effectiveCodChannel,
+    selectedCodChannel,
+    setSelectedCodChannel,
     handleSendCodOtp,
     handleVerifyCodOtp,
     handleConfirmOrder,

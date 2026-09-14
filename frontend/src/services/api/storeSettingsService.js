@@ -13,7 +13,16 @@ const storeSettingsService = {
 
   updateSection: async (section, data) => {
     const response = await apiClient.patch(`/settings/${section}`, data);
-    return response.data.data;
+    const result = response.data.data;
+    try {
+      window.dispatchEvent(
+        new CustomEvent('store-settings-updated', { detail: { section, data: result } }),
+      );
+      localStorage.setItem('store_settings_sync_time', Date.now().toString());
+    } catch (_e) {
+      // Ignored in non-browser environments
+    }
+    return result;
   },
 };
 

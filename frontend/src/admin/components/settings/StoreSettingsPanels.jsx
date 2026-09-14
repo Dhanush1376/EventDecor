@@ -1,4 +1,5 @@
 import React from 'react';
+import toast from 'react-hot-toast';
 import { AdminToggle } from '../AdminUIKit';
 
 const FormGroup = ({ label, description, children }) => (
@@ -24,6 +25,22 @@ const Input = ({ type = 'text', name, value, onChange, ...props }) => (
     className="admin-input h-9 !min-h-[36px] rounded-[4px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] text-[13px]"
     {...props}
   />
+);
+
+const Select = ({ name, value, onChange, options = [], className = '', ...props }) => (
+  <select
+    name={name}
+    value={value === undefined || value === null ? '' : value}
+    onChange={onChange}
+    className={`admin-select h-9 !min-h-[36px] rounded-[4px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] text-[13px] ${className}`}
+    {...props}
+  >
+    {options.map((opt) => (
+      <option key={opt.value} value={opt.value}>
+        {opt.label}
+      </option>
+    ))}
+  </select>
 );
 
 const Checkbox = ({ label, name, checked, onChange, description }) => (
@@ -63,14 +80,6 @@ export const GeneralSettingsPanel = ({ formData, handleChange, handleSave, savin
       <FormGroup label="Store Name">
         <Input name="storeName" value={formData.storeName} onChange={handleChange} required />
       </FormGroup>
-      <FormGroup label="Tagline">
-        <Input
-          name="tagline"
-          value={formData.tagline}
-          onChange={handleChange}
-          placeholder="e.g. Handcrafted Heritage & Artistry"
-        />
-      </FormGroup>
       <FormGroup label="Support Email">
         <Input
           type="email"
@@ -88,35 +97,15 @@ export const GeneralSettingsPanel = ({ formData, handleChange, handleSave, savin
           label="Enable Storefront"
         />
       </FormGroup>
-      <div className="md:col-span-2">
-        <FormGroup label="Announcement Text">
-          <Input
-            name="announcementText"
-            value={formData.announcementText}
-            onChange={handleChange}
-          />
-        </FormGroup>
-      </div>
-      <div className="md:col-span-2">
-        <FormGroup label="Announcement Link">
-          <Input
-            name="announcementLink"
-            value={formData.announcementLink}
-            onChange={handleChange}
-          />
-        </FormGroup>
-      </div>
-      <div className="md:col-span-2">
-        <FormGroup label="Maintenance Mode">
-          <Checkbox
-            name="maintenanceMode"
-            checked={formData.maintenanceMode}
-            onChange={handleChange}
-            label="Enable Maintenance Mode"
-            description="Only admins can access the store."
-          />
-        </FormGroup>
-      </div>
+      <FormGroup label="Maintenance Mode">
+        <Checkbox
+          name="maintenanceMode"
+          checked={formData.maintenanceMode}
+          onChange={handleChange}
+          label="Enable Maintenance Mode"
+          description="Only admins can access the store."
+        />
+      </FormGroup>
     </div>
     <div className="flex justify-end border-t border-[var(--admin-border-subtle)] pt-6">
       <SaveButton saving={saving} />
@@ -196,52 +185,112 @@ export const ShippingSettingsPanel = ({ formData, handleChange, handleSave, savi
   </form>
 );
 
-export const PaymentSettingsPanel = ({ formData, handleChange, handleSave, saving }) => (
-  <form onSubmit={handleSave} className="space-y-8">
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-      <div className="md:col-span-2 space-y-3">
-        <Checkbox
-          name="enableRazorpay"
-          checked={formData.enableRazorpay}
-          onChange={handleChange}
-          label="Enable Razorpay Gateway"
-        />
-        <Checkbox
-          name="enableCOD"
-          checked={formData.enableCOD}
-          onChange={handleChange}
-          label="Enable Cash on Delivery"
-        />
+export const PaymentSettingsPanel = ({ formData, handleChange, handleSave, saving }) => {
+  const isRazorpayActive = Boolean(formData.enableRazorpay);
+  const isCodActive = Boolean(formData.enableCOD);
+
+  const handleToggleRazorpay = (e) => {
+    const nextChecked = e.target.checked;
+    if (!nextChecked && !isCodActive) {
+      toast.error('At least one payment method must remain active.');
+      return;
+    }
+    handleChange(e);
+  };
+
+  const handleToggleCOD = (e) => {
+    const nextChecked = e.target.checked;
+    if (!nextChecked && !isRazorpayActive) {
+      toast.error('At least one payment method must remain active.');
+      return;
+    }
+    handleChange(e);
+  };
+
+  const onFormSubmit = (e) => {
+    e.preventDefault();
+    if (!formData.enableRazorpay && !formData.enableCOD) {
+      toast.error('At least one payment method must remain active.');
+      return;
+    }
+    handleSave(e);
+  };
+
+  return (
+    <form onSubmit={onFormSubmit} className="space-y-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {!isRazorpayActive && !isCodActive && (
+          <div className="md:col-span-2 p-3 bg-amber-500/10 border border-amber-500/30 rounded-[4px] flex items-center gap-2.5 text-amber-800 text-xs font-semibold">
+            <span className="material-symbols-outlined text-[18px] text-amber-600">warning</span>
+            <span>Both methods are currently disabled. Please enable at least one to save.</span>
+          </div>
+        )}
+        <div className="md:col-span-2 space-y-3">
+          <Checkbox
+            name="enableRazorpay"
+            checked={formData.enableRazorpay}
+            onChange={handleToggleRazorpay}
+            label="Enable Razorpay Gateway"
+            description={
+              isRazorpayActive && !isCodActive
+                ? 'Only active payment method (cannot be disabled while Cash on Delivery is off)'
+                : undefined
+            }
+          />
+          <Checkbox
+            name="enableCOD"
+            checked={formData.enableCOD}
+            onChange={handleToggleCOD}
+            label="Enable Cash on Delivery"
+            description={
+              !isRazorpayActive && isCodActive
+                ? 'Only active payment method (cannot be disabled while Razorpay Gateway is off)'
+                : undefined
+            }
+          />
+        </div>
+        {formData.enableCOD && (
+          <>
+            <FormGroup label="COD OTP Verification Channel">
+              <Select
+                name="codOtpChannel"
+                value={formData.codOtpChannel || 'phone'}
+                onChange={handleChange}
+                options={[
+                  { value: 'phone', label: 'Phone (SMS Verification)' },
+                  { value: 'email', label: 'Email (Verification Code)' },
+                  { value: 'both', label: 'Customer Choice (Phone or Email)' },
+                ]}
+              />
+            </FormGroup>
+            <FormGroup label="COD Handling Fee (₹)">
+              <Input type="number" name="codFee" value={formData.codFee} onChange={handleChange} />
+            </FormGroup>
+            <FormGroup label="Minimum Order for COD (₹)">
+              <Input
+                type="number"
+                name="codMinOrder"
+                value={formData.codMinOrder}
+                onChange={handleChange}
+              />
+            </FormGroup>
+            <FormGroup label="Maximum Order for COD (₹)">
+              <Input
+                type="number"
+                name="codMaxOrder"
+                value={formData.codMaxOrder}
+                onChange={handleChange}
+              />
+            </FormGroup>
+          </>
+        )}
       </div>
-      {formData.enableCOD && (
-        <>
-          <FormGroup label="COD Handling Fee (₹)">
-            <Input type="number" name="codFee" value={formData.codFee} onChange={handleChange} />
-          </FormGroup>
-          <FormGroup label="Minimum Order for COD (₹)">
-            <Input
-              type="number"
-              name="codMinOrder"
-              value={formData.codMinOrder}
-              onChange={handleChange}
-            />
-          </FormGroup>
-          <FormGroup label="Maximum Order for COD (₹)">
-            <Input
-              type="number"
-              name="codMaxOrder"
-              value={formData.codMaxOrder}
-              onChange={handleChange}
-            />
-          </FormGroup>
-        </>
-      )}
-    </div>
-    <div className="flex justify-end border-t border-[var(--admin-border-subtle)] pt-6">
-      <SaveButton saving={saving} />
-    </div>
-  </form>
-);
+      <div className="flex justify-end border-t border-[var(--admin-border-subtle)] pt-6">
+        <SaveButton saving={saving} />
+      </div>
+    </form>
+  );
+};
 
 export const ReturnSettingsPanel = ({ formData, handleChange, handleSave, saving }) => (
   <form onSubmit={handleSave} className="space-y-8">

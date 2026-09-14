@@ -6,8 +6,6 @@ import { useConfirm } from '../../../context/ConfirmProvider';
 import { format } from 'date-fns';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useReturnManagement } from '../../hooks/useReturnManagement';
-import { handleImageError } from '../../../utils/media/imageUtils';
-import { PLACEHOLDER_IMAGES } from '../../../constants/placeholderImages';
 import { WhatsAppIcon } from '../../../components/ui/WhatsAppIcon';
 import { InvoiceTemplate } from '../../../components/ui';
 import api from '../../../services/api';
@@ -20,118 +18,17 @@ import {
 } from '../../components/AdminUIKit';
 import AdminExchangeDetailView from './AdminExchangeDetailView';
 import AdminCustomerProfileModal from '../../components/AdminCustomerProfileModal';
-
-const formatINR = (val) => {
-  if (val === null || val === undefined || isNaN(val)) return '0';
-  return Number(val).toLocaleString('en-IN', { maximumFractionDigits: 2 });
-};
-
-const RETURN_HAPPY_PATH = ['Submitted', 'Approved', 'Item Picked Up', 'QC Passed', 'Completed'];
-
-const STEP_ICONS = {
-  Submitted: 'assignment',
-  Approved: 'check_circle',
-  'Item Picked Up': 'local_shipping',
-  'QC Passed': 'fact_check',
-  Completed: 'verified',
-  Rejected: 'cancel',
-  Cancelled: 'cancel',
-};
-
-const STEP_COLORS = {
-  Submitted: {
-    activeBg: 'bg-amber-500',
-    activeBorder: 'border-amber-500',
-    activeText: 'text-white',
-    completedBorder: 'border-amber-500',
-    completedText: 'text-amber-600',
-    pulse: 'bg-amber-500',
-    progress: 'bg-amber-500',
-  },
-  Approved: {
-    activeBg: 'bg-blue-500',
-    activeBorder: 'border-blue-500',
-    activeText: 'text-white',
-    completedBorder: 'border-blue-500',
-    completedText: 'text-blue-600',
-    pulse: 'bg-blue-500',
-    progress: 'bg-blue-500',
-  },
-  'Item Picked Up': {
-    activeBg: 'bg-indigo-600',
-    activeBorder: 'border-indigo-600',
-    activeText: 'text-white',
-    completedBorder: 'border-indigo-600',
-    completedText: 'text-indigo-600',
-    pulse: 'bg-indigo-600',
-    progress: 'bg-indigo-600',
-  },
-  'QC Passed': {
-    activeBg: 'bg-purple-600',
-    activeBorder: 'border-purple-600',
-    activeText: 'text-white',
-    completedBorder: 'border-purple-600',
-    completedText: 'text-purple-600',
-    pulse: 'bg-purple-600',
-    progress: 'bg-purple-600',
-  },
-  Completed: {
-    activeBg: 'bg-emerald-500',
-    activeBorder: 'border-emerald-500',
-    activeText: 'text-white',
-    completedBorder: 'border-emerald-500',
-    completedText: 'text-emerald-600',
-    pulse: 'bg-emerald-500',
-    progress: 'bg-emerald-500',
-  },
-};
-
-const mapStatusToStep = (status) => {
-  if (['completed', 'refund_completed', 'refund_initiated', 'refund_settled'].includes(status)) {
-    return 'Completed';
-  }
-  if (['inspection_completed', 'qc_passed', 'qc_approved'].includes(status)) {
-    return 'QC Passed';
-  }
-  if (
-    [
-      'return_picked_up',
-      'return_courier_assigned',
-      'return_in_transit',
-      'return_received',
-      'inspection_started',
-    ].includes(status)
-  ) {
-    return 'Item Picked Up';
-  }
-  if (status === 'approved') {
-    return 'Approved';
-  }
-  if (status === 'rejected') {
-    return 'Rejected';
-  }
-  if (status === 'cancelled') {
-    return 'Cancelled';
-  }
-  return 'Submitted';
-};
-
-const getReturnTimelineCardStyle = (currentStepName, isFailed) => {
-  if (isFailed) {
-    return 'bg-gradient-to-r from-rose-500/[0.035] via-rose-500/[0.01] to-white dark:to-[#26241f] border-rose-500/25 shadow-xs';
-  }
-  if (currentStepName === 'Completed') {
-    return 'bg-gradient-to-r from-emerald-500/[0.035] via-emerald-500/[0.01] to-white dark:to-[#26241f] border-emerald-500/25 shadow-xs';
-  }
-  if (
-    currentStepName === 'Approved' ||
-    currentStepName === 'Item Picked Up' ||
-    currentStepName === 'QC Passed'
-  ) {
-    return 'bg-gradient-to-r from-blue-500/[0.035] via-blue-500/[0.01] to-white dark:to-[#26241f] border-blue-500/25 shadow-xs';
-  }
-  return 'bg-gradient-to-r from-amber-500/[0.045] via-amber-500/[0.015] to-white dark:to-[#26241f] border-amber-500/30 shadow-xs';
-};
+import {
+  formatINR,
+  RETURN_HAPPY_PATH,
+  mapStatusToStep,
+} from '../../../features/returns/utils/returnDomainUtils';
+import {
+  ReturnTimelineCard,
+  ReturnRejectModal,
+  ReturnSettleRefundModal,
+  ReturnItemInspectionCard,
+} from '../../../features/returns/components';
 
 const AdminReturnDetail = () => {
   const { id } = useParams();
@@ -723,127 +620,14 @@ const AdminReturnDetail = () => {
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-3 sm:gap-6 lg:gap-8 items-start">
           {/* ─── LEFT COLUMN: Operations, Stepper & Items (2/3 Width) ─── */}
           <div className="xl:col-span-2 flex flex-col gap-3 sm:gap-6 lg:gap-8">
-            {/* CARD 1: LIFECYCLE PROGRESSION (Matches OrderStatusTimeline.jsx) */}
-            <div
-              className={`rounded-[6px] overflow-hidden transition-all border ${getReturnTimelineCardStyle(
-                currentStepName,
-                isFailed,
-              )}`}
+            {/* CARD 1: LIFECYCLE PROGRESSION */}
+            <ReturnTimelineCard
+              currentStepName={currentStepName}
+              isFailed={isFailed}
+              currentIdx={currentIdx}
+              status={request.status}
+              onTransitionStatus={(nextStatus) => transitionStatus(id, { nextStatus })}
             >
-              <div className="px-5 py-4 border-b border-[var(--admin-border-subtle)] flex items-center justify-between">
-                <div className="flex flex-col">
-                  <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)] tracking-tight">
-                    Lifecycle Progression
-                  </h3>
-                  <p className="text-[12px] text-[var(--admin-text-secondary)] font-medium hidden sm:block mt-0.5">
-                    Track and override the return's current operational stage.
-                  </p>
-                </div>
-                {/* Status Dropdown to override return status */}
-                <div className="relative w-[140px] sm:w-[165px] h-8 shrink-0">
-                  <select
-                    value={request.status || 'submitted'}
-                    onChange={(e) => transitionStatus(id, { nextStatus: e.target.value })}
-                    style={{ backgroundImage: 'none' }}
-                    className="admin-no-arrow w-full h-8 !min-h-[32px] !max-h-[32px] !appearance-none !bg-none bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-750 border border-stone-300 dark:border-stone-600 text-stone-800 dark:text-stone-200 text-[11px] font-bold rounded-[4px] pl-2.5 pr-7 cursor-pointer shadow-2xs outline-none focus:border-amber-500 transition-colors truncate"
-                  >
-                    <option value="submitted">Submitted</option>
-                    <option value="approved">Approved</option>
-                    <option value="return_picked_up">Item Picked Up</option>
-                    <option value="return_received">Returned / Received</option>
-                    <option value="inspection_completed">QC Passed</option>
-                    <option value="completed">Completed</option>
-                    <option value="rejected">Rejected</option>
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1.5 text-stone-500">
-                    <span className="material-symbols-outlined text-[16px]">expand_more</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Horizontal Connected Stepper */}
-              <div className="px-3 sm:px-5 py-8 overflow-hidden">
-                <div className="flex items-center justify-between relative w-full max-w-full">
-                  {/* Background connecting bar */}
-                  <div className="absolute left-[10%] right-[10%] top-[20px] h-[2px] bg-[var(--admin-border)] z-0">
-                    {!isFailed && currentIdx >= 0 && (
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{
-                          width: `${(currentIdx / (RETURN_HAPPY_PATH.length - 1)) * 100}%`,
-                        }}
-                        transition={{ duration: 0.8, ease: 'easeOut' }}
-                        className={`absolute left-0 top-0 bottom-0 ${STEP_COLORS[currentStepName]?.progress || 'bg-[var(--admin-accent)]'}`}
-                      />
-                    )}
-                  </div>
-
-                  {RETURN_HAPPY_PATH.map((step, idx) => {
-                    const isActive = currentStepName === step;
-                    const isCompleted = currentIdx >= idx && !isFailed;
-                    const colors = STEP_COLORS[step] || {};
-
-                    return (
-                      <div
-                        key={step}
-                        className="relative z-10 flex flex-col items-center gap-2 sm:gap-3 w-16 sm:w-24 shrink-0 text-center"
-                      >
-                        <div className="relative group focus:outline-none">
-                          {/* Pulse animation for active step */}
-                          {isActive && (
-                            <motion.div
-                              animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0, 0.3] }}
-                              transition={{ duration: 2, repeat: Infinity }}
-                              className={`absolute inset-0 rounded-full z-0 ${colors.pulse || 'bg-[var(--admin-accent)]'}`}
-                            />
-                          )}
-                          {/* Circle Node */}
-                          <div
-                            className={`relative z-10 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm border-2 ${
-                              isActive
-                                ? `${colors.activeBg || 'bg-[var(--admin-accent)]'} ${colors.activeBorder || 'border-[var(--admin-accent)]'} ${colors.activeText || 'text-white'}`
-                                : isCompleted
-                                  ? `bg-white dark:bg-stone-900 ${colors.completedBorder || 'border-[var(--admin-accent)]'} ${colors.completedText || 'text-[var(--admin-accent)]'}`
-                                  : 'bg-white dark:bg-stone-900 border-[var(--admin-border-strong)] text-[var(--admin-text-tertiary)]'
-                            }`}
-                          >
-                            {isCompleted && !isActive ? (
-                              <span className="material-symbols-outlined text-[16px] sm:text-[20px] font-bold">
-                                check
-                              </span>
-                            ) : (
-                              <span className="material-symbols-outlined text-[14px] sm:text-[18px]">
-                                {STEP_ICONS[step]}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="text-center mt-1">
-                          <span
-                            className={`text-[9.5px] sm:text-[11px] font-bold uppercase tracking-wider block transition-colors leading-tight whitespace-nowrap ${
-                              isActive
-                                ? colors.completedText || 'text-[var(--admin-text-primary)]'
-                                : isCompleted
-                                  ? colors.completedText || 'text-[var(--admin-text-secondary)]'
-                                  : 'text-[var(--admin-text-tertiary)]'
-                            }`}
-                          >
-                            {step === 'Item Picked Up' ? (
-                              <>
-                                <span className="sm:hidden">Pickup</span>
-                                <span className="hidden sm:inline">Item Picked Up</span>
-                              </>
-                            ) : (
-                              step
-                            )}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
               {/* Footer Quick Action Bar (Contextual buttons + stage advances) */}
               <div className="bg-gray-50 dark:bg-stone-850 border-t border-[var(--admin-border-subtle)] px-3.5 sm:px-5 py-2.5 sm:py-3.5 flex flex-row items-center justify-between gap-2.5 sm:gap-4 flex-wrap">
                 <span className="text-[10px] sm:text-[11px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-widest shrink-0">
@@ -964,7 +748,7 @@ const AdminReturnDetail = () => {
                   )}
                 </div>
               </div>
-            </div>
+            </ReturnTimelineCard>
 
             {/* CARD 2: RETURNED ITEMS & QC INSPECTION (Matches Lifecycle Progression style) */}
             <div className="bg-white dark:bg-stone-900 rounded-[4px] shadow-sm border border-[var(--admin-border-subtle)] overflow-hidden">
@@ -979,273 +763,18 @@ const AdminReturnDetail = () => {
               </div>
 
               <div className="divide-y divide-[var(--admin-border-subtle)]">
-                {request.items?.map((item, index) => {
-                  const itemUnit = Number(item.unitPrice || 0);
-                  const itemQty = Number(item.returnQuantity || 1);
-                  const itemTotal = itemUnit * itemQty;
-
-                  return (
-                    <div key={index} className="p-4 sm:p-5 space-y-4">
-                      {/* Product Header Strip */}
-                      <div className="flex gap-3 sm:gap-4 items-start">
-                        <img
-                          src={item.imageSrc || PLACEHOLDER_IMAGES.product}
-                          alt={item.title || 'Product'}
-                          onError={handleImageError}
-                          onClick={() => item.imageSrc && setPreviewImage(item.imageSrc)}
-                          className="w-14 h-14 sm:w-16 sm:h-16 object-cover rounded-[4px] border border-[var(--admin-border-subtle)] shadow-2xs flex-shrink-0 cursor-pointer hover:opacity-90 transition-opacity"
-                        />
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <h4 className="text-sm font-bold text-[var(--admin-text-primary)] leading-snug">
-                              {item.title || 'Product'}
-                            </h4>
-                            <span className="text-[11px] font-bold font-mono px-2 py-0.5 rounded-[4px] bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] border border-[var(--admin-border-subtle)]">
-                              Qty: {itemQty} of {item.orderedQuantity || itemQty}
-                            </span>
-                          </div>
-
-                          <div className="flex flex-wrap items-center gap-2 mt-1">
-                            {item.sku && (
-                              <span className="text-[11px] font-mono text-[var(--admin-text-tertiary)]">
-                                SKU: {item.sku}
-                              </span>
-                            )}
-                            {item.variant && (
-                              <span className="inline-block bg-[var(--admin-bg-subtle)] text-[var(--admin-text-secondary)] text-[10px] font-semibold px-2 py-0.5 rounded-[4px] border border-[var(--admin-border-subtle)]">
-                                Variant: {item.variant}
-                              </span>
-                            )}
-                          </div>
-
-                          <p className="mt-1.5 text-xs font-bold text-[var(--admin-text-primary)] font-mono">
-                            ₹{formatINR(itemUnit)}{' '}
-                            <span className="text-[11px] font-normal text-[var(--admin-text-tertiary)]">
-                              / unit
-                            </span>
-                            <span className="text-[var(--admin-text-tertiary)] font-normal mx-1.5">
-                              •
-                            </span>
-                            <span className="text-[var(--admin-accent)]">
-                              Total: ₹{formatINR(itemTotal)}
-                            </span>
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Customer Reason Quote */}
-                      <div className="p-3.5 rounded-[4px] bg-amber-500/5 border border-amber-500/20 text-xs space-y-1">
-                        <div className="flex items-center gap-1.5 text-[10.5px] uppercase tracking-wider font-bold text-amber-800 dark:text-amber-300">
-                          <span className="material-symbols-outlined text-[14px] text-amber-600">
-                            help_center
-                          </span>
-                          Customer Return Reason:
-                        </div>
-                        <p className="font-semibold text-[var(--admin-text-primary)]">
-                          {item.reason || 'Customer request'}
-                        </p>
-                        {item.description && item.description !== item.reason && (
-                          <p className="text-[var(--admin-text-secondary)] text-[11px] italic leading-relaxed pt-0.5">
-                            "{item.description}"
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Evidence Photos */}
-                      {item.evidenceImages?.length > 0 && (
-                        <div>
-                          <span className="text-[10px] uppercase tracking-wider font-bold text-[var(--admin-text-tertiary)] mb-2 block">
-                            Customer Attached Photos ({item.evidenceImages.length})
-                          </span>
-                          <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-1">
-                            {item.evidenceImages.map((img, i) => (
-                              <img
-                                key={i}
-                                src={img}
-                                alt="Evidence"
-                                onClick={() => setPreviewImage(img)}
-                                className="w-14 h-14 object-cover rounded-[4px] border border-[var(--admin-border-subtle)] shadow-2xs cursor-pointer hover:scale-105 transition-transform shrink-0"
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Warehouse Quality Inspection Section */}
-                      <div className="pt-2">
-                        {item.inspectionResult?.inspectedAt ? (
-                          <div className="p-3.5 rounded-[4px] bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] space-y-3 text-xs">
-                            <div className="flex items-center justify-between pb-2 border-b border-[var(--admin-border-subtle)]">
-                              <span className="font-bold text-[var(--admin-text-primary)] flex items-center gap-1.5">
-                                <span className="material-symbols-outlined text-[16px] text-emerald-600">
-                                  fact_check
-                                </span>
-                                Warehouse Inspection Result
-                              </span>
-                              <span
-                                className={`px-2.5 py-0.5 rounded-[4px] text-xs font-bold border ${item.inspectionResult.inspectionScore >= 80 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200'}`}
-                              >
-                                Score: {item.inspectionResult.inspectionScore}/100
-                              </span>
-                            </div>
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                              <div className="p-2 bg-[var(--admin-surface)] rounded-[4px] border border-[var(--admin-border-subtle)]">
-                                <span className="text-[10px] text-[var(--admin-text-tertiary)] block font-medium">
-                                  Original Product
-                                </span>
-                                <span
-                                  className={`font-bold ${item.inspectionResult.originalProduct ? 'text-emerald-700' : 'text-red-700'}`}
-                                >
-                                  {item.inspectionResult.originalProduct ? 'Verified' : 'Failed'}
-                                </span>
-                              </div>
-                              <div className="p-2 bg-[var(--admin-surface)] rounded-[4px] border border-[var(--admin-border-subtle)]">
-                                <span className="text-[10px] text-[var(--admin-text-tertiary)] block font-medium">
-                                  Accessories
-                                </span>
-                                <span
-                                  className={`font-bold ${item.inspectionResult.accessoriesPresent ? 'text-emerald-700' : 'text-red-700'}`}
-                                >
-                                  {item.inspectionResult.accessoriesPresent
-                                    ? 'Complete'
-                                    : 'Missing'}
-                                </span>
-                              </div>
-                              <div className="p-2 bg-[var(--admin-surface)] rounded-[4px] border border-[var(--admin-border-subtle)]">
-                                <span className="text-[10px] text-[var(--admin-text-tertiary)] block font-medium">
-                                  Packaging
-                                </span>
-                                <span
-                                  className={`font-bold ${item.inspectionResult.packagingIntact ? 'text-emerald-700' : 'text-red-700'}`}
-                                >
-                                  {item.inspectionResult.packagingIntact ? 'Intact' : 'Damaged'}
-                                </span>
-                              </div>
-                              <div className="p-2 bg-[var(--admin-surface)] rounded-[4px] border border-[var(--admin-border-subtle)]">
-                                <span className="text-[10px] text-[var(--admin-text-tertiary)] block font-medium">
-                                  Condition
-                                </span>
-                                <span
-                                  className={`font-bold ${item.inspectionResult.workingCondition ? 'text-emerald-700' : 'text-red-700'}`}
-                                >
-                                  {item.inspectionResult.workingCondition ? 'Working' : 'Defective'}
-                                </span>
-                              </div>
-                            </div>
-                            {item.inspectionResult.remarks && (
-                              <div className="pt-2 border-t border-[var(--admin-border-subtle)] text-xs text-[var(--admin-text-secondary)]">
-                                <strong className="text-[var(--admin-text-primary)]">
-                                  Remarks:{' '}
-                                </strong>
-                                {item.inspectionResult.remarks}
-                              </div>
-                            )}
-                          </div>
-                        ) : ['return_received', 'inspection_started'].includes(request.status) ? (
-                          <div className="p-3.5 rounded-[4px] bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] space-y-3">
-                            <h5 className="text-xs font-bold text-[var(--admin-text-primary)] flex items-center gap-1.5 pb-2 border-b border-[var(--admin-border-subtle)]">
-                              <span className="material-symbols-outlined text-[16px] text-[var(--admin-accent)]">
-                                fact_check
-                              </span>
-                              Conduct Warehouse Inspection
-                            </h5>
-                            <div className="space-y-2.5">
-                              {[
-                                'originalProduct',
-                                'accessoriesPresent',
-                                'packagingIntact',
-                                'workingCondition',
-                              ].map((field) => (
-                                <div
-                                  key={field}
-                                  className="flex justify-between items-center text-xs"
-                                >
-                                  <span className="text-[var(--admin-text-primary)] font-medium capitalize">
-                                    {field.replace(/([A-Z])/g, ' $1').trim()}
-                                  </span>
-                                  <div className="flex gap-1.5">
-                                    <button
-                                      type="button"
-                                      className={`px-3 py-1 rounded-[4px] border text-xs font-bold transition-colors cursor-pointer ${
-                                        (inspectionState[index]?.[field] ?? true) === true
-                                          ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
-                                          : 'bg-[var(--admin-surface)] text-[var(--admin-text-tertiary)] border-[var(--admin-border)] hover:bg-[var(--admin-surface-hover)]'
-                                      }`}
-                                      onClick={() => handleInspectionChange(index, field, true)}
-                                    >
-                                      Yes
-                                    </button>
-                                    <button
-                                      type="button"
-                                      className={`px-3 py-1 rounded-[4px] border text-xs font-bold transition-colors cursor-pointer ${
-                                        (inspectionState[index]?.[field] ?? true) === false
-                                          ? 'bg-red-50 text-red-700 border-red-300'
-                                          : 'bg-[var(--admin-surface)] text-[var(--admin-text-tertiary)] border-[var(--admin-border)] hover:bg-[var(--admin-surface-hover)]'
-                                      }`}
-                                      onClick={() => handleInspectionChange(index, field, false)}
-                                    >
-                                      No
-                                    </button>
-                                  </div>
-                                </div>
-                              ))}
-                              <div className="pt-2 border-t border-[var(--admin-border-subtle)]">
-                                <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1 block">
-                                  Inspection Score (0-100)
-                                </label>
-                                <input
-                                  type="number"
-                                  min="0"
-                                  max="100"
-                                  className="w-full text-xs p-2 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] outline-none focus:border-[var(--admin-accent)] font-mono"
-                                  value={inspectionState[index]?.inspectionScore ?? 100}
-                                  onChange={(e) =>
-                                    handleInspectionChange(
-                                      index,
-                                      'inspectionScore',
-                                      parseInt(e.target.value) || 0,
-                                    )
-                                  }
-                                />
-                              </div>
-                              <div>
-                                <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1 block">
-                                  Inspector Observations
-                                </label>
-                                <textarea
-                                  className="w-full text-xs p-2 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] outline-none focus:border-[var(--admin-accent)] resize-none"
-                                  rows="2"
-                                  placeholder="Add detailed inspection observations..."
-                                  value={inspectionState[index]?.remarks || ''}
-                                  onChange={(e) =>
-                                    handleInspectionChange(index, 'remarks', e.target.value)
-                                  }
-                                />
-                              </div>
-                              <button
-                                type="button"
-                                className="admin-btn admin-btn-primary w-full text-xs font-bold !rounded-[4px] h-9 cursor-pointer"
-                                onClick={() => handleInspectionSubmit(index)}
-                              >
-                                Submit Inspection
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="p-3.5 rounded-[4px] bg-purple-500/5 border border-purple-500/15 text-xs text-purple-900 dark:text-purple-300 flex items-center gap-2 font-medium">
-                            <span className="material-symbols-outlined text-[17px] text-purple-600 shrink-0">
-                              pending_actions
-                            </span>
-                            <span>
-                              Quality inspection will unlock once item is marked received at
-                              facility.
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
+                {request.items?.map((item, index) => (
+                  <ReturnItemInspectionCard
+                    key={index}
+                    item={item}
+                    index={index}
+                    inspectionState={inspectionState}
+                    onInspectionChange={handleInspectionChange}
+                    onInspectionSubmit={handleInspectionSubmit}
+                    onPreviewImage={setPreviewImage}
+                    canInspect={['return_received', 'inspection_started'].includes(request.status)}
+                  />
+                ))}
               </div>
             </div>
           </div>
@@ -1713,366 +1242,30 @@ const AdminReturnDetail = () => {
       )}
 
       {/* ─── Reject Return Request Modal ─── */}
-      <AnimatePresence>
-        {isRejectOpen && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-[100] p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-[var(--admin-surface)] rounded-[4px] w-full max-w-md p-6 shadow-2xl border border-[var(--admin-border)]"
-            >
-              <h3 className="text-base font-bold text-[var(--admin-error)] flex items-center gap-2 mb-2">
-                <span className="material-symbols-outlined">warning</span>
-                Reject Return Request
-              </h3>
-              <p className="text-xs text-[var(--admin-text-secondary)] mb-4">
-                Please enter the reason for rejecting this return request. This message will be
-                recorded and shown to the customer.
-              </p>
-              <textarea
-                className="admin-input w-full min-h-[100px] text-xs mb-4 !rounded-[4px]"
-                placeholder="e.g., The item does not meet the return policy criteria..."
-                value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
-              />
-              <div className="flex justify-end gap-2.5">
-                <button
-                  type="button"
-                  className="admin-btn admin-btn-outline text-xs !rounded-[4px] cursor-pointer"
-                  onClick={() => {
-                    setIsRejectOpen(false);
-                    setRejectReason('');
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="admin-btn admin-btn-primary !bg-[var(--admin-error)] hover:!bg-[var(--admin-error)]/90 text-xs !rounded-[4px] cursor-pointer"
-                  onClick={handleReject}
-                >
-                  Confirm Rejection
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      <ReturnRejectModal
+        isOpen={isRejectOpen}
+        onClose={() => {
+          setIsRejectOpen(false);
+          setRejectReason('');
+        }}
+        onConfirm={handleReject}
+      />
 
-      {/* ─── Record Refund Payment / Settlement Modal (Standardized Style) ─── */}
-      {typeof document !== 'undefined' &&
-        createPortal(
-          <AnimatePresence>
-            {isSettleModalOpen && (
-              <div
-                key="return-settle-modal-portal"
-                className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 font-sans pointer-events-none"
-                style={{
-                  fontFamily:
-                    "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-                }}
-              >
-                {/* Full-screen Backdrop */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  onClick={!isSubmittingSettle ? () => setIsSettleModalOpen(false) : undefined}
-                  className="fixed inset-0 bg-black/40 dark:bg-black/60 cursor-pointer pointer-events-auto"
-                  style={{ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}
-                />
-
-                {/* Modal Card / Mobile App Drawer */}
-                <motion.div
-                  initial={{ opacity: 0, y: isMobile ? '100%' : 4, scale: isMobile ? 1 : 0.98 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: isMobile ? '100%' : 4, scale: isMobile ? 1 : 0.98 }}
-                  transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-                  className={`admin-section-root ${isDark ? 'dark' : ''} pointer-events-auto relative w-full sm:max-w-md bg-white dark:bg-[#1f1e1b] rounded-t-[20px] sm:rounded-[4px] shadow-2xl overflow-hidden z-10 border-t sm:border border-[#e8e4d9] dark:border-white/10 font-sans max-h-[88vh] sm:max-h-none flex flex-col`}
-                  style={{
-                    backgroundColor: 'var(--admin-surface, #ffffff)',
-                    borderColor: 'var(--admin-border, #e8e4d9)',
-                    fontFamily:
-                      "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {/* Mobile Drawer Pull Indicator */}
-                  <div className="pt-2.5 pb-1 sm:hidden flex justify-center w-full cursor-grab active:cursor-grabbing">
-                    <div className="w-10 h-1.5 rounded-full bg-stone-300 dark:bg-stone-600" />
-                  </div>
-
-                  {/* Header */}
-                  <div
-                    className="px-5 py-3.5 sm:py-4 border-b border-[#e8e4d9] dark:border-white/10 flex items-center justify-between shrink-0"
-                    style={{
-                      borderColor: 'var(--admin-border-subtle, #e8e4d9)',
-                    }}
-                  >
-                    <div className="min-w-0 pr-2">
-                      <h3
-                        className="text-[14.5px] font-bold text-[var(--admin-text-primary)] flex items-center gap-2 !font-sans tracking-normal"
-                        style={{
-                          fontFamily:
-                            "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-                        }}
-                      >
-                        <span className="material-symbols-outlined text-[20px] text-[var(--admin-accent)]">
-                          payments
-                        </span>
-                        Record Refund Payment
-                      </h3>
-                      <p className="text-[11px] text-[var(--admin-text-secondary)] font-medium truncate mt-0.5 !font-sans">
-                        Return #{request.returnId || request._id?.slice(-8)} &bull; Settlement
-                        Payout
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setIsSettleModalOpen(false)}
-                      disabled={isSubmittingSettle}
-                      className="w-7 h-7 rounded-[4px] flex items-center justify-center text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer disabled:opacity-50"
-                    >
-                      <span className="material-symbols-outlined text-[16px]">close</span>
-                    </button>
-                  </div>
-
-                  {/* Body Form */}
-                  <form
-                    onSubmit={handleSettleSubmit}
-                    className="p-5 sm:p-6 space-y-4 font-sans overflow-y-auto custom-scrollbar flex-1 pb-8 sm:pb-6 text-left"
-                  >
-                    {/* Price Difference / Refund Summary Box */}
-                    <div
-                      className="bg-[#faf8f2] dark:bg-[#201e19] rounded-[4px] p-3.5 border border-[#e8e4d9] dark:border-white/10 space-y-2.5 text-xs shadow-2xs"
-                      style={{
-                        backgroundColor: 'var(--admin-bg-subtle, #faf8f2)',
-                        borderColor: 'var(--admin-border-subtle, #e8e4d9)',
-                        fontFamily:
-                          "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-                      }}
-                    >
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center text-[12.5px]">
-                          <span className="text-stone-500 dark:text-stone-400 font-medium shrink-0 flex items-center gap-1.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-stone-400"></span>
-                            Customer
-                          </span>
-                          <span className="font-semibold text-[var(--admin-text-primary)]">
-                            {request.userId?.name || pickupAddr.name || 'Customer'}
-                          </span>
-                        </div>
-                        {(upiId || settleData.upiId) && (
-                          <div className="flex justify-between items-center text-[12px] pt-1 border-t border-[var(--admin-border-subtle)]">
-                            <span className="text-stone-500 dark:text-stone-400 font-medium shrink-0 flex items-center gap-1.5">
-                              <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                              Customer UPI
-                            </span>
-                            <div className="flex items-center gap-1 font-mono font-bold text-[var(--admin-text-primary)]">
-                              <span>{upiId || settleData.upiId}</span>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const upi = upiId || settleData.upiId;
-                                  navigator.clipboard.writeText(upi);
-                                  toast.success('UPI ID copied!');
-                                }}
-                                className="text-[var(--admin-accent)] hover:underline cursor-pointer p-0.5"
-                                title="Copy UPI ID"
-                              >
-                                <span className="material-symbols-outlined text-[13px]">
-                                  content_copy
-                                </span>
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Highlighted Refund Banner */}
-                      <div className="flex justify-between items-center px-3 py-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/40 rounded-[4px] mt-1">
-                        <span className="font-bold text-[12px] text-amber-900 dark:text-amber-200">
-                          Calculated Refund
-                        </span>
-                        <span className="font-extrabold text-amber-700 dark:text-amber-400 font-mono text-[15px]">
-                          ₹{formatINR(grandTotal)}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Amount to Refund */}
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] block">
-                          Refund Amount (₹) *
-                        </label>
-                        {grandTotal > 0 && String(settleData.amount) !== String(grandTotal) && (
-                          <button
-                            type="button"
-                            onClick={() => setSettleData({ ...settleData, amount: grandTotal })}
-                            className="text-[11px] font-bold text-amber-700 dark:text-amber-400 hover:underline cursor-pointer"
-                          >
-                            Fill Due (₹{formatINR(grandTotal)})
-                          </button>
-                        )}
-                      </div>
-                      <div className="relative flex items-center">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--admin-text-tertiary)] font-bold text-[14px] pointer-events-none select-none">
-                          ₹
-                        </span>
-                        <input
-                          type="number"
-                          step="0.01"
-                          min="1"
-                          required
-                          value={settleData.amount}
-                          onChange={(e) => setSettleData({ ...settleData, amount: e.target.value })}
-                          placeholder={`e.g. ${grandTotal || 500}`}
-                          disabled={isSubmittingSettle}
-                          className="w-full h-10 pl-8 pr-3 rounded-[4px] border border-[var(--admin-border)] bg-white dark:bg-[#1a1815] text-[var(--admin-text-primary)] focus:border-[var(--admin-accent)] outline-none text-[14px] font-bold transition-all font-mono"
-                          style={{
-                            backgroundColor: 'var(--admin-bg, #ffffff)',
-                            borderColor: 'var(--admin-border, #e8e4d9)',
-                            color: 'var(--admin-text-primary, #000000)',
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Payment Method */}
-                    <div className="space-y-1.5">
-                      <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] block">
-                        Payment Method *
-                      </label>
-                      <div className="relative">
-                        <select
-                          value={settleData.paymentMethod}
-                          onChange={(e) =>
-                            setSettleData({ ...settleData, paymentMethod: e.target.value })
-                          }
-                          disabled={isSubmittingSettle}
-                          className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[var(--admin-border)] bg-white dark:bg-[#1a1815] text-[var(--admin-text-primary)] focus:border-[var(--admin-accent)] outline-none text-[13px] font-medium transition-all cursor-pointer"
-                          style={{
-                            backgroundColor: 'var(--admin-bg, #ffffff)',
-                            borderColor: 'var(--admin-border, #e8e4d9)',
-                            color: 'var(--admin-text-primary, #000000)',
-                            WebkitAppearance: 'none',
-                            MozAppearance: 'none',
-                            appearance: 'none',
-                            backgroundImage: 'none',
-                          }}
-                        >
-                          <option value="upi">UPI Payout</option>
-                          <option value="wallet">Store Wallet Credit</option>
-                          <option value="bank_transfer">Bank Transfer (NEFT/IMPS)</option>
-                          <option value="original">Original Payment Gateway (Razorpay)</option>
-                        </select>
-                        <span className="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-[18px] text-[var(--admin-text-secondary)] pointer-events-none select-none">
-                          expand_more
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Customer UPI if UPI mode */}
-                    {settleData.paymentMethod === 'upi' && (
-                      <div className="space-y-1.5">
-                        <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] block">
-                          Customer UPI ID *
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          placeholder="e.g. customer@okhdfcbank"
-                          value={settleData.upiId}
-                          onChange={(e) => setSettleData({ ...settleData, upiId: e.target.value })}
-                          disabled={isSubmittingSettle}
-                          className="w-full h-10 px-3 rounded-[4px] border border-[var(--admin-border)] bg-white dark:bg-[#1a1815] text-[var(--admin-text-primary)] focus:border-[var(--admin-accent)] outline-none text-[13px] font-mono transition-all"
-                          style={{
-                            backgroundColor: 'var(--admin-bg, #ffffff)',
-                            borderColor: 'var(--admin-border, #e8e4d9)',
-                            color: 'var(--admin-text-primary, #000000)',
-                          }}
-                        />
-                      </div>
-                    )}
-
-                    {/* Bank Reference / UTR Number */}
-                    <div className="space-y-1.5">
-                      <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] block">
-                        Bank Reference / UTR Number
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="e.g. UPI/123456789012 or UTR..."
-                        value={settleData.transactionId}
-                        onChange={(e) =>
-                          setSettleData({ ...settleData, transactionId: e.target.value })
-                        }
-                        disabled={isSubmittingSettle}
-                        className="w-full h-10 px-3 rounded-[4px] border border-[var(--admin-border)] bg-white dark:bg-[#1a1815] text-[var(--admin-text-primary)] focus:border-[var(--admin-accent)] outline-none text-[13px] font-mono transition-all"
-                        style={{
-                          backgroundColor: 'var(--admin-bg, #ffffff)',
-                          borderColor: 'var(--admin-border, #e8e4d9)',
-                          color: 'var(--admin-text-primary, #000000)',
-                        }}
-                      />
-                    </div>
-
-                    {/* Notes */}
-                    <div className="space-y-1.5">
-                      <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] block">
-                        Notes
-                      </label>
-                      <textarea
-                        rows="2"
-                        value={settleData.notes}
-                        onChange={(e) => setSettleData({ ...settleData, notes: e.target.value })}
-                        placeholder="Optional notes or payout reference details..."
-                        disabled={isSubmittingSettle}
-                        className="w-full px-3 py-2 rounded-[4px] border border-[var(--admin-border)] bg-white dark:bg-[#1a1815] text-[var(--admin-text-primary)] focus:border-[var(--admin-accent)] outline-none text-[13px] transition-all resize-none"
-                        style={{
-                          backgroundColor: 'var(--admin-bg, #ffffff)',
-                          borderColor: 'var(--admin-border, #e8e4d9)',
-                          color: 'var(--admin-text-primary, #000000)',
-                        }}
-                      />
-                    </div>
-
-                    {/* Submit Button */}
-                    <div className="pt-2">
-                      <button
-                        type="submit"
-                        disabled={isSubmittingSettle || Number(settleData.amount) <= 0}
-                        className="w-full h-10 rounded-[4px] bg-[var(--admin-accent)] hover:bg-[var(--admin-accent-hover)] text-white font-bold text-[13px] shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-0"
-                        style={{
-                          backgroundColor: 'var(--admin-accent, #826237)',
-                        }}
-                      >
-                        {isSubmittingSettle ? (
-                          <>
-                            <span className="material-symbols-outlined animate-spin text-[16px]">
-                              progress_activity
-                            </span>
-                            <span>Saving Settlement...</span>
-                          </>
-                        ) : (
-                          <span>
-                            Confirm & Save Settlement{' '}
-                            {Number(settleData.amount) > 0
-                              ? `(₹${formatINR(settleData.amount)})`
-                              : ''}
-                          </span>
-                        )}
-                      </button>
-                    </div>
-                  </form>
-                </motion.div>
-              </div>
-            )}
-          </AnimatePresence>,
-          document.body,
-        )}
+      {/* ─── Record Refund Payment / Settlement Modal ─── */}
+      <ReturnSettleRefundModal
+        isOpen={isSettleModalOpen}
+        onClose={() => setIsSettleModalOpen(false)}
+        settleData={settleData}
+        setSettleData={setSettleData}
+        onSubmit={handleSettleSubmit}
+        isSubmittingSettle={isSubmittingSettle}
+        customerName={request.userId?.name || pickupAddr.name || 'Customer'}
+        upiId={upiId || settleData.upiId}
+        grandTotal={grandTotal}
+        returnCode={request.returnId || request._id?.slice(-8)}
+        isDark={isDark}
+        isMobile={isMobile}
+      />
 
       {/* Customer 360 Profile Modal */}
       <AnimatePresence>

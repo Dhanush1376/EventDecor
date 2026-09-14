@@ -52,30 +52,6 @@ tests/manual/
 stats.html
 stats.json
 
-# Scratch, One-Off & Temporary Scripts (Unwanted for Production)
-test-*.js
-test-*.ts
-test_*.js
-test_*.ts
-verify_*.js
-verify_*.ts
-scratch_*.js
-scratch_*.ts
-simulate_*.js
-simulate_*.ts
-fix-*.js
-fix.js
-clear_cache.ts
-restore_put_service.ts
-backfill*.js
-backfill*.ts
-seed_notifications.js
-seed_notifications.ts
-server_traced.js
-server_traced.ts
-grantAdmin.js
-grantAdmin.ts
-
 # Data Dumps & Migration Previews
 cms*.json
 old_seed_data*.txt
@@ -84,8 +60,6 @@ filters*.json
 explain_output.json
 certification_*.json
 certification_*.md
-FINAL_ACCEPTANCE_REPORT.md
-.env.production.checklist.md
 
 # Backups & Archives
 backups/

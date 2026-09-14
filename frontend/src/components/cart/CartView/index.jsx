@@ -1,9 +1,11 @@
-import { CheckCircle2, Trash2, BadgeCheck, Heart } from 'lucide-react';
+import { CheckCircle2, Trash2, BadgeCheck, Heart, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import React, { useState, useEffect, Profiler } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { useConfig } from '../../../context/ConfigContext';
+import toast from 'react-hot-toast';
 
 import { logRenderMetrics } from '../../../utils/performance/profilerLogger';
 import { useCart } from '../../../context/CartContext';
@@ -54,6 +56,7 @@ export function CartView({ isEmbedded = false }) {
   } = useCart();
   const { addItem: addToWishlist } = useWishlist();
   const { runProtectedAction, isAuthenticated, user } = useAuth();
+  const { isStoreClosed } = useConfig();
   const navigate = useNavigate();
 
   const { data: addresses = [] } = useUserAddresses();
@@ -569,16 +572,33 @@ export function CartView({ isEmbedded = false }) {
               </div>
               <button
                 onClick={() =>
-                  runProtectedAction(() => {
-                    sessionStorage.removeItem('siri_checkout_step');
-                    navigate('/checkout', {
-                      state: { checkoutMode: activeCartMode, couponCode: appliedCoupon?.code },
-                    });
-                  })
+                  isStoreClosed
+                    ? toast(
+                        'Online checkout is currently paused while the store is in catalog-only mode.',
+                      )
+                    : runProtectedAction(() => {
+                        sessionStorage.removeItem('siri_checkout_step');
+                        navigate('/checkout', {
+                          state: { checkoutMode: activeCartMode, couponCode: appliedCoupon?.code },
+                        });
+                      })
                 }
-                className="bg-black text-white h-10 px-5 rounded-full font-label text-[10px] uppercase tracking-widest font-bold shadow-lg active:scale-[0.96] transition-all flex items-center justify-center border-none cursor-pointer shrink-0"
+                className={`h-10 px-5 rounded-full font-label text-[10px] uppercase tracking-widest font-bold shadow-md active:scale-[0.96] transition-all flex items-center justify-center gap-1.5 border-none cursor-pointer shrink-0 ${
+                  isStoreClosed
+                    ? 'bg-stone-200 text-stone-600 border border-stone-300'
+                    : 'bg-black text-white'
+                }`}
               >
-                {activeCartMode === 'rental' ? 'Rent Now' : 'Checkout'}
+                {isStoreClosed ? (
+                  <>
+                    <Lock className="w-3 h-3 text-stone-500" />
+                    <span>Paused</span>
+                  </>
+                ) : activeCartMode === 'rental' ? (
+                  'Rent Now'
+                ) : (
+                  'Checkout'
+                )}
               </button>
             </motion.div>,
             document.body,

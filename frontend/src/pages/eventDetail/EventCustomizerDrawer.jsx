@@ -6,8 +6,10 @@ import { EVENT_TYPES } from '../../config/constants';
 import { LocationSelectorModal } from '../../components/ui/LocationSelectorModal';
 import Check from 'lucide-react/dist/esm/icons/check';
 import { useMobileDrawerEngine, DrawerDragHandle } from '../../components/ui/drawer';
+import { useConfig } from '../../context/ConfigContext';
 
 export function EventCustomizerDrawer({ event, bookingForm }) {
+  const { isStoreClosed } = useConfig();
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
@@ -421,18 +423,26 @@ export function EventCustomizerDrawer({ event, bookingForm }) {
                 >
                   Back
                 </button>
-                <button
-                  onClick={actions.handleReserveOnly}
-                  className="flex-[1] border border-black text-black hover:bg-black/5 transition-all active:scale-95 shadow-sm py-3 rounded-full text-[11px] font-bold cursor-pointer"
-                >
-                  Reserve Only
-                </button>
-                <button
-                  onClick={actions.handleBookRental}
-                  className="flex-[1.5] bg-black text-white hover:bg-stone-900 transition-all active:scale-95 shadow-md py-3 rounded-full text-[11px] font-bold cursor-pointer"
-                >
-                  Pay Now
-                </button>
+                {isStoreClosed ? (
+                  <div className="flex-1 bg-stone-100 border border-stone-200 text-stone-500 rounded-full py-3 px-4 text-center text-xs font-semibold flex items-center justify-center">
+                    Bookings Paused (View Only Mode)
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      onClick={actions.handleReserveOnly}
+                      className="flex-[1] border border-black text-black hover:bg-black/5 transition-all active:scale-95 shadow-sm py-3 rounded-full text-[11px] font-bold cursor-pointer"
+                    >
+                      Reserve Only
+                    </button>
+                    <button
+                      onClick={actions.handleBookRental}
+                      className="flex-[1.5] bg-black text-white hover:bg-stone-900 transition-all active:scale-95 shadow-md py-3 rounded-full text-[11px] font-bold cursor-pointer"
+                    >
+                      Pay Now
+                    </button>
+                  </>
+                )}
               </>
             )}
           </div>
