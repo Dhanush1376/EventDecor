@@ -1,5 +1,6 @@
 import { MessageSquare, Send } from 'lucide-react';
 import React from 'react';
+import { useConfig } from '../../context/ConfigContext';
 
 export function DesktopChatWindow({
   selectedBooking,
@@ -8,6 +9,8 @@ export function DesktopChatWindow({
   handleSendChat,
   chatEndRef,
 }) {
+  const { storeName } = useConfig();
+
   return (
     <div className="hidden lg:flex lg:col-span-4 bg-surface-bright border border-outline-variant/30 rounded-lg p-5 shadow-2xs flex-col h-[600px] lg:sticky lg:top-24 text-[11px]">
       <div className="border-b border-outline-variant/20 pb-3 shrink-0 flex items-center justify-between">
@@ -30,7 +33,7 @@ export function DesktopChatWindow({
               className={`flex flex-col max-w-[85%] ${isAdmin ? 'self-start text-left' : 'self-end text-right ml-auto'}`}
             >
               <span className="font-label text-[8px] text-black/35 font-bold uppercase tracking-widest mb-1 block">
-                {isAdmin ? 'Siri Arts & Crafts Designer' : 'You'}
+                {isAdmin ? `${storeName} Designer` : 'You'}
               </span>
               <div
                 className={`p-3 rounded-[18px] text-xs leading-relaxed font-light ${

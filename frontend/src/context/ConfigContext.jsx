@@ -10,73 +10,46 @@ const ConfigContext = createContext(null);
 export const ConfigProvider = ({ children }) => {
   const [config, setConfig] = useState({});
   const [categories, setCategories] = useState([]);
-  const [storeSettings, setStoreSettings] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [storeSettings, setStoreSettings] = useState(() => {
+    try {
+      const cached = localStorage.getItem('siri_public_settings');
+      if (cached) return JSON.parse(cached);
+    } catch (_e) {}
+    return null;
+  });
+  const [loading, setLoading] = useState(!storeSettings);
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchGlobalData = async () => {
       try {
-        setLoading(true);
         // Fetch categories
         const categoriesRes = await api.get('/categories/active');
-        if (categoriesRes?.data?.success) {
+        if (isMounted && categoriesRes?.data?.success) {
           setCategories(categoriesRes.data.data);
         }
 
         // Fetch store settings
         const settingsRes = await storeSettingsService.getPublicSettings();
-        if (settingsRes) {
+        if (isMounted && settingsRes) {
           setStoreSettings(settingsRes);
         }
       } catch (err) {
         logger.error('Failed to fetch global data', err);
-        setError(err);
+        if (isMounted) setError(err);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     fetchGlobalData();
 
-    // Visitor sockets are intentionally opt-in; the public config fetch remains the canonical source.
-    if (import.meta.env.VITE_ENABLE_VISITOR_SOCKET !== 'true') return;
-
-    // Setup Socket for live maintenance toggles.
-    // Direct backend origin so the transport can upgrade to a real WebSocket.
-    const socketServerUrl = getWebSocketUrl();
-    let socketRef = null;
-
-    import('socket.io-client')
-      .then(({ io }) => {
-        const socket = io(`${socketServerUrl}/visitor`, {
-          transports: ['websocket', 'polling'],
-          reconnectionAttempts: 5,
-          reconnectionDelay: 5000,
-        });
-        socketRef = socket;
-
-        socket.on('MAINTENANCE_TOGGLED', (data) => {
-          setStoreSettings((prev) => {
-            if (!prev) return prev;
-            return {
-              ...prev,
-              general: {
-                ...prev.general,
-                maintenanceMode: data.maintenanceMode,
-              },
-            };
-          });
-        });
-      })
-      .catch((err) => {
-        logger.warn('[ConfigContext] Failed to load socket.io-client module:', err);
-      });
-
     const handleSettingsSync = async () => {
       try {
         const settingsRes = await storeSettingsService.getPublicSettings();
-        if (settingsRes) {
+        if (isMounted && settingsRes) {
           setStoreSettings(settingsRes);
         }
       } catch (_e) {
@@ -86,13 +59,45 @@ export const ConfigProvider = ({ children }) => {
 
     window.addEventListener('store-settings-updated', handleSettingsSync);
     const handleStorageEvent = (e) => {
-      if (e.key === 'store_settings_sync_time') {
+      if (e.key === 'store_settings_sync_time' || e.key === 'siri_store_name') {
         handleSettingsSync();
       }
     };
     window.addEventListener('storage', handleStorageEvent);
 
+    let socketRef = null;
+    if (import.meta.env.VITE_ENABLE_VISITOR_SOCKET === 'true') {
+      const socketServerUrl = getWebSocketUrl();
+      import('socket.io-client')
+        .then(({ io }) => {
+          if (!isMounted) return;
+          const socket = io(`${socketServerUrl}/visitor`, {
+            transports: ['websocket', 'polling'],
+            reconnectionAttempts: 5,
+            reconnectionDelay: 5000,
+          });
+          socketRef = socket;
+
+          socket.on('MAINTENANCE_TOGGLED', (data) => {
+            setStoreSettings((prev) => {
+              if (!prev) return prev;
+              return {
+                ...prev,
+                general: {
+                  ...prev.general,
+                  maintenanceMode: data.maintenanceMode,
+                },
+              };
+            });
+          });
+        })
+        .catch((err) => {
+          logger.warn('[ConfigContext] Failed to load socket.io-client module:', err);
+        });
+    }
+
     return () => {
+      isMounted = false;
       window.removeEventListener('store-settings-updated', handleSettingsSync);
       window.removeEventListener('storage', handleStorageEvent);
       if (socketRef) {
@@ -100,6 +105,18 @@ export const ConfigProvider = ({ children }) => {
       }
     };
   }, []);
+
+  const storeName = useMemo(() => {
+    return (
+      storeSettings?.general?.storeName?.trim() ||
+      import.meta.env.VITE_SITE_NAME ||
+      'Siri Arts & Crafts'
+    );
+  }, [storeSettings]);
+
+  const storeNameUpper = useMemo(() => storeName.toUpperCase(), [storeName]);
+  const storeTagline = storeSettings?.general?.tagline?.trim() || 'Handcrafted Heritage & Artistry';
+  const supportEmail = storeSettings?.general?.supportEmail?.trim() || 'sirisha.atmakuri@gmail.com';
 
   const isMaintenanceMode = storeSettings?.general?.maintenanceMode === true;
   const isStoreClosed = storeSettings?.general?.storeEnabled === false && !isMaintenanceMode;
@@ -109,12 +126,28 @@ export const ConfigProvider = ({ children }) => {
       config,
       categories,
       storeSettings,
+      storeName,
+      storeNameUpper,
+      storeTagline,
+      supportEmail,
       loading,
       error,
       isStoreClosed,
       isMaintenanceMode,
     }),
-    [config, categories, storeSettings, loading, error, isStoreClosed, isMaintenanceMode],
+    [
+      config,
+      categories,
+      storeSettings,
+      storeName,
+      storeNameUpper,
+      storeTagline,
+      supportEmail,
+      loading,
+      error,
+      isStoreClosed,
+      isMaintenanceMode,
+    ],
   );
 
   return <ConfigContext.Provider value={contextValue}>{children}</ConfigContext.Provider>;
@@ -126,4 +159,9 @@ export const useConfig = () => {
     throw new Error('useConfig must be used within a ConfigProvider');
   }
   return context;
+};
+
+export const useStoreName = () => {
+  const { storeName } = useConfig();
+  return storeName;
 };

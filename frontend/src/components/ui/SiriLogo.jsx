@@ -1,9 +1,22 @@
+import { BRAND } from '../../config/brand';
+import { useConfig } from '../../context/ConfigContext';
+
 export function SiriLogo({
   className = '',
   size = '36px',
   _showSubtitle = false,
   variant = 'default',
 }) {
+  let storeName = BRAND.name;
+  try {
+    const config = useConfig();
+    if (config?.storeName) {
+      storeName = config.storeName;
+    }
+  } catch (_e) {
+    // Outside ConfigProvider
+  }
+
   // Parse the size to a number to scale it up
   const numericSize = typeof size === 'string' ? parseInt(size, 10) : size;
   // Make the logo slightly larger than passed size height (1.15x)
@@ -19,7 +32,8 @@ export function SiriLogo({
     >
       <img
         src="/MainLogo.png"
-        alt="Siri Arts & Crafts Logo"
+        alt={`${storeName} Logo`}
+        title={storeName}
         loading="eager"
         fetchPriority="high"
         style={{

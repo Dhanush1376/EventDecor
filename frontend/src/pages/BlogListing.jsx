@@ -4,8 +4,10 @@ import { SEO } from '../components/seo/SEO';
 import { BlogCard } from '../components/blog/BlogCard';
 import { useState, useMemo, useEffect } from 'react';
 import { blogService } from '../services/domainServices';
+import { useConfig } from '../context/ConfigContext';
 
 export function BlogListing() {
+  const { storeName } = useConfig();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [blogsData, setBlogsData] = useState([]);
@@ -51,7 +53,7 @@ export function BlogListing() {
     <div className="min-h-screen bg-background pt-24 pb-20">
       <SEO
         title="Event Decoration Blog & Ideas"
-        description="Explore the latest event decoration trends, wedding ideas, and traditional pooja setups from the experts at Siri Arts & Crafts."
+        description={`Explore the latest event decoration trends, wedding ideas, and traditional pooja setups from the experts at ${storeName || 'Siri Arts & Crafts'}.`}
         canonicalUrl="/blog"
       />
 

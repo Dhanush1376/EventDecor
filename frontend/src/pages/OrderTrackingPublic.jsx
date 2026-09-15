@@ -8,6 +8,7 @@ import { useOrderTracking } from '../hooks/useOrderTracking';
 import { TrackingTimeline } from '../components/tracking/TrackingTimeline';
 import { TrackingCourierDetails } from '../components/tracking/TrackingCourierDetails';
 import { TrackingOperatorPanel } from '../components/tracking/TrackingOperatorPanel';
+import { useConfig } from '../context/ConfigContext';
 
 const statusColors = {
   Pending: 'text-amber-600 bg-amber-50 border-amber-200',
@@ -20,6 +21,7 @@ const statusColors = {
 };
 
 export function OrderTrackingPublic() {
+  const { storeNameUpper, storeSettings } = useConfig();
   const { orderId } = useParams();
   const [searchParams] = useSearchParams();
   const trackingToken = searchParams.get('token') || '';
@@ -48,7 +50,7 @@ export function OrderTrackingPublic() {
   if (error || !order) {
     return (
       <div className="min-h-screen bg-surface-bright flex flex-col items-center justify-center p-6 text-center">
-        <SEO title="Tracking Error | Siri Arts & Crafts" noindex />
+        <SEO title="Tracking Error" noindex />
         <Truck className="text-[64px] text-red-400 mb-4 animate-bounce" strokeWidth={1.5} />
         <h2 className="font-body text-xl font-bold text-on-surface mb-2">
           Tracking Record Unreachable
@@ -68,10 +70,7 @@ export function OrderTrackingPublic() {
 
   return (
     <div className="min-h-screen bg-surface-bright py-12 px-4 sm:px-6 relative overflow-hidden">
-      <SEO
-        title={`Track Dispatch #${order._id.substring(0, 8).toUpperCase()} | Siri Arts & Crafts`}
-        noindex
-      />
+      <SEO title={`Track Dispatch #${order._id.substring(0, 8).toUpperCase()}`} noindex />
 
       {/* Decorative Brand Mandala */}
       <MandalaElement
@@ -311,7 +310,8 @@ export function OrderTrackingPublic() {
 
         {/* Footer info */}
         <div className="text-center text-[10px] text-secondary font-medium tracking-wide">
-          SIRI ARTS & CRAFTS • ATELIER DELIVERIES • NEED HELP? CALL +91 99999 99999
+          {storeNameUpper || 'SIRI ARTS & CRAFTS'} • ATELIER DELIVERIES • NEED HELP? CALL{' '}
+          {storeSettings?.support?.phone || storeSettings?.contact?.phone || '+91 99999 99999'}
         </div>
       </div>
     </div>

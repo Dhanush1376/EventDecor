@@ -1,6 +1,10 @@
 import React from 'react';
+import { useConfig } from '../../../context/ConfigContext';
 
 export function ProductSeoStep({ formData }) {
+  const { storeName } = useConfig();
+  const displayName = storeName || 'Siri Arts & Crafts';
+
   return (
     <div className="space-y-5">
       <div>
@@ -20,7 +24,7 @@ export function ProductSeoStep({ formData }) {
           <input
             type="text"
             readOnly
-            value={formData.title ? `${formData.title} | Siri Arts & Crafts` : ''}
+            value={formData.title ? `${formData.title} | ${displayName}` : ''}
             placeholder="SEO Page Title"
             className="w-full bg-[var(--admin-bg-subtle)] rounded-[4px] px-3 h-9 text-[12.5px] outline-none transition-all border border-[var(--admin-border)] opacity-70 cursor-not-allowed text-[var(--admin-text-primary)] font-medium"
           />
@@ -47,13 +51,13 @@ export function ProductSeoStep({ formData }) {
           </div>
           <h4 className="text-[#1a0dab] text-[16px] hover:underline cursor-pointer leading-tight font-medium font-sans">
             {formData.title
-              ? `${formData.title} | Siri Arts & Crafts`
+              ? `${formData.title} | ${displayName}`
               : 'Buy Luxury Handcrafted Traditional Decor Items Online'}
           </h4>
           <p className="text-[#4d5156] text-[12px] leading-relaxed font-normal">
             <span className="text-[#70757a]">17 May 2026 — </span>
             {formData.description ||
-              'Discover organic handcrafted Urli bowls, Rosewood Jharokha mirrors, traditional brass artifacts for wedding backdrops at Siri Arts & Crafts.'}
+              `Discover organic handcrafted Urli bowls, Rosewood Jharokha mirrors, traditional brass artifacts for wedding backdrops at ${displayName}.`}
           </p>
         </div>
       </div>

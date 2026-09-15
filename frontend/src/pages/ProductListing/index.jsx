@@ -192,7 +192,7 @@ export function ProductListing() {
   const websiteContent = useWebsiteContent();
   const shopContent = websiteContent?.shopPage || {
     hero: {
-      title: 'Heritage Collection',
+      title: 'Shop',
       subtitle: 'Handcrafted Decor',
       description: 'Handcrafted luxury event decor blending tradition.',
       backgroundImage:
@@ -256,7 +256,7 @@ export function ProductListing() {
     <Profiler id="ProductListing" onRender={logRenderMetrics}>
       <div className="bg-surface min-h-screen">
         <SEO
-          title="Shop | Siri Arts & Crafts"
+          title="Shop"
           description="Shop premium handcrafted wedding decor, pooja essentials, floral decorations, and personalized gifts."
         />
 

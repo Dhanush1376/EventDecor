@@ -16,6 +16,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import recommendationService from '../services/api/recommendationService';
 import { ProductCard } from '../components/shared/ProductCard';
 import logger from '../utils/core/logger';
+import { useConfig } from '../context/ConfigContext';
 
 const RecommendationSystem = React.lazy(() =>
   import('../components/sections/RecommendationSystem').then((m) => ({
@@ -30,6 +31,7 @@ const LazyProductReviews = React.lazy(() =>
 );
 
 export function ProductDetails() {
+  const { storeName } = useConfig();
   const { id } = useParams();
   const atcRef = useRef(null);
   const { user } = useAuth();
@@ -121,7 +123,7 @@ export function ProductDetails() {
       sku: `SIRI-${product?.id || product?._id}`,
       brand: {
         '@type': 'Brand',
-        name: 'Siri Arts & Crafts',
+        name: storeName || 'Siri Arts & Crafts',
       },
       offers: {
         '@type': 'Offer',
@@ -131,7 +133,7 @@ export function ProductDetails() {
         availability: 'https://schema.org/InStock',
       },
     }),
-    [product, galleryImages],
+    [product, galleryImages, storeName],
   );
 
   if (loading) {

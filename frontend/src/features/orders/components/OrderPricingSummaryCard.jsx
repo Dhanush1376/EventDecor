@@ -12,6 +12,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { useConfig } from '../../../context/ConfigContext';
 
 /**
  * Collapsible order pricing breakdown panel, pending payment resolver, and invoice / return action trigger bar.
@@ -31,6 +32,8 @@ export default function OrderPricingSummaryCard({
   isDelivered,
   isNonRefundable,
 }) {
+  const { storeName } = useConfig();
+
   return (
     <div className="bg-surface-bright border border-outline-variant/40 rounded-lg overflow-hidden shadow-xs">
       <button
@@ -133,7 +136,7 @@ export default function OrderPricingSummaryCard({
                 Payment: {order.paymentMethod?.toUpperCase() || 'RAZORPAY'}
               </span>
               <span className="text-[8px] text-secondary uppercase tracking-widest">
-                Sold by: Siri Arts & Crafts
+                Sold by: {storeName}
               </span>
             </div>
           </motion.div>

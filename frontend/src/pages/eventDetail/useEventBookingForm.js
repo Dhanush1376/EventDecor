@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { bookingService } from '../../services/domainServices';
 import logger from '../../utils/core/logger';
+import { useConfig } from '../../context/ConfigContext';
 
 import { EXTERNAL_URLS } from '../../config/constants';
 
@@ -17,6 +18,7 @@ export const loadRazorpayScript = () => {
 };
 
 export function useEventBookingForm(event, isAuthenticated, runProtectedAction, navigate, user) {
+  const { storeName } = useConfig();
   const [customInclusions, setCustomInclusions] = useState([]);
   const [rentalDurationDays, setRentalDurationDays] = useState(1);
   const [selectedPaletteColor, setSelectedPaletteColor] = useState('');
@@ -406,7 +408,7 @@ export function useEventBookingForm(event, isAuthenticated, runProtectedAction, 
         key,
         amount: amount * 100,
         currency,
-        name: 'Siri Arts & Crafts',
+        name: storeName || 'Siri Arts & Crafts',
         description: `Advance Deposit for ${event.title}`,
         order_id: razorpayOrderId,
         handler: async function (response) {

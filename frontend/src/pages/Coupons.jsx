@@ -54,7 +54,7 @@ export function Coupons() {
   return (
     <div className="min-h-screen bg-[var(--color-bg-primary)] pt-32 pb-20 px-6">
       <SEO
-        title="Active Offers & Coupons | Siri Arts & Crafts"
+        title="Active Offers & Coupons"
         description="Discover our latest offers and discount coupons."
         noindex
       />

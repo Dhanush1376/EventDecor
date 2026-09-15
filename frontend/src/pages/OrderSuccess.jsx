@@ -23,6 +23,7 @@ import { useState, useEffect } from 'react';
 import { handleImageError } from '../utils/media/imageUtils';
 import { orderService, rentalService } from '../services/domainServices';
 import logger from '../utils/core/logger';
+import { useConfig } from '../context/ConfigContext';
 
 const _BarcodeSVG = ({ _val }) => (
   <svg viewBox="0 0 200 40" className="w-full h-9" xmlns="http://www.w3.org/2000/svg">
@@ -297,6 +298,7 @@ const mapOrderData = (rawOrder) => {
 };
 
 export function OrderSuccess() {
+  const { storeName } = useConfig();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -468,7 +470,7 @@ export function OrderSuccess() {
       animate={{ opacity: 1 }}
       className="bg-surface-container-low min-h-screen relative pt-12 pb-32 font-body selection:bg-primary/20"
     >
-      <SEO title="Order Success | Siri Arts & Crafts" noindex />
+      <SEO title="Order Success" noindex />
 
       {/* CSS Stylesheet Inject for Clean Receipt Printing */}
       <style>
@@ -549,7 +551,7 @@ export function OrderSuccess() {
               </h2>
               <p className="text-xs text-secondary max-w-md mx-auto leading-relaxed mb-8">
                 {order.isMixed
-                  ? 'Thank you for shopping & renting with Siri Arts & Crafts. Your purchased items and rental bookings have both been confirmed.'
+                  ? `Thank you for shopping & renting with ${storeName || 'Siri Arts & Crafts'}. Your purchased items and rental bookings have both been confirmed.`
                   : order.isPureRental
                     ? "Your artisanal decor rental has been successfully reserved. We've dispatched your booking confirmation and rental policy to your mobile contact and email address."
                     : "Your artisanal journey has begun. We've sent the order details to your registered number and email address."}

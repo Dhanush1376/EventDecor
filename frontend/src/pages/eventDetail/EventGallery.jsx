@@ -4,8 +4,10 @@ import { m as motion } from 'framer-motion';
 import { OptimizedImage } from '../../components/ui/OptimizedImage';
 import { ShareButton } from '../../components/ui/ShareButton';
 import { useScrollLock } from '../../hooks/useScrollLock';
+import { useConfig } from '../../context/ConfigContext';
 
 export function EventGallery({ event, toggleItem, isWishlisted }) {
+  const { storeName } = useConfig();
   const [activeGalleryIndex, setActiveGalleryIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const lightboxScrollRef = useRef(null);
@@ -74,7 +76,7 @@ export function EventGallery({ event, toggleItem, isWishlisted }) {
           </button>
           <ShareButton
             url={window.location.href}
-            title={`Siri Arts & Crafts: ${event.title}`}
+            title={`${storeName || 'Siri Arts & Crafts'}: ${event.title}`}
             variant="custom"
             size="custom"
             className="flex items-center justify-center w-8 h-8 min-h-0 min-w-0 p-0 aspect-square rounded-full bg-[#fbfbf8] shadow-lg border border-black/5 active:scale-90 hover:scale-105 transition-all text-black hover:bg-white text-[16px]"

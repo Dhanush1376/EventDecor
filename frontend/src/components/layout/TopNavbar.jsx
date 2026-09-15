@@ -48,9 +48,9 @@ const VisualSearchOverlay = lazy(() =>
 // Search caching is now handled by useSearchOverlay hook
 
 export function TopNavbar() {
-  const { storeSettings } = useConfig();
+  const { storeSettings, storeNameUpper } = useConfig();
   const { navigation } = useWebsiteContent();
-  const logoText = navigation?.logo?.text || 'SIRI ARTS & CRAFTS';
+  const logoText = navigation?.logo?.text || storeNameUpper || 'SIRI ARTS & CRAFTS';
   const logoWords = logoText.split(' ');
   const _firstWord = logoWords[0] || 'SIRI';
   const _restWords = logoWords.slice(1).join(' ') || 'ARTS & CRAFTS';

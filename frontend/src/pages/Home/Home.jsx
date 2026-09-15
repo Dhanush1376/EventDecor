@@ -30,8 +30,10 @@ const GalleryInspiration = lazy(() =>
 
 import './home.css';
 import { useWebsiteContent } from '../../hooks/useWebsiteContent';
+import { useConfig } from '../../context/ConfigContext';
 
 export function Home({ previewContent }) {
+  const { storeName } = useConfig();
   const cms = useWebsiteContent({ includeDefaults: false });
   const activeCms = previewContent || cms;
   const loading = !previewContent && cms.loading;
@@ -59,7 +61,7 @@ export function Home({ previewContent }) {
   return (
     <>
       <SEO
-        title={cms?.seo?.homeTitle || cms?.siteName || 'Siri Arts & Crafts'}
+        title={cms?.seo?.homeTitle || cms?.siteName || storeName || 'Siri Arts & Crafts'}
         description={cms?.seo?.homeDescription}
       />
 

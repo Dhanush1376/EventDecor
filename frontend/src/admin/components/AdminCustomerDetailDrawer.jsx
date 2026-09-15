@@ -10,6 +10,7 @@ import { EXTERNAL_URLS } from '../../config/constants';
 import { customerIntelligenceService, orderService } from '../../services/domainServices';
 import { getErrorMessage } from '../../utils/core/errorHelpers';
 import { AdminOrderDrawer } from './AdminOrderDrawer';
+import { useConfig } from '../../context/ConfigContext';
 
 const getOrderCardStyle = (o) => {
   const s = (o.status || o.orderStatus || '').toLowerCase();
@@ -107,6 +108,7 @@ export function AdminCustomerDetailDrawer({
   onClose,
   onDelete,
 }) {
+  const { storeName } = useConfig();
   const navigate = useNavigate();
   const rawCustomer = customerData || (typeof customer === 'object' ? customer : null) || {};
   const resolvedCustomerId =
@@ -466,7 +468,7 @@ export function AdminCustomerDetailDrawer({
                 {phone ? (
                   <a
                     href={`${EXTERNAL_URLS.WHATSAPP_BASE}/${cleanPhone}?text=${encodeURIComponent(
-                      `Hi ${name}, thank you for choosing Siri Arts & Crafts! How may we assist you today?`,
+                      `Hi ${name}, thank you for choosing ${storeName}! How may we assist you today?`,
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -516,7 +518,7 @@ export function AdminCustomerDetailDrawer({
                 {email ? (
                   <a
                     href={`mailto:${email}?subject=${encodeURIComponent(
-                      'Message from Siri Arts & Crafts',
+                      `Message from ${storeName}`,
                     )}`}
                     className={`${btnCls} border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-200 hover:bg-stone-50 dark:hover:bg-stone-700 hover:text-sky-600 hover:border-sky-300 active:scale-95`}
                     title={`Email: ${email}`}

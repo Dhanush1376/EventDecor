@@ -1,6 +1,7 @@
 import { CloudUpload, FileText, LineChart, FileUp } from 'lucide-react';
 import React from 'react';
 import { m as motion } from 'framer-motion';
+import { useConfig } from '../../context/ConfigContext';
 
 export function AiDesignStep({
   handleFileUploadSim,
@@ -9,6 +10,7 @@ export function AiDesignStep({
   isGeneratingDesign,
   aiAnalysisResult,
 }) {
+  const { storeNameUpper } = useConfig();
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
@@ -75,7 +77,7 @@ export function AiDesignStep({
                 </div>
                 <div className="space-y-1.5">
                   <span className="font-label text-[9px] uppercase tracking-[0.25em] text-primary font-bold block animate-pulse">
-                    SIRI ARTS & CRAFTS DESIGN GENERATOR
+                    {storeNameUpper} DESIGN GENERATOR
                   </span>
                   <p className="font-body text-black/50 text-xs">
                     Generating spatial layers, garland structures, and color swatches based on

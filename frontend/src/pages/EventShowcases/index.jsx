@@ -26,7 +26,7 @@ export function EventShowcases() {
   const websiteContent = useWebsiteContent();
   const eventsPageContent = websiteContent?.eventsPage || {
     hero: {
-      title: 'Luxury Event Scapes',
+      title: 'Event Setup',
       subtitle: 'Cinematic Environments',
       description:
         'Stunning handcrafted designs to transform your milestone celebrations into living masterpieces.',
@@ -87,7 +87,7 @@ export function EventShowcases() {
   return (
     <div className="bg-surface min-h-screen font-body">
       <SEO
-        title="Event Decorations | Siri Arts & Crafts"
+        title="Event Decorations"
         description="Explore our stunning handcrafted event decorations, wedding mandaps, pooja setups, and floral styling."
       />
 

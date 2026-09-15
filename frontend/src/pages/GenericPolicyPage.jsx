@@ -7,8 +7,10 @@ import { useQuery } from '@tanstack/react-query';
 import { policyService } from '../services/domainServices';
 import { createSafeHtml } from '../utils/security/sanitize';
 import { MandalaElement } from '../components/ui/MandalaElement';
+import { useConfig } from '../context/ConfigContext';
 
 export function GenericPolicyPage({ slug: propSlug, defaultTitle }) {
+  const { storeName } = useConfig();
   const { slug: paramSlug } = useParams();
   const slug = propSlug || paramSlug;
   const {
@@ -44,7 +46,10 @@ export function GenericPolicyPage({ slug: propSlug, defaultTitle }) {
         variant={2}
         className="absolute bottom-0 left-0 translate-y-1/4 -translate-x-1/4 text-primary opacity-5 lg:opacity-10 pointer-events-none"
       />
-      <SEO title={policy.title} description={`Read our ${policy.title} at Siri Arts & Crafts.`} />
+      <SEO
+        title={policy.title}
+        description={`Read our ${policy.title} at ${storeName || 'Siri Arts & Crafts'}.`}
+      />
 
       <div className="max-w-[1400px] mx-auto px-4 lg:px-8 lg:px-12 relative z-10">
         {/* Help Center Header */}

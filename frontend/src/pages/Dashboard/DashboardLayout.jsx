@@ -3,6 +3,7 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { useDashboard } from '../../context/DashboardContext';
 import { SEO } from '../../components/seo/SEO';
+import { useConfig } from '../../context/ConfigContext';
 import { DashboardHeader } from '../../components/dashboard/DashboardHeader';
 import { Sidebar } from '../../components/dashboard/Sidebar';
 import { AddressModal } from '../../components/dashboard/AddressModal';
@@ -14,6 +15,7 @@ const InvoiceTemplate = React.lazy(() =>
 );
 
 export function DashboardLayout() {
+  const { storeName } = useConfig();
   const {
     mobileShowContent,
     reviewingProduct,
@@ -32,7 +34,7 @@ export function DashboardLayout() {
     >
       <SEO
         title="Your Premium Studio Account"
-        description="Manage your Siri Arts & Crafts profile parameters, live orders, dynamic shipping addresses, wishlist collections, and personalized newsletter configurations."
+        description={`Manage your ${storeName || 'Siri Arts & Crafts'} profile parameters, live orders, dynamic shipping addresses, wishlist collections, and personalized newsletter configurations.`}
         noindex
       />
 

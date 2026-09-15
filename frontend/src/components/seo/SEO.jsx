@@ -52,8 +52,11 @@ export function SEO({
   const { storeSettings } = useConfig();
 
   const sameAs = buildSameAsLinks(footer?.socialLinks);
-  const siteName = storeSettings?.general?.storeName || SITE_NAME || 'Siri Arts & Crafts';
+  const siteName = storeSettings?.general?.storeName?.trim() || SITE_NAME || 'Siri Arts & Crafts';
   const siteUrl = SITE_URL || (typeof window !== 'undefined' ? window.location.origin : '');
+
+  const defaultDesc = `Shop premium handcrafted wedding decor, pooja essentials, floral decorations, event styling, and personalized gifts at ${siteName}.`;
+  const defaultTitle = `${siteName} — Handcrafted Wedding Decor, Event Decorations & Custom Gifts`;
 
   const settingsPhone = storeSettings?.contact?.phone || contact?.phone;
   const contactPhone = settingsPhone
@@ -65,11 +68,18 @@ export function SEO({
   const globalSeoKeywords = seo?.globalKeywords;
   const globalSeoOgImage = seo?.ogImage;
 
-  const fullTitle = title
-    ? `${title} | ${siteName}`
-    : globalSeoTitle || (siteName ? `${siteName} | ${DEFAULT_TITLE}` : DEFAULT_TITLE);
+  // Clean title to avoid duplicate "| Siri Arts & Crafts" or stale store name suffix
+  const cleanTitle = title
+    ? title
+        .replace(new RegExp(`\\s*\\|?\\s*${siteName}$`, 'i'), '')
+        .replace(/\s*\|\s*Siri Arts & Crafts$/i, '')
+        .replace(/\s*\|\s*Siri Arts and Crafts$/i, '')
+        .trim()
+    : '';
 
-  const metaDescription = description || globalSeoDesc || DEFAULT_DESCRIPTION;
+  const fullTitle = cleanTitle ? `${cleanTitle} | ${siteName}` : globalSeoTitle || defaultTitle;
+
+  const metaDescription = description || globalSeoDesc || defaultDesc;
   const metaKeywords = keywords || globalSeoKeywords || '';
   const normalizedPath = normalizeUrl(location.pathname);
   const currentUrl = canonicalUrl || (siteUrl ? `${siteUrl}${normalizedPath}` : normalizedPath);

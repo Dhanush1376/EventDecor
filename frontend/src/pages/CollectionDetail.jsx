@@ -9,6 +9,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { fadeUp } from '../animations/variants';
 import { handleImageError } from '../utils/media/imageUtils';
 import { productService } from '../services/domainServices';
+import { useConfig } from '../context/ConfigContext';
 
 import { PLACEHOLDER_IMAGES } from '../constants/placeholderImages';
 
@@ -31,6 +32,7 @@ const getProductsFromResponse = (payload) => {
 };
 
 export function CollectionDetail() {
+  const { storeName } = useConfig();
   const { id } = useParams();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -89,7 +91,7 @@ export function CollectionDetail() {
   const description =
     heroProduct?.seoDescription ||
     heroProduct?.description ||
-    `Explore live ${collectionTitle} pieces from the Siri Arts & Crafts catalog.`;
+    `Explore live ${collectionTitle} pieces from the ${storeName || 'Siri Arts & Crafts'} catalog.`;
 
   return (
     <div className="pt-20 lg:pt-28">
@@ -162,7 +164,7 @@ export function CollectionDetail() {
             >
               <ShareButton
                 url={window.location.href}
-                title={`${collectionTitle} - Siri Arts & Crafts`}
+                title={`${collectionTitle} - ${storeName || 'Siri Arts & Crafts'}`}
                 description={description}
                 variant="primary"
               />

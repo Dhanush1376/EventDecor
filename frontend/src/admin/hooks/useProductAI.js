@@ -3,6 +3,7 @@ import { productService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
 import { aiService } from '../../services/api/aiService';
 import logger from '../../utils/core/logger';
+import { BRAND } from '../../config/brand';
 
 export function useProductAI({
   formData,
@@ -139,7 +140,7 @@ export function useProductAI({
         value:
           aiAnalysisResult.seo_title ||
           (aiAnalysisResult.english_title
-            ? `${aiAnalysisResult.english_title} | Siri Arts & Crafts`
+            ? `${aiAnalysisResult.english_title} | ${BRAND.name}`
             : ''),
       },
       {

@@ -1,4 +1,5 @@
 import { logCartTrace, forensicHashId } from '../forensic/cartTrace';
+import { BRAND } from '../../config/brand';
 
 export function cleanRentalInfo(rentalInfo) {
   if (!rentalInfo) return undefined;
@@ -98,7 +99,7 @@ export function transformDbCart(dbCartItems) {
               ? Number(item.product.stock)
               : 10
           : (item.product.stock ?? 10),
-        seller: item.product.seller || 'Siri Arts & Crafts Artisans',
+        seller: item.product.seller || `${BRAND.name} Artisans`,
         rating: item.product.rating || 0,
         imageSrc:
           item.product.imageSrc ||

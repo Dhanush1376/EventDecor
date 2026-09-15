@@ -17,11 +17,13 @@ import { useWebsiteContent } from '../hooks/useWebsiteContent';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { userService } from '../services/domainServices';
 import { useConfirm } from './ConfirmProvider';
+import { useConfig } from './ConfigContext';
 import toast from 'react-hot-toast';
 
 const DashboardContext = createContext(null);
 
 export function DashboardProvider({ children }) {
+  const { storeSettings, storeName } = useConfig();
   const _navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, logout, checkAuth, openAuthModal } = useAuth();
@@ -32,7 +34,8 @@ export function DashboardProvider({ children }) {
   const { contact } = useWebsiteContent();
   const addressText =
     contact?.address ||
-    'Siri Arts & Crafts, #28-1-92, South Street, ONGOLE-523001, Prakasam District, Andhra Pradesh';
+    storeSettings?.contact?.address ||
+    `${storeName}, #28-1-92, South Street, ONGOLE-523001, Prakasam District, Andhra Pradesh`;
   const rawPhone = import.meta.env.VITE_CONTACT_PHONE || contact?.phone || '9866006648';
   const phoneText = rawPhone.replace(/^\+91/, '').replace(/^91/, '').trim();
 

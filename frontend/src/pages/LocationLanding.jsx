@@ -8,8 +8,10 @@ import { LazyImage } from '../components/ui/LazyImage';
 import { FAQAccordion } from '../components/seo/FAQAccordion';
 import { useState, useEffect } from 'react';
 import { locationService } from '../services/domainServices';
+import { useConfig } from '../context/ConfigContext';
 
 export function LocationLanding() {
+  const { storeName } = useConfig();
   const { city } = useParams();
 
   const [locationObj, setLocationObj] = useState(null);
@@ -137,7 +139,7 @@ export function LocationLanding() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div className="space-y-6">
             <h2 className="font-display text-3xl lg:text-4xl font-bold text-on-surface">
-              Why Choose Siri Arts & Crafts in {locationObj.city}?
+              Why Choose {storeName || 'Siri Arts & Crafts'} in {locationObj.city}?
             </h2>
             {locationObj.content.map((paragraph, index) => (
               <p key={index} className="text-on-surface-variant text-lg leading-relaxed">

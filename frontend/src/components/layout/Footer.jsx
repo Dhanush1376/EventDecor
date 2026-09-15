@@ -8,7 +8,10 @@ import { useQuery } from '@tanstack/react-query';
 import storeSettingsService from '../../services/api/storeSettingsService';
 import { policyService } from '../../services/domainServices';
 
+import { useConfig } from '../../context/ConfigContext';
+
 export function Footer() {
+  const { storeName, storeNameUpper } = useConfig();
   const { contact, footer, navigation } = useWebsiteContent();
   const { data: settings } = useQuery({
     queryKey: ['storeSettings', 'public'],
@@ -23,7 +26,7 @@ export function Footer() {
   });
   const policies = policiesResponse?.data || [];
 
-  const logoText = navigation?.logo?.text || 'SIRI ARTS & CRAFTS';
+  const logoText = navigation?.logo?.text || storeNameUpper || 'SIRI ARTS & CRAFTS';
   const logoWords = logoText.split(' ');
   const _firstWord = logoWords[0] || 'SIRI';
   const _restWords = logoWords.slice(1).join(' ') || 'ARTS & CRAFTS';
@@ -46,6 +49,7 @@ export function Footer() {
     settings?.legal?.legalCompanyName ||
     settings?.legal?.companyName ||
     settings?.general?.storeName ||
+    storeName ||
     'Siri Arts & Crafts';
 
   // Dynamic CMS Link Mappings

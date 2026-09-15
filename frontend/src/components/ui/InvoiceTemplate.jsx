@@ -2,6 +2,8 @@ import { X } from 'lucide-react';
 import { useState, useRef, useEffect, Suspense, lazy } from 'react';
 import toast from 'react-hot-toast';
 import { CANONICAL_INVOICE } from './invoiceTokens';
+import { useConfig } from '../../context/ConfigContext';
+import { BRAND } from '../../config/brand';
 
 const QRCodeCanvas = lazy(() => import('qrcode.react').then((m) => ({ default: m.QRCodeCanvas })));
 const Barcode = lazy(() => import('react-barcode'));
@@ -17,6 +19,7 @@ const Barcode = lazy(() => import('react-barcode'));
  * - Browser download captures unscaled canonical canvas (desktop & mobile outputs match)
  */
 export function InvoiceTemplate({ order, user = {}, onClose, isAdmin = false }) {
+  const { storeName, storeSettings } = useConfig();
   const outerRadiusClass = isAdmin ? 'rounded-[6px]' : 'rounded-[28px]';
   const cardRadiusClass = isAdmin ? 'rounded-[4px]' : 'rounded-2xl';
   const btnRadiusClass = isAdmin ? 'rounded-[4px]' : 'rounded-full';
@@ -229,10 +232,14 @@ export function InvoiceTemplate({ order, user = {}, onClose, isAdmin = false }) 
     : 'N/A';
 
   // ─── Store identity (from snapshot) ────────────────────────────────
-  const businessName = storeSnap.displayName || 'Siri Arts & Crafts';
-  const legalName = storeSnap.legalCompanyName || '';
-  const gstin = storeSnap.gstin || '29AAAES9284D1ZX';
-  const storeEmail = storeSnap.email || 'support@siriartsandcrafts.com';
+  const businessName = storeSnap.displayName || storeName || BRAND.name || 'Siri Arts & Crafts';
+  const legalName = storeSnap.legalCompanyName || storeSettings?.company?.legalCompanyName || '';
+  const gstin = storeSnap.gstin || storeSettings?.company?.taxId || '29AAAES9284D1ZX';
+  const storeEmail =
+    storeSnap.email ||
+    storeSettings?.contact?.email ||
+    storeSettings?.support?.email ||
+    'support@siriartsandcrafts.com';
 
   const storeAddressLines = storeSnap.addressLine1
     ? [

@@ -68,10 +68,7 @@ export const ReturnDetailPage = () => {
 
   return (
     <div className="space-y-6 text-left font-body text-on-surface text-[11px]">
-      <SEO
-        title={`${isExchange ? 'Exchange' : 'Return'} #${returnRequest.returnId} | Siri Arts & Crafts`}
-        noindex
-      />
+      <SEO title={`${isExchange ? 'Exchange' : 'Return'} #${returnRequest.returnId}`} noindex />
 
       {/* Top Header Card */}
       <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-4 sm:p-5 shadow-xs">

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useMobileDrawerEngine, DrawerDragHandle } from '../../components/ui/drawer';
+import { BRAND } from '../../config/brand';
 
 export function AiCurationOverlay({
   showAIHUD,
@@ -532,7 +533,7 @@ export function AiCurationOverlay({
                       value={
                         aiAnalysisResult.seo_title ||
                         (aiAnalysisResult.english_title
-                          ? `${aiAnalysisResult.english_title} | Siri Arts & Crafts`
+                          ? `${aiAnalysisResult.english_title} | ${BRAND.name}`
                           : '')
                       }
                       onChange={(e) => updateField('seo_title', e.target.value)}

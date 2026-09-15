@@ -6,10 +6,12 @@ import api from '../services/api';
 import toast from 'react-hot-toast';
 import ShieldCheck from 'lucide-react/dist/esm/icons/shield-check';
 import { SEO } from '../components/seo/SEO';
+import { useConfig } from '../context/ConfigContext';
 
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 
 export function AcceptInvite() {
+  const { storeName } = useConfig();
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
   const navigate = useNavigate();
@@ -82,7 +84,7 @@ export function AcceptInvite() {
 
   return (
     <div className="min-h-screen bg-[#faf9f6] flex items-center justify-center py-20 px-4 font-body">
-      <SEO title="Accept Invitation | Siri Arts & Crafts" noindex />
+      <SEO title="Accept Invitation" noindex />
       <motion.div
         initial="hidden"
         animate="show"
@@ -98,7 +100,7 @@ export function AcceptInvite() {
             <ShieldCheck className="w-6 h-6" />
           </div>
           <h2 className="text-[28px] font-bold text-on-surface font-display tracking-[0.2em] uppercase leading-none">
-            Siri Arts & Crafts
+            {storeName}
           </h2>
           <p className="text-[10px] text-outline-variant font-bold tracking-[0.3em] uppercase mt-2">
             Craft & Heritage Studio
@@ -166,7 +168,7 @@ export function AcceptInvite() {
                 Join our Creative Team
               </h2>
               <p className="text-[13px] text-outline leading-relaxed px-2">
-                You have been invited to join Siri Arts & Crafts as a designated{' '}
+                You have been invited to join {storeName} as a designated{' '}
                 <strong className="text-primary uppercase tracking-wider font-semibold font-mono">
                   {invite?.role}
                 </strong>{' '}

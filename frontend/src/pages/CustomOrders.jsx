@@ -22,7 +22,7 @@ const isDirectImageUrl = (url) => {
 
 export function CustomOrders() {
   const { user, isAuthenticated, runProtectedAction, openAuthModal } = useAuth();
-  const { isStoreClosed } = useConfig();
+  const { isStoreClosed, storeSettings, storeName } = useConfig();
   const [searchParams] = useSearchParams();
   const productIdQuery = searchParams.get('product');
   const eventIdQuery = searchParams.get('event');
@@ -67,9 +67,11 @@ export function CustomOrders() {
   const isSendingMessageRef = useRef(false);
 
   const handleWhatsAppConsult = () => {
-    const phone = '919866006648';
+    const rawPhone =
+      storeSettings?.contact?.whatsappNumber || storeSettings?.contact?.phone || '919866006648';
+    const phone = rawPhone.replace(/[^0-9]/g, '');
     const baseUrl = window.location.origin;
-    let msg = `Namaste Siri Arts & Crafts! I am interested in consulting with your master artisans for a custom event decor.\n\n`;
+    let msg = `Namaste ${storeName}! I am interested in consulting with your master artisans for a custom event decor.\n\n`;
     if (selectedOrder) {
       msg += `*Order Reference:* ${selectedOrder._id}\n`;
       msg += `*Order Link:* ${baseUrl}/custom-order?orderId=${selectedOrder._id}\n`;
@@ -102,7 +104,7 @@ export function CustomOrders() {
   return (
     <div className="relative selection:bg-primary/20 bg-[var(--color-surface-ivory)] min-h-screen text-[var(--color-on-surface)] font-body pt-20 lg:pt-32">
       <SEO
-        title="Custom Orders | Siri Arts & Crafts"
+        title="Custom Orders"
         description="Design your custom decor, personalized gifts, and bespoke event styling with our master artisans."
       />
       {/* Decorative Mandalas */}

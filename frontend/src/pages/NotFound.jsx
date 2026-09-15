@@ -5,7 +5,7 @@ export function NotFound() {
   return (
     <div className="min-h-[80vh] relative flex flex-col items-center justify-center px-4 overflow-hidden pt-24 lg:pt-32 pb-24 lg:pb-32">
       <SEO
-        title="Page Not Found | Siri Arts & Crafts"
+        title="Page Not Found"
         description="The heritage masterpiece or custom ceremony styling selection you are looking for has either found a new home or is currently unavailable."
         robots="noindex, follow"
       />

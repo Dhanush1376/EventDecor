@@ -7,7 +7,7 @@ import { MandalaElement } from './MandalaElement';
 import { useConfig } from '../../context/ConfigContext';
 
 export function MaintenanceScreen({ isStoreDisabled = false }) {
-  const { storeSettings } = useConfig();
+  const { storeSettings, storeName } = useConfig();
 
   const whatsappNumber = storeSettings?.contact?.whatsappNumber || '+91 98660 06648';
   const email = storeSettings?.contact?.email || 'Sirisha.atmakuri@gmail.com';
@@ -67,7 +67,7 @@ export function MaintenanceScreen({ isStoreDisabled = false }) {
           variants={itemVariants}
           className="text-3xl lg:text-5xl font-display font-semibold text-on-surface mb-4"
         >
-          {isStoreDisabled ? 'Store is Temporarily Closed' : "We're polishing things up!"}
+          {isStoreDisabled ? `${storeName} is Temporarily Closed` : "We're polishing things up!"}
         </m.h1>
 
         <m.p
@@ -75,8 +75,8 @@ export function MaintenanceScreen({ isStoreDisabled = false }) {
           className="text-lg text-on-surface-variant max-w-lg mx-auto mb-12"
         >
           {isStoreDisabled
-            ? 'Our online storefront is currently closed. Please check back soon or get in touch with our team directly.'
-            : "Our store is temporarily down for maintenance as we improve your shopping experience. We'll be back shortly. Thank you for your patience!"}
+            ? `${storeName} online storefront is currently closed. Please check back soon or get in touch with our team directly.`
+            : `${storeName} is temporarily down for maintenance as we improve your shopping experience. We'll be back shortly. Thank you for your patience!`}
         </m.p>
 
         <m.div variants={itemVariants} className="flex flex-col items-center gap-6 w-full">

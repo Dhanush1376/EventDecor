@@ -8,6 +8,7 @@ import { ShareButton } from '../../../components/ui/ShareButton';
 import { LinkedProductCard } from './LinkedProductCard';
 import { ProductNoteCard } from '../../../components/ui/ProductNoteCard';
 import { fadeUp, scaleIn } from './GalleryAnimations';
+import { useConfig } from '../../../context/ConfigContext';
 
 export function GalleryDesktopLayout({
   item,
@@ -22,6 +23,7 @@ export function GalleryDesktopLayout({
   navigate,
   hideProducts,
 }) {
+  const { storeName } = useConfig();
   const [activeTab, setActiveTab] = useState('details');
 
   return (
@@ -118,7 +120,7 @@ export function GalleryDesktopLayout({
               {/* Share */}
               <ShareButton
                 url={pageUrl}
-                title={`${item.title} - Siri Arts & Crafts Gallery`}
+                title={`${item.title} - ${storeName || 'Siri Arts & Crafts'} Gallery`}
                 description={item.description}
                 variant="custom"
                 size="custom"

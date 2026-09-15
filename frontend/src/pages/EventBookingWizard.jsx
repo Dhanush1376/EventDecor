@@ -33,7 +33,7 @@ const loadRazorpayScript = () => {
 
 export function EventBookingWizard() {
   const { isAuthenticated, runProtectedAction } = useAuth();
-  const { isStoreClosed } = useConfig();
+  const { isStoreClosed, storeName, storeNameUpper } = useConfig();
   const navigate = useNavigate();
   const location = useLocation();
   const [currentStep, setCurrentStep] = useState(1);
@@ -316,7 +316,7 @@ export function EventBookingWizard() {
         key,
         amount,
         currency,
-        name: 'Siri Arts & Crafts',
+        name: storeName,
         description: `Advance Deposit for ${formData.title}`,
         order_id: razorpayOrderId,
         handler: async function (response) {
@@ -373,7 +373,7 @@ export function EventBookingWizard() {
   return (
     <div className="bg-[#fcfbf9] min-h-screen text-on-surface pt-20 lg:pt-32 pb-24 relative overflow-hidden font-body">
       <SEO
-        title="Event Decoration Booking | Siri Arts & Crafts"
+        title="Event Decoration Booking"
         description="Book your event decoration with our guided booking wizard."
         noindex
       />
@@ -395,7 +395,7 @@ export function EventBookingWizard() {
         {/* Editorial Heading */}
         <div className="text-center mb-10 lg:mb-16">
           <span className="font-label text-[10px] lg:text-[11px] uppercase tracking-[0.4em] text-primary font-bold block mb-3">
-            SIRI ARTS & CRAFTS STUDIO
+            {storeNameUpper} STUDIO
           </span>
           <h2 className="font-display text-[28px] lg:text-[54px] text-black font-light tracking-tight leading-tight">
             Design Your Celebration.

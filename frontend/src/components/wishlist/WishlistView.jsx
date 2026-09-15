@@ -14,8 +14,10 @@ import { CloudinaryImage } from '../ui/CloudinaryImage';
 import { useUserProfile, useUserAddresses, useAddressMutations } from '../../hooks/useUserQueries';
 import { useShowcases } from '../../hooks/useShowcaseQueries';
 import { ShowcaseCard } from '../ui/ShowcaseCard';
+import { useConfig } from '../../context/ConfigContext';
 
 export function WishlistView({ isEmbedded = false }) {
+  const { storeName } = useConfig();
   const { items, _removeItem, _toggleItem, loading: wishlistLoading } = useWishlist();
   const { addItem: _addToCart } = useCart();
   const { data: addresses = [] } = useUserAddresses();
@@ -169,7 +171,7 @@ export function WishlistView({ isEmbedded = false }) {
       {!isEmbedded && (
         <SEO
           title="My Wishlist"
-          description="A private gallery of your favorite Siri Arts & Crafts masterpieces. Artisanal decor saved for your future heritage celebrations."
+          description={`A private gallery of your favorite ${storeName} masterpieces. Artisanal decor saved for your future heritage celebrations.`}
         />
       )}
 

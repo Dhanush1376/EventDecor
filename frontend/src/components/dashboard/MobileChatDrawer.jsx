@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useMobileDrawerEngine, DrawerDragHandle } from '../ui/drawer';
+import { useConfig } from '../../context/ConfigContext';
 
 export function MobileChatDrawer({
   isMobileChatOpen,
@@ -14,6 +15,7 @@ export function MobileChatDrawer({
   handleSendChat,
   chatEndRef,
 }) {
+  const { storeName } = useConfig();
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
@@ -98,7 +100,7 @@ export function MobileChatDrawer({
                         className={`flex flex-col max-w-[82%] ${isAdmin ? 'self-start text-left' : 'self-end text-right ml-auto'}`}
                       >
                         <span className="font-label text-[8px] text-black/35 font-bold uppercase tracking-widest mb-1 block">
-                          {isAdmin ? 'Siri Arts & Crafts Designer' : 'You'}
+                          {isAdmin ? `${storeName} Designer` : 'You'}
                         </span>
                         <div
                           className={`p-3.5 rounded-[18px] text-xs leading-relaxed ${

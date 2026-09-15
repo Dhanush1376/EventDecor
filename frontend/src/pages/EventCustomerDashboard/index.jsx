@@ -62,7 +62,7 @@ export function EventCustomerDashboard({
       {!isEmbedded && (
         <>
           <SEO
-            title="My Events Workspace | Siri Arts & Crafts"
+            title="My Events Workspace"
             description="Track your live event timelines, coordinate theme palette adjustments, and manage payments."
             noindex
           />

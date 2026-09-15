@@ -4,6 +4,7 @@ import { m as motion, AnimatePresence } from 'framer-motion';
 import { SiriLogo } from '../../../components/ui/SiriLogo';
 import { useAuth } from '../../../context/AuthContext';
 import { useAdmin } from '../../context/AdminContext';
+import { useConfig } from '../../../context/ConfigContext';
 
 // Admin sidebar content renderer with dynamic section role filtering and active path highlights
 export function AdminSidebarContent({
@@ -22,6 +23,7 @@ export function AdminSidebarContent({
   const location = useLocation();
   const { user } = useAuth();
   const { activeRole } = useAdmin();
+  const { storeName } = useConfig();
 
   const effectiveRole = activeRole || user?.role || 'owner';
 
@@ -32,10 +34,10 @@ export function AdminSidebarContent({
 
   return (
     <div
-      className="flex flex-col h-full relative z-20 min-w-0"
+      className="flex flex-col h-full overflow-hidden select-none relative z-20 min-w-0"
       style={{ background: 'var(--admin-surface)', borderRight: '1px solid var(--admin-border)' }}
     >
-      {/* Sidebar Header — Logo + Search combined */}
+      {/* Brand Header */}
       <div
         className="shrink-0 transition-all duration-300"
         style={{ borderBottom: '1px solid var(--admin-border-subtle)' }}
@@ -47,8 +49,8 @@ export function AdminSidebarContent({
             type="button"
             onClick={() => navigate('/admin')}
             className="flex items-center justify-center cursor-pointer group outline-none overflow-hidden shrink-0 min-h-0 transition-transform hover:scale-105 active:scale-95"
-            title="Siri Arts & Crafts Dashboard"
-            aria-label="Siri Arts & Crafts Dashboard"
+            title={`${storeName} Dashboard`}
+            aria-label={`${storeName} Dashboard`}
           >
             <SiriLogo size="44px" showSubtitle={false} className="shrink-0" />
           </button>

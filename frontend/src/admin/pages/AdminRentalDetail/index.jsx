@@ -11,8 +11,10 @@ import { RentalTimeline } from './RentalTimeline';
 import { RentalCustomerAndProof } from './RentalCustomerAndProof';
 import rentalService from '../../../services/api/rentalService';
 import toast from 'react-hot-toast';
+import { useConfig } from '../../../context/ConfigContext';
 
 export function AdminRentalDetail() {
+  const { storeName, storeSettings } = useConfig();
   const { rentalId } = useParams();
   const navigate = useNavigate();
   const [rental, setRental] = useState(null);
@@ -246,11 +248,19 @@ export function AdminRentalDetail() {
                     <InvoiceTemplate
                       order={getRentalOrderForInvoice(rental)}
                       businessDetails={{
-                        name: 'Siri Arts & Crafts',
-                        email: 'support@siriartsandcrafts.com',
-                        phone: '+91 94939 12345',
-                        address: 'Main Road, Jubilee Hills, Hyderabad, TS 500033',
-                        gstin: '36ABCDE1234F1Z5',
+                        name: storeName || 'Siri Arts & Crafts',
+                        email:
+                          storeSettings?.contact?.email ||
+                          storeSettings?.support?.email ||
+                          'support@siriartsandcrafts.com',
+                        phone:
+                          storeSettings?.contact?.phone ||
+                          storeSettings?.support?.phone ||
+                          '+91 94939 12345',
+                        address:
+                          storeSettings?.company?.address ||
+                          'Main Road, Jubilee Hills, Hyderabad, TS 500033',
+                        gstin: storeSettings?.company?.taxId || '36ABCDE1234F1Z5',
                       }}
                       onClose={() => setShowInvoiceModal(false)}
                       isAdmin={true}

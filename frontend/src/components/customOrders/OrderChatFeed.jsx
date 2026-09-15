@@ -2,6 +2,7 @@ import { CheckCircle2, ShoppingBag, History, ArrowLeft, Info, Paperclip, Send } 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
+import { useConfig } from '../../context/ConfigContext';
 
 export function OrderChatFeed({
   selectedOrder,
@@ -12,6 +13,7 @@ export function OrderChatFeed({
   isSendingMessage,
   chatEndRef,
 }) {
+  const { storeName } = useConfig();
   const [showChat, setShowChat] = useState(false);
   const navigate = useNavigate();
   const { attemptAddToCart } = useCart();
@@ -138,9 +140,9 @@ export function OrderChatFeed({
           let displaySenderName = msg.senderName;
           if (isAdmin) {
             if (msg.senderName === 'System Logger' || msg.senderName === 'System') {
-              displaySenderName = 'Siri Arts & Crafts';
+              displaySenderName = storeName;
             } else if (!msg.senderName) {
-              displaySenderName = 'Siri Design Team';
+              displaySenderName = `${storeName} Design Team`;
             }
           }
 

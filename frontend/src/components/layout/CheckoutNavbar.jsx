@@ -1,7 +1,11 @@
 import { Lock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { SiriLogo } from '../ui/SiriLogo';
+import { useConfig } from '../../context/ConfigContext';
+
 export function CheckoutNavbar() {
+  const { storeName } = useConfig();
+
   return (
     <header className="bg-surface-bright border-b border-outline-variant/40 py-2 sm:py-2.5 px-4 sm:px-6 sticky top-0 z-50">
       <div className="max-w-[1240px] mx-auto flex items-center justify-between gap-4">
@@ -31,7 +35,7 @@ export function CheckoutNavbar() {
         <div className="flex-1 flex flex-col sm:flex-row items-end sm:items-center justify-end gap-2 sm:gap-6">
           <div className="flex flex-col items-end">
             <span className="font-label text-[9px] uppercase tracking-widest text-secondary/60">
-              Siri Arts & Crafts
+              {storeName}
             </span>
             <span className="font-body text-[13px] sm:text-[14px] font-bold text-primary">
               Secure Checkout

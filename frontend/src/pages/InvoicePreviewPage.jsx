@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { InvoiceTemplate } from '../components/ui/InvoiceTemplate';
+import { BRAND } from '../config/brand';
 
 const sampleReferenceOrder = {
   _id: '68bc22849129031022',
@@ -22,7 +23,7 @@ const sampleReferenceOrder = {
     pincode: '523001',
   },
   store: {
-    displayName: 'Siri Arts & Crafts',
+    displayName: BRAND.name,
     legalCompanyName: 'Premium Studio & Handicrafts',
     gstin: '29AAAES9284D1ZX',
     addressLine1: '#28-1-92, South Street, ONGOLE-523001,',
@@ -107,7 +108,7 @@ const sampleBalajiOrder = {
     pincode: '144411',
   },
   store: {
-    displayName: 'Siri Arts & Crafts',
+    displayName: BRAND.name,
     legalCompanyName: 'Premium Studio & Handicrafts',
     gstin: '29AAAES9284D1ZX',
     addressLine1: '#28-1-92, South Street, ONGOLE-523001,',
@@ -164,7 +165,7 @@ const sampleRentalBangleOrder = {
     pincode: '144411',
   },
   store: {
-    displayName: 'Siri Arts & Crafts',
+    displayName: BRAND.name,
     legalCompanyName: 'Premium Studio & Handicrafts',
     gstin: '29AAAES9284D1ZX',
     addressLine1: '#28-1-92, South Street, ONGOLE-523001,',

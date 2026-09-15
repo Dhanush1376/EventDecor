@@ -5,6 +5,7 @@ import rentalService from '../../services/api/rentalService';
 import toast from 'react-hot-toast';
 import logger from '../../utils/core/logger';
 import { EXTERNAL_URLS } from '../../config/constants';
+import { BRAND } from '../../config/brand';
 
 const createIdempotencyKey = () => {
   if (window.crypto?.randomUUID) return window.crypto.randomUUID();
@@ -409,7 +410,7 @@ export function useCheckoutFlow({
         key: razorpayKeyId || import.meta.env.VITE_RAZORPAY_KEY_ID,
         amount: amount,
         currency: 'INR',
-        name: 'Siri Arts & Crafts',
+        name: settings?.general?.storeName || BRAND.name || 'Siri Arts & Crafts',
         description: `Rental: ${rentalOrder.productTitle}`,
         image:
           import.meta.env.VITE_LOGO_URL ||

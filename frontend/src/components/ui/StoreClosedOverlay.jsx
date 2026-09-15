@@ -8,7 +8,7 @@ import { SiriLogo } from './SiriLogo';
 
 export function StoreClosedOverlay({ isOpen, onClose }) {
   const { openAuthModal, isAuthenticated, user } = useAuth();
-  const { storeSettings } = useConfig();
+  const { storeSettings, storeName } = useConfig();
   const navigate = useNavigate();
 
   const contactPhone =
@@ -62,7 +62,7 @@ export function StoreClosedOverlay({ isOpen, onClose }) {
           >
             {/* Playfair Display Title in Crisp White */}
             <h1 className="font-display text-3xl sm:text-4xl md:text-5xl text-white font-normal leading-[1.15] tracking-tight mb-4">
-              Store is Temporarily Closed
+              {storeName} is Temporarily Closed
             </h1>
 
             {/* Delicate White Divider */}
@@ -70,7 +70,7 @@ export function StoreClosedOverlay({ isOpen, onClose }) {
 
             {/* Polite Notice in Soft Clean White */}
             <p className="font-body text-white/85 text-sm sm:text-base md:text-[17px] leading-relaxed max-w-lg mx-auto font-light">
-              Our store is temporarily closed and orders cannot be placed at this time. You can
+              {storeName} is temporarily closed and orders cannot be placed at this time. You can
               freely view our complete collection as a guest.
             </p>
 

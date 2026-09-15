@@ -3,8 +3,10 @@ import { bookingService } from '../../../services/domainServices';
 import toast from 'react-hot-toast';
 import logger from '../../../utils/core/logger';
 import { loadRazorpayScript } from '../../../pages/eventDetail/useEventBookingForm';
+import { useConfig } from '../../../context/ConfigContext';
 
 export function useDashboardData(isEmbedded = false) {
+  const { storeName } = useConfig();
   const [bookings, setBookings] = useState([]);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -137,7 +139,7 @@ export function useDashboardData(isEmbedded = false) {
         key,
         amount: amount * 100,
         currency,
-        name: 'Siri Arts & Crafts',
+        name: storeName || 'Siri Arts & Crafts',
         description: `Milestone Payment for Booking ${selectedBooking.bookingId || ''}`,
         order_id: razorpayOrderId,
         handler: async function (response) {

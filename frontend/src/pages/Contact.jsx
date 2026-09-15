@@ -12,12 +12,14 @@ import storeSettingsService from '../services/api/storeSettingsService';
 import { MOTION_PRESETS, EASE, DURATION } from '../constants/design-tokens';
 import { useCategories } from '../hooks/useProductQueries';
 import { useAuth } from '../context/AuthContext';
+import { useConfig } from '../context/ConfigContext';
 
 import logger from '../utils/core/logger';
 
 import GPSMap from './GPSMapLazy';
 
 export function Contact() {
+  const { storeName } = useConfig();
   const { contact, loading } = useWebsiteContent();
   const { data: settings, isLoading: settingsLoading } = useQuery({
     queryKey: ['storeSettings', 'public'],
@@ -138,8 +140,8 @@ export function Contact() {
   return (
     <div className="bg-[var(--color-surface-ivory)] min-h-screen pt-24 lg:pt-32 pb-20 relative overflow-hidden selection:bg-primary/20">
       <SEO
-        title="Contact Us | Siri Arts & Crafts"
-        description="Get in touch with Siri Arts & Crafts for inquiries about our handcrafted products, event decor services, or custom design requests. We're here to help bring your vision to life."
+        title="Contact Us"
+        description={`Get in touch with ${storeName || 'Siri Arts & Crafts'} for inquiries about our handcrafted products, event decor services, or custom design requests. We're here to help bring your vision to life.`}
       />
 
       {/* Atmospheric Background Decor */}

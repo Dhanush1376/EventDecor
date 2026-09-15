@@ -86,7 +86,7 @@ export function EventCollections() {
   const websiteContent = useWebsiteContent();
   const eventsPageContent = websiteContent?.eventsPage || {
     hero: {
-      title: 'Luxury Event Scapes',
+      title: 'Event Setups',
       subtitle: 'Cinematic Environments',
       description:
         'Immersive architectural curations designed to transform your milestone celebrations into living masterpieces.',
@@ -425,10 +425,7 @@ export function EventCollections() {
 
   return (
     <div className="bg-surface min-h-screen text-on-surface">
-      <SEO
-        title={`${eventsPageContent.hero.title} | Siri Arts & Crafts`}
-        description={eventsPageContent.hero.description}
-      />
+      <SEO title={eventsPageContent.hero.title} description={eventsPageContent.hero.description} />
 
       {/* Editorial Hero */}
       <EventHero eventsPageContent={eventsPageContent} />

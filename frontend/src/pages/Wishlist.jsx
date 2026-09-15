@@ -4,8 +4,10 @@ import { m as motion } from 'framer-motion';
 import { WishlistView } from '../components/wishlist/WishlistView';
 import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
 import { SEO } from '../components/seo/SEO';
+import { useConfig } from '../context/ConfigContext';
 
 export function Wishlist() {
+  const { storeName } = useConfig();
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -13,7 +15,11 @@ export function Wishlist() {
       transition={{ duration: 0.4 }}
       className="bg-surface min-h-screen pt-[60px] pb-32 font-body text-on-surface relative overflow-hidden"
     >
-      <SEO title="Wishlist" description="Your saved items at Siri Arts & Crafts." noindex />
+      <SEO
+        title="Wishlist"
+        description={`Your saved items at ${storeName || 'Siri Arts & Crafts'}.`}
+        noindex
+      />
       <MandalaArtDecor
         variant={3}
         size={450}

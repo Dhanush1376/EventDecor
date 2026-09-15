@@ -13,10 +13,10 @@ import { AboutSkeleton } from '../../components/ui/Skeleton';
 import { useConfig } from '../../context/ConfigContext';
 
 export function About() {
-  const { storeSettings } = useConfig();
+  const { storeSettings, storeName, storeNameUpper } = useConfig();
   const hideGallery = storeSettings?.storefront?.hideGallerySection;
   const { navigation, loading: webLoading } = useWebsiteContent();
-  const logoText = navigation?.logo?.text || 'SIRI ARTS & CRAFTS';
+  const logoText = navigation?.logo?.text || storeNameUpper || 'SIRI ARTS & CRAFTS';
 
   const [cmsContent, setCmsContent] = useState(null);
   const [galleryPreview, setGalleryPreview] = useState([]);
@@ -400,7 +400,7 @@ export function About() {
               </h2>
               <p className="font-body text-lg text-[#4A4A4A] leading-relaxed font-light mb-6">
                 {cmsContent?.aboutText ||
-                  'Siri Arts & Crafts was born out of a profound love for our cultural heritage and a passion for bringing traditional elegance to modern celebrations. We meticulously curate and craft decor that speaks volumes of our rich Indian roots, ensuring every piece adds a touch of royal grace to your special moments.'}
+                  `${storeName} was born out of a profound love for our cultural heritage and a passion for bringing traditional elegance to modern celebrations. We meticulously curate and craft decor that speaks volumes of our rich Indian roots, ensuring every piece adds a touch of royal grace to your special moments.`}
               </p>
               <p className="font-body text-lg text-[#4A4A4A] leading-relaxed font-light">
                 {cmsContent?.aboutTextSecondary ||

@@ -83,7 +83,7 @@ export const initialWebsiteContent = {
   // ═══════════════════════════════════════════════════════
   shopPage: {
     hero: {
-      title: 'Heritage Collection',
+      title: 'Shop',
       subtitle: 'Curated Artisanship',
       description:
         'Discover masterfully crafted decor pieces that honor ancient traditions with contemporary luxury sensibilities.',
@@ -109,7 +109,7 @@ export const initialWebsiteContent = {
   // ═══════════════════════════════════════════════════════
   eventsPage: {
     hero: {
-      title: 'Luxury Event Scapes',
+      title: 'Event Setup',
       subtitle: 'Cinematic Environments',
       description:
         'Immersive architectural curations designed to transform your milestone celebrations into living masterpieces.',

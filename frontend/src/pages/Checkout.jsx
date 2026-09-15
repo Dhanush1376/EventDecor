@@ -31,7 +31,7 @@ function StepFallback({ mode = 'address' }) {
 const CheckoutSidebar = lazy(() => import('../checkout/CheckoutSidebar'));
 
 function CheckoutContent() {
-  const { isStoreClosed } = useConfig();
+  const { isStoreClosed, storeName } = useConfig();
   const {
     activeStep,
     setActiveStep,
@@ -75,7 +75,7 @@ function CheckoutContent() {
     <div className="bg-surface-container-low min-h-screen pb-32 font-body text-on-surface modern-sans-headings">
       <SEO
         title="Secure Checkout"
-        description="Finalize your Siri Arts & Crafts order through our secure checkout portal."
+        description={`Finalize your ${storeName || 'Siri Arts & Crafts'} order through our secure checkout portal.`}
         noindex
       />
 
