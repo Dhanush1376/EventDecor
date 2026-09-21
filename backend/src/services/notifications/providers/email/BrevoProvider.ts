@@ -1,5 +1,6 @@
 import logger from '../../../../config/logger';
 import { IEmailProvider, EmailSendOptions, EmailSendResult } from '../../types';
+import { getStoreConfigSync } from '../../../../config/storeConfig';
 
 export class BrevoProvider implements IEmailProvider {
   name = 'Brevo';
@@ -14,8 +15,10 @@ export class BrevoProvider implements IEmailProvider {
     }
 
     const apiKey = process.env.BREVO_API_KEY!;
-    const senderEmail = process.env.SMTP_FROM_EMAIL || 'noreply@siriartsandcrafts.com';
-    const senderName = options.from || process.env.SMTP_FROM_NAME || 'Siri Arts & Crafts';
+    const store = getStoreConfigSync();
+    const senderEmail =
+      process.env.SMTP_FROM_EMAIL || store.contact.email || `noreply@${store.websiteDomain}`;
+    const senderName = options.from || process.env.SMTP_FROM_NAME || store.name;
 
     const body: any = {
       sender: { name: senderName, email: senderEmail },

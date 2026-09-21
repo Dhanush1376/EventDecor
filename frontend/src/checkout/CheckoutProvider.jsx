@@ -9,6 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 import logger from '../utils/core/logger';
 import { PINCODE_MAP, UPI_REGEX } from './checkoutConstants';
 import { persistentStorage } from '../utils/storage/persistentStorage';
+import toast from 'react-hot-toast';
 
 import { useCheckoutShipping } from './hooks/useCheckoutShipping';
 import { useCheckoutRentals } from './hooks/useCheckoutRentals';
@@ -221,8 +222,46 @@ export function CheckoutProvider({ children }) {
       if (!orderCompleteRef.current) {
         navigate('/cart', { replace: true });
       }
+      return;
     }
-  }, [activeItems, navigate, orderCompleteRef]);
+    if (settings?.orders && !orderCompleteRef.current) {
+      const {
+        maxItemsPerOrder = 20,
+        maxQuantityPerItem = 50,
+        minOrderValue = 0,
+        maxOrderValue = 1000000,
+      } = settings.orders;
+      if (activeItems.length > maxItemsPerOrder) {
+        toast.error(
+          `Order cannot exceed ${maxItemsPerOrder} different products. Please adjust your bag.`,
+        );
+        navigate('/cart', { replace: true });
+        return;
+      }
+      const overLimitItem = activeItems.find((i) => Number(i.quantity) > maxQuantityPerItem);
+      if (overLimitItem) {
+        toast.error(
+          `Maximum allowed quantity is ${maxQuantityPerItem} per product. Please adjust your bag.`,
+        );
+        navigate('/cart', { replace: true });
+        return;
+      }
+      if (minOrderValue > 0 && subtotal < minOrderValue) {
+        toast.error(
+          `Minimum order amount of ₹${minOrderValue.toLocaleString('en-IN')} is required.`,
+        );
+        navigate('/cart', { replace: true });
+        return;
+      }
+      if (maxOrderValue > 0 && subtotal > maxOrderValue) {
+        toast.error(
+          `Maximum order amount of ₹${maxOrderValue.toLocaleString('en-IN')} is exceeded.`,
+        );
+        navigate('/cart', { replace: true });
+        return;
+      }
+    }
+  }, [activeItems, navigate, orderCompleteRef, settings?.orders, subtotal]);
 
   const value = {
     items,

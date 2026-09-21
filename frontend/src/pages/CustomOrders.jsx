@@ -13,6 +13,7 @@ import { useProduct } from '../hooks/useProductQueries';
 import { useAuth } from '../context/AuthContext';
 import { useConfig } from '../context/ConfigContext';
 import { useWebsiteContent } from '../hooks/useWebsiteContent';
+import { BRAND, cleanPhoneDigits } from '../config/brand';
 
 // Direct Image URL Check
 const isDirectImageUrl = (url) => {
@@ -68,8 +69,12 @@ export function CustomOrders() {
 
   const handleWhatsAppConsult = () => {
     const rawPhone =
-      storeSettings?.contact?.whatsappNumber || storeSettings?.contact?.phone || '919866006648';
-    const phone = rawPhone.replace(/[^0-9]/g, '');
+      storeSettings?.general?.whatsappNumber ||
+      storeSettings?.contact?.whatsappNumber ||
+      storeSettings?.general?.phone ||
+      storeSettings?.contact?.phone ||
+      BRAND.whatsappNumber;
+    const phone = cleanPhoneDigits(rawPhone);
     const baseUrl = window.location.origin;
     let msg = `Namaste ${storeName}! I am interested in consulting with your master artisans for a custom event decor.\n\n`;
     if (selectedOrder) {
@@ -85,7 +90,7 @@ export function CustomOrders() {
       msg += `*Total Estimated Price:* ${selectedOrder.quotation?.total ? '₹' + selectedOrder.quotation.total.toLocaleString('en-IN') : 'Price Estimate Pending'}\n`;
     }
     msg += `\nLooking forward to your expert advice!`;
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+    window.open(BRAND.getWhatsAppUrl(msg, phone), '_blank');
   };
 
   const { loadWorkspaceData, handleSendChatMessage, handleQuotationDecision } =

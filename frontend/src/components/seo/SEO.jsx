@@ -55,8 +55,35 @@ export function SEO({
   const siteName = storeSettings?.general?.storeName?.trim() || SITE_NAME || 'Siri Arts & Crafts';
   const siteUrl = SITE_URL || (typeof window !== 'undefined' ? window.location.origin : '');
 
-  const defaultDesc = `Shop premium handcrafted wedding decor, pooja essentials, floral decorations, event styling, and personalized gifts at ${siteName}.`;
-  const defaultTitle = `${siteName} — Handcrafted Wedding Decor, Event Decorations & Custom Gifts`;
+  const locality = storeSettings?.contact?.city || 'Ongole';
+  const region = storeSettings?.contact?.state || 'Andhra Pradesh';
+  const postalCode = storeSettings?.contact?.postalCode || '523001';
+  const country = storeSettings?.contact?.country || 'India';
+  const street = storeSettings?.contact?.address || contact?.address || '';
+  const supportHoursStr = storeSettings?.contact?.supportHours || 'Mon - Sat, 10 AM to 6 PM';
+
+  const parseOpeningHours = (hours) => {
+    if (!hours) return 'Mo-Sa 10:00-18:00';
+    if (/^[A-Za-z]{2}-[A-Za-z]{2}\s+\d{2}:\d{2}-\d{2}:\d{2}$/.test(hours.trim())) {
+      return hours.trim();
+    }
+    const lower = hours.toLowerCase();
+    let days = 'Mo-Sa';
+    if (lower.includes('mon - sun') || lower.includes('mon-sun') || lower.includes('everyday')) {
+      days = 'Mo-Su';
+    } else if (lower.includes('mon - fri') || lower.includes('mon-fri')) {
+      days = 'Mo-Fr';
+    }
+    return `${days} 10:00-18:00`;
+  };
+
+  const tagline = storeSettings?.general?.tagline?.trim();
+  const defaultDesc = tagline
+    ? `${tagline}. Shop premium handcrafted wedding decor, pooja essentials, and event styling at ${siteName}.`
+    : `Shop premium handcrafted wedding decor, pooja essentials, floral decorations, event styling, and personalized gifts at ${siteName}.`;
+  const defaultTitle = tagline
+    ? `${siteName} — ${tagline}`
+    : `${siteName} — Handcrafted Wedding Decor, Event Decorations & Custom Gifts`;
 
   const settingsPhone = storeSettings?.contact?.phone || contact?.phone;
   const contactPhone = settingsPhone
@@ -95,12 +122,15 @@ export function SEO({
     name: siteName,
     url: siteUrl,
     logo: siteUrl ? `${siteUrl}/favicon.png` : undefined,
-    description: 'Premium handcrafted event decor, wedding trays, and heritage pooja essentials.',
+    description:
+      tagline || 'Premium handcrafted event decor, wedding trays, and heritage pooja essentials.',
     address: {
       '@type': 'PostalAddress',
-      addressLocality: 'Ongole',
-      addressRegion: 'Andhra Pradesh',
-      addressCountry: 'IN',
+      ...(street && { streetAddress: street }),
+      addressLocality: locality,
+      addressRegion: region,
+      postalCode: postalCode,
+      addressCountry: country === 'India' ? 'IN' : country,
     },
     ...(contactPhone && {
       contactPoint: {
@@ -121,13 +151,15 @@ export function SEO({
     url: siteUrl,
     telephone: contactPhone,
     description:
+      tagline ||
       'Premium handcrafted event decor, wedding trays, and heritage pooja essentials. Woven with tradition and refined for the modern aesthetic.',
     address: {
       '@type': 'PostalAddress',
-      addressLocality: contact?.address ? undefined : 'Ongole',
-      addressRegion: 'Andhra Pradesh',
-      addressCountry: 'IN',
-      ...(contact?.address && { streetAddress: contact.address }),
+      ...(street && { streetAddress: street }),
+      addressLocality: locality,
+      addressRegion: region,
+      postalCode: postalCode,
+      addressCountry: country === 'India' ? 'IN' : country,
     },
     geo: {
       '@type': 'GeoCoordinates',
@@ -135,7 +167,7 @@ export function SEO({
       longitude: 80.0499,
     },
     priceRange: '₹₹',
-    openingHours: 'Mo-Sa 10:00-19:00',
+    openingHours: parseOpeningHours(supportHoursStr),
     ...(sameAs.length > 0 && { sameAs }),
   };
 

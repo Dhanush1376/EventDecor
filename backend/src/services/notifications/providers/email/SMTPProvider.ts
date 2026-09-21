@@ -1,6 +1,7 @@
 import logger from '../../../../config/logger';
 import { IEmailProvider, EmailSendOptions, EmailSendResult } from '../../types';
 import nodemailer from 'nodemailer';
+import { getStoreConfigSync } from '../../../../config/storeConfig';
 
 export class SMTPProvider implements IEmailProvider {
   name = 'SMTP';
@@ -32,7 +33,7 @@ export class SMTPProvider implements IEmailProvider {
     }
 
     const senderEmail = process.env.SMTP_FROM_EMAIL || smtpUser;
-    const senderName = options.from || process.env.SMTP_FROM_NAME || 'Siri Arts & Crafts';
+    const senderName = options.from || process.env.SMTP_FROM_NAME || getStoreConfigSync().name;
 
     try {
       const info = await this.cachedTransporter.sendMail({

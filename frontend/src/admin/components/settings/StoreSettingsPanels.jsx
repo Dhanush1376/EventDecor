@@ -16,16 +16,50 @@ const FormGroup = ({ label, description, children }) => (
   </div>
 );
 
-const Input = ({ type = 'text', name, value, onChange, ...props }) => (
+const Input = ({ type = 'text', name, value, onChange, className = '', ...props }) => (
   <input
     type={type}
     name={name}
     value={value === undefined || value === null ? '' : value}
     onChange={onChange}
-    className="admin-input h-9 !min-h-[36px] rounded-[4px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] text-[13px]"
+    className={`admin-input h-9 !min-h-[36px] rounded-[4px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] text-[13px] placeholder:text-[var(--admin-text-placeholder)] placeholder:opacity-55 placeholder:font-normal ${className}`}
     {...props}
   />
 );
+
+const PhoneInput = ({ name, value, onChange, placeholder = '98765 43210', ...props }) => {
+  const cleanVal = (value || '').replace(/^\+?91\s*/, '').replace(/^0/, '');
+  const placeholderClean = (placeholder || '').replace(/^\+?91\s*/, '');
+
+  const handlePhoneChange = (e) => {
+    let input = e.target.value.trim();
+    if (input.startsWith('+91')) input = input.slice(3).trim();
+    else if (input.startsWith('91') && input.length > 10) input = input.slice(2).trim();
+    else if (input.startsWith('0')) input = input.slice(1).trim();
+
+    const finalVal = input ? `+91 ${input}` : '';
+    onChange({ target: { name, value: finalVal } });
+  };
+
+  return (
+    <div className="relative flex items-center">
+      <div className="absolute left-2.5 flex items-center gap-1 pointer-events-none select-none text-[12px] font-semibold text-[var(--admin-text-secondary)]">
+        <span>🇮🇳</span>
+        <span>+91</span>
+        <span className="text-[var(--admin-border)] ml-0.5">|</span>
+      </div>
+      <input
+        type="tel"
+        name={name}
+        value={cleanVal}
+        onChange={handlePhoneChange}
+        placeholder={placeholderClean}
+        className="admin-input h-9 !min-h-[36px] rounded-[4px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] text-[13px] !pl-16 font-medium tracking-wide placeholder:text-[var(--admin-text-placeholder)] placeholder:opacity-55 placeholder:font-normal"
+        {...props}
+      />
+    </div>
+  );
+};
 
 const Select = ({ name, value, onChange, options = [], className = '', ...props }) => (
   <select
@@ -44,13 +78,15 @@ const Select = ({ name, value, onChange, options = [], className = '', ...props 
 );
 
 const Checkbox = ({ label, name, checked, onChange, description }) => (
-  <div className="flex items-start gap-3 p-3.5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] hover:border-[var(--admin-border)] rounded-[4px] transition-all">
+  <div
+    className={`h-full flex ${description ? 'items-start' : 'items-center'} gap-3 p-3.5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] hover:border-[var(--admin-border)] rounded-[4px] transition-all`}
+  >
     <AdminToggle
       checked={!!checked}
       onChange={() => onChange({ target: { name, type: 'checkbox', checked: !checked } })}
       size="sm"
     />
-    <div className="pt-0.5 flex-1 min-w-0">
+    <div className={`${description ? 'pt-0.5' : ''} flex-1 min-w-0`}>
       <label className="text-[13px] font-bold text-[var(--admin-text-primary)] leading-tight cursor-pointer select-none block">
         {label}
       </label>
@@ -75,7 +111,7 @@ export const SaveButton = ({ saving, label = 'Save Settings' }) => (
 );
 
 export const GeneralSettingsPanel = ({ formData, handleChange, handleSave, saving }) => (
-  <form onSubmit={handleSave} className="space-y-8">
+  <form onSubmit={handleSave} className="space-y-6">
     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
       <FormGroup label="Store Name">
         <Input name="storeName" value={formData.storeName} onChange={handleChange} required />
@@ -86,27 +122,229 @@ export const GeneralSettingsPanel = ({ formData, handleChange, handleSave, savin
           name="supportEmail"
           value={formData.supportEmail}
           onChange={handleChange}
-          placeholder="e.g. support@siriartsandcrafts.com"
+          placeholder="e.g. support@example.com"
         />
       </FormGroup>
-      <FormGroup label="Store Enabled">
+      <FormGroup label="Primary Phone Number">
+        <PhoneInput
+          name="phone"
+          value={formData.phone}
+          onChange={handleChange}
+          placeholder="98765 43210"
+        />
+      </FormGroup>
+      <FormGroup label="Alternate Phone Number">
+        <PhoneInput
+          name="alternatePhone"
+          value={formData.alternatePhone}
+          onChange={handleChange}
+          placeholder="98765 43211"
+        />
+      </FormGroup>
+      <FormGroup label="WhatsApp Number">
+        <PhoneInput
+          name="whatsappNumber"
+          value={formData.whatsappNumber}
+          onChange={handleChange}
+          placeholder="98765 43210"
+        />
+      </FormGroup>
+    </div>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+      <Checkbox
+        name="storeEnabled"
+        checked={formData.storeEnabled}
+        onChange={handleChange}
+        label="Enable Storefront"
+      />
+      <Checkbox
+        name="maintenanceMode"
+        checked={formData.maintenanceMode}
+        onChange={handleChange}
+        label="Enable Maintenance Mode"
+      />
+    </div>
+
+    <div className="flex justify-end border-t border-[var(--admin-border-subtle)] pt-6">
+      <SaveButton saving={saving} />
+    </div>
+  </form>
+);
+
+export const StoreDetailsLegalPanel = ({ formData, handleChange, handleSave, saving }) => (
+  <form onSubmit={handleSave} className="space-y-7">
+    {/* 1. General Info & Storefront Controls */}
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <FormGroup label="Store Name">
+          <Input name="storeName" value={formData.storeName} onChange={handleChange} required />
+        </FormGroup>
+        <FormGroup label="Tagline">
+          <Input
+            name="tagline"
+            value={formData.tagline}
+            onChange={handleChange}
+            placeholder="Enter brand tagline"
+          />
+        </FormGroup>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Checkbox
           name="storeEnabled"
           checked={formData.storeEnabled}
           onChange={handleChange}
           label="Enable Storefront"
         />
-      </FormGroup>
-      <FormGroup label="Maintenance Mode">
         <Checkbox
           name="maintenanceMode"
           checked={formData.maintenanceMode}
           onChange={handleChange}
           label="Enable Maintenance Mode"
-          description="Only admins can access the store."
         />
-      </FormGroup>
+      </div>
     </div>
+
+    {/* 2. Contact Details & Customer Support */}
+    <div className="space-y-4 pt-4 border-t border-[var(--admin-border-subtle)]">
+      <h4 className="text-[12px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider">
+        Contact Details
+      </h4>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <FormGroup label="Support Email">
+          <Input
+            type="email"
+            name="supportEmail"
+            value={formData.supportEmail}
+            onChange={handleChange}
+            placeholder="support@example.com"
+          />
+        </FormGroup>
+        <FormGroup label="Support Hours">
+          <Input
+            name="supportHours"
+            value={formData.supportHours}
+            onChange={handleChange}
+            placeholder="Mon - Sat, 10 AM to 6 PM"
+          />
+        </FormGroup>
+        <FormGroup label="Primary Phone Number">
+          <PhoneInput
+            name="phone"
+            value={formData.phone}
+            onChange={handleChange}
+            placeholder="98765 43210"
+          />
+        </FormGroup>
+        <FormGroup label="Alternate Phone Number">
+          <PhoneInput
+            name="alternatePhone"
+            value={formData.alternatePhone}
+            onChange={handleChange}
+            placeholder="98765 43211"
+          />
+        </FormGroup>
+        <div className="md:col-span-2">
+          <FormGroup label="WhatsApp Number">
+            <PhoneInput
+              name="whatsappNumber"
+              value={formData.whatsappNumber}
+              onChange={handleChange}
+              placeholder="98765 43210"
+            />
+          </FormGroup>
+        </div>
+      </div>
+    </div>
+
+    {/* 3. Physical Address & Location */}
+    <div className="space-y-4 pt-4 border-t border-[var(--admin-border-subtle)]">
+      <h4 className="text-[12px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider">
+        Store Location
+      </h4>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="md:col-span-2">
+          <FormGroup label="Physical Address">
+            <textarea
+              name="address"
+              rows={2}
+              value={formData.address || ''}
+              onChange={handleChange}
+              placeholder="Street address, landmark"
+              className="admin-textarea"
+            />
+          </FormGroup>
+        </div>
+        <FormGroup label="City">
+          <Input name="city" value={formData.city} onChange={handleChange} placeholder="City" />
+        </FormGroup>
+        <FormGroup label="State">
+          <Input name="state" value={formData.state} onChange={handleChange} placeholder="State" />
+        </FormGroup>
+        <FormGroup label="Postal Code">
+          <Input
+            name="postalCode"
+            value={formData.postalCode}
+            onChange={handleChange}
+            placeholder="PIN Code"
+          />
+        </FormGroup>
+        <FormGroup label="Country">
+          <Input
+            name="country"
+            value={formData.country}
+            onChange={handleChange}
+            placeholder="Country"
+          />
+        </FormGroup>
+      </div>
+    </div>
+
+    {/* 4. Legal & Corporate Identity */}
+    <div className="space-y-4 pt-4 border-t border-[var(--admin-border-subtle)]">
+      <h4 className="text-[12px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider">
+        Legal & Company
+      </h4>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <FormGroup label="Brand / Display Name">
+          <Input
+            name="companyName"
+            value={formData.companyName}
+            onChange={handleChange}
+            placeholder="Brand name"
+          />
+        </FormGroup>
+        <FormGroup label="Registered Legal Company Name">
+          <Input
+            name="legalCompanyName"
+            value={formData.legalCompanyName}
+            onChange={handleChange}
+            placeholder="Registered company name"
+          />
+        </FormGroup>
+        <FormGroup label="CIN (Corporate Identification Number)">
+          <Input name="cin" value={formData.cin} onChange={handleChange} placeholder="CIN number" />
+        </FormGroup>
+        <div className="md:col-span-2">
+          <FormGroup label="Registered Address">
+            <textarea
+              name="registeredAddress"
+              rows={2}
+              value={formData.registeredAddress || ''}
+              onChange={handleChange}
+              placeholder="Registered corporate address"
+              className="admin-textarea"
+            />
+          </FormGroup>
+        </div>
+      </div>
+    </div>
+
+    {/* Form Footer / Save Bar */}
     <div className="flex justify-end border-t border-[var(--admin-border-subtle)] pt-6">
       <SaveButton saving={saving} />
     </div>
@@ -114,7 +352,7 @@ export const GeneralSettingsPanel = ({ formData, handleChange, handleSave, savin
 );
 
 export const ShippingSettingsPanel = ({ formData, handleChange, handleSave, saving }) => (
-  <form onSubmit={handleSave} className="space-y-8">
+  <form onSubmit={handleSave} className="space-y-6">
     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
       <FormGroup label="Base Delivery Charge (₹)">
         <Input
@@ -122,6 +360,7 @@ export const ShippingSettingsPanel = ({ formData, handleChange, handleSave, savi
           name="deliveryCharge"
           value={formData.deliveryCharge}
           onChange={handleChange}
+          min="0"
         />
       </FormGroup>
       <FormGroup label="Free Shipping Threshold (₹)">
@@ -130,14 +369,7 @@ export const ShippingSettingsPanel = ({ formData, handleChange, handleSave, savi
           name="freeShippingThreshold"
           value={formData.freeShippingThreshold}
           onChange={handleChange}
-        />
-      </FormGroup>
-      <FormGroup label="Express Delivery Charge (₹)">
-        <Input
-          type="number"
-          name="expressDeliveryCharge"
-          value={formData.expressDeliveryCharge}
-          onChange={handleChange}
+          min="0"
         />
       </FormGroup>
       <FormGroup label="Estimated Delivery Days">
@@ -148,37 +380,153 @@ export const ShippingSettingsPanel = ({ formData, handleChange, handleSave, savi
           placeholder="e.g. 5-7"
         />
       </FormGroup>
-      <FormGroup label="Origin Pincode (Warehouse Dispatch)">
-        <Input
-          name="originPincode"
-          value={formData.originPincode}
-          onChange={handleChange}
-          placeholder="e.g. 523001"
-        />
-      </FormGroup>
-      <FormGroup label="Default Courier Partner">
-        <Input
-          name="defaultCourierPartner"
-          value={formData.defaultCourierPartner}
-          onChange={handleChange}
-          placeholder="e.g. Delhivery Logistics"
-        />
-      </FormGroup>
-      <div className="md:col-span-2 space-y-3">
-        <Checkbox
-          name="enableFreeShipping"
-          checked={formData.enableFreeShipping}
-          onChange={handleChange}
-          label="Enable Free Shipping Over Threshold"
-        />
-        <Checkbox
-          name="enableExpressDelivery"
-          checked={formData.enableExpressDelivery}
-          onChange={handleChange}
-          label="Enable Express Delivery Option"
-        />
+    </div>
+
+    <div className="pt-1">
+      <Checkbox
+        name="enableFreeShipping"
+        checked={formData.enableFreeShipping}
+        onChange={handleChange}
+        label="Enable Free Shipping Over Threshold"
+      />
+    </div>
+
+    <div className="flex justify-end border-t border-[var(--admin-border-subtle)] pt-6">
+      <SaveButton saving={saving} />
+    </div>
+  </form>
+);
+
+export const ShippingOrdersPanel = ({ formData, handleChange, handleSave, saving }) => (
+  <form onSubmit={handleSave} className="space-y-8">
+    {/* 1. Shipping & Delivery Configuration */}
+    <div className="space-y-5">
+      <div className="flex items-center gap-2 pb-1 border-b border-[var(--admin-border-subtle)]">
+        <span className="material-symbols-outlined text-[20px] text-[var(--admin-accent)]">
+          local_shipping
+        </span>
+        <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)] tracking-wide">
+          Shipping & Delivery Charges
+        </h3>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <FormGroup label="Standard Delivery Fee (₹)">
+          <Input
+            type="number"
+            name="deliveryCharge"
+            value={formData.deliveryCharge}
+            onChange={handleChange}
+            min="0"
+          />
+        </FormGroup>
+        <FormGroup label="Free Delivery on Orders Above (₹)">
+          <Input
+            type="number"
+            name="freeShippingThreshold"
+            value={formData.freeShippingThreshold}
+            onChange={handleChange}
+            min="0"
+          />
+        </FormGroup>
+        <FormGroup label="Estimated Delivery Time">
+          <Input
+            name="estimatedDeliveryDays"
+            value={formData.estimatedDeliveryDays}
+            onChange={handleChange}
+            placeholder="e.g. 4-6 business days"
+          />
+        </FormGroup>
+        <FormGroup label="Packaging & Handling Fee (₹)">
+          <Input
+            type="number"
+            name="packagingFee"
+            value={formData.packagingFee}
+            onChange={handleChange}
+            min="0"
+          />
+        </FormGroup>
+        <FormGroup label="Store Dispatch Pincode">
+          <Input
+            name="originPincode"
+            value={formData.originPincode}
+            onChange={handleChange}
+            placeholder="e.g. 523001"
+          />
+        </FormGroup>
+        <FormGroup label="Primary Courier Partner">
+          <Input
+            name="defaultCourierPartner"
+            value={formData.defaultCourierPartner}
+            onChange={handleChange}
+            placeholder="e.g. BlueDart Express, Delhivery, DTDC"
+          />
+        </FormGroup>
       </div>
     </div>
+
+    {/* 2. Order Limits & Platform Rules */}
+    <div className="space-y-5 pt-4 border-t border-[var(--admin-border-subtle)]">
+      <div className="flex items-center gap-2 pb-1 border-b border-[var(--admin-border-subtle)]">
+        <span className="material-symbols-outlined text-[20px] text-[var(--admin-accent)]">
+          shopping_bag
+        </span>
+        <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)] tracking-wide">
+          Order Limits & Checkout Rules
+        </h3>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <FormGroup label="Max Different Products in One Order">
+          <Input
+            type="number"
+            name="maxItemsPerOrder"
+            value={formData.maxItemsPerOrder}
+            onChange={handleChange}
+            min="1"
+          />
+        </FormGroup>
+        <FormGroup label="Max Quantity Allowed per Product">
+          <Input
+            type="number"
+            name="maxQuantityPerItem"
+            value={formData.maxQuantityPerItem}
+            onChange={handleChange}
+            min="1"
+          />
+        </FormGroup>
+        <FormGroup label="Minimum Allowed Order Amount (₹)">
+          <Input
+            type="number"
+            name="minOrderValue"
+            value={formData.minOrderValue}
+            onChange={handleChange}
+            min="0"
+          />
+        </FormGroup>
+        <FormGroup label="Maximum Allowed Order Amount (₹)">
+          <Input
+            type="number"
+            name="maxOrderValue"
+            value={formData.maxOrderValue}
+            onChange={handleChange}
+            min="0"
+          />
+        </FormGroup>
+        <div className="md:col-span-2">
+          <FormGroup label="Standard Platform & Service Fee (₹)">
+            <Input
+              type="number"
+              name="platformFee"
+              value={formData.platformFee}
+              onChange={handleChange}
+              min="0"
+            />
+          </FormGroup>
+        </div>
+      </div>
+    </div>
+
     <div className="flex justify-end border-t border-[var(--admin-border-subtle)] pt-6">
       <SaveButton saving={saving} />
     </div>
@@ -225,7 +573,7 @@ export const PaymentSettingsPanel = ({ formData, handleChange, handleSave, savin
             <span>Both methods are currently disabled. Please enable at least one to save.</span>
           </div>
         )}
-        <div className="md:col-span-2 space-y-3">
+        <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
           <Checkbox
             name="enableRazorpay"
             checked={formData.enableRazorpay}
@@ -254,12 +602,13 @@ export const PaymentSettingsPanel = ({ formData, handleChange, handleSave, savin
             <FormGroup label="COD OTP Verification Channel">
               <Select
                 name="codOtpChannel"
-                value={formData.codOtpChannel || 'phone'}
+                value={
+                  formData.codOtpChannel === 'both' ? 'phone' : formData.codOtpChannel || 'phone'
+                }
                 onChange={handleChange}
                 options={[
                   { value: 'phone', label: 'Phone (SMS Verification)' },
                   { value: 'email', label: 'Email (Verification Code)' },
-                  { value: 'both', label: 'Customer Choice (Phone or Email)' },
                 ]}
               />
             </FormGroup>
@@ -285,6 +634,205 @@ export const PaymentSettingsPanel = ({ formData, handleChange, handleSave, savin
           </>
         )}
       </div>
+      <div className="flex justify-end border-t border-[var(--admin-border-subtle)] pt-6">
+        <SaveButton saving={saving} />
+      </div>
+    </form>
+  );
+};
+
+export const PaymentsTaxesPanel = ({
+  paymentsFormData = {},
+  taxesFormData = {},
+  onPaymentsChange,
+  onTaxesChange,
+  handleSave,
+  saving,
+}) => {
+  const isRazorpayActive = Boolean(paymentsFormData.enableRazorpay);
+  const isCodActive = Boolean(paymentsFormData.enableCOD);
+
+  const handleToggleRazorpay = (e) => {
+    const nextChecked = e.target.checked;
+    if (!nextChecked && !isCodActive) {
+      toast.error('At least one payment method must remain active.');
+      return;
+    }
+    onPaymentsChange(e);
+  };
+
+  const handleToggleCOD = (e) => {
+    const nextChecked = e.target.checked;
+    if (!nextChecked && !isRazorpayActive) {
+      toast.error('At least one payment method must remain active.');
+      return;
+    }
+    onPaymentsChange(e);
+  };
+
+  const onFormSubmit = (e) => {
+    e.preventDefault();
+    if (!paymentsFormData.enableRazorpay && !paymentsFormData.enableCOD) {
+      toast.error('At least one payment method must remain active.');
+      return;
+    }
+    handleSave(e);
+  };
+
+  return (
+    <form onSubmit={onFormSubmit} className="space-y-8">
+      {/* 1. Payment Methods & Gateways */}
+      <div className="space-y-5">
+        <div className="flex items-center gap-2 pb-1 border-b border-[var(--admin-border-subtle)]">
+          <span className="material-symbols-outlined text-[20px] text-[var(--admin-accent)]">
+            payments
+          </span>
+          <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)] tracking-wide">
+            Payment Methods & Gateways
+          </h3>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {!isRazorpayActive && !isCodActive && (
+            <div className="md:col-span-2 p-3 bg-amber-500/10 border border-amber-500/30 rounded-[4px] flex items-center gap-2.5 text-amber-800 text-xs font-semibold">
+              <span className="material-symbols-outlined text-[18px] text-amber-600">warning</span>
+              <span>Both methods are currently disabled. Please enable at least one to save.</span>
+            </div>
+          )}
+          <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Checkbox
+              name="enableRazorpay"
+              checked={paymentsFormData.enableRazorpay}
+              onChange={handleToggleRazorpay}
+              label="Enable Razorpay Gateway"
+              description={
+                isRazorpayActive && !isCodActive
+                  ? 'Only active payment method (cannot be disabled while Cash on Delivery is off)'
+                  : undefined
+              }
+            />
+            <Checkbox
+              name="enableCOD"
+              checked={paymentsFormData.enableCOD}
+              onChange={handleToggleCOD}
+              label="Enable Cash on Delivery"
+              description={
+                !isRazorpayActive && isCodActive
+                  ? 'Only active payment method (cannot be disabled while Razorpay Gateway is off)'
+                  : undefined
+              }
+            />
+          </div>
+          {paymentsFormData.enableCOD && (
+            <>
+              <FormGroup label="COD OTP Verification Channel">
+                <Select
+                  name="codOtpChannel"
+                  value={
+                    paymentsFormData.codOtpChannel === 'both'
+                      ? 'phone'
+                      : paymentsFormData.codOtpChannel || 'phone'
+                  }
+                  onChange={onPaymentsChange}
+                  options={[
+                    { value: 'phone', label: 'Phone (SMS Verification)' },
+                    { value: 'email', label: 'Email (Verification Code)' },
+                  ]}
+                />
+              </FormGroup>
+              <FormGroup label="COD Handling Fee (₹)">
+                <Input
+                  type="number"
+                  name="codFee"
+                  value={paymentsFormData.codFee}
+                  onChange={onPaymentsChange}
+                />
+              </FormGroup>
+              <FormGroup label="Minimum Order for COD (₹)">
+                <Input
+                  type="number"
+                  name="codMinOrder"
+                  value={paymentsFormData.codMinOrder}
+                  onChange={onPaymentsChange}
+                />
+              </FormGroup>
+              <FormGroup label="Maximum Order for COD (₹)">
+                <Input
+                  type="number"
+                  name="codMaxOrder"
+                  value={paymentsFormData.codMaxOrder}
+                  onChange={onPaymentsChange}
+                />
+              </FormGroup>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* 2. Taxes, GST & Invoicing */}
+      <div className="space-y-5 pt-4 border-t border-[var(--admin-border-subtle)]">
+        <div className="flex items-center gap-2 pb-1 border-b border-[var(--admin-border-subtle)]">
+          <span className="material-symbols-outlined text-[20px] text-[var(--admin-accent)]">
+            receipt_long
+          </span>
+          <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)] tracking-wide">
+            Taxes, GST & Invoicing
+          </h3>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Checkbox
+              name="gstEnabled"
+              checked={taxesFormData.gstEnabled}
+              onChange={onTaxesChange}
+              label="Enable GST Computation"
+            />
+            <Checkbox
+              name="taxInclusive"
+              checked={taxesFormData.taxInclusive}
+              onChange={onTaxesChange}
+              label="Prices are Tax Inclusive"
+            />
+          </div>
+          <FormGroup label="GST Number">
+            <Input
+              name="gstNumber"
+              value={taxesFormData.gstNumber}
+              onChange={onTaxesChange}
+              placeholder="e.g. 29AAAAA0000A1Z5"
+            />
+          </FormGroup>
+          <FormGroup label="Base GST Rate (e.g. 0.18 for 18%)">
+            <Input
+              type="number"
+              step="0.01"
+              name="gstRate"
+              value={taxesFormData.gstRate}
+              onChange={onTaxesChange}
+            />
+          </FormGroup>
+          <FormGroup label="CGST Rate (e.g. 0.09 for 9%)">
+            <Input
+              type="number"
+              step="0.01"
+              name="cgstRate"
+              value={taxesFormData.cgstRate}
+              onChange={onTaxesChange}
+            />
+          </FormGroup>
+          <FormGroup label="SGST Rate (e.g. 0.09 for 9%)">
+            <Input
+              type="number"
+              step="0.01"
+              name="sgstRate"
+              value={taxesFormData.sgstRate}
+              onChange={onTaxesChange}
+            />
+          </FormGroup>
+        </div>
+      </div>
+
       <div className="flex justify-end border-t border-[var(--admin-border-subtle)] pt-6">
         <SaveButton saving={saving} />
       </div>
@@ -582,11 +1130,29 @@ export const ContactSettingsPanel = ({ formData, handleChange, handleSave, savin
       <FormGroup label="Email Address">
         <Input type="email" name="email" value={formData.email} onChange={handleChange} />
       </FormGroup>
-      <FormGroup label="Phone Number">
-        <Input name="phone" value={formData.phone} onChange={handleChange} />
+      <FormGroup label="Primary Phone Number">
+        <PhoneInput
+          name="phone"
+          value={formData.phone}
+          onChange={handleChange}
+          placeholder="98765 43210"
+        />
+      </FormGroup>
+      <FormGroup label="Alternate Phone Number">
+        <PhoneInput
+          name="alternatePhone"
+          value={formData.alternatePhone}
+          onChange={handleChange}
+          placeholder="98765 43211"
+        />
       </FormGroup>
       <FormGroup label="WhatsApp Number">
-        <Input name="whatsappNumber" value={formData.whatsappNumber} onChange={handleChange} />
+        <PhoneInput
+          name="whatsappNumber"
+          value={formData.whatsappNumber}
+          onChange={handleChange}
+          placeholder="98765 43210"
+        />
       </FormGroup>
       <FormGroup label="Support Hours">
         <Input name="supportHours" value={formData.supportHours} onChange={handleChange} />
@@ -714,58 +1280,153 @@ export const CancellationSettingsPanel = ({ formData, handleChange, handleSave, 
   </form>
 );
 
-export const NotificationSettingsPanel = ({ formData, handleChange, handleSave, saving }) => (
-  <form onSubmit={handleSave} className="space-y-8">
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-      <div className="md:col-span-2 space-y-3">
-        <Checkbox
-          name="emailEnabled"
-          checked={formData.emailEnabled}
-          onChange={handleChange}
-          label="Enable Email Notifications"
-        />
-        <Checkbox
-          name="smsEnabled"
-          checked={formData.smsEnabled}
-          onChange={handleChange}
-          label="Enable SMS Notifications"
-        />
-        <Checkbox
-          name="whatsappEnabled"
-          checked={formData.whatsappEnabled}
-          onChange={handleChange}
-          label="Enable WhatsApp Notifications"
-        />
-      </div>
-    </div>
-    <div className="flex justify-end border-t border-[var(--admin-border-subtle)] pt-6">
-      <SaveButton saving={saving} />
-    </div>
-  </form>
-);
+export const StorefrontSettingsPanel = ({ formData, handleChange, handleSave, saving }) => {
+  const currentAuthMethod = formData.customerAuthMethod || 'both';
 
-export const StorefrontSettingsPanel = ({ formData, handleChange, handleSave, saving }) => (
-  <form onSubmit={handleSave} className="space-y-8">
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-      <div className="md:col-span-2">
-        <FormGroup label="SEO Title Default">
-          <Input name="seoTitle" value={formData.seoTitle} onChange={handleChange} />
-        </FormGroup>
+  return (
+    <form onSubmit={handleSave} className="space-y-8">
+      {/* 1. Customer Authentication Modal Options */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 pb-1 border-b border-[var(--admin-border-subtle)]">
+          <span className="material-symbols-outlined text-[20px] text-[var(--admin-accent)]">
+            badge
+          </span>
+          <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)] tracking-wide">
+            Customer Login & Auth Modal Methods
+          </h3>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 pt-1">
+          {/* Option 1: Combined */}
+          <div
+            onClick={() => handleChange({ target: { name: 'customerAuthMethod', value: 'both' } })}
+            className={`p-3.5 rounded-[6px] border cursor-pointer transition-all flex items-center justify-between ${
+              currentAuthMethod === 'both'
+                ? 'bg-[var(--admin-accent)]/10 border-[var(--admin-accent)] ring-1 ring-[var(--admin-accent)] shadow-xs'
+                : 'bg-[var(--admin-bg-subtle)] border-[var(--admin-border-subtle)] hover:border-[var(--admin-border)]'
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <span className="material-symbols-outlined text-[19px] text-[var(--admin-accent)]">
+                devices
+              </span>
+              <span className="text-[13px] font-bold text-[var(--admin-text-primary)]">
+                Combined (Phone or Email in 1)
+              </span>
+            </div>
+            <div
+              className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
+                currentAuthMethod === 'both'
+                  ? 'border-[var(--admin-accent)] bg-[var(--admin-accent)]'
+                  : 'border-[var(--admin-border)]'
+              }`}
+            >
+              {currentAuthMethod === 'both' && (
+                <div className="w-1.5 h-1.5 rounded-full bg-white" />
+              )}
+            </div>
+          </div>
+
+          {/* Option 2: Phone Only */}
+          <div
+            onClick={() =>
+              handleChange({ target: { name: 'customerAuthMethod', value: 'phone_only' } })
+            }
+            className={`p-3.5 rounded-[6px] border cursor-pointer transition-all flex items-center justify-between ${
+              currentAuthMethod === 'phone_only'
+                ? 'bg-[var(--admin-accent)]/10 border-[var(--admin-accent)] ring-1 ring-[var(--admin-accent)] shadow-xs'
+                : 'bg-[var(--admin-bg-subtle)] border-[var(--admin-border-subtle)] hover:border-[var(--admin-border)]'
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <span className="material-symbols-outlined text-[19px] text-[var(--admin-accent)]">
+                smartphone
+              </span>
+              <span className="text-[13px] font-bold text-[var(--admin-text-primary)]">
+                Mobile Phone Only
+              </span>
+            </div>
+            <div
+              className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
+                currentAuthMethod === 'phone_only'
+                  ? 'border-[var(--admin-accent)] bg-[var(--admin-accent)]'
+                  : 'border-[var(--admin-border)]'
+              }`}
+            >
+              {currentAuthMethod === 'phone_only' && (
+                <div className="w-1.5 h-1.5 rounded-full bg-white" />
+              )}
+            </div>
+          </div>
+
+          {/* Option 3: Email Only */}
+          <div
+            onClick={() =>
+              handleChange({ target: { name: 'customerAuthMethod', value: 'email_only' } })
+            }
+            className={`p-3.5 rounded-[6px] border cursor-pointer transition-all flex items-center justify-between ${
+              currentAuthMethod === 'email_only'
+                ? 'bg-[var(--admin-accent)]/10 border-[var(--admin-accent)] ring-1 ring-[var(--admin-accent)] shadow-xs'
+                : 'bg-[var(--admin-bg-subtle)] border-[var(--admin-border-subtle)] hover:border-[var(--admin-border)]'
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <span className="material-symbols-outlined text-[19px] text-[var(--admin-accent)]">
+                mail
+              </span>
+              <span className="text-[13px] font-bold text-[var(--admin-text-primary)]">
+                Email Only
+              </span>
+            </div>
+            <div
+              className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
+                currentAuthMethod === 'email_only'
+                  ? 'border-[var(--admin-accent)] bg-[var(--admin-accent)]'
+                  : 'border-[var(--admin-border)]'
+              }`}
+            >
+              {currentAuthMethod === 'email_only' && (
+                <div className="w-1.5 h-1.5 rounded-full bg-white" />
+              )}
+            </div>
+          </div>
+        </div>
       </div>
-      <div className="md:col-span-2">
-        <FormGroup label="SEO Description Default">
-          <textarea
-            name="seoDescription"
-            rows={3}
-            value={formData.seoDescription || ''}
-            onChange={handleChange}
-            className="admin-textarea"
-          />
-        </FormGroup>
+
+      {/* 2. SEO & Search Visibility */}
+      <div className="space-y-4 pt-4 border-t border-[var(--admin-border-subtle)]">
+        <div className="flex items-center gap-2 pb-1 border-b border-[var(--admin-border-subtle)]">
+          <span className="material-symbols-outlined text-[20px] text-[var(--admin-accent)]">
+            travel_explore
+          </span>
+          <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)] tracking-wide">
+            SEO & Search Visibility
+          </h3>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="md:col-span-2">
+            <FormGroup label="Default SEO Title">
+              <Input name="seoTitle" value={formData.seoTitle} onChange={handleChange} />
+            </FormGroup>
+          </div>
+          <div className="md:col-span-2">
+            <FormGroup label="Default SEO Meta Description">
+              <textarea
+                name="seoDescription"
+                rows={3}
+                value={formData.seoDescription || ''}
+                onChange={handleChange}
+                className="admin-textarea"
+              />
+            </FormGroup>
+          </div>
+        </div>
       </div>
-    </div>
-    <div className="flex justify-end border-t border-[var(--admin-border-subtle)] pt-6">
-      <SaveButton saving={saving} />
-    </div>
-  </form>
-);
+
+      <div className="flex justify-end border-t border-[var(--admin-border-subtle)] pt-6">
+        <SaveButton saving={saving} />
+      </div>
+    </form>
+  );
+};

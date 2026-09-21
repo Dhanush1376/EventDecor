@@ -47,6 +47,7 @@ import {
   createAdminNotification,
   setSocketNotificationHandler,
 } from './src/services/notificationService';
+import { initStoreConfig } from './src/config/storeConfig';
 
 // Wire up circular dependencies
 setAlertingNotificationHandlers(sendDirectEmail, createAdminNotification);
@@ -228,6 +229,9 @@ const startServer = async () => {
     logger.info('[STARTUP] Connecting to MongoDB before accepting traffic...');
     await connectDB();
     logger.info('[STARTUP] MongoDB connected successfully');
+
+    // Prime store identity configuration cache
+    await initStoreConfig();
 
     // 2. Start Express Server
     server = app.listen(PORT, '0.0.0.0', () => {

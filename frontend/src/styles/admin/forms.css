@@ -53,8 +53,13 @@
   padding-left: 40px;
 }
 
-.admin-section-root .admin-input::placeholder {
-  color: var(--admin-text-placeholder);
+.admin-section-root .admin-input::placeholder,
+.admin-section-root .admin-textarea::placeholder,
+.admin-section-root input::placeholder,
+.admin-section-root textarea::placeholder {
+  color: var(--admin-text-placeholder) !important;
+  opacity: 0.6 !important;
+  font-weight: 400 !important;
 }
 
 .admin-section-root .admin-input:not(:focus):hover {

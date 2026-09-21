@@ -24,7 +24,13 @@ export function cleanRentalInfo(rentalInfo) {
   };
 }
 
-export function calculateCartSummary(items, cartType, shippingFee = 0) {
+export function calculateCartSummary(
+  items,
+  cartType,
+  shippingFee = 0,
+  platformFee = 0,
+  taxSettings,
+) {
   const subtotal = items.reduce((sum, item) => {
     let itemPrice = item.price || item.product?.price || 0;
 
@@ -53,9 +59,44 @@ export function calculateCartSummary(items, cartType, shippingFee = 0) {
     );
   }
 
-  const total = subtotal + depositTotal + shippingFee;
+  const resolvedPlatformFee = items.length > 0 ? Math.max(0, platformFee || 0) : 0;
 
-  return { subtotal, depositTotal, total };
+  if (taxSettings && typeof taxSettings === 'object') {
+    const gstEnabled = taxSettings.gstEnabled ?? true;
+    const taxInclusive = taxSettings.taxInclusive ?? true;
+    const gstRate = Number(taxSettings.gstRate) || 0.18;
+
+    let estimatedTax = 0;
+    if (gstEnabled) {
+      if (taxInclusive) {
+        const taxableBase = Math.round((subtotal / (1 + gstRate)) * 100) / 100;
+        estimatedTax = Math.round((subtotal - taxableBase) * 100) / 100;
+      } else {
+        estimatedTax = Math.round(subtotal * gstRate * 100) / 100;
+      }
+    }
+
+    const total =
+      !gstEnabled || taxInclusive
+        ? Math.round((subtotal + depositTotal + shippingFee + resolvedPlatformFee) * 100) / 100
+        : Math.round(
+            (subtotal + depositTotal + shippingFee + resolvedPlatformFee + estimatedTax) * 100,
+          ) / 100;
+
+    return {
+      subtotal,
+      depositTotal,
+      shippingFee,
+      platformFee: resolvedPlatformFee,
+      estimatedTax,
+      taxInclusive,
+      gstEnabled,
+      total,
+    };
+  }
+
+  const total = subtotal + depositTotal + shippingFee + resolvedPlatformFee;
+  return { subtotal, depositTotal, shippingFee, platformFee: resolvedPlatformFee, total };
 }
 
 export function transformDbCart(dbCartItems) {

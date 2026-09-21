@@ -2,6 +2,7 @@ import ApiError from '../../utils/ApiError';
 import User from '../../models/User';
 import Product from '../../models/Product';
 import mongoose from 'mongoose';
+import storeSettingsService from '../StoreSettingsService';
 
 export class UserCartService {
   static async addToCart(
@@ -11,7 +12,11 @@ export class UserCartService {
     type: string,
     rentalInfo: any,
   ) {
-    const qty = Math.max(1, Math.min(50, Number(quantity) || 1));
+    const settings = await storeSettingsService.getSettings();
+    const maxQtyPerItem = settings?.orders?.maxQuantityPerItem ?? 50;
+    const maxItemsPerOrder = settings?.orders?.maxItemsPerOrder ?? 20;
+
+    const qty = Math.max(1, Math.min(maxQtyPerItem, Number(quantity) || 1));
     const product = await Product.findById(productId).select('stock isActive title');
     if (!product || !product.isActive) {
       throw new ApiError(404, 'Product is unavailable');
@@ -29,6 +34,19 @@ export class UserCartService {
 
     let updatedUser;
     if (userHasItem) {
+      const existingItem = (userHasItem.cart || []).find(
+        (i: any) =>
+          (i.product?._id?.toString() || i.product?.toString()) === productId &&
+          i.type === itemType,
+      );
+      const currentQty = Number(existingItem?.quantity) || 0;
+      if (currentQty + qty > maxQtyPerItem) {
+        throw new ApiError(
+          400,
+          `Maximum allowed quantity for this product is ${maxQtyPerItem}. You already have ${currentQty} in your cart.`,
+        );
+      }
+
       if (itemType === 'rental') {
         const updateOps: any = {
           $inc: { 'cart.$.quantity': qty },
@@ -50,12 +68,15 @@ export class UserCartService {
       }
     } else if (qty > 0) {
       const currentUser = await User.findById(userId).select('cart');
-      if (currentUser && currentUser.cart.length >= 50) {
-        throw new ApiError(400, 'Cart capacity reached. Maximum 50 items allowed.');
+      if (currentUser && currentUser.cart.length >= maxItemsPerOrder) {
+        throw new ApiError(
+          400,
+          `Order limit reached. Maximum ${maxItemsPerOrder} different products allowed per order.`,
+        );
       }
       const cartItem: any = {
         product: objectId,
-        quantity: qty,
+        quantity: Math.min(maxQtyPerItem, qty),
         variant: 'Default',
         type: itemType,
       };
@@ -83,18 +104,25 @@ export class UserCartService {
     const user = await User.findById(userId);
     if (!user) throw new ApiError(404, 'User not found');
 
+    const settings = await storeSettingsService.getSettings();
+    const maxQtyPerItem = settings?.orders?.maxQuantityPerItem ?? 50;
+    const maxItemsPerOrder = settings?.orders?.maxItemsPerOrder ?? 20;
+
     const updatedCart = (cartItems || [])
       .filter((item: any) => item.product || item._id || item.id)
       .map((item: any) => ({
         product: item.product || item._id || item.id,
-        quantity: Math.max(1, Math.min(50, Number(item.quantity) || 1)),
+        quantity: Math.max(1, Math.min(maxQtyPerItem, Number(item.quantity) || 1)),
         variant: item.variant || 'Default',
         type: item.type || 'purchase',
         rentalInfo: item.rentalInfo,
       }));
 
-    if (updatedCart.length > 50) {
-      throw new ApiError(400, 'Cart capacity reached. Maximum 50 items allowed.');
+    if (updatedCart.length > maxItemsPerOrder) {
+      throw new ApiError(
+        400,
+        `Cart limit reached. Maximum ${maxItemsPerOrder} different products allowed per order.`,
+      );
     }
 
     await User.findOneAndUpdate({ _id: userId }, { $set: { cart: updatedCart } });
@@ -120,6 +148,10 @@ export class UserCartService {
     });
 
     if (!user) throw new ApiError(404, 'User not found');
+
+    const settings = await storeSettingsService.getSettings();
+    const maxQtyPerItem = settings?.orders?.maxQuantityPerItem ?? 50;
+    const maxItemsPerOrder = settings?.orders?.maxItemsPerOrder ?? 20;
 
     const existingCart = user.cart || [];
     const droppedItems: any[] = [];
@@ -163,17 +195,20 @@ export class UserCartService {
 
       if (existingIndex >= 0) {
         mergedCart[existingIndex].quantity = Math.min(
-          50,
+          maxQtyPerItem,
           mergedCart[existingIndex].quantity + qtyToAdd,
         );
       } else {
-        if (mergedCart.length >= 50) {
-          droppedItems.push({ productId, reason: 'Cart capacity reached (max 50)' });
+        if (mergedCart.length >= maxItemsPerOrder) {
+          droppedItems.push({
+            productId,
+            reason: `Order limit reached (max ${maxItemsPerOrder} products)`,
+          });
           continue;
         }
         mergedCart.push({
           product: productId,
-          quantity: Math.min(50, qtyToAdd),
+          quantity: Math.min(maxQtyPerItem, qtyToAdd),
           type: itemType,
           variant,
           rentalInfo: item.rentalInfo,

@@ -84,7 +84,9 @@ export const analyzeImage = asyncHandler(async (req: Request, res: Response) => 
 export const getPublicConfig = asyncHandler(async (req: Request, res: Response) => {
   const config = await getVisualSearchConfig();
 
-  res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   res.status(200).json(
     new ApiResponse(true, 'Visual search configuration', {
       enabled: config.enabled,

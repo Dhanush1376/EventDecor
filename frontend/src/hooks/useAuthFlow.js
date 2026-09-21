@@ -39,10 +39,13 @@ export function useAuthFlow(loginSuccess, isAuthModalOpen) {
     setPendingSessionData(null);
   }, []);
 
-  const requestOTP = async (e) => {
+  const requestOTP = async (e, customIdentifier) => {
     e?.preventDefault();
-    if (!identifier || identifier.length < 3) {
-      toast.error('Please enter a valid email');
+    const target = (
+      typeof customIdentifier === 'string' ? customIdentifier : identifier || ''
+    ).trim();
+    if (!target || target.length < 3) {
+      toast.error('Please enter your mobile phone number or email address');
       return;
     }
 
@@ -52,7 +55,10 @@ export function useAuthFlow(loginSuccess, isAuthModalOpen) {
     setIsLoading(true);
 
     try {
-      const response = await authService.requestOTP(identifier);
+      const response = await authService.requestOTP(target);
+      if (customIdentifier && customIdentifier !== identifier) {
+        setIdentifier(customIdentifier);
+      }
       setChallengeId(response.data?.challengeId || '');
       toast.success(response.message || 'Verification code sent!');
       setStep('otp');
@@ -62,7 +68,7 @@ export function useAuthFlow(loginSuccess, isAuthModalOpen) {
         if (otpRefs.current[0]) otpRefs.current[0].focus();
       }, 300);
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to send verification credentials');
+      toast.error(err.response?.data?.message || 'Failed to send verification code');
     } finally {
       isSubmittingRef.current = false;
       setIsLoading(false);

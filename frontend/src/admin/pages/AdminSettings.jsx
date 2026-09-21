@@ -1,11 +1,10 @@
 import { m as motion } from 'framer-motion';
 import { PageHeader, AdminSettingsSkeleton, fadeUp, stagger } from '../components/AdminUIKit';
-import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
 import { DraftRestoreModal } from '../components/DraftRestoreModal';
 import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
 import { useState, useEffect, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { userService, cmsService, notificationService } from '../../services/domainServices';
+import { userService, cmsService } from '../../services/domainServices';
 import storeSettingsService from '../../services/api/storeSettingsService';
 import { useAuth } from '../../context/AuthContext';
 import { useAdmin } from '../context/AdminContext';
@@ -17,23 +16,15 @@ import { useDraft } from '../hooks/useDraft';
 // Settings Panels
 import { ProfilePanel } from '../components/settings/ProfilePanel';
 
-import { WhatsAppPanel } from '../components/settings/WhatsAppPanel';
 import AiSettingsPanel from '../components/settings/AiSettingsPanel';
 import { SecurityPanel } from '../components/settings/SecurityPanel';
-import { EmailSmtpPanel } from '../components/settings/EmailSmtpPanel';
 import {
-  GeneralSettingsPanel,
-  ShippingSettingsPanel,
-  PaymentSettingsPanel,
   ReturnSettingsPanel,
-  CancellationSettingsPanel,
   LoyaltySettingsPanel,
-  OrderSettingsPanel,
-  TaxSettingsPanel,
-  ContactSettingsPanel,
-  LegalSettingsPanel,
-  NotificationSettingsPanel,
   StorefrontSettingsPanel,
+  StoreDetailsLegalPanel,
+  ShippingOrdersPanel,
+  PaymentsTaxesPanel,
 } from '../components/settings/StoreSettingsPanels';
 import { VisualSearchPanel } from '../components/settings/VisualSearchPanel';
 
@@ -41,25 +32,25 @@ const DEFAULT_STORE_SETTINGS = {
   general: {
     storeName: 'Siri Arts & Crafts',
     tagline: 'Handcrafted Heritage & Artistry',
-    supportEmail: 'sirisha.atmakuri@gmail.com',
+    supportEmail: '',
+    phone: '',
+    alternatePhone: '',
+    whatsappNumber: '',
     announcementText: '',
     announcementLink: '',
     maintenanceMode: false,
     storeEnabled: true,
   },
   shipping: {
-    deliveryCharge: 0,
+    deliveryCharge: 99,
     freeShippingThreshold: 2000,
     enableFreeShipping: true,
-    expressDeliveryCharge: 249,
     enableExpressDelivery: true,
-    packagingFee: 0,
-    remoteAreaCharge: 0,
-    estimatedDeliveryDays: '5-7',
-    maxShippingDistance: 0,
-    enableLocalDelivery: false,
+    packagingFee: 15,
+    estimatedDeliveryDays: '4-6',
+    enableLocalDelivery: true,
     originPincode: '523001',
-    defaultCourierPartner: 'Delhivery Logistics',
+    defaultCourierPartner: 'BlueDart Express',
   },
   payments: {
     enableCOD: true,
@@ -86,11 +77,11 @@ const DEFAULT_STORE_SETTINGS = {
     storeCreditOption: true,
   },
   cancellation: {
-    allowCancellation: true,
-    cancellationWindowHours: 24,
+    allowCancellation: false,
+    cancellationWindowHours: 0,
     refundTimeline: '5-7 business days',
-    walletRefund: true,
-    originalPaymentRefund: true,
+    walletRefund: false,
+    originalPaymentRefund: false,
   },
   loyalty: {
     walletEnabled: true,
@@ -120,9 +111,9 @@ const DEFAULT_STORE_SETTINGS = {
   orders: {
     maxItemsPerOrder: 20,
     maxQuantityPerItem: 50,
-    minOrderValue: 0,
-    maxOrderValue: 1000000,
-    platformFee: 0,
+    minOrderValue: 1000,
+    maxOrderValue: 100000,
+    platformFee: 49,
   },
   taxes: {
     gstEnabled: true,
@@ -135,23 +126,20 @@ const DEFAULT_STORE_SETTINGS = {
     taxInclusive: true,
     invoiceFooter: '',
   },
-  notifications: {
-    emailEnabled: true,
-    smsEnabled: true,
-    whatsappEnabled: true,
-  },
   storefront: {
     seoTitle: 'Siri Arts and Crafts',
     seoDescription: 'Premium Handicrafts and Luxury Event Decor',
     hideGallerySection: false,
     hideProductsFromGallery: false,
+    customerAuthMethod: 'both',
   },
   contact: {
-    phone: '+91 98660 06648',
-    email: 'sirisha.atmakuri@gmail.com',
+    phone: '',
+    alternatePhone: '',
+    email: '',
     supportHours: 'Mon - Sat, 10 AM to 6 PM',
-    address: '#28-1-92, South Street, ONGOLE-523001, Prakasam District, Andhra Pradesh',
-    whatsappNumber: '+91 98660 06648',
+    address: '',
+    whatsappNumber: '',
     whatsappMessage: 'Hello! Thank you for reaching Siri Arts & Crafts.',
     googleMapsUrl: '',
     instagram: '',
@@ -163,12 +151,12 @@ const DEFAULT_STORE_SETTINGS = {
     city: 'Ongole',
     state: 'Andhra Pradesh',
     country: 'India',
-    postalCode: '523001',
+    postalCode: '',
   },
   legal: {
     companyName: 'Siri Arts & Crafts',
     legalCompanyName: 'Siri Arts and Crafts Private Limited',
-    registeredAddress: '#28-1-92, South Street, ONGOLE-523001, Prakasam District, Andhra Pradesh',
+    registeredAddress: '',
     cin: '',
   },
 };
@@ -184,6 +172,29 @@ const mergeSettingsWithDefaults = (fetched) => {
   }
   return merged;
 };
+
+const SubTabBar = ({ tabs = [], activeTab, onChange }) => (
+  <div className="flex flex-wrap items-center gap-1.5 p-1 bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] rounded-[6px] w-fit mb-6">
+    {tabs.map((tab) => {
+      const isActive = activeTab === tab.id;
+      return (
+        <button
+          key={tab.id}
+          type="button"
+          onClick={() => onChange(tab.id)}
+          className={`flex items-center gap-1.5 px-3 py-1.5 text-[12.5px] font-bold rounded-[4px] transition-all cursor-pointer ${
+            isActive
+              ? 'bg-[var(--admin-surface)] text-[var(--admin-accent)] shadow-xs border border-[var(--admin-border)]'
+              : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface)]/50'
+          }`}
+        >
+          {tab.icon && <span className="material-symbols-outlined text-[16px]">{tab.icon}</span>}
+          <span>{tab.label}</span>
+        </button>
+      );
+    })}
+  </div>
+);
 
 export function AdminSettings({ hideHeader = false }) {
   const queryClient = useQueryClient();
@@ -211,58 +222,16 @@ export function AdminSettings({ hideHeader = false }) {
   const [resetCheck3, setResetCheck3] = useState(false);
   const [resetExecuting, setResetExecuting] = useState(false);
 
-  const [auditSearchQuery, setAuditSearchQuery] = useState('');
-  const [auditActorFilter, setAuditActorFilter] = useState('all');
-
-  const [testRecipientEmail, setTestRecipientEmail] = useState('');
-  const [testingSmtp, setTestingSmtp] = useState(false);
-  const [smtpTestResult, setSmtpTestResult] = useState(null);
-
-  const handleSmtpTest = async (e) => {
-    e.preventDefault();
-    setTestingSmtp(true);
-    setSmtpTestResult(null);
-    const testToast = toast.loading('Verifying SMTP connection and dispatching test email...');
-    try {
-      const res = await notificationService.testSmtp(testRecipientEmail);
-      if (res.success) {
-        toast.success('SMTP Diagnostic success! Test email dispatched.', { id: testToast });
-        setSmtpTestResult({
-          success: true,
-          message: res.message,
-          messageId: res.messageId,
-          details: res.details,
-        });
-      } else {
-        toast.error('SMTP Diagnostic failed. Check stack trace.', { id: testToast });
-        setSmtpTestResult({
-          success: false,
-          message: res.message || 'Connection refused.',
-          errorMessage: res.errorMessage || 'Unknown transport error.',
-          details: res.details,
-        });
-      }
-    } catch (error) {
-      const errorMsg =
-        error.response?.data?.message || error.message || 'Diagnostic request timed out.';
-      const errorStack =
-        error.response?.data?.errorMessage || error.response?.data?.errorStack || error.stack || '';
-      toast.error(`SMTP Verification Failed: ${errorMsg}`, { id: testToast });
-      setSmtpTestResult({
-        success: false,
-        message: errorMsg,
-        errorMessage: errorStack,
-      });
-    } finally {
-      setTestingSmtp(false);
-    }
-  };
-
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeSection, setActiveSection] = useState(0);
+  const [activeSubTabs, setActiveSubTabs] = useState({});
   const [mobileSectionOpen, setMobileSectionOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  const setSubTabForSection = (sectionId, subTabId) => {
+    setActiveSubTabs((prev) => ({ ...prev, [sectionId]: subTabId }));
+  };
 
   const [profileForm, setProfileForm] = useState({
     name: authUser?.name || '',
@@ -302,7 +271,7 @@ export function AdminSettings({ hideHeader = false }) {
       primaryColor: 'var(--color-gold-dark)',
       secondaryColor: '#F8F9FB',
       fontFamily: 'Playfair Display + Inter',
-      whatsappNumber: '+91 98660 06648',
+      whatsappNumber: '',
       whatsappMessage: 'Hello! Thank you for reaching Siri Arts & Crafts.',
     },
     enabled: true,
@@ -467,23 +436,6 @@ export function AdminSettings({ hideHeader = false }) {
     }
   };
 
-  const handleGlobalSettingsSave = async (e) => {
-    e.preventDefault();
-    setSaving(true);
-    try {
-      const { razorpaySecret: _s, razorpayKeySecret: _k, ...settingsToSave } = settings;
-      const res = await cmsService.updateSection('studio_settings', settingsToSave);
-      if (res) {
-        await deleteDraft();
-        toast.success('Settings saved');
-      }
-    } catch (err) {
-      toast.error(getErrorMessage(err, 'Failed to commit settings changes.'));
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const handleStoreSettingsSave = (sectionId) => async (e) => {
     if (e) e.preventDefault();
     if (sectionId === 'payments') {
@@ -506,6 +458,7 @@ export function AdminSettings({ hideHeader = false }) {
         },
       }));
       queryClient.invalidateQueries({ queryKey: ['storeSettings'] });
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
       toast.success(`${sectionId.charAt(0).toUpperCase() + sectionId.slice(1)} settings saved`);
     } catch (err) {
       toast.error(getErrorMessage(err, 'Failed to save settings.'));
@@ -557,34 +510,243 @@ export function AdminSettings({ hideHeader = false }) {
     }));
   };
 
+  const handleStoreDetailsChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    const val = type === 'checkbox' ? checked : value;
+
+    setStoreSettings((prev) => {
+      const next = {
+        ...prev,
+        general: { ...(prev?.general || {}) },
+        contact: { ...(prev?.contact || {}) },
+        legal: { ...(prev?.legal || {}) },
+      };
+
+      if (['storeName', 'tagline', 'storeEnabled', 'maintenanceMode'].includes(name)) {
+        next.general[name] = val;
+      } else if (name === 'supportEmail' || name === 'email') {
+        next.general.supportEmail = val;
+        next.contact.email = val;
+      } else if (name === 'phone') {
+        next.general.phone = val;
+        next.contact.phone = val;
+      } else if (name === 'alternatePhone') {
+        next.general.alternatePhone = val;
+        next.contact.alternatePhone = val;
+      } else if (name === 'whatsappNumber') {
+        next.general.whatsappNumber = val;
+        next.contact.whatsappNumber = val;
+      } else if (
+        ['supportHours', 'address', 'city', 'state', 'postalCode', 'country'].includes(name)
+      ) {
+        next.contact[name] = val;
+      } else if (['companyName', 'legalCompanyName', 'cin', 'registeredAddress'].includes(name)) {
+        next.legal[name] = val;
+      }
+
+      return next;
+    });
+  };
+
+  const handleStoreDetailsSave = async (e) => {
+    if (e) e.preventDefault();
+    setSaving(true);
+    try {
+      const legalPayload = {
+        ...(storeSettings.legal || {}),
+        companyName: storeSettings.legal?.companyName || storeSettings.general?.storeName || '',
+      };
+      const genRes = await storeSettingsService.updateSection('general', storeSettings.general);
+      const conRes = await storeSettingsService.updateSection('contact', storeSettings.contact);
+      const legRes = await storeSettingsService.updateSection('legal', legalPayload);
+
+      setStoreSettings((prev) => ({
+        ...prev,
+        general: { ...(prev?.general || {}), ...(genRes?.general || genRes || prev?.general) },
+        contact: { ...(prev?.contact || {}), ...(conRes?.contact || conRes || prev?.contact) },
+        legal: { ...(prev?.legal || {}), ...(legRes?.legal || legRes || prev?.legal) },
+      }));
+      queryClient.invalidateQueries({ queryKey: ['storeSettings'] });
+      toast.success('Store details & legal settings saved successfully');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to save store settings.'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleShippingOrdersChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    const val = type === 'checkbox' ? checked : value;
+
+    setStoreSettings((prev) => {
+      const next = {
+        ...prev,
+        shipping: { ...(prev?.shipping || {}) },
+        orders: { ...(prev?.orders || {}) },
+      };
+
+      const shippingKeys = [
+        'deliveryCharge',
+        'freeShippingThreshold',
+        'estimatedDeliveryDays',
+        'packagingFee',
+        'originPincode',
+        'defaultCourierPartner',
+      ];
+
+      const orderKeys = [
+        'maxItemsPerOrder',
+        'maxQuantityPerItem',
+        'minOrderValue',
+        'maxOrderValue',
+        'platformFee',
+      ];
+
+      if (shippingKeys.includes(name)) {
+        const numFields = ['deliveryCharge', 'freeShippingThreshold', 'packagingFee'];
+        next.shipping[name] = numFields.includes(name) ? (val === '' ? '' : Number(val)) : val;
+      } else if (orderKeys.includes(name)) {
+        next.orders[name] = val === '' ? '' : Number(val);
+      }
+
+      return next;
+    });
+  };
+
+  const handleShippingOrdersSave = async (e) => {
+    if (e) e.preventDefault();
+    setSaving(true);
+    try {
+      const res = await storeSettingsService.updateShippingOrders({
+        shipping: storeSettings.shipping || {},
+        orders: storeSettings.orders || {},
+      });
+
+      setStoreSettings((prev) => ({
+        ...prev,
+        shipping: { ...(prev?.shipping || {}), ...(res?.shipping || prev?.shipping) },
+        orders: { ...(prev?.orders || {}), ...(res?.orders || prev?.orders) },
+      }));
+
+      queryClient.invalidateQueries({ queryKey: ['storeSettings'] });
+      toast.success('Shipping & order limits saved successfully');
+    } catch (error) {
+      logger.error('Failed to save shipping & orders settings:', error);
+      toast.error(getErrorMessage(error, 'Failed to save settings'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handlePaymentsTaxesSave = async (e) => {
+    if (e) e.preventDefault();
+    const p = storeSettings.payments || {};
+    if (!p.enableRazorpay && !p.enableCOD) {
+      toast.error('At least one payment method must remain active.');
+      return;
+    }
+    setSaving(true);
+    try {
+      const [payRes, taxRes] = await Promise.all([
+        storeSettingsService.updateSection('payments', storeSettings.payments || {}),
+        storeSettingsService.updateSection('taxes', storeSettings.taxes || {}),
+      ]);
+
+      setStoreSettings((prev) => ({
+        ...prev,
+        payments: { ...(prev?.payments || {}), ...(payRes?.payments || payRes || prev?.payments) },
+        taxes: { ...(prev?.taxes || {}), ...(taxRes?.taxes || taxRes || prev?.taxes) },
+      }));
+
+      queryClient.invalidateQueries({ queryKey: ['storeSettings'] });
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
+      toast.success('Payments and taxes saved successfully');
+    } catch (error) {
+      logger.error('Failed to save payments & taxes settings:', error);
+      toast.error(getErrorMessage(error, 'Failed to save settings'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading || !storeSettings) {
     return <AdminSettingsSkeleton hideHeader={hideHeader} />;
   }
 
   const sectionsList = [
     { id: 'profile', title: 'Profile & Account', icon: 'person' },
-    { id: 'general', title: 'General Info', icon: 'store' },
-    { id: 'shipping', title: 'Shipping & Delivery', icon: 'local_shipping' },
-    { id: 'payments', title: 'Payment Methods', icon: 'payments' },
-    { id: 'returnsExchanges', title: 'Returns & Exchanges', icon: 'sync' },
-    { id: 'cancellation', title: 'Cancellation', icon: 'cancel' },
+    {
+      id: 'store',
+      title: 'Store Details & Legal',
+      icon: 'store',
+      keywords: ['general', 'contact', 'legal', 'company', 'address', 'phone', 'email', 'support'],
+    },
+    {
+      id: 'shippingOrders',
+      title: 'Shipping & Orders',
+      icon: 'local_shipping',
+      keywords: [
+        'shipping',
+        'delivery',
+        'charge',
+        'orders',
+        'limits',
+        'threshold',
+        'courier',
+        'fee',
+        'express',
+        'local',
+      ],
+    },
+    {
+      id: 'paymentsTaxes',
+      title: 'Payments & Taxes',
+      icon: 'payments',
+      keywords: [
+        'payment',
+        'razorpay',
+        'cod',
+        'cash on delivery',
+        'taxes',
+        'gst',
+        'invoicing',
+        'invoice',
+        'rates',
+      ],
+    },
+    {
+      id: 'policies',
+      title: 'Returns & Exchanges',
+      icon: 'sync',
+      keywords: ['returns', 'exchanges', 'refund', 'policy', 'return window'],
+    },
     { id: 'loyalty', title: 'Loyalty & Rewards', icon: 'card_giftcard' },
-    { id: 'orders', title: 'Order Limits', icon: 'shopping_bag' },
-    { id: 'taxes', title: 'Taxes & Invoicing', icon: 'receipt' },
-    { id: 'notifications', title: 'Notifications', icon: 'notifications' },
-    { id: 'storefront', title: 'Storefront SEO', icon: 'travel_explore' },
-    { id: 'contact', title: 'Contact Details', icon: 'contact_phone' },
-    { id: 'legal', title: 'Legal & Company', icon: 'gavel' },
-    { id: 'whatsapp', title: 'WhatsApp Automations', icon: 'chat' },
+    {
+      id: 'storefront',
+      title: 'Storefront & Customer Auth',
+      icon: 'travel_explore',
+      keywords: ['storefront', 'seo', 'auth', 'login', 'modal', 'email', 'mobile', 'otp', 'search'],
+    },
+    {
+      id: 'aiSearch',
+      title: 'AI & Visual Search',
+      icon: 'auto_awesome',
+      subTabs: [
+        { id: 'visualSearch', label: 'AI Visual Search', icon: 'image_search' },
+        { id: 'aiPlatform', label: 'Global AI Platform', icon: 'memory' },
+      ],
+    },
     { id: 'security', title: 'Security & Operations', icon: 'shield' },
-    { id: 'email', title: 'Email Diagnostics', icon: 'mail' },
-    { id: 'visualSearch', title: 'AI Visual Search', icon: 'image_search' },
-    { id: 'aiPlatform', title: 'Global AI Platform', icon: 'memory' },
   ];
 
   const filteredSections = sectionsList.filter((sec) => {
     if (!searchQuery.trim()) return true;
-    return sec.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const q = searchQuery.toLowerCase();
+    if (sec.title.toLowerCase().includes(q)) return true;
+    if (sec.subTabs && sec.subTabs.some((st) => st.label.toLowerCase().includes(q))) return true;
+    if (sec.keywords && sec.keywords.some((k) => k.toLowerCase().includes(q))) return true;
+    return false;
   });
 
   return (
@@ -766,9 +928,6 @@ export function AdminSettings({ hideHeader = false }) {
               <span className="text-[10px] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] px-2.5 py-1 rounded-[4px] font-bold uppercase tracking-wider border border-[var(--admin-border)] shadow-2xs">
                 Live Configuration
               </span>
-              {sectionsList[activeSection]?.id === 'whatsapp' && (
-                <DraftStatusIndicator status={draftStatus} lastSavedAt={lastSavedAt} />
-              )}
             </div>
           </div>
 
@@ -783,47 +942,73 @@ export function AdminSettings({ hideHeader = false }) {
               />
             )}
 
-            {sectionsList[activeSection].id === 'general' && (
-              <GeneralSettingsPanel
-                formData={storeSettings.general || {}}
-                handleChange={handleStoreSettingsChange('general')}
-                handleSave={handleStoreSettingsSave('general')}
+            {sectionsList[activeSection].id === 'store' && (
+              <StoreDetailsLegalPanel
+                formData={{
+                  storeName: storeSettings.general?.storeName || '',
+                  tagline: storeSettings.general?.tagline || '',
+                  storeEnabled: storeSettings.general?.storeEnabled ?? true,
+                  maintenanceMode: storeSettings.general?.maintenanceMode ?? false,
+
+                  supportEmail:
+                    storeSettings.general?.supportEmail || storeSettings.contact?.email || '',
+                  phone: storeSettings.general?.phone || storeSettings.contact?.phone || '',
+                  alternatePhone:
+                    storeSettings.general?.alternatePhone ||
+                    storeSettings.contact?.alternatePhone ||
+                    '',
+                  whatsappNumber:
+                    storeSettings.general?.whatsappNumber ||
+                    storeSettings.contact?.whatsappNumber ||
+                    '',
+                  supportHours: storeSettings.contact?.supportHours || '',
+
+                  address: storeSettings.contact?.address || '',
+                  city: storeSettings.contact?.city || '',
+                  state: storeSettings.contact?.state || '',
+                  postalCode: storeSettings.contact?.postalCode || '',
+                  country: storeSettings.contact?.country || '',
+
+                  companyName:
+                    storeSettings.legal?.companyName || storeSettings.general?.storeName || '',
+                  legalCompanyName: storeSettings.legal?.legalCompanyName || '',
+                  cin: storeSettings.legal?.cin || '',
+                  registeredAddress: storeSettings.legal?.registeredAddress || '',
+                }}
+                handleChange={handleStoreDetailsChange}
+                handleSave={handleStoreDetailsSave}
                 saving={saving}
               />
             )}
 
-            {sectionsList[activeSection].id === 'shipping' && (
-              <ShippingSettingsPanel
-                formData={storeSettings.shipping || {}}
-                handleChange={handleStoreSettingsChange('shipping')}
-                handleSave={handleStoreSettingsSave('shipping')}
+            {sectionsList[activeSection].id === 'shippingOrders' && (
+              <ShippingOrdersPanel
+                formData={{
+                  ...(storeSettings.shipping || {}),
+                  ...(storeSettings.orders || {}),
+                }}
+                handleChange={handleShippingOrdersChange}
+                handleSave={handleShippingOrdersSave}
                 saving={saving}
               />
             )}
 
-            {sectionsList[activeSection].id === 'payments' && (
-              <PaymentSettingsPanel
-                formData={storeSettings.payments || {}}
-                handleChange={handleStoreSettingsChange('payments')}
-                handleSave={handleStoreSettingsSave('payments')}
+            {sectionsList[activeSection].id === 'paymentsTaxes' && (
+              <PaymentsTaxesPanel
+                paymentsFormData={storeSettings.payments || {}}
+                taxesFormData={storeSettings.taxes || {}}
+                onPaymentsChange={handleStoreSettingsChange('payments')}
+                onTaxesChange={handleStoreSettingsChange('taxes')}
+                handleSave={handlePaymentsTaxesSave}
                 saving={saving}
               />
             )}
 
-            {sectionsList[activeSection].id === 'returnsExchanges' && (
+            {sectionsList[activeSection].id === 'policies' && (
               <ReturnSettingsPanel
                 formData={storeSettings.returnsExchanges || {}}
                 handleChange={handleStoreSettingsChange('returnsExchanges')}
                 handleSave={handleStoreSettingsSave('returnsExchanges')}
-                saving={saving}
-              />
-            )}
-
-            {sectionsList[activeSection].id === 'cancellation' && (
-              <CancellationSettingsPanel
-                formData={storeSettings.cancellation || {}}
-                handleChange={handleStoreSettingsChange('cancellation')}
-                handleSave={handleStoreSettingsSave('cancellation')}
                 saving={saving}
               />
             )}
@@ -838,33 +1023,6 @@ export function AdminSettings({ hideHeader = false }) {
               />
             )}
 
-            {sectionsList[activeSection].id === 'orders' && (
-              <OrderSettingsPanel
-                formData={storeSettings.orders || {}}
-                handleChange={handleStoreSettingsChange('orders')}
-                handleSave={handleStoreSettingsSave('orders')}
-                saving={saving}
-              />
-            )}
-
-            {sectionsList[activeSection].id === 'taxes' && (
-              <TaxSettingsPanel
-                formData={storeSettings.taxes || {}}
-                handleChange={handleStoreSettingsChange('taxes')}
-                handleSave={handleStoreSettingsSave('taxes')}
-                saving={saving}
-              />
-            )}
-
-            {sectionsList[activeSection].id === 'notifications' && (
-              <NotificationSettingsPanel
-                formData={storeSettings.notifications || {}}
-                handleChange={handleStoreSettingsChange('notifications')}
-                handleSave={handleStoreSettingsSave('notifications')}
-                saving={saving}
-              />
-            )}
-
             {sectionsList[activeSection].id === 'storefront' && (
               <StorefrontSettingsPanel
                 formData={storeSettings.storefront || {}}
@@ -874,32 +1032,18 @@ export function AdminSettings({ hideHeader = false }) {
               />
             )}
 
-            {sectionsList[activeSection].id === 'contact' && (
-              <ContactSettingsPanel
-                formData={storeSettings.contact || {}}
-                handleChange={handleStoreSettingsChange('contact')}
-                handleSave={handleStoreSettingsSave('contact')}
-                saving={saving}
-              />
-            )}
-
-            {sectionsList[activeSection].id === 'legal' && (
-              <LegalSettingsPanel
-                formData={storeSettings.legal || {}}
-                handleChange={handleStoreSettingsChange('legal')}
-                handleSave={handleStoreSettingsSave('legal')}
-                saving={saving}
-              />
-            )}
-
-            {sectionsList[activeSection].id === 'whatsapp' && (
-              <WhatsAppPanel
-                settings={settings}
-                setSettings={setSettings}
-                handleGlobalSettingsSave={handleGlobalSettingsSave}
-                syncSettingsData={syncSettingsData}
-                saving={saving}
-              />
+            {sectionsList[activeSection].id === 'aiSearch' && (
+              <div>
+                <SubTabBar
+                  tabs={sectionsList[activeSection].subTabs}
+                  activeTab={activeSubTabs.aiSearch || 'visualSearch'}
+                  onChange={(tabId) => setSubTabForSection('aiSearch', tabId)}
+                />
+                {(activeSubTabs.aiSearch || 'visualSearch') === 'visualSearch' && (
+                  <VisualSearchPanel />
+                )}
+                {activeSubTabs.aiSearch === 'aiPlatform' && <AiSettingsPanel />}
+              </div>
             )}
 
             {sectionsList[activeSection].id === 'security' && (
@@ -912,13 +1056,6 @@ export function AdminSettings({ hideHeader = false }) {
                 toggleAutoPublish={toggleAutoPublish}
                 idleTimeoutMinutes={idleTimeoutMinutes}
                 changeIdleTimeout={changeIdleTimeout}
-                auditLogs={auditLogs}
-                clearAuditLogs={clearAuditLogs}
-                handleBackupDownload={handleBackupDownload}
-                auditSearchQuery={auditSearchQuery}
-                setAuditSearchQuery={setAuditSearchQuery}
-                auditActorFilter={auditActorFilter}
-                setAuditActorFilter={setAuditActorFilter}
                 handleHardReset={handleHardReset}
                 resetCheck1={resetCheck1}
                 setResetCheck1={setResetCheck1}
@@ -931,20 +1068,6 @@ export function AdminSettings({ hideHeader = false }) {
                 resetExecuting={resetExecuting}
               />
             )}
-
-            {sectionsList[activeSection].id === 'email' && (
-              <EmailSmtpPanel
-                testRecipientEmail={testRecipientEmail}
-                setTestRecipientEmail={setTestRecipientEmail}
-                handleSmtpTest={handleSmtpTest}
-                testingSmtp={testingSmtp}
-                smtpTestResult={smtpTestResult}
-              />
-            )}
-
-            {sectionsList[activeSection].id === 'visualSearch' && <VisualSearchPanel />}
-
-            {sectionsList[activeSection].id === 'aiPlatform' && <AiSettingsPanel />}
           </div>
         </motion.div>
       </div>

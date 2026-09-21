@@ -33,8 +33,8 @@ export function AIVisionHUD({
 
   return createPortal(
     <AnimatePresence>
-      {showAIHUD && aiAnalysisResult && (
-        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 pointer-events-none">
+      {showAIHUD && (
+        <div className="admin-section-root fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4 pointer-events-none">
           {/* Blurred Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -42,7 +42,7 @@ export function AIVisionHUD({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={() => setShowAIHUD(false)}
-            className="fixed inset-0 bg-black/50 dark:bg-black/70 pointer-events-auto cursor-pointer"
+            className="fixed inset-0 bg-black/65 dark:bg-black/80 pointer-events-auto cursor-pointer"
             style={{
               backdropFilter: 'blur(8px)',
               WebkitBackdropFilter: 'blur(8px)',
@@ -53,21 +53,26 @@ export function AIVisionHUD({
           <motion.div
             initial={{
               opacity: 0,
-              y: isMobile ? '100%' : 8,
+              y: isMobile ? '100%' : 16,
               scale: isMobile ? 1 : 0.98,
             }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{
               opacity: 0,
-              y: isMobile ? '100%' : 8,
+              y: isMobile ? '100%' : 16,
               scale: isMobile ? 1 : 0.98,
             }}
             transition={sheetTransition}
             {...dragProps}
-            className="pointer-events-auto relative z-10 bg-[var(--admin-surface)] border-t sm:border border-[var(--admin-border)] w-full sm:max-w-xl rounded-t-2xl sm:rounded-[4px] shadow-2xl flex flex-col max-h-[90dvh] sm:max-h-[86vh] overflow-hidden"
+            className="pointer-events-auto relative z-10 bg-[var(--admin-surface)] border-t sm:border border-[var(--admin-border)] w-full sm:max-w-2xl lg:max-w-3xl rounded-t-2xl sm:rounded-xl shadow-2xl flex flex-col max-h-[92dvh] sm:max-h-[86vh] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            {isMobile && <DrawerDragHandle onClick={() => setShowAIHUD(false)} />}
+            {isMobile && (
+              <DrawerDragHandle
+                onClick={() => setShowAIHUD(false)}
+                pillClassName="bg-[var(--admin-border-strong)]"
+              />
+            )}
 
             {/* Header */}
             <div className="px-4 sm:px-5 py-3 border-b border-[var(--admin-border-subtle)] bg-[var(--admin-surface)] flex items-center justify-between gap-2 shrink-0">
@@ -100,7 +105,7 @@ export function AIVisionHUD({
             </div>
 
             {/* Scrollable Dashboard Panel */}
-            <div className="p-4 sm:p-5 overflow-y-auto overscroll-contain touch-pan-y space-y-3.5 custom-scrollbar text-left text-[var(--admin-text-primary)] flex-1">
+            <div className="p-4 sm:p-5 overflow-y-auto overflow-x-hidden overscroll-contain touch-pan-y space-y-3.5 custom-scrollbar text-left text-[var(--admin-text-primary)] flex-1 min-h-0">
               {/* Classification Banner: Concept + Match */}
               <div className="flex items-center justify-between gap-3 p-3 sm:p-3.5 rounded-[4px] bg-[var(--admin-surface-muted)] border border-[var(--admin-border)]">
                 <div className="min-w-0">
@@ -255,7 +260,7 @@ export function AIVisionHUD({
               <button
                 type="button"
                 onClick={() => setShowAIHUD(false)}
-                className="admin-btn admin-btn-outline flex-1 !h-9 sm:!h-10 !py-0 px-3 sm:px-4 !rounded-[4px] text-[12px] sm:text-[13px] font-bold shadow-xs min-w-max cursor-pointer inline-flex items-center justify-center gap-1.5 box-border"
+                className="admin-btn admin-btn-outline flex-1 !h-9 sm:!h-10 !py-0 px-3 sm:px-4 !rounded-[4px] text-[12px] sm:text-[13px] font-bold shadow-xs cursor-pointer inline-flex items-center justify-center gap-1.5 box-border truncate"
               >
                 Reject / Cancel
               </button>
@@ -263,12 +268,12 @@ export function AIVisionHUD({
               <button
                 type="button"
                 onClick={handleApplyAISpecs}
-                className="admin-btn admin-btn-primary flex-1 !h-9 sm:!h-10 !py-0 px-3 sm:px-4 !rounded-[4px] text-[12px] sm:text-[13px] font-bold shadow-xs min-w-max cursor-pointer inline-flex items-center justify-center gap-1.5 box-border"
+                className="admin-btn admin-btn-primary flex-1 !h-9 sm:!h-10 !py-0 px-3 sm:px-4 !rounded-[4px] text-[12px] sm:text-[13px] font-bold shadow-xs cursor-pointer inline-flex items-center justify-center gap-1.5 box-border truncate"
               >
-                <span className="material-symbols-outlined text-[17px] leading-none">
+                <span className="material-symbols-outlined text-[17px] leading-none shrink-0">
                   published_with_changes
                 </span>
-                <span>Apply AI Curation</span>
+                <span className="truncate">Apply AI Curation</span>
               </button>
             </div>
           </motion.div>

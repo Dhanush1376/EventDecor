@@ -152,11 +152,11 @@ describe('SmsProviderService', () => {
       });
 
       const rawOtp = '741852';
-      await provider.sendOtp('+919866006648', rawOtp);
+      await provider.sendOtp('+919999999999', rawOtp);
 
       expect(loggerInfoSpy).toHaveBeenCalled();
       const loggedText = loggerInfoSpy.mock.calls.map((c) => c.join(' ')).join(' ');
-      expect(loggedText).toContain('+91 ******6648');
+      expect(loggedText).toContain('+91 ******9999');
       expect(loggedText).not.toContain(rawOtp);
       expect(loggedText).not.toContain(secretKey);
     });

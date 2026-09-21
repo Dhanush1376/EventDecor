@@ -110,7 +110,7 @@ export function SearchInputHeader({
               </button>
             )}
 
-            {!query && visualSearch?.isEnabled && (
+            {!query && visualSearch?.isEnabled && visualSearch?.isCameraSearchEnabled && (
               <button
                 onClick={() => visualSearch.open()}
                 className="w-7 h-7 min-h-0 rounded-full flex items-center justify-center bg-stone-100 text-stone-500 active:bg-stone-200 transition-all flex-shrink-0"
@@ -255,7 +255,7 @@ export function SearchInputHeader({
             </button>
 
             {/* Visual Search Button */}
-            {visualSearch?.isEnabled && (
+            {visualSearch?.isEnabled && visualSearch?.isCameraSearchEnabled && (
               <button
                 onClick={() => visualSearch.open()}
                 className="flex items-center justify-center rounded-full bg-stone-200/50 hover:bg-[#d4af37]/10 text-stone-500 hover:text-[#d4af37] transition-all duration-300 cursor-pointer"

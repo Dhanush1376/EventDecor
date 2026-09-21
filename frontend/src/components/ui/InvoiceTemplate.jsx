@@ -197,7 +197,17 @@ export function InvoiceTemplate({ order, user = {}, onClose, isAdmin = false }) 
   // ─── Read from immutable snapshots ─────────────────────────────────
   const invoiceSnap = order.invoice || {};
   const storeSnap = order.store || {};
-  const taxSnap = typeof order.tax === 'object' && order.tax !== null ? order.tax : {};
+  const taxSnap =
+    typeof order.tax === 'object' && order.tax !== null ? order.tax : order.taxSnapshot || {};
+
+  const isGstEnabled = taxSnap.gstEnabled ?? storeSettings?.taxes?.gstEnabled ?? true;
+  const isTaxInclusive = taxSnap.taxInclusive ?? storeSettings?.taxes?.taxInclusive ?? true;
+  const isInterState = Boolean(taxSnap.isInterState);
+  const gstRate = Number(taxSnap.gstRate ?? storeSettings?.taxes?.gstRate ?? 0.18);
+  const cgstRate = Number(taxSnap.cgstRate ?? storeSettings?.taxes?.cgstRate ?? gstRate / 2);
+  const sgstRate = Number(taxSnap.sgstRate ?? storeSettings?.taxes?.sgstRate ?? gstRate / 2);
+  const hsnCode = taxSnap.hsnCode || storeSettings?.taxes?.hsnCode || '';
+  const invoiceFooter = taxSnap.invoiceFooter || storeSettings?.taxes?.invoiceFooter || '';
 
   // ─── Invoice metadata ─────────────────────────────────────────────
   const orderId = isPureRental
@@ -212,11 +222,15 @@ export function InvoiceTemplate({ order, user = {}, onClose, isAdmin = false }) 
       (order._id ? `INV-${order._id.slice(-8).toUpperCase()}` : 'Not Generated');
 
   const invoiceNumber = displayInvoiceNumber;
-  const invoiceHeading = isMixed
-    ? 'TAX INVOICE'
-    : isPureRental
-      ? 'TAX INVOICE — RENTAL'
-      : 'TAX INVOICE';
+  const invoiceHeading = !isGstEnabled
+    ? isPureRental
+      ? 'INVOICE — RENTAL'
+      : 'INVOICE'
+    : isMixed
+      ? 'TAX INVOICE'
+      : isPureRental
+        ? 'TAX INVOICE — RENTAL'
+        : 'TAX INVOICE';
 
   const rawDate =
     invoiceSnap.issuedAt ||
@@ -233,23 +247,46 @@ export function InvoiceTemplate({ order, user = {}, onClose, isAdmin = false }) 
 
   // ─── Store identity (from snapshot) ────────────────────────────────
   const businessName = storeSnap.displayName || storeName || BRAND.name || 'Siri Arts & Crafts';
-  const legalName = storeSnap.legalCompanyName || storeSettings?.company?.legalCompanyName || '';
-  const gstin = storeSnap.gstin || storeSettings?.company?.taxId || '29AAAES9284D1ZX';
+  const legalName =
+    storeSnap.legalCompanyName ||
+    storeSettings?.legal?.legalCompanyName ||
+    storeSettings?.legal?.companyName ||
+    BRAND.legalCompanyName ||
+    '';
+  const gstin =
+    taxSnap.gstNumber || storeSnap.gstin || storeSettings?.taxes?.gstNumber || BRAND.gstin || '';
+  const cin = storeSnap.cin || storeSettings?.legal?.cin || BRAND.cin || '';
   const storeEmail =
     storeSnap.email ||
+    storeSettings?.general?.supportEmail ||
     storeSettings?.contact?.email ||
-    storeSettings?.support?.email ||
-    'support@siriartsandcrafts.com';
+    BRAND.email ||
+    '';
 
-  const storeAddressLines = storeSnap.addressLine1
-    ? [
-        storeSnap.addressLine1,
-        storeSnap.addressLine2,
-        [storeSnap.city, storeSnap.state].filter(Boolean).join(', '),
-        storeSnap.postalCode,
-        storeSnap.country,
-      ].filter(Boolean)
-    : ['#28-1-92, South Street, ONGOLE-523001,', 'Prakasam District, Andhra Pradesh', 'India'];
+  const baseAddress =
+    storeSnap.addressLine1 ||
+    storeSettings?.contact?.address ||
+    storeSettings?.legal?.registeredAddress ||
+    BRAND.address ||
+    '';
+
+  const storeAddressLines = [];
+  if (baseAddress) {
+    storeAddressLines.push(baseAddress);
+  }
+  if (
+    storeSnap.addressLine2 &&
+    !baseAddress.toLowerCase().includes(storeSnap.addressLine2.toLowerCase())
+  ) {
+    storeAddressLines.push(storeSnap.addressLine2);
+  }
+  const cityState = [storeSnap.city, storeSnap.state].filter(Boolean).join(', ');
+  if (cityState && !baseAddress.toLowerCase().includes(cityState.toLowerCase())) {
+    storeAddressLines.push(cityState);
+  }
+  if (storeSnap.postalCode && !baseAddress.includes(storeSnap.postalCode)) {
+    storeAddressLines.push(storeSnap.postalCode);
+  }
 
   // ─── Payment (from live order fields) ──────────────────────────────
   const paymentMode = order.paymentMethod || order.paymentMode || 'COD';
@@ -351,25 +388,18 @@ export function InvoiceTemplate({ order, user = {}, onClose, isAdmin = false }) 
     : (order.shippingFee ?? order.deliveryCharge ?? 0);
   const shippingFee = deliveryCharge;
 
-  const taxAmount = isPureRental
-    ? typeof order.tax === 'number'
-      ? order.tax
-      : (taxSnap.totalTax ?? 0)
-    : (taxSnap.totalTax ??
-      (typeof order.tax === 'number' ? order.tax : (order.tax?.totalTax ?? 0)));
-
-  const totalTax = Number(taxSnap.totalTax ?? taxAmount) || 0;
+  const totalTax =
+    Number(
+      taxSnap.totalTax ??
+        taxSnap.taxAmount ??
+        (typeof order.tax === 'number' ? order.tax : (order.tax?.totalTax ?? 0)),
+    ) || 0;
 
   const walletDeduction = order.walletDeduction ?? 0;
-  // Check if tax was charged on top (exclusive) or already included in the subtotal
+  const isTaxAddedOnTop = isGstEnabled && !isTaxInclusive && totalTax > 0;
+
   const computedExclusiveTotal =
     subtotal + securityDeposit + deliveryCharge + totalTax - discount - walletDeduction;
-  const isTaxAddedOnTop =
-    totalTax > 0 &&
-    (order.taxInclusive === false ||
-      Math.abs(
-        (order.totalAmount ?? order.total ?? computedExclusiveTotal) - computedExclusiveTotal,
-      ) < 1);
 
   const grandTotal =
     taxSnap.grandTotal ??
@@ -379,19 +409,22 @@ export function InvoiceTemplate({ order, user = {}, onClose, isAdmin = false }) 
       ? computedExclusiveTotal
       : subtotal + securityDeposit + deliveryCharge - discount - walletDeduction);
 
-  const taxableAmount = isPurePurchase
-    ? Number(taxSnap.taxableAmount ?? subtotal - (totalTax || taxAmount)) ||
-      (subtotal > taxAmount ? subtotal - taxAmount : subtotal)
-    : isPureRental
-      ? Number(taxSnap.taxableAmount ?? rentalCharge) || 0
-      : Number(taxSnap.taxableAmount ?? subtotal) || 0;
+  const taxableAmount =
+    Number(
+      taxSnap.taxableAmount ??
+        (isTaxInclusive
+          ? Math.max(0, subtotal - discount) / (1 + gstRate)
+          : Math.max(0, subtotal - discount)),
+    ) || 0;
 
-  const cgst = Number(taxSnap.cgst ?? (totalTax > 0 ? totalTax / 2 : 0)) || 0;
-  const sgst = Number(taxSnap.sgst ?? (totalTax > 0 ? totalTax / 2 : 0)) || 0;
+  const igst = Number(taxSnap.igst ?? (isInterState ? totalTax : 0)) || 0;
+  const cgst = Number(taxSnap.cgst ?? (!isInterState ? totalTax / 2 : 0)) || 0;
+  const sgst = Number(taxSnap.sgst ?? (!isInterState ? totalTax / 2 : 0)) || 0;
   const currency = taxSnap.currencySymbol || '₹';
 
-  const cgstPercent = taxableAmount > 0 ? ((cgst / taxableAmount) * 100).toFixed(0) : '9';
-  const sgstPercent = taxableAmount > 0 ? ((sgst / taxableAmount) * 100).toFixed(0) : '9';
+  const gstRatePercent = (gstRate * 100).toFixed(1);
+  const cgstPercent = (cgstRate * 100).toFixed(1);
+  const sgstPercent = (sgstRate * 100).toFixed(1);
 
   // ─── Tracking info ────────────────────────────────────────────────
   const trackingNumber =
@@ -708,7 +741,8 @@ export function InvoiceTemplate({ order, user = {}, onClose, isAdmin = false }) 
                     {storeAddressLines.map((line, i) => (
                       <p key={i}>{line}</p>
                     ))}
-                    <p className="font-semibold text-black mt-1">GSTIN: {gstin}</p>
+                    {gstin && <p className="font-semibold text-black mt-1">GSTIN: {gstin}</p>}
+                    {cin && <p className="font-semibold text-black">CIN: {cin}</p>}
                   </div>
                 </div>
 
@@ -734,6 +768,12 @@ export function InvoiceTemplate({ order, user = {}, onClose, isAdmin = false }) 
                       <p>
                         Payment:{' '}
                         <strong className="text-black uppercase font-bold">{paymentMode}</strong>
+                      </p>
+                    )}
+                    {hsnCode && isGstEnabled && (
+                      <p>
+                        HSN / SAC:{' '}
+                        <strong className="text-black font-mono font-bold">{hsnCode}</strong>
                       </p>
                     )}
                   </div>
@@ -967,29 +1007,31 @@ export function InvoiceTemplate({ order, user = {}, onClose, isAdmin = false }) 
                     </div>
                   )}
 
-                  {isTaxAddedOnTop ? (
-                    <div className="flex justify-end gap-3">
-                      <span className="font-bold text-[#4b5563]">Taxes & GST:</span>
-                      <span className="font-bold font-mono text-[#111827] w-[90px]">
-                        +{currency}
-                        {totalTax.toFixed(2)}
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="flex justify-end gap-3 text-[#6b7280]">
-                      <span className="font-medium">Taxes & GST:</span>
-                      <span className="font-medium font-mono text-[#4b5563]">
-                        Included in Subtotal ({currency}
-                        {taxAmount > 0 ? taxAmount.toFixed(2) : totalTax.toFixed(2)})
-                      </span>
-                    </div>
-                  )}
+                  {isGstEnabled &&
+                    (isTaxAddedOnTop ? (
+                      <div className="flex justify-end gap-3">
+                        <span className="font-bold text-[#4b5563]">Taxes & GST:</span>
+                        <span className="font-bold font-mono text-[#111827] w-[90px]">
+                          +{currency}
+                          {totalTax.toFixed(2)}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex justify-end gap-3 text-[#6b7280]">
+                        <span className="font-medium">Taxes & GST:</span>
+                        <span className="font-medium font-mono text-[#4b5563]">
+                          Included in Subtotal ({currency}
+                          {totalTax.toFixed(2)})
+                        </span>
+                      </div>
+                    ))}
                 </div>
 
                 {/* Grand Total Banner */}
                 <div className="bg-[#f9fafb] border-t border-b border-[#111827] py-2 px-3 flex justify-between items-center mt-2.5">
                   <span className="font-black text-[#111827] text-[10.5px] uppercase tracking-wider">
-                    GRAND TOTAL (INC. TAXES):
+                    GRAND TOTAL{' '}
+                    {isGstEnabled ? (isTaxInclusive ? '(INC. TAXES)' : '(TAXES ADDED)') : ''}:
                   </span>
                   <span className="font-black font-mono text-black text-[14px]">
                     {currency}
@@ -998,54 +1040,68 @@ export function InvoiceTemplate({ order, user = {}, onClose, isAdmin = false }) 
                 </div>
               </div>
 
-              {/* GST Tax Assessment: FULL WIDTH CARD */}
-              <div
-                className={`bg-[#f9fafb] ${cardRadiusClass} p-3 border border-[#f3f4f6] mt-3 mb-3`}
-              >
-                <h4
-                  className="font-bold text-[9px] uppercase tracking-wider text-[#374151] pb-1 mb-1.5 border-b border-[#e5e7eb]"
-                  style={{ fontFamily: INVOICE_FONT }}
+              {/* GST Tax Assessment: FULL WIDTH CARD (Only rendered when GST is enabled) */}
+              {isGstEnabled && (
+                <div
+                  className={`bg-[#f9fafb] ${cardRadiusClass} p-3 border border-[#f3f4f6] mt-3 mb-3`}
                 >
-                  GST TAX ASSESSMENT
-                </h4>
-                <div className="space-y-1 text-[9.5px]">
-                  <div className="flex justify-between items-center text-[#4b5563]">
-                    <span>Taxable Basic Value:</span>
-                    <span className="font-semibold font-mono text-[#111827]">
-                      {currency}
-                      {taxableAmount > 0
-                        ? taxableAmount.toFixed(2)
-                        : (grandTotal - totalTax).toFixed(2)}
-                    </span>
-                  </div>
+                  <h4
+                    className="font-bold text-[9px] uppercase tracking-wider text-[#374151] pb-1 mb-1.5 border-b border-[#e5e7eb]"
+                    style={{ fontFamily: INVOICE_FONT }}
+                  >
+                    GST TAX ASSESSMENT
+                  </h4>
+                  <div className="space-y-1 text-[9.5px]">
+                    <div className="flex justify-between items-center text-[#4b5563]">
+                      <span>Taxable Basic Value:</span>
+                      <span className="font-semibold font-mono text-[#111827]">
+                        {currency}
+                        {taxableAmount > 0
+                          ? taxableAmount.toFixed(2)
+                          : (grandTotal - totalTax).toFixed(2)}
+                      </span>
+                    </div>
 
-                  <div className="flex justify-between items-center text-[#4b5563]">
-                    <span>Integrated SGST ({sgstPercent}%):</span>
-                    <span className="font-semibold font-mono text-[#111827]">
-                      {currency}
-                      {sgst > 0 ? sgst.toFixed(2) : (totalTax / 2).toFixed(2)}
-                    </span>
-                  </div>
+                    {isInterState ? (
+                      <div className="flex justify-between items-center text-[#4b5563]">
+                        <span>Integrated IGST ({gstRatePercent}%):</span>
+                        <span className="font-semibold font-mono text-[#111827]">
+                          {currency}
+                          {igst.toFixed(2)}
+                        </span>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex justify-between items-center text-[#4b5563]">
+                          <span>State SGST ({sgstPercent}%):</span>
+                          <span className="font-semibold font-mono text-[#111827]">
+                            {currency}
+                            {sgst.toFixed(2)}
+                          </span>
+                        </div>
 
-                  <div className="flex justify-between items-center text-[#4b5563]">
-                    <span>Integrated CGST ({cgstPercent}%):</span>
-                    <span className="font-semibold font-mono text-[#111827]">
-                      {currency}
-                      {cgst > 0 ? cgst.toFixed(2) : (totalTax / 2).toFixed(2)}
-                    </span>
-                  </div>
+                        <div className="flex justify-between items-center text-[#4b5563]">
+                          <span>Central CGST ({cgstPercent}%):</span>
+                          <span className="font-semibold font-mono text-[#111827]">
+                            {currency}
+                            {cgst.toFixed(2)}
+                          </span>
+                        </div>
+                      </>
+                    )}
 
-                  <div className="border-b border-dashed border-[#d1d5db] my-1" />
+                    <div className="border-b border-dashed border-[#d1d5db] my-1" />
 
-                  <div className="flex justify-between items-center font-bold text-[#111827]">
-                    <span>Total Taxes (Inclusive):</span>
-                    <span className="font-black font-mono text-black">
-                      {currency}
-                      {totalTax > 0 ? totalTax.toFixed(2) : taxAmount.toFixed(2)}
-                    </span>
+                    <div className="flex justify-between items-center font-bold text-[#111827]">
+                      <span>Total Taxes ({isTaxInclusive ? 'Inclusive' : 'Exclusive'}):</span>
+                      <span className="font-black font-mono text-black">
+                        {currency}
+                        {totalTax.toFixed(2)}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* Order Tracking: FULL WIDTH ROW (QR Left, Wide Barcode Right) */}
               <div className="mt-2.5 mb-2">
@@ -1102,8 +1158,8 @@ export function InvoiceTemplate({ order, user = {}, onClose, isAdmin = false }) 
 
               {/* Footer Legal Disclaimer */}
               <div className="border-t border-[#f3f4f6] pt-1.5 mt-2 text-center text-[#9ca3af] text-[7.5px] font-light leading-normal">
-                This is a secure computer generated tax invoice issued under {businessName}{' '}
-                regulations and requires no physical signatures.
+                {invoiceFooter ||
+                  `This is a secure computer generated ${isGstEnabled ? 'tax invoice' : 'invoice'} issued under ${businessName} regulations and requires no physical signatures.`}
               </div>
             </div>
           </div>

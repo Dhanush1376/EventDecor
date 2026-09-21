@@ -4,6 +4,7 @@ import CustomOrderConfig from '../models/CustomOrderConfig';
 import CustomOrder from '../models/CustomOrder';
 import OutboxEvent from '../models/OutboxEvent';
 import Product from '../models/Product';
+import { getStoreConfigSync } from '../config/storeConfig';
 import logger from '../config/logger';
 
 export class CustomOrderService {
@@ -67,7 +68,7 @@ export class CustomOrderService {
       messages: [
         {
           sender: 'admin' as const,
-          senderName: 'Siri Arts & Crafts',
+          senderName: getStoreConfigSync().name,
           text: 'Welcome to your custom design workspace! Our design team is currently reviewing your blueprint and inspiration images.',
           createdAt: new Date(),
         },
@@ -219,7 +220,7 @@ export class CustomOrderService {
       messages: [
         {
           sender: 'admin' as const,
-          senderName: 'Siri Arts & Crafts',
+          senderName: getStoreConfigSync().name,
           text: `Thank you for your customization request for "${product.title}"! Our artisan team is reviewing your specifications and will provide a detailed quotation shortly.`,
           createdAt: new Date(),
         },

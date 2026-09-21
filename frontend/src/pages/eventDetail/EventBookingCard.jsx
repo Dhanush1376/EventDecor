@@ -3,6 +3,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { WhatsAppIcon } from '../../components/ui/WhatsAppIcon';
 import { useConfig } from '../../context/ConfigContext';
+import { BRAND } from '../../config/brand';
 import toast from 'react-hot-toast';
 
 export function EventBookingCard({
@@ -32,12 +33,9 @@ export function EventBookingCard({
             <button
               onClick={() => {
                 if (!event) return;
-                const num = '919866006648';
                 const link = `${window.location.origin}/events/${event._id || event.id}`;
-                const msg = encodeURIComponent(
-                  `Hello, I'm interested in this event setup and would like to chat about it.\\n\\nLink: ${link}`,
-                );
-                window.open(`https://wa.me/${num}?text=${msg}`, '_blank');
+                const msg = `Hello, I'm interested in this event setup and would like to chat about it.\n\nLink: ${link}`;
+                window.open(BRAND.getWhatsAppUrl(msg), '_blank');
               }}
               className="bg-white hover:bg-gray-100 text-black px-4 py-2.5 rounded-full font-label-sm text-[11px] uppercase tracking-[0.15em] transition-all whitespace-nowrap font-bold flex items-center justify-center gap-1.5 w-full shadow-sm"
             >

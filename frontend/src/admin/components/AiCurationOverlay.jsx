@@ -83,7 +83,7 @@ export function AiCurationOverlay({
   return createPortal(
     <AnimatePresence>
       {showAIHUD && (
-        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 pointer-events-none">
+        <div className="admin-section-root fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4 pointer-events-none">
           {/* Blurred Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -91,7 +91,7 @@ export function AiCurationOverlay({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={() => setShowAIHUD(false)}
-            className="fixed inset-0 bg-black/50 dark:bg-black/70 pointer-events-auto cursor-pointer"
+            className="fixed inset-0 bg-black/65 dark:bg-black/80 pointer-events-auto cursor-pointer"
             style={{
               backdropFilter: 'blur(8px)',
               WebkitBackdropFilter: 'blur(8px)',
@@ -102,21 +102,26 @@ export function AiCurationOverlay({
           <motion.div
             initial={{
               opacity: 0,
-              y: isMobile ? '100%' : 8,
+              y: isMobile ? '100%' : 16,
               scale: isMobile ? 1 : 0.98,
             }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{
               opacity: 0,
-              y: isMobile ? '100%' : 8,
+              y: isMobile ? '100%' : 16,
               scale: isMobile ? 1 : 0.98,
             }}
             transition={sheetTransition}
             {...dragProps}
-            className="pointer-events-auto relative z-10 bg-[var(--admin-surface)] border-t sm:border border-[var(--admin-border)] w-full sm:max-w-2xl rounded-t-2xl sm:rounded-[4px] shadow-2xl flex flex-col max-h-[90dvh] sm:max-h-[88vh] overflow-hidden"
+            className="pointer-events-auto relative z-10 bg-[var(--admin-surface)] border-t sm:border border-[var(--admin-border)] w-full sm:max-w-2xl lg:max-w-3xl rounded-t-2xl sm:rounded-xl shadow-2xl flex flex-col max-h-[92dvh] sm:max-h-[86vh] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            {isMobile && <DrawerDragHandle onClick={() => setShowAIHUD(false)} />}
+            {isMobile && (
+              <DrawerDragHandle
+                onClick={() => setShowAIHUD(false)}
+                pillClassName="bg-[var(--admin-border-strong)]"
+              />
+            )}
 
             {/* Header */}
             <div className="px-4 sm:px-5 py-3 border-b border-[var(--admin-border-subtle)] bg-[var(--admin-surface)] flex items-center justify-between gap-2 shrink-0">
@@ -125,17 +130,9 @@ export function AiCurationOverlay({
                   <span className="material-symbols-outlined text-[19px]">psychology</span>
                 </div>
                 <div className="min-w-0 text-left">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-[13.5px] sm:text-[14px] font-bold text-[var(--admin-text-primary)] tracking-tight whitespace-nowrap leading-tight">
-                      AI Curation Analysis
-                    </h3>
-                    <span className="text-[9.5px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-[4px] border bg-[var(--admin-accent)]/10 text-[var(--admin-accent)] border-[var(--admin-accent)]/30 shrink-0">
-                      Editable Curation
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-[var(--admin-text-secondary)] font-medium truncate mt-0.5">
-                    Review and customize fields before applying to the product
-                  </p>
+                  <h3 className="text-[13.5px] sm:text-[14px] font-bold text-[var(--admin-text-primary)] tracking-tight whitespace-nowrap leading-tight">
+                    AI Curation Analysis
+                  </h3>
                 </div>
               </div>
               <button
@@ -162,7 +159,7 @@ export function AiCurationOverlay({
             </div>
 
             {/* Scrollable Content Body */}
-            <div className="p-4 sm:p-5 overflow-y-auto overscroll-contain touch-pan-y space-y-3.5 custom-scrollbar text-left text-[var(--admin-text-primary)] flex-1">
+            <div className="p-4 sm:p-5 overflow-y-auto overflow-x-hidden overscroll-contain touch-pan-y space-y-3.5 custom-scrollbar text-left text-[var(--admin-text-primary)] flex-1 min-h-0">
               {/* Classification Banner: Detected Object + Confidence */}
               <div className="p-3 sm:p-3.5 rounded-[4px] bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] space-y-2">
                 <div className="flex items-center justify-between gap-2">
@@ -264,19 +261,19 @@ export function AiCurationOverlay({
                   <span className="text-[10.5px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] block">
                     Pack Quantity
                   </span>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 min-w-0">
                     <input
                       type="number"
                       value={aiAnalysisResult.estimated_quantity || 1}
                       onChange={(e) => updateField('estimated_quantity', Number(e.target.value))}
-                      className="w-14 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] px-2 py-1.5 text-[12px] font-bold text-[var(--admin-text-primary)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] outline-none text-center"
+                      className="w-14 shrink-0 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] px-2 py-1.5 text-[12px] font-bold text-[var(--admin-text-primary)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] outline-none text-center"
                     />
                     <input
                       type="text"
                       value={aiAnalysisResult.estimated_quantity_unit || 'Items'}
                       onChange={(e) => updateField('estimated_quantity_unit', e.target.value)}
                       placeholder="Units"
-                      className="flex-1 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] px-2.5 py-1.5 text-[12px] font-medium text-[var(--admin-text-primary)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] outline-none"
+                      className="flex-1 min-w-0 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] px-2.5 py-1.5 text-[12px] font-medium text-[var(--admin-text-primary)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] outline-none"
                     />
                   </div>
                 </div>
@@ -419,19 +416,30 @@ export function AiCurationOverlay({
                   </div>
                   <button
                     type="button"
+                    role="switch"
+                    aria-checked={Boolean(aiAnalysisResult.personalization_enabled)}
                     onClick={() =>
                       updateField(
                         'personalization_enabled',
                         !aiAnalysisResult.personalization_enabled,
                       )
                     }
-                    className={`px-3 py-1 rounded-[4px] text-[10px] font-bold uppercase tracking-wider border cursor-pointer transition-all shrink-0 ${
+                    className={`w-11 h-6 rounded-full transition-colors duration-200 relative focus:outline-none cursor-pointer min-h-0 p-0 shrink-0 ${
                       aiAnalysisResult.personalization_enabled
-                        ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
-                        : 'bg-stone-500/10 text-stone-500 border-stone-500/20'
+                        ? 'bg-[var(--admin-accent)]'
+                        : 'bg-[var(--admin-border-strong)]'
                     }`}
+                    title={
+                      aiAnalysisResult.personalization_enabled
+                        ? 'Disable Personalization'
+                        : 'Enable Personalization'
+                    }
                   >
-                    {aiAnalysisResult.personalization_enabled ? '✓ Enabled' : 'Disabled'}
+                    <span
+                      className={`absolute top-0.5 left-0.5 w-5 h-5 bg-[var(--admin-surface)] rounded-full transition-transform duration-200 shadow-sm ${
+                        aiAnalysisResult.personalization_enabled ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
                   </button>
                 </div>
 
@@ -573,12 +581,12 @@ export function AiCurationOverlay({
                   placeholder="Detailed product narrative description..."
                   className="w-full min-h-[85px] bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] p-3 text-[12px] text-[var(--admin-text-primary)] leading-relaxed focus:border-[var(--admin-accent)] outline-none transition-all resize-y custom-scrollbar"
                 />
-                <div className="pt-2 border-t border-[var(--admin-border-subtle)] flex items-center gap-2">
+                <div className="pt-2 border-t border-[var(--admin-border-subtle)] flex items-center gap-2 min-w-0">
                   <span className="text-[10.5px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] shrink-0">
                     URL Slug:
                   </span>
-                  <div className="flex-1 flex items-center bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] px-2.5 py-1">
-                    <span className="text-[11px] font-mono text-[var(--admin-text-tertiary)]">
+                  <div className="flex-1 min-w-0 flex items-center bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] px-2.5 py-1">
+                    <span className="text-[11px] font-mono text-[var(--admin-text-tertiary)] shrink-0">
                       /
                     </span>
                     <input
@@ -586,7 +594,7 @@ export function AiCurationOverlay({
                       value={aiAnalysisResult.slug || ''}
                       onChange={(e) => updateField('slug', e.target.value)}
                       placeholder="product-slug"
-                      className="flex-1 bg-transparent border-0 outline-none text-[11px] font-mono text-[var(--admin-accent)] px-1"
+                      className="flex-1 min-w-0 bg-transparent border-0 outline-none text-[11px] font-mono text-[var(--admin-accent)] px-1"
                     />
                   </div>
                 </div>
@@ -597,14 +605,14 @@ export function AiCurationOverlay({
             <div className="px-4 sm:px-5 py-2.5 border-t border-[var(--admin-border-subtle)] bg-[var(--admin-surface)] shrink-0">
               <form
                 onSubmit={handleAiChatSubmit}
-                className="flex items-center gap-2 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] p-1 focus-within:border-[var(--admin-accent)] focus-within:ring-1 focus-within:ring-[var(--admin-accent)]/20 transition-all"
+                className="flex items-center gap-2 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] p-1 focus-within:border-[var(--admin-accent)] focus-within:ring-1 focus-within:ring-[var(--admin-accent)]/20 transition-all min-w-0"
               >
                 <input
                   type="text"
                   value={aiChatInput}
                   onChange={(e) => setAiChatInput(e.target.value)}
                   placeholder="Ask AI to change title, category, style, etc..."
-                  className="flex-1 bg-transparent border-0 !border-none outline-none !outline-none focus:ring-0 focus:!ring-0 shadow-none text-[12px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] px-2.5 py-1"
+                  className="flex-1 min-w-0 bg-transparent border-0 !border-none outline-none !outline-none focus:ring-0 focus:!ring-0 shadow-none text-[12px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] px-2.5 py-1"
                   disabled={isAILearning}
                 />
                 <button
@@ -628,7 +636,7 @@ export function AiCurationOverlay({
               <button
                 type="button"
                 onClick={() => setShowAIHUD(false)}
-                className="admin-btn admin-btn-outline flex-1 !h-9 sm:!h-10 !py-0 px-3 sm:px-4 !rounded-[4px] text-[12px] sm:text-[13px] font-bold shadow-xs min-w-max cursor-pointer inline-flex items-center justify-center gap-1.5 box-border"
+                className="admin-btn admin-btn-outline flex-1 !h-9 sm:!h-10 !py-0 px-3 sm:px-4 !rounded-[4px] text-[12px] sm:text-[13px] font-bold shadow-xs cursor-pointer inline-flex items-center justify-center gap-1.5 box-border truncate"
               >
                 Manual Correction / Reject
               </button>
@@ -636,12 +644,12 @@ export function AiCurationOverlay({
               <button
                 type="button"
                 onClick={handleApplyAISpecs}
-                className="admin-btn admin-btn-primary flex-1 !h-9 sm:!h-10 !py-0 px-3 sm:px-4 !rounded-[4px] text-[12px] sm:text-[13px] font-bold shadow-xs min-w-max cursor-pointer inline-flex items-center justify-center gap-1.5 box-border"
+                className="admin-btn admin-btn-primary flex-1 !h-9 sm:!h-10 !py-0 px-3 sm:px-4 !rounded-[4px] text-[12px] sm:text-[13px] font-bold shadow-xs cursor-pointer inline-flex items-center justify-center gap-1.5 box-border truncate"
               >
-                <span className="material-symbols-outlined text-[17px] leading-none">
+                <span className="material-symbols-outlined text-[17px] leading-none shrink-0">
                   published_with_changes
                 </span>
-                <span>Apply AI Curation</span>
+                <span className="truncate">Apply AI Curation</span>
               </button>
             </div>
           </motion.div>

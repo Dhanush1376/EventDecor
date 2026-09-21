@@ -5,6 +5,9 @@ export interface IStoreSettings extends Document {
     storeName: string;
     tagline: string;
     supportEmail: string;
+    phone: string;
+    alternatePhone: string;
+    whatsappNumber: string;
     logo: string;
     announcementText: string;
     announcementLink: string;
@@ -63,6 +66,7 @@ export interface IStoreSettings extends Document {
     cgstRate: number;
     sgstRate: number;
     invoicePrefix: string;
+    invoiceFooter: string;
     hsnCode: string;
     gstNumber: string;
     taxInclusive: boolean;
@@ -100,6 +104,7 @@ export interface IStoreSettings extends Document {
   };
   contact: {
     phone: string;
+    alternatePhone: string;
     email: string;
     supportHours: string;
     address: string;
@@ -133,6 +138,7 @@ export interface IStoreSettings extends Document {
     seoDescription: string;
     hideGallerySection: boolean;
     hideProductsFromGallery: boolean;
+    customerAuthMethod?: 'both' | 'phone_only' | 'email_only';
   };
   retentionPolicies?: {
     analyticsEventsDays: number;
@@ -157,6 +163,9 @@ const StoreSettingsSchema: Schema = new Schema(
       storeName: { type: String, default: '' },
       tagline: { type: String, default: '' },
       supportEmail: { type: String, default: '' },
+      phone: { type: String, default: '' },
+      alternatePhone: { type: String, default: '' },
+      whatsappNumber: { type: String, default: '' },
       logo: { type: String, default: '' },
       announcementText: { type: String, default: '' },
       announcementLink: { type: String, default: '' },
@@ -177,8 +186,8 @@ const StoreSettingsSchema: Schema = new Schema(
       enableLocalDelivery: { type: Boolean, default: false },
       // Warehouse dispatch origin — used as the source pincode for delivery
       // estimation. Defaults to the store's registered Ongole location.
-      originPincode: { type: String, default: '523001' },
-      defaultCourierPartner: { type: String, default: 'Delhivery Logistics' },
+      originPincode: { type: String, default: '' },
+      defaultCourierPartner: { type: String, default: '' },
     },
     payments: {
       enableCOD: { type: Boolean, default: true },
@@ -209,11 +218,11 @@ const StoreSettingsSchema: Schema = new Schema(
       storeCreditOption: { type: Boolean, default: true },
     },
     cancellation: {
-      allowCancellation: { type: Boolean, default: true },
-      cancellationWindowHours: { type: Number, default: 24 },
+      allowCancellation: { type: Boolean, default: false },
+      cancellationWindowHours: { type: Number, default: 0 },
       refundTimeline: { type: String, default: '5-7 business days' },
-      walletRefund: { type: Boolean, default: true },
-      originalPaymentRefund: { type: Boolean, default: true },
+      walletRefund: { type: Boolean, default: false },
+      originalPaymentRefund: { type: Boolean, default: false },
     },
     taxes: {
       gstEnabled: { type: Boolean, default: true },
@@ -261,6 +270,7 @@ const StoreSettingsSchema: Schema = new Schema(
     },
     contact: {
       phone: { type: String, default: '' },
+      alternatePhone: { type: String, default: '' },
       email: { type: String, default: '' },
       supportHours: { type: String, default: 'Mon - Sat, 10 AM to 6 PM' },
       address: { type: String, default: '' },
@@ -294,6 +304,11 @@ const StoreSettingsSchema: Schema = new Schema(
       seoDescription: { type: String, default: '' },
       hideGallerySection: { type: Boolean, default: false },
       hideProductsFromGallery: { type: Boolean, default: false },
+      customerAuthMethod: {
+        type: String,
+        enum: ['both', 'phone_only', 'email_only'],
+        default: 'both',
+      },
     },
     retentionPolicies: {
       analyticsEventsDays: { type: Number, default: 30 },

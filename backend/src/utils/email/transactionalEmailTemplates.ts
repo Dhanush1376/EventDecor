@@ -337,14 +337,24 @@ export const buildNextStepsSection = (stepsHtml: string) => `
   </div>
 `;
 
-export const buildSupportSection = () => `
+export const buildSupportSection = (contactInfo?: { phone?: string; alternatePhone?: string }) => {
+  const phone = contactInfo?.phone || '';
+  const altPhone = contactInfo?.alternatePhone || '';
+  let phoneText = '';
+  if (phone && altPhone) {
+    phoneText = ` or call us at <strong>${escapeHtml(phone)}</strong> / <strong>${escapeHtml(altPhone)}</strong>`;
+  } else if (phone) {
+    phoneText = ` or call us at <strong>${escapeHtml(phone)}</strong>`;
+  }
+  return `
   <div style="margin-top: 40px; padding-top: 24px; border-top: 1px solid #e5e7eb;">
     <h3 style="color: #111827; margin: 0 0 12px 0; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em;">Need Help?</h3>
     <p style="color: #4b5563; font-size: 14px; line-height: 1.5; margin: 0;">
-      If you have any questions or need to make changes to your booking, please reply directly to this email or call us at <strong>9866006648</strong> / <strong>9324546303</strong>.
+      If you have any questions or need to make changes to your booking, please reply directly to this email${phoneText}.
     </p>
   </div>
 `;
+};
 
 // --- Order Templates ---
 

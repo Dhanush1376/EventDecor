@@ -1,4 +1,4 @@
-import { Info, ShieldCheck, Shield, Lock } from 'lucide-react';
+import { Info, ShieldCheck, Shield, Lock, AlertTriangle } from 'lucide-react';
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Skeleton } from '../../ui/Skeleton';
@@ -22,6 +22,8 @@ export const CartSummary = ({
   depositTotal,
   runProtectedAction,
   navigate,
+  orderLimitError,
+  orderLimitButtonText,
 }) => {
   const { isStoreClosed } = useConfig();
   return (
@@ -161,32 +163,50 @@ export const CartSummary = ({
           )}
 
           {/* Desktop Place Order Button */}
+          {orderLimitError && (
+            <div className="mt-4 p-2.5 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-2 text-amber-900 text-[11px] font-medium leading-tight">
+              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+              <span>{orderLimitError}</span>
+            </div>
+          )}
           <button
-            onClick={() =>
-              isStoreClosed
-                ? toast(
-                    'Online checkout is currently paused while the store is in catalog-only mode.',
-                  )
-                : runProtectedAction(() => {
-                    sessionStorage.removeItem('siri_checkout_step');
-                    navigate('/checkout', {
-                      state: {
-                        checkoutMode: activeCartMode,
-                        couponCode: appliedCoupon?.code,
-                      },
-                    });
-                  })
-            }
-            className={`w-full mt-6 py-3.5 rounded-full text-[11px] font-bold uppercase tracking-widest shadow-md transition-all text-center hidden lg:flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] ${
-              isStoreClosed
-                ? 'bg-stone-200 text-stone-600 hover:bg-stone-300/80 border border-stone-300'
-                : 'bg-black text-white hover:bg-[#8c7335] hover:text-white'
+            onClick={() => {
+              if (isStoreClosed) {
+                toast(
+                  'Online checkout is currently paused while the store is in catalog-only mode.',
+                );
+                return;
+              }
+              if (orderLimitError) {
+                toast.error(orderLimitError);
+                return;
+              }
+              runProtectedAction(() => {
+                sessionStorage.removeItem('siri_checkout_step');
+                navigate('/checkout', {
+                  state: {
+                    checkoutMode: activeCartMode,
+                    couponCode: appliedCoupon?.code,
+                  },
+                });
+              });
+            }}
+            disabled={Boolean(isStoreClosed || orderLimitError)}
+            className={`w-full mt-6 py-3.5 rounded-full text-[11px] font-bold uppercase tracking-widest shadow-md transition-all text-center hidden lg:flex items-center justify-center gap-2 ${
+              isStoreClosed || orderLimitError
+                ? 'bg-stone-200 text-stone-500 hover:bg-stone-200 border border-stone-300 cursor-not-allowed'
+                : 'bg-black text-white hover:bg-[#8c7335] hover:text-white cursor-pointer active:scale-[0.98]'
             }`}
           >
             {isStoreClosed ? (
               <>
                 <Lock className="w-3.5 h-3.5 text-stone-500" />
                 <span>Orders Paused (View Only)</span>
+              </>
+            ) : orderLimitError ? (
+              <>
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+                <span>{orderLimitButtonText || 'Order Limits Not Met'}</span>
               </>
             ) : activeCartMode === 'rental' ? (
               'Continue Rental Booking'

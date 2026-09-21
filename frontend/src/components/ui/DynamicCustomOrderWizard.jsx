@@ -8,6 +8,7 @@ import { useConfirm } from '../../context/ConfirmProvider';
 import { CustomerContactGate } from '../shared/CustomerContactGate';
 import { Skeleton } from './Skeleton';
 import { WhatsAppIcon } from './WhatsAppIcon';
+import { BRAND } from '../../config/brand';
 
 export function DynamicCustomOrderWizard({
   onComplete,
@@ -602,7 +603,7 @@ export function DynamicCustomOrderWizard({
                             <button
                               type="button"
                               onClick={() => {
-                                const num = field.whatsappNumber || '919866006648';
+                                const targetNum = field.whatsappNumber || BRAND.whatsappNumber;
                                 let baseMsg =
                                   field.whatsappMessage ||
                                   'Hello, I have a question about my customization.';
@@ -610,8 +611,7 @@ export function DynamicCustomOrderWizard({
                                   const productLink = `${window.location.origin}/product/${initialProductPayload.productId}`;
                                   baseMsg += `\n\nProduct Link: ${productLink}`;
                                 }
-                                const msg = encodeURIComponent(baseMsg);
-                                window.open(`https://wa.me/${num}?text=${msg}`, '_blank');
+                                window.open(BRAND.getWhatsAppUrl(baseMsg, targetNum), '_blank');
                               }}
                               className="w-full sm:w-auto px-5 py-2.5 bg-[#25D366] hover:bg-[#1ebd59] text-white rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm shrink-0"
                             >

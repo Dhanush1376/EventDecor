@@ -1,4 +1,5 @@
 import logger from '../../config/logger';
+import { getStoreConfigSync } from '../../config/storeConfig';
 
 export interface IDistanceProvider {
   calculateDistance(origin: string, destination: string): Promise<number>;
@@ -57,8 +58,11 @@ export class TravelDistanceService {
   }
 
   static async calculateDistance(destination: string): Promise<number> {
-    // Determine the origin from environment configuration, default to a safe value
-    const origin = process.env.EVENT_TRAVEL_ORIGIN || 'EventDecor HQ, Hyderabad, Telangana';
+    // Determine the origin from environment configuration or dynamic store address
+    const origin =
+      process.env.EVENT_TRAVEL_ORIGIN ||
+      getStoreConfigSync().contact.address ||
+      'Ongole, Andhra Pradesh';
     const provider = this.getProvider();
 
     try {

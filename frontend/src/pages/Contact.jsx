@@ -13,13 +13,14 @@ import { MOTION_PRESETS, EASE, DURATION } from '../constants/design-tokens';
 import { useCategories } from '../hooks/useProductQueries';
 import { useAuth } from '../context/AuthContext';
 import { useConfig } from '../context/ConfigContext';
+import { BRAND, formatPhoneWithCountryCode, cleanPhoneDigits } from '../config/brand';
 
 import logger from '../utils/core/logger';
 
 import GPSMap from './GPSMapLazy';
 
 export function Contact() {
-  const { storeName } = useConfig();
+  const { storeName, supportEmail, supportPhone, alternatePhone, whatsappNumber } = useConfig();
   const { contact, loading } = useWebsiteContent();
   const { data: settings, isLoading: settingsLoading } = useQuery({
     queryKey: ['storeSettings', 'public'],
@@ -83,52 +84,89 @@ export function Contact() {
     }
   };
 
+  const primaryPhoneDisplay = formatPhoneWithCountryCode(
+    settings?.general?.phone ||
+      settings?.contact?.phone ||
+      supportPhone ||
+      contact?.phone ||
+      BRAND.phone,
+  );
+
+  const alternatePhoneDisplay = formatPhoneWithCountryCode(
+    settings?.general?.alternatePhone ||
+      settings?.contact?.alternatePhone ||
+      alternatePhone ||
+      BRAND.alternatePhone,
+  );
+
+  const whatsappDisplay = formatPhoneWithCountryCode(
+    settings?.general?.whatsappNumber ||
+      settings?.contact?.whatsappNumber ||
+      whatsappNumber ||
+      BRAND.whatsappNumber,
+  );
+
+  const emailDisplay =
+    settings?.general?.supportEmail ||
+    settings?.contact?.email ||
+    supportEmail ||
+    contact?.email ||
+    BRAND.email;
+
+  const addressDisplay = settings?.contact?.address || contact?.address || BRAND.address || '';
+
   const contactMethods = [
-    {
-      title: 'Studio Address',
-      value:
-        settings?.contact?.address || contact?.address || '#28-1-92, South Street, ONGOLE-523001',
-      icon: 'location_on',
-      link:
-        settings?.contact?.googleMapsUrl ||
-        contact?.mapEmbed ||
-        'https://www.google.com/maps/place/Siri+Arts+%26+Crafts/@15.5024512,80.0450481,17z/data=!3m1!4b1!4m6!3m5!1s0x3a4b01495510d675:0xe98014cae349dbea!8m2!3d15.502446!4d80.047623!16s%2Fg%2F11scb6jg5_',
-      target: '_blank',
-    },
+    ...(addressDisplay
+      ? [
+          {
+            title: 'Studio Address',
+            value: addressDisplay,
+            icon: 'location_on',
+            link:
+              settings?.contact?.googleMapsUrl || contact?.mapEmbed || 'https://maps.google.com',
+            target: '_blank',
+          },
+        ]
+      : []),
     {
       title: 'WhatsApp Us',
-      value:
-        settings?.contact?.whatsappNumber ||
-        settings?.contact?.phone ||
-        contact?.phone ||
-        '+91 98660 06648',
+      value: whatsappDisplay,
       icon: 'forum',
-      link: settings?.contact?.whatsappNumber
-        ? `https://wa.me/${String(settings.contact.whatsappNumber).replace(/\D/g, '')}`
-        : contact?.whatsapp || 'https://wa.me/919866006648',
+      link: BRAND.getWhatsAppUrl(null, whatsappDisplay),
       target: '_blank',
     },
     {
       title: 'Email Us',
-      value:
-        settings?.contact?.email ||
-        settings?.general?.supportEmail ||
-        contact?.email ||
-        'Sirisha.atmakuri@gmail.com',
+      value: emailDisplay,
       icon: 'mail',
-      link: `mailto:${settings?.contact?.email || settings?.general?.supportEmail || contact?.email || 'Sirisha.atmakuri@gmail.com'}`,
+      link: `mailto:${emailDisplay}`,
       target: '_self',
     },
     {
       title: 'Call Us',
-      value: settings?.contact?.phone || contact?.phone || '+91 98660 06648',
+      value: primaryPhoneDisplay,
       icon: 'phone',
-      link: `tel:${settings?.contact?.phone || contact?.phone || '+91 98660 06648'}`,
+      link: `tel:${cleanPhoneDigits(primaryPhoneDisplay)}`,
       target: '_self',
     },
+    ...(alternatePhoneDisplay && alternatePhoneDisplay !== primaryPhoneDisplay
+      ? [
+          {
+            title: 'Alternate Support',
+            value: alternatePhoneDisplay,
+            icon: 'call',
+            link: `tel:${cleanPhoneDigits(alternatePhoneDisplay)}`,
+            target: '_self',
+          },
+        ]
+      : []),
     {
       title: 'Support Hours',
-      value: contact?.businessHours || 'Mon - Sat: 10 AM - 7 PM',
+      value:
+        settings?.contact?.supportHours ||
+        contact?.businessHours ||
+        BRAND.supportHours ||
+        'Mon - Sat, 10 AM to 6 PM',
       icon: 'schedule',
       link: '#',
       target: '_self',

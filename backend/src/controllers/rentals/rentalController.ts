@@ -9,8 +9,14 @@ import ApiError from '../../utils/ApiError';
 // ─── Customer Endpoints ───
 
 export const calculateRentalCost = asyncHandler(async (req: Request, res: Response) => {
-  const { productId, startDate, endDate, quantity } = req.body;
-  const result = await RentalService.calculateRentalCost(productId, startDate, endDate, quantity);
+  const { productId, startDate, endDate, quantity, state } = req.body;
+  const result = await RentalService.calculateRentalCost(
+    productId,
+    startDate,
+    endDate,
+    quantity,
+    state,
+  );
   res.status(200).json(new ApiResponse(true, 'Rental cost calculated', result));
 });
 

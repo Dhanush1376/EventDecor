@@ -10,6 +10,7 @@ import {
   CalendarDays,
   Lock,
   Heart,
+  AlertTriangle,
 } from 'lucide-react';
 import React from 'react';
 import { motion } from 'framer-motion';
@@ -18,6 +19,7 @@ import { useQuery } from '@tanstack/react-query';
 import { handleImageError, getOptimizedUrl, getBlurDataUri } from '../../utils/media/imageUtils';
 import { useProduct } from '../../hooks/useProductQueries';
 import { customOrderService } from '../../services/domainServices';
+import { useConfig } from '../../context/ConfigContext';
 import ArrowRight from 'lucide-react/dist/esm/icons/arrow-right';
 
 export const CartItemRow = React.memo(function CartItemRow({
@@ -30,6 +32,7 @@ export const CartItemRow = React.memo(function CartItemRow({
   handleMoveToWishlist,
   triggerNotification,
 }) {
+  const { maxQuantityPerItem = 10 } = useConfig();
   const itemOldPrice = item.oldPrice || item.price;
   const savingsPct =
     itemOldPrice > item.price ? Math.round(((itemOldPrice - item.price) / itemOldPrice) * 100) : 0;
@@ -210,10 +213,19 @@ export const CartItemRow = React.memo(function CartItemRow({
               <button
                 onClick={(e) => {
                   e.preventDefault();
+                  if (item.quantity >= maxQuantityPerItem) {
+                    return;
+                  }
                   updateQuantity(item.id || item._id, item.variant, item.quantity + 1);
                 }}
-                disabled={item.quantity >= item.stock}
-                className={`w-10 h-full flex items-center justify-center transition-colors min-h-0 ${item.quantity >= item.stock ? 'text-secondary/30 cursor-not-allowed bg-surface-container-low' : 'text-secondary hover:text-on-surface hover:bg-surface-container cursor-pointer'}`}
+                disabled={
+                  item.quantity >= (item.stock || 999) || item.quantity >= maxQuantityPerItem
+                }
+                className={`w-10 h-full flex items-center justify-center transition-colors min-h-0 ${
+                  item.quantity >= (item.stock || 999) || item.quantity >= maxQuantityPerItem
+                    ? 'text-secondary/30 cursor-not-allowed bg-surface-container-low'
+                    : 'text-secondary hover:text-on-surface hover:bg-surface-container cursor-pointer'
+                }`}
                 aria-label="Increase quantity"
               >
                 <Plus className="text-[16px]" strokeWidth={1.5} />
@@ -221,7 +233,29 @@ export const CartItemRow = React.memo(function CartItemRow({
             </div>
           </div>
 
-          {item.quantity >= item.stock && item.stock > 0 && (
+          {item.quantity > maxQuantityPerItem && (
+            <div className="flex items-center gap-2 mt-2 p-2 bg-amber-50 border border-amber-300 rounded text-[11px] text-amber-900 font-medium">
+              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+              <span>Exceeds max allowed quantity of {maxQuantityPerItem} per product</span>
+              <button
+                type="button"
+                onClick={() =>
+                  updateQuantity(item.id || item._id, item.variant, maxQuantityPerItem)
+                }
+                className="underline font-bold text-amber-950 ml-auto cursor-pointer hover:text-black shrink-0"
+              >
+                Fix to {maxQuantityPerItem}
+              </button>
+            </div>
+          )}
+
+          {item.quantity === maxQuantityPerItem && (
+            <span className="text-[10px] text-amber-700 font-semibold block mt-1">
+              Max order limit reached ({maxQuantityPerItem} items)
+            </span>
+          )}
+
+          {item.quantity >= item.stock && item.stock > 0 && item.quantity < maxQuantityPerItem && (
             <span className="text-[10px] text-red-500 font-medium block mt-1">
               Maximum stock reached
             </span>

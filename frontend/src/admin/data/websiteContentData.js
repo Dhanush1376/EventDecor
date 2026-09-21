@@ -29,7 +29,7 @@ export const initialWebsiteContent = {
   banners: [
     {
       id: 1,
-      text: 'Free Shipping on Orders Above ₹2,000',
+      text: 'Free Delivery on Eligible Orders',
       icon: 'local_shipping',
       isActive: true,
       position: 'top',
@@ -167,8 +167,9 @@ export const initialWebsiteContent = {
       { label: 'Bespoke', href: '/custom-orders' },
       { label: 'Contact', href: '/contact' },
     ],
-    phone: '+91 98660 06648',
-    email: 'Sirisha.atmakuri@gmail.com',
+    phone: '',
+    alternatePhone: '',
+    email: '',
     socialLinks: {
       instagram: '',
       pinterest: '',
@@ -182,42 +183,43 @@ export const initialWebsiteContent = {
   // CONTACT INFORMATION
   // ═══════════════════════════════════════════════════════
   contact: {
-    phone: '9866006648',
-    email: 'Sirisha.atmakuri@gmail.com',
-    whatsapp: '9866006648',
-    address: '#28-1-92, South Street, ONGOLE-523001, Prakasam District, Andhra Pradesh',
+    phone: '',
+    alternatePhone: '',
+    email: '',
+    whatsapp: '',
+    address: '',
     mapEmbed: '',
     businessHours: 'Mon - Sat: 10 AM - 7 PM',
     contactMethods: [
       {
         icon: 'call',
         title: 'Voice Curation',
-        value: '+91 98660 06648',
-        link: 'tel:+919866006648',
+        value: '',
+        link: '',
       },
       {
         icon: 'smartphone',
         title: 'Secondary Line',
-        value: '+91 98660 06648',
-        link: 'tel:+919866006648',
+        value: '',
+        link: '',
       },
       {
         icon: 'mail',
         title: 'Digital Studio',
-        value: 'Sirisha.atmakuri@gmail.com',
-        link: 'mailto:Sirisha.atmakuri@gmail.com',
+        value: '',
+        link: '',
       },
       {
         icon: 'alternate_email',
         title: 'Direct Access',
-        value: 'sirisha.atmakuri@gmail.com',
-        link: 'mailto:sirisha.atmakuri@gmail.com',
+        value: '',
+        link: '',
       },
       {
         icon: 'location_on',
         title: 'Physical Studio',
-        value: 'ONGOLE-523001, Andhra Pradesh',
-        link: 'https://maps.google.com',
+        value: '',
+        link: '',
       },
     ],
     studioHours: [

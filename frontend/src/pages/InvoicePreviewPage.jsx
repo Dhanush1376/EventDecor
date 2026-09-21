@@ -14,21 +14,25 @@ const sampleReferenceOrder = {
   paymentMethod: 'COD',
   customer: 'Dhanush Atmakuri',
   shippingAddress: {
-    name: 'Dhanush Atmakuri',
+    name: 'Dhanush',
     email: 'customer@example.com',
-    phone: '9154691315',
-    address: '28-1-50, Near enugu chettu, Ongole,',
-    city: 'Ongole',
-    state: 'Andhra pradesh',
-    pincode: '523001',
+    phone: '9876543210',
+    address: 'Flat 101, Green Meadows Apartments,',
+    city: 'Hyderabad',
+    state: 'Telangana',
+    pincode: '500081',
   },
   store: {
     displayName: BRAND.name,
-    legalCompanyName: 'Premium Studio & Handicrafts',
-    gstin: '29AAAES9284D1ZX',
-    addressLine1: '#28-1-92, South Street, ONGOLE-523001,',
-    addressLine2: 'Prakasam District, Andhra Pradesh',
-    city: 'India',
+    legalCompanyName: BRAND.legalCompanyName || BRAND.name,
+    gstin: BRAND.gstin || '29AAAES9284D1ZX',
+    cin: BRAND.cin || '',
+    addressLine1:
+      BRAND.address || '#28-1-92, South Street, ONGOLE-523001, Prakasam District, Andhra Pradesh',
+    city: BRAND.city || 'Ongole',
+    state: BRAND.state || 'Andhra Pradesh',
+    postalCode: BRAND.postalCode || '523001',
+    country: BRAND.country || 'India',
   },
   items: [
     {
@@ -103,17 +107,23 @@ const sampleBalajiOrder = {
   shippingAddress: {
     name: 'Balaji Atmakuri',
     email: 'sakhisoaps@gmail.com',
-    phone: '9324546303',
+    phone: '9876543210',
     address: 'Chiheru Khusropur Link Road, Law gate, Phagwara Tahsil, Punjab',
     pincode: '144411',
   },
   store: {
     displayName: BRAND.name,
-    legalCompanyName: 'Premium Studio & Handicrafts',
-    gstin: '29AAAES9284D1ZX',
-    addressLine1: '#28-1-92, South Street, ONGOLE-523001,',
-    addressLine2: 'Prakasam District, Andhra Pradesh',
-    city: 'India',
+    email: BRAND.email,
+    phone: BRAND.phone,
+    legalCompanyName: BRAND.legalCompanyName || BRAND.name,
+    gstin: BRAND.gstin || '29AAAES9284D1ZX',
+    cin: BRAND.cin || '',
+    addressLine1:
+      BRAND.address || '#28-1-92, South Street, ONGOLE-523001, Prakasam District, Andhra Pradesh',
+    city: BRAND.city || 'Ongole',
+    state: BRAND.state || 'Andhra Pradesh',
+    postalCode: BRAND.postalCode || '523001',
+    country: BRAND.country || 'India',
   },
   items: [
     {
@@ -166,11 +176,15 @@ const sampleRentalBangleOrder = {
   },
   store: {
     displayName: BRAND.name,
-    legalCompanyName: 'Premium Studio & Handicrafts',
-    gstin: '29AAAES9284D1ZX',
-    addressLine1: '#28-1-92, South Street, ONGOLE-523001,',
-    addressLine2: 'Prakasam District, Andhra Pradesh',
-    city: 'India',
+    legalCompanyName: BRAND.legalCompanyName || BRAND.name,
+    gstin: BRAND.gstin || '29AAAES9284D1ZX',
+    cin: BRAND.cin || '',
+    addressLine1:
+      BRAND.address || '#28-1-92, South Street, ONGOLE-523001, Prakasam District, Andhra Pradesh',
+    city: BRAND.city || 'Ongole',
+    state: BRAND.state || 'Andhra Pradesh',
+    postalCode: BRAND.postalCode || '523001',
+    country: BRAND.country || 'India',
   },
   items: [
     {

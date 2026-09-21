@@ -1,5 +1,6 @@
 import React from 'react';
 import { AdminField, AdminInput } from '../AdminUIKit';
+import { BRAND } from '../../../config/brand';
 
 export function ContactInfoEditor({ content, onUpdate }) {
   const c = content || {};
@@ -22,7 +23,7 @@ export function ContactInfoEditor({ content, onUpdate }) {
               description="Direct voice call telephone number"
             >
               <AdminInput
-                value={c.phone || '+91 98660 06648'}
+                value={c.phone || BRAND.phone}
                 onChange={(e) => onUpdate('contact', { phone: e.target.value })}
                 className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-md shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
               />
@@ -32,7 +33,7 @@ export function ContactInfoEditor({ content, onUpdate }) {
               description="Direct WhatsApp click-to-chat URL"
             >
               <AdminInput
-                value={c.whatsapp || 'https://wa.me/919866006648'}
+                value={c.whatsapp || BRAND.whatsappUrl}
                 onChange={(e) => onUpdate('contact', { whatsapp: e.target.value })}
                 className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-md shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
               />
@@ -42,7 +43,7 @@ export function ContactInfoEditor({ content, onUpdate }) {
               description="Official customer enquiry inbox"
             >
               <AdminInput
-                value={c.email || 'Sirisha.atmakuri@gmail.com'}
+                value={c.email || BRAND.email}
                 onChange={(e) => onUpdate('contact', { email: e.target.value })}
                 className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-md shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
               />
@@ -67,8 +68,9 @@ export function ContactInfoEditor({ content, onUpdate }) {
               description="Location rendered on footer & contact pages"
             >
               <AdminInput
-                value={c.address || '#28-1-92, South Street, ONGOLE-523001'}
+                value={c.address || BRAND.address || ''}
                 onChange={(e) => onUpdate('contact', { address: e.target.value })}
+                placeholder="e.g. Studio Address, City, State"
                 className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-md shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
               />
             </AdminField>

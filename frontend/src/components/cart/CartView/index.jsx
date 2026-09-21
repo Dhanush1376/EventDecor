@@ -1,4 +1,4 @@
-import { CheckCircle2, Trash2, BadgeCheck, Heart, Lock } from 'lucide-react';
+import { CheckCircle2, Trash2, BadgeCheck, Heart, Lock, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import React, { useState, useEffect, Profiler } from 'react';
 import { createPortal } from 'react-dom';
@@ -56,7 +56,11 @@ export function CartView({ isEmbedded = false }) {
   } = useCart();
   const { addItem: addToWishlist } = useWishlist();
   const { runProtectedAction, isAuthenticated, user } = useAuth();
-  const { isStoreClosed } = useConfig();
+  const { isStoreClosed, orderLimits, shippingSettings } = useConfig();
+  const maxItemsPerOrder = orderLimits?.maxItemsPerOrder ?? 20;
+  const maxQuantityPerItem = orderLimits?.maxQuantityPerItem ?? 50;
+  const minOrderValue = orderLimits?.minOrderValue ?? 0;
+  const maxOrderValue = orderLimits?.maxOrderValue ?? 1000000;
   const navigate = useNavigate();
 
   const { data: addresses = [] } = useUserAddresses();
@@ -129,8 +133,27 @@ export function CartView({ isEmbedded = false }) {
       ? items.reduce((acc, item) => acc + (item.deposit || 0) * item.quantity, 0)
       : 0;
 
-  const shippingFee = summary?.shippingFee || 0;
-  const platformFee = summary?.platformFee || 0;
+  const freeShippingThreshold = shippingSettings?.freeShippingThreshold ?? 2000;
+  const enableFreeShipping = shippingSettings?.enableFreeShipping ?? true;
+  const deliveryCharge = shippingSettings?.deliveryCharge ?? 99;
+  const isFreeShipping = enableFreeShipping && actualSubtotal >= freeShippingThreshold;
+  const shippingFee =
+    actualSubtotal === 0
+      ? 0
+      : isFreeShipping
+        ? 0
+        : summary?.shippingFee !== undefined
+          ? summary.shippingFee
+          : deliveryCharge;
+
+  // Live store-configured platform fee: always respects current store settings
+  const configuredPlatformFee =
+    orderLimits?.platformFee !== undefined
+      ? Number(orderLimits.platformFee)
+      : summary?.platformFee !== undefined
+        ? Number(summary.platformFee)
+        : 0;
+  const platformFee = items.length > 0 ? Math.max(0, configuredPlatformFee) : 0;
 
   const [useWallet, setUseWallet] = useState(() => {
     return persistentStorage.getItem('siri_checkout_use_wallet', {
@@ -149,6 +172,71 @@ export function CartView({ isEmbedded = false }) {
     useWallet && user?.walletBalance > 0 ? Math.min(user.walletBalance, basePayableAmount) : 0;
 
   const finalPayableAmount = items.length > 0 ? basePayableAmount - walletDeduction : 0;
+
+  // Real-time order limits violations evaluation
+  const itemsExceedingQty = React.useMemo(() => {
+    return items.filter((item) => Number(item.quantity) > maxQuantityPerItem);
+  }, [items, maxQuantityPerItem]);
+
+  const hasQuantityViolation = itemsExceedingQty.length > 0;
+  const hasDistinctItemsViolation = items.length > maxItemsPerOrder;
+  const hasMinOrderViolation = minOrderValue > 0 && actualSubtotal < minOrderValue;
+  const hasMaxOrderViolation = maxOrderValue > 0 && actualSubtotal > maxOrderValue;
+
+  const orderLimitError = React.useMemo(() => {
+    if (hasQuantityViolation) {
+      const names = itemsExceedingQty.map((i) => `"${i.title}" (Qty: ${i.quantity})`).join(', ');
+      return `Product quantity limit exceeded: Maximum allowed is ${maxQuantityPerItem} per product. Items affected: ${names}.`;
+    }
+    if (hasDistinctItemsViolation) {
+      return `Your cart has ${items.length} different items, but the maximum allowed per order is ${maxItemsPerOrder}. Please remove some items to proceed.`;
+    }
+    if (hasMinOrderViolation) {
+      return `Minimum order amount of ₹${minOrderValue.toLocaleString('en-IN')} is required to checkout. Your current subtotal is ₹${actualSubtotal.toLocaleString('en-IN')}.`;
+    }
+    if (hasMaxOrderViolation) {
+      return `Maximum order amount is ₹${maxOrderValue.toLocaleString('en-IN')}. Your current subtotal is ₹${actualSubtotal.toLocaleString('en-IN')}.`;
+    }
+    return null;
+  }, [
+    hasQuantityViolation,
+    hasDistinctItemsViolation,
+    hasMinOrderViolation,
+    hasMaxOrderViolation,
+    itemsExceedingQty,
+    maxQuantityPerItem,
+    items.length,
+    maxItemsPerOrder,
+    minOrderValue,
+    actualSubtotal,
+    maxOrderValue,
+  ]);
+
+  const orderLimitButtonText = React.useMemo(() => {
+    if (hasQuantityViolation) return `Max Qty ${maxQuantityPerItem} Exceeded`;
+    if (hasDistinctItemsViolation) return `Max ${maxItemsPerOrder} Items Exceeded`;
+    if (hasMinOrderViolation) return `Min Order ₹${minOrderValue.toLocaleString('en-IN')} Required`;
+    if (hasMaxOrderViolation) return `Max Order ₹${maxOrderValue.toLocaleString('en-IN')} Exceeded`;
+    return null;
+  }, [
+    hasQuantityViolation,
+    hasDistinctItemsViolation,
+    hasMinOrderViolation,
+    hasMaxOrderViolation,
+    maxQuantityPerItem,
+    maxItemsPerOrder,
+    minOrderValue,
+    maxOrderValue,
+  ]);
+
+  const handleFixOverLimitQuantities = () => {
+    itemsExceedingQty.forEach((item) => {
+      updateQuantity(item.id || item._id, item.variant, maxQuantityPerItem, item.type);
+    });
+    triggerNotification(
+      `Adjusted ${itemsExceedingQty.length} item(s) to max allowed quantity of ${maxQuantityPerItem}`,
+    );
+  };
 
   const nextAvailableCoupon = React.useMemo(() => {
     return activeCoupons
@@ -401,6 +489,36 @@ export function CartView({ isEmbedded = false }) {
                 </div>
               </div>
 
+              {/* Order Limits Warning Banner */}
+              {orderLimitError && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-amber-900 shadow-xs mb-3"
+                >
+                  <div className="flex items-start gap-2.5">
+                    <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-[12px] font-bold text-amber-900 leading-tight">
+                        Order Requirement Notice
+                      </p>
+                      <p className="text-[11px] text-amber-800/90 mt-0.5 leading-snug">
+                        {orderLimitError}
+                      </p>
+                    </div>
+                  </div>
+                  {hasQuantityViolation && (
+                    <button
+                      type="button"
+                      onClick={handleFixOverLimitQuantities}
+                      className="shrink-0 px-3.5 py-1.5 rounded-full bg-amber-600 hover:bg-amber-700 active:scale-95 text-white font-bold text-[11px] uppercase tracking-wider transition-all cursor-pointer shadow-xs"
+                    >
+                      Fix Quantities to {maxQuantityPerItem}
+                    </button>
+                  )}
+                </motion.div>
+              )}
+
               <motion.div layout className="space-y-3">
                 <AnimatePresence>
                   {items.map((item) => {
@@ -523,6 +641,8 @@ export function CartView({ isEmbedded = false }) {
                 depositTotal={depositTotal}
                 runProtectedAction={runProtectedAction}
                 navigate={navigate}
+                orderLimitError={orderLimitError}
+                orderLimitButtonText={orderLimitButtonText}
               />
             </motion.div>
           </div>
@@ -571,28 +691,40 @@ export function CartView({ isEmbedded = false }) {
                 </div>
               </div>
               <button
-                onClick={() =>
-                  isStoreClosed
-                    ? toast(
-                        'Online checkout is currently paused while the store is in catalog-only mode.',
-                      )
-                    : runProtectedAction(() => {
-                        sessionStorage.removeItem('siri_checkout_step');
-                        navigate('/checkout', {
-                          state: { checkoutMode: activeCartMode, couponCode: appliedCoupon?.code },
-                        });
-                      })
-                }
-                className={`h-10 px-5 rounded-full font-label text-[10px] uppercase tracking-widest font-bold shadow-md active:scale-[0.96] transition-all flex items-center justify-center gap-1.5 border-none cursor-pointer shrink-0 ${
-                  isStoreClosed
-                    ? 'bg-stone-200 text-stone-600 border border-stone-300'
-                    : 'bg-black text-white'
+                disabled={Boolean(isStoreClosed || orderLimitError)}
+                onClick={() => {
+                  if (isStoreClosed) {
+                    toast(
+                      'Online checkout is currently paused while the store is in catalog-only mode.',
+                    );
+                    return;
+                  }
+                  if (orderLimitError) {
+                    toast.error(orderLimitError);
+                    return;
+                  }
+                  runProtectedAction(() => {
+                    sessionStorage.removeItem('siri_checkout_step');
+                    navigate('/checkout', {
+                      state: { checkoutMode: activeCartMode, couponCode: appliedCoupon?.code },
+                    });
+                  });
+                }}
+                className={`h-10 px-5 rounded-full font-label text-[10px] uppercase tracking-widest font-bold shadow-md active:scale-[0.96] transition-all flex items-center justify-center gap-1.5 border-none shrink-0 ${
+                  isStoreClosed || orderLimitError
+                    ? 'bg-stone-200 text-stone-500 border border-stone-300 cursor-not-allowed'
+                    : 'bg-black text-white cursor-pointer'
                 }`}
               >
                 {isStoreClosed ? (
                   <>
                     <Lock className="w-3 h-3 text-stone-500" />
                     <span>Paused</span>
+                  </>
+                ) : orderLimitError ? (
+                  <>
+                    <AlertTriangle className="w-3 h-3 text-amber-600" />
+                    <span>{orderLimitButtonText || 'Limits Not Met'}</span>
                   </>
                 ) : activeCartMode === 'rental' ? (
                   'Rent Now'

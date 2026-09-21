@@ -20,10 +20,39 @@ describe('computeOrderTotals', () => {
     expect(t.total).toBe(1100);
   });
 
-  it('gives free shipping strictly above the threshold', () => {
+  it('gives free shipping at or above the threshold', () => {
     expect(computeOrderTotals({ ...base, subtotal: 2001 }).shippingFee).toBe(0);
-    // Exactly at the threshold still pays shipping (uses `>` not `>=`).
-    expect(computeOrderTotals({ ...base, subtotal: 2000 }).shippingFee).toBe(100);
+    // Exactly at the threshold gets free shipping (>= rule)
+    expect(computeOrderTotals({ ...base, subtotal: 2000 }).shippingFee).toBe(0);
+    // Strictly below threshold pays shipping
+    expect(computeOrderTotals({ ...base, subtotal: 1999 }).shippingFee).toBe(100);
+  });
+
+  it('charges shipping when enableFreeShipping is false even at or above threshold', () => {
+    expect(
+      computeOrderTotals({ ...base, subtotal: 2000, enableFreeShipping: false }).shippingFee,
+    ).toBe(100);
+    expect(
+      computeOrderTotals({ ...base, subtotal: 5000, enableFreeShipping: false }).shippingFee,
+    ).toBe(100);
+  });
+
+  it('charges zero shipping for an empty cart (subtotal === 0)', () => {
+    const t = computeOrderTotals({ ...base, subtotal: 0 });
+    expect(t.shippingFee).toBe(0);
+    expect(t.total).toBe(0);
+  });
+
+  it('participates platformFee in preliminaryTotal and final payable total', () => {
+    const t1 = computeOrderTotals({ ...base, subtotal: 1000, platformFee: 50 });
+    // subtotal(1000) + shipping(100) + platformFee(50) = 1150
+    expect(t1.platformFee).toBe(50);
+    expect(t1.total).toBe(1150);
+
+    const t2 = computeOrderTotals({ ...base, subtotal: 2000, platformFee: 25 });
+    // subtotal(2000) + shipping(0) + platformFee(25) = 2025
+    expect(t2.platformFee).toBe(25);
+    expect(t2.total).toBe(2025);
   });
 
   it('adds the COD fee only for COD orders', () => {
@@ -136,5 +165,25 @@ describe('computeOrderTotals', () => {
     expect(t.codFee).toBe(0);
     expect(t.preliminaryTotal).toBe(0);
     expect(t.total).toBe(0);
+  });
+
+  it('composes platformFee with discount, COD, shipping, deposit, and wallet correctly', () => {
+    const t = computeOrderTotals({
+      subtotal: 1500,
+      discount: 200,
+      depositTotal: 300,
+      isCod: true,
+      codFee: 90,
+      freeShippingThreshold: 2000,
+      deliveryCharge: 100,
+      platformFee: 49,
+      useWallet: true,
+      walletBalance: 500,
+    });
+    // preliminary = 1500 + 100(shipping) + 49(platformFee) + 90(cod) + 300(deposit) - 200(discount) = 1839
+    expect(t.platformFee).toBe(49);
+    expect(t.preliminaryTotal).toBe(1839);
+    expect(t.walletDeduction).toBe(500);
+    expect(t.total).toBe(1339);
   });
 });

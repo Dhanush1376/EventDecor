@@ -220,9 +220,11 @@
             <td class="main-card">
               <!-- Header -->
               <div class="brand-header">
-                <a href="https://siriartsandcrafts.com" target="_blank" class="brand-link">
-                  <img src="https://event-decor.vercel.app/MainLogo_bg.png" alt="Siri Arts & Crafts Logo" class="brand-logo" />
-                  <span class="brand-name">Siri Arts & Crafts</span>
+                <a href="{{websiteUrl}}" target="_blank" class="brand-link">
+                  {{#if storeLogo}}
+                  <img src="{{storeLogo}}" alt="{{storeName}} Logo" class="brand-logo" />
+                  {{/if}}
+                  <span class="brand-name">{{storeName}}</span>
                 </a>
               </div>
 
@@ -304,13 +306,13 @@
               <!-- Footer -->
               <div class="footer-divider">
                 <p class="footer-text">
-                  This email was sent by Siri Arts & Crafts.
+                  This email was sent by {{storeName}}.
                 </p>
                 <p class="footer-text">
-                  <a href="https://siriartsandcrafts.com" target="_blank">siriartsandcrafts.com</a> • Ongole, Andhra Pradesh, India
+                  <a href="{{websiteUrl}}" target="_blank">{{websiteDomain}}</a>{{#if storeAddress}} • {{storeAddress}}{{/if}}
                 </p>
                 <p class="footer-text" style="color: #94a3b8; margin-top: 12px;">
-                  &copy; {{currentYear}} Siri Arts & Crafts. All rights reserved.
+                  &copy; {{currentYear}} {{storeName}}. All rights reserved.
                 </p>
               </div>
             </td>

@@ -1,3 +1,5 @@
+import { BRAND } from './brand';
+
 export const EVENT_TYPES = [
   {
     id: 'wedding',
@@ -91,5 +93,7 @@ export const EXTERNAL_URLS = {
 };
 
 export const APP_CONFIG = {
-  DEFAULT_WHATSAPP_NUMBER: '919866006648',
+  get DEFAULT_WHATSAPP_NUMBER() {
+    return BRAND.whatsappDigits;
+  },
 };

@@ -15,6 +15,33 @@ const defaultCart = {
   },
 };
 
+const getMaxQtyPerItem = () => {
+  try {
+    const val = localStorage.getItem('siri_orders_max_qty');
+    return val ? Math.max(1, Number(val)) : 50;
+  } catch {
+    return 50;
+  }
+};
+
+const getMaxItemsPerOrder = () => {
+  try {
+    const val = localStorage.getItem('siri_orders_max_items');
+    return val ? Math.max(1, Number(val)) : 20;
+  } catch {
+    return 20;
+  }
+};
+
+const getPlatformFee = () => {
+  try {
+    const val = localStorage.getItem('siri_orders_platform_fee');
+    return val !== null && val !== undefined ? Math.max(0, Number(val)) : 0;
+  } catch {
+    return 0;
+  }
+};
+
 export const GuestCartService = {
   /**
    * Initializes the guest cart with metadata if not present
@@ -59,6 +86,9 @@ export const GuestCartService = {
     const targetCartKey = type === 'purchase' ? 'purchaseCart' : 'rentalCart';
     const items = cart[targetCartKey].items || [];
 
+    const maxQty = getMaxQtyPerItem();
+    const maxItems = getMaxItemsPerOrder();
+
     const itemId = product._id || product.id;
     const existingIndex = items.findIndex(
       (item) => (item.product?._id || item.product?.id || item._id || item.id) === itemId,
@@ -67,17 +97,24 @@ export const GuestCartService = {
     let updatedItems;
     if (existingIndex >= 0) {
       updatedItems = [...items];
+      const newQty = Math.min(
+        maxQty,
+        (Number(updatedItems[existingIndex].quantity) || 1) + quantity,
+      );
       updatedItems[existingIndex] = {
         ...updatedItems[existingIndex],
-        quantity: Math.min(50, updatedItems[existingIndex].quantity + quantity),
+        quantity: newQty,
       };
     } else {
+      if (items.length >= maxItems) {
+        return this.getCart();
+      }
       updatedItems = [
         ...items,
         {
           id: itemId,
           _id: itemId,
-          quantity: Math.min(50, quantity),
+          quantity: Math.min(maxQty, quantity),
           type,
           product,
           rentalInfo: cleanRentalInfo(rentalInfo || product.rentalInfo),
@@ -86,10 +123,11 @@ export const GuestCartService = {
       ];
     }
 
-    const { subtotal, depositTotal, total } = calculateCartSummary(
+    const { subtotal, depositTotal, shippingFee, platformFee, total } = calculateCartSummary(
       updatedItems,
       type,
       cart[targetCartKey].summary?.shippingFee || 0,
+      getPlatformFee(),
     );
 
     cart[targetCartKey].items = updatedItems;
@@ -97,6 +135,8 @@ export const GuestCartService = {
       ...(cart[targetCartKey].summary || defaultCart.purchaseCart.summary),
       subtotal,
       depositTotal,
+      shippingFee,
+      platformFee,
       total,
     };
 
@@ -112,10 +152,11 @@ export const GuestCartService = {
       (item) => (item.product?._id || item.product?.id || item._id || item.id) !== productId,
     );
 
-    const { subtotal, depositTotal, total } = calculateCartSummary(
+    const { subtotal, depositTotal, shippingFee, platformFee, total } = calculateCartSummary(
       updatedItems,
       type,
       cart[targetCartKey].summary?.shippingFee || 0,
+      getPlatformFee(),
     );
 
     cart[targetCartKey].items = updatedItems;
@@ -123,6 +164,8 @@ export const GuestCartService = {
       ...(cart[targetCartKey].summary || defaultCart.purchaseCart.summary),
       subtotal,
       depositTotal,
+      shippingFee,
+      platformFee,
       total,
     };
 
@@ -134,7 +177,8 @@ export const GuestCartService = {
     const targetCartKey = type === 'purchase' ? 'purchaseCart' : 'rentalCart';
     const items = cart[targetCartKey].items || [];
 
-    const numericQuantity = Math.max(0, Math.min(50, Number(quantity) || 1));
+    const maxQty = getMaxQtyPerItem();
+    const numericQuantity = Math.max(0, Math.min(maxQty, Number(quantity) || 1));
 
     if (numericQuantity === 0) {
       return this.removeFromCart(productId, type);
@@ -148,10 +192,11 @@ export const GuestCartService = {
       return item;
     });
 
-    const { subtotal, depositTotal, total } = calculateCartSummary(
+    const { subtotal, depositTotal, shippingFee, platformFee, total } = calculateCartSummary(
       updatedItems,
       type,
       cart[targetCartKey].summary?.shippingFee || 0,
+      getPlatformFee(),
     );
 
     cart[targetCartKey].items = updatedItems;
@@ -159,6 +204,8 @@ export const GuestCartService = {
       ...(cart[targetCartKey].summary || defaultCart.purchaseCart.summary),
       subtotal,
       depositTotal,
+      shippingFee,
+      platformFee,
       total,
     };
 

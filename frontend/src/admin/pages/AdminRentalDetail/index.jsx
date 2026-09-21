@@ -14,7 +14,7 @@ import toast from 'react-hot-toast';
 import { useConfig } from '../../../context/ConfigContext';
 
 export function AdminRentalDetail() {
-  const { storeName, storeSettings } = useConfig();
+  const { storeName, storeSettings, supportEmail, supportPhone, storeAddress, gstin } = useConfig();
   const { rentalId } = useParams();
   const navigate = useNavigate();
   const [rental, setRental] = useState(null);
@@ -250,17 +250,21 @@ export function AdminRentalDetail() {
                       businessDetails={{
                         name: storeName || 'Siri Arts & Crafts',
                         email:
+                          supportEmail ||
                           storeSettings?.contact?.email ||
-                          storeSettings?.support?.email ||
-                          'support@siriartsandcrafts.com',
+                          storeSettings?.general?.supportEmail ||
+                          '',
                         phone:
+                          supportPhone ||
                           storeSettings?.contact?.phone ||
-                          storeSettings?.support?.phone ||
-                          '+91 94939 12345',
+                          storeSettings?.general?.phone ||
+                          '',
                         address:
-                          storeSettings?.company?.address ||
-                          'Main Road, Jubilee Hills, Hyderabad, TS 500033',
-                        gstin: storeSettings?.company?.taxId || '36ABCDE1234F1Z5',
+                          storeAddress ||
+                          storeSettings?.contact?.address ||
+                          storeSettings?.legal?.registeredAddress ||
+                          '',
+                        gstin: gstin || storeSettings?.taxes?.gstNumber || '',
                       }}
                       onClose={() => setShowInvoiceModal(false)}
                       isAdmin={true}

@@ -89,6 +89,7 @@ export interface IOrder extends ISoftDeleted {
   statusHistory: IOrderStatusHistory[];
   subtotal: number;
   shippingFee: number;
+  platformFee?: number;
   discount: number;
   codFee?: number;
   walletDeduction?: number;

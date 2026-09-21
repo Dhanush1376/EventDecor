@@ -9,9 +9,18 @@ import storeSettingsService from '../../services/api/storeSettingsService';
 import { policyService } from '../../services/domainServices';
 
 import { useConfig } from '../../context/ConfigContext';
+import { BRAND, formatPhoneWithCountryCode, cleanPhoneDigits } from '../../config/brand';
 
 export function Footer() {
-  const { storeName, storeNameUpper } = useConfig();
+  const {
+    storeName,
+    storeNameUpper,
+    storeTagline,
+    cin: configCin,
+    supportEmail: configEmail,
+    supportPhone: configPhone,
+    alternatePhone: configAltPhone,
+  } = useConfig();
   const { contact, footer, navigation } = useWebsiteContent();
   const { data: settings } = useQuery({
     queryKey: ['storeSettings', 'public'],
@@ -32,12 +41,27 @@ export function Footer() {
   const _restWords = logoWords.slice(1).join(' ') || 'ARTS & CRAFTS';
   const currentYear = new Date().getFullYear();
 
-  const phone = settings?.contact?.phone || contact?.phone || footer?.phone || '';
+  const primaryPhone =
+    settings?.general?.phone ||
+    settings?.contact?.phone ||
+    configPhone ||
+    contact?.phone ||
+    footer?.phone ||
+    BRAND.phone;
+
+  const alternatePhone =
+    settings?.general?.alternatePhone ||
+    settings?.contact?.alternatePhone ||
+    configAltPhone ||
+    BRAND.alternatePhone;
+
   const email =
-    settings?.contact?.email ||
     settings?.general?.supportEmail ||
+    settings?.contact?.email ||
+    configEmail ||
     contact?.email ||
     footer?.email ||
+    BRAND.email ||
     CONTACT_EMAIL;
 
   const instagramLink =
@@ -115,7 +139,10 @@ export function Footer() {
             <SiriLogo size="32px" />
           </Link>
           <p className="font-body text-on-surface-variant/80 max-w-sm leading-relaxed font-light text-[11px] lg:px-0">
-            {footer?.description || 'Ancient craftsmanship meets modern elegance.'}
+            {footer?.description ||
+              storeTagline ||
+              settings?.general?.tagline ||
+              'Ancient craftsmanship meets modern elegance.'}
           </p>
         </div>
 
@@ -159,13 +186,26 @@ export function Footer() {
                 Support
               </h4>
               <div className="flex flex-col space-y-2 text-[10px] text-on-surface-variant/70 leading-relaxed font-medium">
-                <div className="flex flex-col">
-                  <a
-                    href={`tel:${phone.startsWith('+') ? phone : '+91' + phone}`}
-                    className="hover:text-primary transition-colors whitespace-nowrap"
-                  >
-                    {phone.startsWith('+91') ? phone : `+91 ${phone}`}
-                  </a>
+                <div className="flex flex-col space-y-1">
+                  {primaryPhone && (
+                    <a
+                      href={`tel:${cleanPhoneDigits(primaryPhone)}`}
+                      className="hover:text-primary transition-colors whitespace-nowrap"
+                    >
+                      {formatPhoneWithCountryCode(primaryPhone)}
+                    </a>
+                  )}
+                  {alternatePhone &&
+                    formatPhoneWithCountryCode(alternatePhone) !==
+                      formatPhoneWithCountryCode(primaryPhone) && (
+                      <a
+                        href={`tel:${cleanPhoneDigits(alternatePhone)}`}
+                        className="hover:text-primary transition-colors whitespace-nowrap text-on-surface-variant/60"
+                        title="Alternate support number"
+                      >
+                        {formatPhoneWithCountryCode(alternatePhone)}
+                      </a>
+                    )}
                 </div>
                 <a
                   href={`mailto:${email}`}
@@ -236,6 +276,11 @@ export function Footer() {
             <p className="font-label-sm text-on-surface-variant/50 tracking-[0.1em] text-[9px] uppercase font-bold">
               {footer?.copyright?.replace('{year}', currentYear.toString()) ||
                 `© ${currentYear} ${businessName}.`}
+              {(settings?.legal?.cin || configCin) && (
+                <span className="ml-2 font-normal text-on-surface-variant/40">
+                  • CIN: {settings?.legal?.cin || configCin}
+                </span>
+              )}
             </p>
           </div>
           <div className="flex items-center flex-wrap gap-x-3.5 gap-y-2 sm:gap-4">

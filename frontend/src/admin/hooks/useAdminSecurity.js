@@ -151,11 +151,20 @@ export function useAdminSecurity({
 
   const changeIdleTimeout = useCallback(
     async (val) => {
-      setIdleTimeoutMinutes(val);
+      const numVal = parseInt(val, 10) || 0;
+      setIdleTimeoutMinutes(numVal);
       try {
-        await cmsService.updateSection('admin_idle_timeout', { idleTimeout: val });
-        logAdminAction('TIMEOUT_UPDATE', `Idle inactivity threshold updated to ${val} minutes`);
-        toast.success(`Inactivity limit set to ${val} minutes`);
+        await cmsService.updateSection('admin_idle_timeout', { idleTimeout: numVal });
+        if (numVal === 0) {
+          logAdminAction('TIMEOUT_UPDATE', 'Idle inactivity timeout disabled (Never log out)');
+          toast.success('Auto-logout disabled (Stay logged in)');
+        } else {
+          logAdminAction(
+            'TIMEOUT_UPDATE',
+            `Idle inactivity threshold updated to ${numVal} minutes`,
+          );
+          toast.success(`Inactivity limit set to ${numVal} minutes`);
+        }
       } catch (err) {
         logger.error('Failed to save idle timeout to backend:', err);
         toast.error('Failed to save timeout in database');
@@ -168,6 +177,11 @@ export function useAdminSecurity({
   const lastActivityRef = useRef(null);
 
   useEffect(() => {
+    if (!idleTimeoutMinutes || Number(idleTimeoutMinutes) <= 0) {
+      setShowIdleWarning(false);
+      return;
+    }
+
     lastActivityRef.current = Date.now();
     const handleActivity = () => {
       lastActivityRef.current = Date.now();

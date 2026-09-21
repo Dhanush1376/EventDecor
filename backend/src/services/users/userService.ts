@@ -10,6 +10,7 @@ import { sendDirectEmail } from '../notificationService';
 import { getFrontendUrl } from '../../utils/getFrontendUrl';
 import { getTeamInviteEmailTemplate } from '../../utils/email/emailTemplates';
 import storeSettingsService from '../StoreSettingsService';
+import { computeOrderTotals } from '../orders/orderTotals';
 
 export class UserService {
   static async updateUserRole(targetUserId: string, newRole: string, actorRole: string) {
@@ -251,21 +252,27 @@ export class UserService {
         subtotal += itemPrice * item.quantity;
       });
 
-      const shippingFee =
-        subtotal > settings.shipping.freeShippingThreshold || subtotal === 0
-          ? 0
-          : settings.shipping.deliveryCharge;
-      const platformFee = settings.orders.platformFee;
-      const discount = 0;
-      const total = subtotal + shippingFee + depositTotal - discount;
+      const totals = computeOrderTotals({
+        subtotal,
+        discount: 0,
+        depositTotal,
+        isCod: false,
+        codFee: 0,
+        enableFreeShipping: settings.shipping.enableFreeShipping,
+        freeShippingThreshold: settings.shipping.freeShippingThreshold,
+        deliveryCharge: settings.shipping.deliveryCharge,
+        platformFee: settings.orders.platformFee || 0,
+        useWallet: false,
+        walletBalance: 0,
+      });
 
       return {
         subtotal,
         depositTotal,
-        shippingFee,
-        platformFee,
-        discount,
-        total,
+        shippingFee: totals.shippingFee,
+        platformFee: totals.platformFee,
+        discount: 0,
+        total: totals.total,
       };
     };
 

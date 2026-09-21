@@ -20,8 +20,21 @@ export class SequenceGeneratorService {
    * Specifically generates an Invoice Number for a given year.
    * e.g., INV-2026-000124
    */
-  static async generateInvoiceNumber(year?: number): Promise<string> {
-    const targetYear = year || new Date().getFullYear();
+  static async generateInvoiceNumber(
+    prefixOrYear?: string | number,
+    maybeYear?: number,
+  ): Promise<string> {
+    let prefix = 'INV-';
+    let targetYear = new Date().getFullYear();
+
+    if (typeof prefixOrYear === 'string') {
+      prefix = prefixOrYear.trim();
+      if (prefix && !prefix.endsWith('-')) prefix = `${prefix}-`;
+      if (typeof maybeYear === 'number') targetYear = maybeYear;
+    } else if (typeof prefixOrYear === 'number') {
+      targetYear = prefixOrYear;
+    }
+
     const counterId = `invoice_${targetYear}`;
 
     // First, check if we need to initialize the counter to avoid overlapping with any legacy data.
@@ -33,7 +46,7 @@ export class SequenceGeneratorService {
     }
 
     const seqStr = await this.nextSequence(counterId);
-    return `INV-${targetYear}-${seqStr}`;
+    return `${prefix}${targetYear}-${seqStr}`;
   }
 
   /**

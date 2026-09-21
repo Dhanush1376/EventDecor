@@ -4,6 +4,7 @@ import Coupon from '../models/Coupon';
 import ApiError from '../utils/ApiError';
 import storeSettingsService from '../services/StoreSettingsService';
 import CustomOrder from '../models/CustomOrder';
+import { computeOrderTotals } from './orders/orderTotals';
 
 export class OrderValidationService {
   static async validateTotals(userId: string, data: any) {
@@ -18,17 +19,25 @@ export class OrderValidationService {
     const MAX_ITEMS_PER_ORDER = settings.orders.maxItemsPerOrder;
 
     if (items.length > MAX_ITEMS_PER_ORDER) {
-      throw new ApiError(400, 'Too many items in order');
+      throw new ApiError(
+        400,
+        `Order exceeds maximum allowed limit of ${MAX_ITEMS_PER_ORDER} distinct items. Current items count: ${items.length}`,
+      );
     }
 
     for (const item of items) {
       if (
         typeof item.quantity !== 'number' ||
         !Number.isInteger(item.quantity) ||
-        item.quantity < 1 ||
-        item.quantity > MAX_QUANTITY_PER_ITEM
+        item.quantity < 1
       ) {
         throw new ApiError(400, `Invalid quantity for item: ${item.productId}`);
+      }
+      if (item.quantity > MAX_QUANTITY_PER_ITEM) {
+        throw new ApiError(
+          400,
+          `Quantity (${item.quantity}) exceeds the maximum allowed limit of ${MAX_QUANTITY_PER_ITEM} per product.`,
+        );
       }
     }
 
@@ -232,30 +241,23 @@ export class OrderValidationService {
     }
 
     const { paymentMethod, useWallet } = data;
-    const shippingFee =
-      (settings.shipping.enableFreeShipping &&
-        subtotal > settings.shipping.freeShippingThreshold) ||
-      subtotal === 0
-        ? 0
-        : settings.shipping.deliveryCharge;
-    const platformFee = settings.orders.platformFee;
+    const isCod = Boolean(paymentMethod && paymentMethod.toLowerCase() === 'cod');
 
-    const preliminaryWithoutCod = Math.max(0, subtotal + shippingFee + depositTotal - discount);
-    const isFullyCoveredByWallet = Boolean(
-      useWallet && settings.loyalty.walletEnabled && availableWallet >= preliminaryWithoutCod,
-    );
+    const totals = computeOrderTotals({
+      subtotal,
+      discount,
+      depositTotal,
+      isCod,
+      codFee: settings.payments.codFee,
+      enableFreeShipping: settings.shipping.enableFreeShipping,
+      freeShippingThreshold: settings.shipping.freeShippingThreshold,
+      deliveryCharge: settings.shipping.deliveryCharge,
+      platformFee: settings.orders.platformFee || 0,
+      useWallet: Boolean(useWallet && settings.loyalty.walletEnabled),
+      walletBalance: availableWallet,
+    });
 
-    let codFee = 0;
-    if (
-      paymentMethod &&
-      paymentMethod.toLowerCase() === 'cod' &&
-      !isFullyCoveredByWallet &&
-      preliminaryWithoutCod > 0
-    ) {
-      codFee = settings.payments.codFee;
-    }
-
-    const preliminaryTotal = Math.max(0, preliminaryWithoutCod + codFee);
+    const { shippingFee, platformFee, codFee, walletDeduction, total } = totals;
 
     const orderValueForLimits = Math.max(0, subtotal - discount);
     if (settings.orders.minOrderValue && orderValueForLimits < settings.orders.minOrderValue) {
@@ -264,13 +266,6 @@ export class OrderValidationService {
     if (settings.orders.maxOrderValue && orderValueForLimits > settings.orders.maxOrderValue) {
       throw new ApiError(400, `Maximum order value must be ₹${settings.orders.maxOrderValue}`);
     }
-
-    let walletDeduction = 0;
-    if (useWallet && settings.loyalty.walletEnabled) {
-      walletDeduction = Math.min(preliminaryTotal, availableWallet);
-    }
-
-    const total = preliminaryTotal - walletDeduction;
 
     // Estimate Siri Coins
     const coinsToEarn = Math.round(subtotal * settings.loyalty.coinsPerRupee);

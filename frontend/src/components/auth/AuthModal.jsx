@@ -3,6 +3,7 @@ import { m as motion, AnimatePresence } from 'framer-motion';
 import { MandalaElement } from '../ui/MandalaElement';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useConfig } from '../../context/ConfigContext';
 import { useAuthFlow } from '../../hooks/useAuthFlow';
 import { useScrollLock } from '../../hooks/useScrollLock';
 import toast from 'react-hot-toast';
@@ -17,6 +18,7 @@ import {
 
 export function AuthModal() {
   const { isAuthModalOpen, closeAuthModal, loginSuccess } = useAuth();
+  const { customerAuthMethod = 'both' } = useConfig();
 
   useScrollLock(isAuthModalOpen);
 
@@ -199,7 +201,11 @@ export function AuthModal() {
                           <p className="text-on-surface-variant/60 text-[13px] font-light leading-relaxed">
                             {step === '2fa'
                               ? 'Enter the 6-digit code from your authenticator app.'
-                              : `Log in or register with your phone number or email`}
+                              : customerAuthMethod === 'email_only'
+                                ? 'Log in or register with your email address'
+                                : customerAuthMethod === 'phone_only'
+                                  ? 'Log in or register with your mobile phone number'
+                                  : 'Log in or register with your phone number or email'}
                           </p>
                         )}
                         {step === 'name_prompt' && (
@@ -245,6 +251,7 @@ export function AuthModal() {
                                 googleLoading={googleLoading}
                                 handleGoogleSuccess={handleGoogleSuccess}
                                 handleGoogleError={handleGoogleError}
+                                customerAuthMethod={customerAuthMethod}
                               />
                             </motion.div>
                           ) : step === 'account_exists' ? (

@@ -4,7 +4,7 @@
  * Used to throw HTTP errors with specific status codes.
  * Handled globally by the errorMiddleware.
  */
-class ApiError extends Error {
+export class ApiError extends Error {
   statusCode: number;
   success: boolean;
 

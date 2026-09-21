@@ -19,6 +19,7 @@ import { useCart } from '../../context/CartContext';
 import { prefetchManager } from '../../utils/performance/prefetchManager';
 import { useActiveCoupons } from '../../hooks/useActiveCoupons';
 import { useScrollLock } from '../../hooks/useScrollLock';
+import { useConfig } from '../../context/ConfigContext';
 
 const getItemImage = (item) => {
   const candidate =
@@ -47,6 +48,13 @@ export function CartDrawer({ isOpen, onClose }) {
     setClaimedCoupon,
     activeCartMode,
   } = useCart();
+
+  const {
+    maxQuantityPerItem = 10,
+    maxItemsPerOrder = 5,
+    minOrderValue = 0,
+    maxOrderValue = 100000,
+  } = useConfig();
 
   const isRentalMode =
     activeCartMode === 'rental' || (items.length > 0 && items.every((i) => i.type === 'rental'));
@@ -309,20 +317,48 @@ export function CartDrawer({ isOpen, onClose }) {
                                           {item.quantity}
                                         </span>
                                         <button
-                                          onClick={() =>
+                                          onClick={() => {
+                                            if (item.quantity >= maxQuantityPerItem) return;
                                             updateQuantity(
                                               item.id || item._id,
                                               item.variant,
                                               item.quantity + 1,
-                                            )
+                                            );
+                                          }}
+                                          disabled={
+                                            item.quantity >= maxQuantityPerItem ||
+                                            item.quantity >= (item.stock || 999)
                                           }
-                                          className="w-7 h-7 rounded-full flex items-center justify-center text-black/50 hover:bg-black/5 hover:text-[#1a1a1a] transition-all cursor-pointer active:scale-95"
+                                          className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${
+                                            item.quantity >= maxQuantityPerItem ||
+                                            item.quantity >= (item.stock || 999)
+                                              ? 'opacity-30 cursor-not-allowed text-black/30'
+                                              : 'text-black/50 hover:bg-black/5 hover:text-[#1a1a1a] cursor-pointer active:scale-95'
+                                          }`}
                                           aria-label="Increase quantity"
                                         >
                                           <Plus className="text-[16px]" strokeWidth={1.5} />
                                         </button>
                                       </div>
                                     </div>
+                                    {item.quantity > maxQuantityPerItem && (
+                                      <div className="flex items-center justify-between text-[10px] text-amber-900 bg-amber-50 border border-amber-300 rounded px-2 py-1 mt-2">
+                                        <span>Max limit is {maxQuantityPerItem}</span>
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            updateQuantity(
+                                              item.id || item._id,
+                                              item.variant,
+                                              maxQuantityPerItem,
+                                            )
+                                          }
+                                          className="underline font-bold text-amber-950 ml-2 cursor-pointer"
+                                        >
+                                          Set to {maxQuantityPerItem}
+                                        </button>
+                                      </div>
+                                    )}
                                   </div>
                                   {confirmingRemove?.id === (item.id || item._id) &&
                                     confirmingRemove?.variant === item.variant && (
@@ -591,20 +627,48 @@ export function CartDrawer({ isOpen, onClose }) {
                                           {item.quantity}
                                         </span>
                                         <button
-                                          onClick={() =>
+                                          onClick={() => {
+                                            if (item.quantity >= maxQuantityPerItem) return;
                                             updateQuantity(
                                               item.id || item._id,
                                               item.variant,
                                               item.quantity + 1,
-                                            )
+                                            );
+                                          }}
+                                          disabled={
+                                            item.quantity >= maxQuantityPerItem ||
+                                            item.quantity >= (item.stock || 999)
                                           }
-                                          className="w-7 h-7 rounded-full flex items-center justify-center text-black/50 hover:bg-primary/10 hover:text-primary transition-all cursor-pointer active:scale-95"
+                                          className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${
+                                            item.quantity >= maxQuantityPerItem ||
+                                            item.quantity >= (item.stock || 999)
+                                              ? 'opacity-30 cursor-not-allowed text-black/30'
+                                              : 'text-black/50 hover:bg-primary/10 hover:text-primary cursor-pointer active:scale-95'
+                                          }`}
                                           aria-label="Increase quantity"
                                         >
                                           <Plus className="text-[16px]" strokeWidth={1.5} />
                                         </button>
                                       </div>
                                     </div>
+                                    {item.quantity > maxQuantityPerItem && (
+                                      <div className="flex items-center justify-between text-[10px] text-amber-900 bg-amber-50 border border-amber-300 rounded px-2 py-1 mt-2">
+                                        <span>Max limit is {maxQuantityPerItem}</span>
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            updateQuantity(
+                                              item.id || item._id,
+                                              item.variant,
+                                              maxQuantityPerItem,
+                                            )
+                                          }
+                                          className="underline font-bold text-amber-950 ml-2 cursor-pointer"
+                                        >
+                                          Set to {maxQuantityPerItem}
+                                        </button>
+                                      </div>
+                                    )}
                                   </div>
                                   {confirmingRemove?.id === (item.id || item._id) &&
                                     confirmingRemove?.variant === item.variant && (

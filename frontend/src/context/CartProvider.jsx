@@ -9,9 +9,11 @@ import { transformDbCart } from '../utils/ecommerce/cartCalculations';
 import { persistentStorage } from '../utils/storage/persistentStorage';
 import { GuestCartService } from '../services/GuestCartService';
 import { userService } from '../services/api/userService';
+import { useConfig } from './ConfigContext';
 
 export function CartProvider({ children }) {
   const { isAuthenticated, runProtectedAction } = useAuth();
+  const { maxItemsPerOrder = 5, maxQuantityPerItem = 10 } = useConfig();
   const queryClient = useQueryClient();
 
   const [activeCartMode, setActiveCartMode] = useState(() => {
@@ -160,15 +162,38 @@ export function CartProvider({ children }) {
     runProtectedAction, // Note: we'll bypass this in useOptimisticCartMutation shortly
     setIsCartOpen,
     emptySummary,
+    maxQuantityPerItem,
+    maxItemsPerOrder,
   });
 
   // Abstracted Cart Actions
   const addItem = useCallback(
     (product) => {
-      setIsCartOpen(true);
       if (isAuthenticated) {
+        setIsCartOpen(true);
         optAddItem(product);
       } else {
+        const currentGuestCart = GuestCartService.getCart();
+        const targetCartKey =
+          (product.type || 'purchase') === 'purchase' ? 'purchaseCart' : 'rentalCart';
+        const currentItems = currentGuestCart[targetCartKey]?.items || [];
+        const itemId = product._id || product.id;
+        const existingItem = currentItems.find(
+          (item) => (item.product?._id || item.product?.id || item._id || item.id) === itemId,
+        );
+        const currentQty = existingItem ? Number(existingItem.quantity) || 0 : 0;
+        const requestedQty = Number(product.quantity) || 1;
+
+        if (!existingItem && currentItems.length >= maxItemsPerOrder) {
+          toast.error(`Maximum ${maxItemsPerOrder} different products allowed per order`);
+          return;
+        }
+        if (currentQty + requestedQty > maxQuantityPerItem) {
+          toast.error(`Maximum allowed quantity is ${maxQuantityPerItem} per product`);
+          return;
+        }
+
+        setIsCartOpen(true);
         GuestCartService.addToCart(
           product,
           product.quantity || 1,
@@ -178,7 +203,7 @@ export function CartProvider({ children }) {
         setGuestCart(GuestCartService.getCart());
       }
     },
-    [isAuthenticated, optAddItem],
+    [isAuthenticated, optAddItem, setIsCartOpen, maxItemsPerOrder, maxQuantityPerItem],
   );
 
   const attemptAddToCart = useCallback(
@@ -209,15 +234,20 @@ export function CartProvider({ children }) {
 
   const updateQuantity = useCallback(
     (id, variantOrQuantity, maybeQuantity) => {
+      const quantity = maybeQuantity !== undefined ? maybeQuantity : variantOrQuantity;
+      const numQty = Number(quantity) || 1;
+      const clampedQuantity = Math.max(0, Math.min(maxQuantityPerItem, numQty));
+      if (numQty > maxQuantityPerItem) {
+        toast.error(`Maximum allowed quantity is ${maxQuantityPerItem} per product`);
+      }
       if (isAuthenticated) {
-        optUpdateQuantity(id, variantOrQuantity, maybeQuantity);
+        optUpdateQuantity(id, variantOrQuantity, clampedQuantity);
       } else {
-        const quantity = maybeQuantity !== undefined ? maybeQuantity : variantOrQuantity;
-        GuestCartService.updateQuantity(id, quantity, activeCartMode);
+        GuestCartService.updateQuantity(id, clampedQuantity, activeCartMode);
         setGuestCart(GuestCartService.getCart());
       }
     },
-    [isAuthenticated, optUpdateQuantity, activeCartMode],
+    [isAuthenticated, optUpdateQuantity, activeCartMode, maxQuantityPerItem],
   );
 
   const clearCart = useCallback(() => {

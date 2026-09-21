@@ -38,6 +38,8 @@ describe('calculateCartSummary', () => {
     expect(calculateCartSummary(items, 'purchase')).toEqual({
       subtotal: 250,
       depositTotal: 0,
+      shippingFee: 0,
+      platformFee: 0,
       total: 250,
     });
   });
@@ -46,7 +48,17 @@ describe('calculateCartSummary', () => {
     const items = [{ product: { price: 100 }, quantity: 1 }];
     const summary = calculateCartSummary(items, 'purchase', 49);
     expect(summary.subtotal).toBe(100);
+    expect(summary.shippingFee).toBe(49);
     expect(summary.total).toBe(149);
+  });
+
+  it('adds platform fee and shipping fee into the total only', () => {
+    const items = [{ product: { price: 100 }, quantity: 1 }];
+    const summary = calculateCartSummary(items, 'purchase', 49, 10);
+    expect(summary.subtotal).toBe(100);
+    expect(summary.shippingFee).toBe(49);
+    expect(summary.platformFee).toBe(10);
+    expect(summary.total).toBe(159);
   });
 
   it('prices rentals using total package price (not multiplied by days)', () => {

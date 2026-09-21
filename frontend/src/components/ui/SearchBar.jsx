@@ -1,5 +1,6 @@
 import { Search, Camera, X } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
+import visualSearchService from '../../services/api/visualSearchService';
 
 export function SearchBar({
   value = '',
@@ -14,6 +15,78 @@ export function SearchBar({
   const onChangeRef = useRef(onChange);
   const lastEmittedValue = useRef(value);
   const isFocused = useRef(false);
+  const [isVisualSearchEnabled, setIsVisualSearchEnabled] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const storedEnabled = localStorage.getItem('siri_visual_search_enabled');
+        const storedCamera = localStorage.getItem('siri_visual_search_camera_enabled');
+        if (storedEnabled !== null) {
+          return storedEnabled === 'true' && storedCamera !== 'false';
+        }
+      } catch (_e) {}
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    let mounted = true;
+    visualSearchService
+      .getConfig()
+      .then((res) => {
+        if (mounted && res?.data) {
+          setIsVisualSearchEnabled(
+            Boolean(res.data.enabled && res.data.cameraSearchEnabled !== false),
+          );
+        }
+      })
+      .catch(() => {
+        if (mounted) setIsVisualSearchEnabled(false);
+      });
+
+    const handleConfigChange = (e) => {
+      const detail = e.detail;
+      if (detail && detail.enabled !== undefined) {
+        setIsVisualSearchEnabled(Boolean(detail.enabled && detail.cameraSearchEnabled !== false));
+      }
+    };
+
+    const handleStorageChange = (e) => {
+      if (
+        e.key === 'siri_visual_search_enabled' ||
+        e.key === 'siri_visual_search_camera_enabled' ||
+        e.key === 'siri_visual_search_config'
+      ) {
+        try {
+          const storedEnabled = localStorage.getItem('siri_visual_search_enabled') === 'true';
+          const storedCamera =
+            localStorage.getItem('siri_visual_search_camera_enabled') !== 'false';
+          setIsVisualSearchEnabled(storedEnabled && storedCamera);
+        } catch (_e) {}
+      }
+    };
+
+    let channel = null;
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        channel = new BroadcastChannel('siri_visual_search_channel');
+        channel.onmessage = (msg) => {
+          if (mounted && msg.data?.type === 'config_updated' && msg.data?.data) {
+            const d = msg.data.data;
+            setIsVisualSearchEnabled(Boolean(d.enabled && d.cameraSearchEnabled !== false));
+          }
+        };
+      }
+    } catch (_e) {}
+
+    window.addEventListener('visual-search-config-changed', handleConfigChange);
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      mounted = false;
+      window.removeEventListener('visual-search-config-changed', handleConfigChange);
+      window.removeEventListener('storage', handleStorageChange);
+      channel?.close();
+    };
+  }, []);
 
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -40,7 +113,7 @@ export function SearchBar({
     onChange?.({ target: { value: '' } });
   };
 
-  const hasCamera = !!onCameraClick;
+  const hasCamera = Boolean(onCameraClick && isVisualSearchEnabled);
   const hasClear = !!localValue;
   const paddingRightClass =
     hasCamera && hasClear ? 'pr-18 lg:pr-20' : hasCamera || hasClear ? 'pr-11 lg:pr-12' : 'pr-4';
@@ -102,7 +175,7 @@ export function SearchBar({
         aria-label="Search"
       />
       <div className="absolute right-3 lg:right-4 top-1/2 -translate-y-1/2 flex items-center gap-1.5 z-10">
-        {onCameraClick && (
+        {hasCamera && (
           <button
             onClick={(e) => {
               e.preventDefault();

@@ -438,7 +438,9 @@ export function useAdminCMS({
       const idleRes = await cmsService.getSection('admin_idle_timeout');
       if (idleRes && idleRes.success && idleRes.data) {
         const val = idleRes.data.data?.idleTimeout;
-        if (val) setIdleTimeoutMinutes(parseInt(val));
+        if (val !== undefined && val !== null && !isNaN(parseInt(val, 10))) {
+          setIdleTimeoutMinutes(parseInt(val, 10));
+        }
       }
 
       const autoPublishRes = await cmsService.getSection('admin_auto_publish');

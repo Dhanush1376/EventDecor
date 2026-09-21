@@ -288,7 +288,9 @@ export function ProductListing() {
           setNavbarHeight={setNavbarHeight}
           isStuck={isStuck}
           setIsStuck={setIsStuck}
-          visualSearchEnabled={state.visualSearch?.isEnabled}
+          visualSearchEnabled={Boolean(
+            state.visualSearch?.isEnabled && state.visualSearch?.isCameraSearchEnabled,
+          )}
         />
 
         <CountdownPromo

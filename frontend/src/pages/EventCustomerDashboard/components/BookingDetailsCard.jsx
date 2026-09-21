@@ -1,12 +1,11 @@
 import { CalendarCheck, MessageSquare, MapPin, PartyPopper } from 'lucide-react';
 import { OptimizedImage } from '../../../components/ui';
+import { BRAND } from '../../../config/brand';
 
 export function BookingDetailsCard({ selectedBooking, currentStatusIndex }) {
   const handleWhatsApp = () => {
-    const msg = encodeURIComponent(
-      `Hi, I need assistance with my event booking (ID: ${selectedBooking._id || selectedBooking.id})`,
-    );
-    window.open(`https://wa.me/919866006648?text=${msg}`, '_blank');
+    const msg = `Hi, I need assistance with my event booking (ID: ${selectedBooking._id || selectedBooking.id})`;
+    window.open(BRAND.getWhatsAppUrl(msg), '_blank');
   };
 
   const eventImage =

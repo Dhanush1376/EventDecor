@@ -5,19 +5,42 @@ import { useAuth } from '../../context/AuthContext';
 import { useConfig } from '../../context/ConfigContext';
 import { useNavigate } from 'react-router-dom';
 import { SiriLogo } from './SiriLogo';
+import { BRAND, cleanPhoneDigits } from '../../config/brand';
 
 export function StoreClosedOverlay({ isOpen, onClose }) {
   const { openAuthModal, isAuthenticated, user } = useAuth();
-  const { storeSettings, storeName } = useConfig();
+  const {
+    storeSettings,
+    storeName,
+    supportEmail,
+    supportPhone,
+    alternatePhone,
+    whatsappNumber,
+    whatsappUrl,
+  } = useConfig();
   const navigate = useNavigate();
 
   const contactPhone =
-    storeSettings?.contact?.phone || storeSettings?.contact?.whatsappNumber || '+91 98660 06648';
-  const whatsappNumber =
-    storeSettings?.contact?.whatsappNumber || storeSettings?.contact?.phone || '+91 98660 06648';
-  const cleanPhone = whatsappNumber.replace(/[^0-9]/g, '');
-  const cleanCallPhone = contactPhone.replace(/[^0-9+]/g, '');
-  const supportEmail = storeSettings?.general?.supportEmail || 'support@siriartsandcrafts.com';
+    storeSettings?.general?.phone || storeSettings?.contact?.phone || supportPhone || BRAND.phone;
+  const contactAltPhone =
+    storeSettings?.general?.alternatePhone ||
+    storeSettings?.contact?.alternatePhone ||
+    alternatePhone ||
+    BRAND.alternatePhone;
+  const activeWhatsappNumber =
+    storeSettings?.general?.whatsappNumber ||
+    storeSettings?.contact?.whatsappNumber ||
+    whatsappNumber ||
+    BRAND.whatsappNumber;
+  const activeSupportEmail =
+    storeSettings?.general?.supportEmail ||
+    storeSettings?.contact?.email ||
+    supportEmail ||
+    BRAND.email;
+
+  const cleanPhone = cleanPhoneDigits(activeWhatsappNumber);
+  const cleanCallPhone = cleanPhoneDigits(contactPhone);
+  const cleanAltCallPhone = cleanPhoneDigits(contactAltPhone);
 
   const handleExplore = () => {
     onClose();
@@ -112,11 +135,22 @@ export function StoreClosedOverlay({ isOpen, onClose }) {
                 className="inline-flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-all backdrop-blur-md font-medium active:scale-95"
               >
                 <Phone className="w-3.5 h-3.5 text-white" />
-                <span>Call</span>
+                <span>Call Us</span>
               </a>
 
+              {cleanAltCallPhone && cleanAltCallPhone !== cleanCallPhone && (
+                <a
+                  href={`tel:${cleanAltCallPhone}`}
+                  className="inline-flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white/90 transition-all backdrop-blur-md font-medium active:scale-95"
+                  title="Alternate Support Line"
+                >
+                  <Phone className="w-3.5 h-3.5 text-white/80" />
+                  <span>Alt Phone</span>
+                </a>
+              )}
+
               <a
-                href={`https://wa.me/${cleanPhone}`}
+                href={BRAND.getWhatsAppUrl(null, activeWhatsappNumber)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-all backdrop-blur-md font-medium active:scale-95"
@@ -138,7 +172,7 @@ export function StoreClosedOverlay({ isOpen, onClose }) {
               </a>
 
               <a
-                href={`mailto:${supportEmail}`}
+                href={`mailto:${activeSupportEmail}`}
                 className="inline-flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-all backdrop-blur-md font-medium active:scale-95"
               >
                 <Mail className="w-4 h-4 text-white" />

@@ -80,29 +80,10 @@ export class OrderFulfillmentService {
         // Evaluate user-initiated cancellations/returns against store policies
         if (!isPrivileged) {
           if (finalStatus === 'Cancelled') {
-            // Check StoreSettings property mappings (allowCancellation or allowCustomerCancellation)
-            const isCancelAllowed =
-              settings.cancellation.allowCancellation ||
-              (settings.cancellation as any).allowCustomerCancellation;
-            if (!isCancelAllowed) {
-              throw new ApiError(400, 'Customer cancellations are disabled by the store.');
-            }
-
-            const orderDate =
-              order.createdAt ||
-              (order.statusHistory && order.statusHistory[0]?.timestamp) ||
-              new Date();
-            const hoursSinceOrder = (Date.now() - orderDate.getTime()) / (1000 * 60 * 60);
-
-            if (
-              settings.cancellation.cancellationWindowHours &&
-              hoursSinceOrder > settings.cancellation.cancellationWindowHours
-            ) {
-              throw new ApiError(
-                400,
-                `Cancellations are only allowed within ${settings.cancellation.cancellationWindowHours} hours of placing the order.`,
-              );
-            }
+            throw new ApiError(
+              400,
+              'Orders cannot be cancelled once placed. Please contact support if you need assistance.',
+            );
           } else if (finalStatus === 'Returned') {
             if (!settings.returnsExchanges.enableReturns) {
               throw new ApiError(400, 'Returns are currently disabled by the store.');

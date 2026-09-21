@@ -15,6 +15,8 @@ export function useOptimisticCartMutation({
   runProtectedAction,
   setIsCartOpen,
   emptySummary,
+  maxQuantityPerItem = 10,
+  maxItemsPerOrder = 5,
 }) {
   const { addToCart, removeFromCart, syncCart } = useCartMutations();
   const syncTimeoutRef = useRef(null);
@@ -26,9 +28,37 @@ export function useOptimisticCartMutation({
   const addItem = useCallback(
     (product) => {
       runProtectedAction(() => {
-        setIsCartOpen(true);
-        const qty = product.quantity || 1;
         const itemType = product.type || 'purchase';
+        const targetCartKey =
+          itemType === 'purchase'
+            ? 'purchaseCart'
+            : itemType === 'rental'
+              ? 'rentalCart'
+              : 'customCart';
+
+        const previousCart = queryClient.getQueryData(['cart', cartKey]);
+        const currentItems = previousCart?.[targetCartKey]?.items || [];
+        const productId = product._id || product.id;
+
+        const existingItem = currentItems.find(
+          (item) => (item.product?._id || item.product?.id || item._id || item.id) === productId,
+        );
+
+        const currentQty = existingItem ? Number(existingItem.quantity) || 0 : 0;
+        const requestedQty = Number(product.quantity) || 1;
+
+        if (!existingItem && currentItems.length >= maxItemsPerOrder) {
+          toast.error(`Maximum ${maxItemsPerOrder} different products allowed per order`);
+          return;
+        }
+
+        if (currentQty + requestedQty > maxQuantityPerItem) {
+          toast.error(`Maximum allowed quantity is ${maxQuantityPerItem} per product`);
+          return;
+        }
+
+        setIsCartOpen(true);
+        const qty = requestedQty;
 
         // React Query useCartMutations handles the optimistic UI and rollback natively now!
         addToCart({
@@ -40,7 +70,15 @@ export function useOptimisticCartMutation({
         });
       });
     },
-    [runProtectedAction, addToCart, setIsCartOpen],
+    [
+      runProtectedAction,
+      addToCart,
+      setIsCartOpen,
+      queryClient,
+      cartKey,
+      maxItemsPerOrder,
+      maxQuantityPerItem,
+    ],
   );
 
   const attemptAddToCart = useCallback(
@@ -72,11 +110,16 @@ export function useOptimisticCartMutation({
   const updateQuantity = useCallback(
     (id, variantOrQuantity, maybeQuantity) => {
       const quantity = maybeQuantity !== undefined ? maybeQuantity : variantOrQuantity;
-      const numericQuantity = Number(quantity) || 1;
+      let numericQuantity = Number(quantity) || 1;
 
       if (numericQuantity < 1) {
         removeItem(id);
         return;
+      }
+
+      if (numericQuantity > maxQuantityPerItem) {
+        toast.error(`Maximum allowed quantity is ${maxQuantityPerItem} per product`);
+        numericQuantity = maxQuantityPerItem;
       }
 
       runProtectedAction(() => {
@@ -145,7 +188,16 @@ export function useOptimisticCartMutation({
         }, 500);
       });
     },
-    [removeItem, runProtectedAction, syncCart, queryClient, activeCartMode, cartKey, emptySummary],
+    [
+      removeItem,
+      runProtectedAction,
+      syncCart,
+      queryClient,
+      activeCartMode,
+      cartKey,
+      emptySummary,
+      maxQuantityPerItem,
+    ],
   );
 
   const clearCart = useCallback(() => {

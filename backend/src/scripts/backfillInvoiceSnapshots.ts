@@ -118,28 +118,38 @@ async function main() {
         let taxableAmount: number;
         let totalTax: number;
 
+        const taxableBase = Math.max(0, subtotal - discount);
         if (taxInclusive) {
-          taxableAmount = parseFloat((total / (1 + taxRate)).toFixed(2));
-          totalTax = parseFloat((total - taxableAmount).toFixed(2));
+          taxableAmount = parseFloat((taxableBase / (1 + taxRate)).toFixed(2));
+          totalTax = parseFloat((taxableBase - taxableAmount).toFixed(2));
         } else {
-          taxableAmount = subtotal - discount;
+          taxableAmount = taxableBase;
           totalTax = parseFloat((taxableAmount * taxRate).toFixed(2));
         }
 
         const cgstRatio = cgstRate / (taxRate || 1);
-        const sgstRatio = sgstRate / (taxRate || 1);
+        const cgst = parseFloat((totalTax * cgstRatio).toFixed(2));
+        const sgst = parseFloat((totalTax - cgst).toFixed(2));
 
         const taxSnapshot = {
           subtotal,
           discount,
           taxableAmount,
-          cgst: parseFloat((totalTax * cgstRatio).toFixed(2)),
-          sgst: parseFloat((totalTax * sgstRatio).toFixed(2)),
+          cgst,
+          sgst,
           igst: 0,
           totalTax,
           grandTotal: total,
           currency: 'INR',
           currencySymbol: '₹',
+          isInterState: false,
+          gstEnabled: settings.taxes.gstEnabled ?? true,
+          taxInclusive,
+          gstRate: taxRate,
+          cgstRate,
+          sgstRate,
+          hsnCode: settings.taxes.hsnCode || '',
+          invoiceFooter: settings.taxes.invoiceFooter || '',
         };
 
         const invoiceData = {

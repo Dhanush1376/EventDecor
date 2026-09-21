@@ -1,4 +1,7 @@
-export const Header = (logoUrl?: string, brandName: string = 'Siri Arts & Crafts') => {
+import { getStoreConfigSync } from '../../../config/storeConfig';
+
+export const Header = (logoUrl?: string, customBrandName?: string) => {
+  const brandName = customBrandName || getStoreConfigSync().name;
   if (logoUrl) {
     return `
       <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 30px;">

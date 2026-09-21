@@ -23,8 +23,15 @@ class RentalService {
     startDate: Date,
     endDate: Date,
     quantity: number = 1,
+    state?: string,
   ) {
-    return await RentalCheckoutService.calculateRentalCost(productId, startDate, endDate, quantity);
+    return await RentalCheckoutService.calculateRentalCost(
+      productId,
+      startDate,
+      endDate,
+      quantity,
+      state,
+    );
   }
 
   static async checkServiceArea(lat: number, lng: number) {

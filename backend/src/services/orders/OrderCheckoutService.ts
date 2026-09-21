@@ -15,6 +15,7 @@ import OutboxEvent from '../../models/OutboxEvent';
 import { computeOrderTotals } from './orderTotals';
 import { InventoryService } from '../InventoryService';
 import { InvoiceService } from '../InvoiceService';
+import { TaxEngine } from '../taxes/TaxEngine';
 
 export class OrderCheckoutService {
   static async createOrder(userId: string, orderData: any) {
@@ -226,6 +227,27 @@ export class OrderCheckoutService {
         }
       }
 
+      if (!shippingAddress?.state) {
+        throw new ApiError(400, 'Destination state is required for delivery and tax compliance.');
+      }
+
+      const storeState =
+        settings.contact?.state || settings.legal?.registeredAddress || 'Andhra Pradesh';
+
+      const taxResult = TaxEngine.calculateTax({
+        subtotal,
+        discount,
+        storeState,
+        customerState: shippingAddress.state,
+        taxConfig: {
+          gstEnabled: settings.taxes?.gstEnabled,
+          taxInclusive: settings.taxes?.taxInclusive,
+          gstRate: settings.taxes?.gstRate,
+          cgstRate: settings.taxes?.cgstRate,
+          sgstRate: settings.taxes?.sgstRate,
+        },
+      });
+
       const user = await User.findById(userId).session(session);
 
       const totals = computeOrderTotals({
@@ -234,15 +256,17 @@ export class OrderCheckoutService {
         depositTotal,
         isCod,
         codFee: settings.payments.codFee,
-        freeShippingThreshold: settings.shipping.enableFreeShipping
-          ? settings.shipping.freeShippingThreshold
-          : Infinity,
+        enableFreeShipping: settings.shipping.enableFreeShipping,
+        freeShippingThreshold: settings.shipping.freeShippingThreshold,
         deliveryCharge: settings.shipping.deliveryCharge,
+        platformFee: settings.orders.platformFee || 0,
+        taxAmount: taxResult.taxAmount,
+        isTaxInclusive: taxResult.taxInclusive,
         useWallet: Boolean(useWallet && user && settings.loyalty.walletEnabled),
         walletBalance: user?.walletBalance || 0,
       });
 
-      const { shippingFee, codFee, total } = totals;
+      const { shippingFee, platformFee, codFee, total } = totals;
       const isZeroTotalOrder = total === 0;
 
       const orderValueForLimits = Math.max(0, subtotal - discount);
@@ -360,15 +384,14 @@ export class OrderCheckoutService {
       walletDeduction = totals.walletDeduction;
       if (walletDeduction > 0) walletDeducted = true;
 
-      // Generate immutable invoice snapshots (sequential number, store identity, tax breakdown)
+      // Generate immutable invoice snapshots (sequential number, store identity, self-contained tax breakdown)
       const invoiceSnapshots = await InvoiceService.generateOrderSnapshots(
         { subtotal, discount, shippingFee, codFee, walletDeduction, total },
+        taxResult,
         {
-          gstEnabled: settings.taxes.gstEnabled,
-          taxRate: settings.taxes.gstRate,
-          cgstRate: settings.taxes.cgstRate,
-          sgstRate: settings.taxes.sgstRate,
-          taxInclusive: settings.taxes.taxInclusive,
+          hsnCode: settings.taxes?.hsnCode,
+          invoicePrefix: settings.taxes?.invoicePrefix,
+          invoiceFooter: settings.taxes?.invoiceFooter,
         },
       );
       const invoiceNumber = invoiceSnapshots.invoice.number;
@@ -444,6 +467,7 @@ export class OrderCheckoutService {
           depositTotal,
           subtotal,
           shippingFee,
+          platformFee,
           discount,
           codFee,
           walletDeduction,

@@ -1,10 +1,14 @@
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useConfig } from '../../context/ConfigContext';
+import { BRAND } from '../../config/brand';
 
 export function WhatsAppWidget() {
   const { pathname } = useLocation();
   const [isVisible, setIsVisible] = useState(true);
+  const { whatsappUrl } = useConfig();
+  const targetUrl = whatsappUrl || BRAND.whatsappUrl;
 
   // Hide on checkout & return flows for a distraction-free experience or if dismissed
   if (pathname === '/checkout' || pathname.startsWith('/dashboard/returns') || !isVisible)
@@ -42,7 +46,7 @@ export function WhatsAppWidget() {
           </button>
 
           <a
-            href="https://wa.me/919866006648"
+            href={targetUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="w-14 h-14 bg-white/95 backdrop-blur-md rounded-full shadow-[0_12px_40px_rgba(0,0,0,0.15)] border border-black/5 hover:border-primary/30 flex items-center justify-center transition-all duration-500 ease-out group"

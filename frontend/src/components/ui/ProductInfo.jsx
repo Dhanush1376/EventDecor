@@ -23,6 +23,7 @@ import { useQuery } from '@tanstack/react-query';
 import { couponService } from '../../services/domainServices';
 import { MandalaArtDecor } from './MandalaArtDecor';
 import { ProductCoupons } from './ProductCoupons';
+import { BRAND } from '../../config/brand';
 import { WhatsAppIcon } from './WhatsAppIcon';
 import { useConfig } from '../../context/ConfigContext';
 import toast from 'react-hot-toast';
@@ -34,7 +35,8 @@ export function ProductInfo({
   setLocalAppliedCoupon,
   _maxQuantity = 10,
 }) {
-  const { isStoreClosed } = useConfig();
+  const { isStoreClosed, estimatedDeliveryDays, freeShippingThreshold, enableFreeShipping } =
+    useConfig();
   const navigate = useNavigate();
   const { attemptAddToCart, claimedCoupon } = useCart();
   const { toggleItem, isWishlisted } = useWishlist();
@@ -529,6 +531,22 @@ export function ProductInfo({
             })()}
         </div>
 
+        {/* Dynamic Delivery Reassurance Badge */}
+        <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-surface-container-low/70 border border-outline-variant/30 text-[12px] text-on-surface/85">
+          <Truck className="w-4 h-4 text-primary shrink-0" strokeWidth={1.5} />
+          <span>
+            Standard Delivery:{' '}
+            <strong className="font-semibold text-on-surface">
+              {estimatedDeliveryDays || '5-7'} days
+            </strong>
+            {enableFreeShipping && freeShippingThreshold > 0 && (
+              <span className="text-secondary ml-1 font-medium">
+                (Free on orders above ₹{freeShippingThreshold.toLocaleString()})
+              </span>
+            )}
+          </span>
+        </div>
+
         {/* Custom Design Consultation Card */}
         <div className="md:hidden">
           <CustomThemeCard product={product} />
@@ -565,11 +583,9 @@ export function CustomThemeCard({ product }) {
 
   const handleWhatsAppChat = () => {
     if (!product) return;
-    const num = '919866006648';
     const productLink = `${window.location.origin}/product/${product._id || product.id}`;
     const baseMsg = `Hello, I'm interested in this product and would like to chat about it.\n\nProduct Link: ${productLink}`;
-    const msg = encodeURIComponent(baseMsg);
-    window.open(`https://wa.me/${num}?text=${msg}`, '_blank');
+    window.open(BRAND.getWhatsAppUrl(baseMsg), '_blank');
   };
 
   return (

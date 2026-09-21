@@ -14,6 +14,7 @@ import PaymentAttempt from '../../models/PaymentAttempt';
 import User from '../../models/User';
 import WalletTransaction from '../../models/WalletTransaction';
 import { debitWalletBalance } from '../../utils/payment/walletMutations';
+import { TaxEngine } from '../taxes/TaxEngine';
 
 export class RentalCheckoutService {
   static async calculateRentalCost(
@@ -21,6 +22,7 @@ export class RentalCheckoutService {
     startDate: Date,
     endDate: Date,
     quantity: number = 1,
+    customerState?: string,
   ) {
     const qty = Math.max(1, Number(quantity) || 1);
     const product = await Product.findById(productId).lean();
@@ -73,21 +75,23 @@ export class RentalCheckoutService {
       rentalCharge === 0;
     const deliveryCharge = isFreeShipping ? 0 : settings.shipping.deliveryCharge;
 
-    const gstEnabled = settings.taxes.gstEnabled;
-    const taxInclusive = settings.taxes.taxInclusive !== false;
-    const taxRate = settings.taxes.gstRate || 0.18;
-    let tax: number;
+    const storeState = settings.contact?.state || 'AP';
+    const effectiveCustomerState = customerState || storeState;
+
+    const taxResult = TaxEngine.calculateTax({
+      subtotal: rentalCharge,
+      discount: 0,
+      taxSettings: settings.taxes,
+      customerState: effectiveCustomerState,
+      storeState,
+    });
+
+    const tax = taxResult.taxAmount;
     let totalAmount: number;
 
-    if (!gstEnabled) {
-      tax = 0;
-      totalAmount = Math.round((rentalCharge + securityDeposit + deliveryCharge) * 100) / 100;
-    } else if (taxInclusive) {
-      const taxableAmount = Math.round((rentalCharge / (1 + taxRate)) * 100) / 100;
-      tax = Math.round((rentalCharge - taxableAmount) * 100) / 100;
+    if (!taxResult.isGstEnabled || taxResult.isTaxInclusive) {
       totalAmount = Math.round((rentalCharge + securityDeposit + deliveryCharge) * 100) / 100;
     } else {
-      tax = Math.round(rentalCharge * taxRate * 100) / 100;
       totalAmount = Math.round((rentalCharge + securityDeposit + deliveryCharge + tax) * 100) / 100;
     }
 
@@ -106,7 +110,8 @@ export class RentalCheckoutService {
       isDepositRefundable: product.isDepositRefundable,
       deliveryCharge,
       tax,
-      taxInclusive,
+      taxDetails: taxResult,
+      taxInclusive: taxResult.isTaxInclusive,
       totalAmount,
       startDate: start,
       endDate: end,
@@ -159,12 +164,17 @@ export class RentalCheckoutService {
       useWallet,
     } = data;
 
+    if (!shippingAddress || !shippingAddress.state) {
+      throw new ApiError(400, 'Shipping address state is required for tax calculation');
+    }
+
     const qty = Math.max(1, Number(quantity) || 1);
     const costBreakdown = await this.calculateRentalCost(
       productId,
       rentalStartDate,
       rentalEndDate,
       qty,
+      shippingAddress.state,
     );
     const availability = await RentalAvailabilityService.checkAvailability(
       productId,
@@ -267,6 +277,21 @@ export class RentalCheckoutService {
                   securityDeposit: costBreakdown.securityDeposit,
                   deliveryCharge: costBreakdown.deliveryCharge,
                   tax: costBreakdown.tax,
+                  taxSnapshot: {
+                    taxableAmount: costBreakdown.taxDetails.taxableAmount,
+                    taxAmount: costBreakdown.taxDetails.taxAmount,
+                    cgst: costBreakdown.taxDetails.cgst,
+                    sgst: costBreakdown.taxDetails.sgst,
+                    igst: costBreakdown.taxDetails.igst,
+                    isInterState: costBreakdown.taxDetails.isInterState,
+                    gstRate: costBreakdown.taxDetails.gstRate,
+                    cgstRate: costBreakdown.taxDetails.cgstRate,
+                    sgstRate: costBreakdown.taxDetails.sgstRate,
+                    gstEnabled: costBreakdown.taxDetails.isGstEnabled,
+                    taxInclusive: costBreakdown.taxDetails.isTaxInclusive,
+                    hsnCode: settings.taxes?.hsnCode || '9973',
+                    invoiceFooter: settings.taxes?.invoiceFooter || '',
+                  },
                   walletDeduction,
                   totalAmount: finalAmount,
                   status: 'confirmed',
@@ -380,6 +405,21 @@ export class RentalCheckoutService {
           securityDeposit: costBreakdown.securityDeposit,
           deliveryCharge: costBreakdown.deliveryCharge,
           tax: costBreakdown.tax,
+          taxSnapshot: {
+            taxableAmount: costBreakdown.taxDetails.taxableAmount,
+            taxAmount: costBreakdown.taxDetails.taxAmount,
+            cgst: costBreakdown.taxDetails.cgst,
+            sgst: costBreakdown.taxDetails.sgst,
+            igst: costBreakdown.taxDetails.igst,
+            isInterState: costBreakdown.taxDetails.isInterState,
+            gstRate: costBreakdown.taxDetails.gstRate,
+            cgstRate: costBreakdown.taxDetails.cgstRate,
+            sgstRate: costBreakdown.taxDetails.sgstRate,
+            gstEnabled: costBreakdown.taxDetails.isGstEnabled,
+            taxInclusive: costBreakdown.taxDetails.isTaxInclusive,
+            hsnCode: settings.taxes?.hsnCode || '9973',
+            invoiceFooter: settings.taxes?.invoiceFooter || '',
+          },
           walletDeduction,
           total: finalAmount,
           totalAmount: finalAmount,

@@ -3,6 +3,7 @@ import SoftDeletePlugin, { SoftDeleteModel } from '../utils/SoftDeletePlugin';
 import ForensicAuditPlugin from '../utils/ForensicAuditPlugin';
 
 import { ICustomOrder } from '../types/customOrder';
+export { ICustomOrder };
 
 // ─── Sub-Schemas ───
 

@@ -22,6 +22,21 @@ export interface IRentalOrder extends Document, ISoftDeleted {
   securityDeposit: number;
   deliveryCharge: number;
   tax: number;
+  taxSnapshot?: {
+    taxableAmount: number;
+    taxAmount: number;
+    cgst: number;
+    sgst: number;
+    igst: number;
+    isInterState: boolean;
+    gstRate: number;
+    cgstRate: number;
+    sgstRate: number;
+    gstEnabled: boolean;
+    taxInclusive: boolean;
+    hsnCode?: string;
+    invoiceFooter?: string;
+  };
   walletDeduction?: number;
   totalAmount: number;
   status: 'pending' | 'confirmed' | 'active_rental' | 'returned' | 'completed' | 'cancelled';
@@ -122,6 +137,21 @@ const RentalOrderSchema: Schema = new Schema(
     securityDeposit: { type: Number, required: true },
     deliveryCharge: { type: Number, default: 0 },
     tax: { type: Number, required: true },
+    taxSnapshot: {
+      taxableAmount: { type: Number },
+      taxAmount: { type: Number },
+      cgst: { type: Number },
+      sgst: { type: Number },
+      igst: { type: Number },
+      isInterState: { type: Boolean },
+      gstRate: { type: Number },
+      cgstRate: { type: Number },
+      sgstRate: { type: Number },
+      gstEnabled: { type: Boolean },
+      taxInclusive: { type: Boolean },
+      hsnCode: { type: String },
+      invoiceFooter: { type: String },
+    },
     walletDeduction: { type: Number, default: 0, min: 0 },
     totalAmount: { type: Number, required: true },
     status: {

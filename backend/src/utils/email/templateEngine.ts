@@ -2,6 +2,7 @@ import handlebars from 'handlebars';
 import fs from 'fs';
 import path from 'path';
 import logger from '../../config/logger';
+import { getStoreConfigSync } from '../../config/storeConfig';
 
 // {{value}} is HTML-escaped by default. Use {{{value}}} only for trusted, server-controlled markup.
 handlebars.registerHelper('formatCurrency', function (value) {
@@ -25,7 +26,21 @@ export const compileTemplate = (templateName: string, data: Record<string, any>)
     }
     const source = fs.readFileSync(templatePath, 'utf-8');
     const template = handlebars.compile(source);
-    return template(data);
+
+    const store = getStoreConfigSync();
+    const enrichedData = {
+      storeName: store.name,
+      storeLogo: store.logo,
+      websiteUrl: store.websiteUrl,
+      websiteDomain: store.websiteDomain,
+      storeAddress: store.contact.address,
+      supportEmail: store.contact.email,
+      supportPhone: store.contact.phone,
+      currentYear: new Date().getFullYear(),
+      ...data,
+    };
+
+    return template(enrichedData);
   } catch (error) {
     logger.error(`Error compiling template ${templateName}:`, error);
     return '';

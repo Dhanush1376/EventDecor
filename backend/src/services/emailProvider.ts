@@ -22,6 +22,7 @@
 
 import logger from '../config/logger';
 import dns from 'dns';
+import { getStoreConfigSync } from '../config/storeConfig';
 
 // Force Node.js >= 17 to prefer IPv4 first (fixes ENETUNREACH on IPv6 to Gmail SMTP)
 if (dns.setDefaultResultOrder) {
@@ -51,7 +52,7 @@ export const sendViaBrevo = async (payload: EmailPayload): Promise<{ messageId: 
 
   const senderEmail =
     payload.from || process.env.BREVO_SENDER_EMAIL || 'noreply@siriartsandcrafts.com';
-  const senderName = payload.fromName || 'Siri Arts & Crafts';
+  const senderName = payload.fromName || getStoreConfigSync().name || 'Siri Arts & Crafts';
 
   const body: any = {
     sender: { name: senderName, email: senderEmail },
@@ -120,7 +121,7 @@ export const sendViaSMTP = async (payload: EmailPayload): Promise<{ messageId: s
   const transporter = cachedTransporter;
 
   const senderEmail = payload.from || process.env.SMTP_USER || 'noreply@siriartsandcrafts.com';
-  const senderName = payload.fromName || 'Siri Arts & Crafts';
+  const senderName = payload.fromName || getStoreConfigSync().name || 'Siri Arts & Crafts';
 
   const info = await transporter.sendMail({
     from: `"${senderName}" <${senderEmail}>`,

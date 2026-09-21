@@ -94,10 +94,11 @@ class ContentService {
         studio_settings: {
           businessName: 'Siri Arts & Crafts',
           tagline: '',
-          businessEmail: 'Sirisha.atmakuri@gmail.com',
-          phoneNumber: '+91 98660 06648',
+          businessEmail: '',
+          phoneNumber: '',
+          alternatePhone: '',
           gstNumber: 'GSTIN123456789',
-          address: '#28-1-92, South Street, ONGOLE-523001, Prakasam District, Andhra Pradesh',
+          address: '',
           primaryColor: '#735c00',
           secondaryColor: '#F8F9FB',
           fontFamily: 'Playfair Display + Inter',
@@ -108,7 +109,7 @@ class ContentService {
           deliveryEstimate: '5-7',
           razorpayKeyId: '',
           upiId: 'siriarts@upi',
-          whatsappNumber: '+91 98660 06648',
+          whatsappNumber: '',
           whatsappMessage: 'Hello! Thank you for reaching Siri Arts & Crafts.',
         },
         custom_categories: {

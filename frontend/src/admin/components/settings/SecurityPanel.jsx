@@ -107,7 +107,7 @@ export function SecurityPanel({
             <select
               value={idleTimeoutMinutes}
               onChange={(e) => {
-                const val = parseInt(e.target.value);
+                const val = parseInt(e.target.value, 10);
                 changeIdleTimeout(val);
               }}
               className="admin-input h-9 !min-h-[36px] rounded-[4px] border-[var(--admin-border)] text-[12.5px] font-semibold"
@@ -116,6 +116,7 @@ export function SecurityPanel({
               <option value="15">15 Minutes</option>
               <option value="30">30 Minutes</option>
               <option value="60">60 Minutes</option>
+              <option value="0">Never (No Auto-Logout)</option>
             </select>
           </div>
         </div>

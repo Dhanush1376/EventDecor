@@ -4,8 +4,10 @@ import Check from 'lucide-react/dist/esm/icons/check';
 import { Banknote } from 'lucide-react';
 import { useCheckout } from './CheckoutProvider';
 import { useActiveCoupons } from '../hooks/useActiveCoupons';
+import { useConfig } from '../context/ConfigContext';
 
 export default function CheckoutSidebar() {
+  const { estimatedDeliveryDays } = useConfig();
   const {
     user,
     backendTotals,
@@ -316,7 +318,7 @@ export default function CheckoutSidebar() {
                 )}
 
                 <div className="flex justify-between">
-                  <span>Delivery Fee</span>
+                  <span>Delivery Fee ({estimatedDeliveryDays || '5-7'} days)</span>
                   <span className="text-primary font-bold uppercase tracking-wider text-[12px]">
                     {rentalCostBreakdown?.deliveryCharge === 0
                       ? 'Free'
@@ -433,7 +435,7 @@ export default function CheckoutSidebar() {
                 </div>
 
                 <div className="flex justify-between">
-                  <span>Delivery Fee</span>
+                  <span>Delivery Fee ({estimatedDeliveryDays || '5-7'} days)</span>
                   <span className="text-primary font-bold uppercase tracking-wider text-[12px]">
                     {backendTotals?.shippingFee === 0
                       ? 'Free'
@@ -445,6 +447,15 @@ export default function CheckoutSidebar() {
                   <span>Tax</span>
                   <span className="text-secondary font-medium">Included</span>
                 </div>
+
+                {backendTotals?.platformFee > 0 && (
+                  <div className="flex justify-between">
+                    <span>Platform Fee</span>
+                    <span className="font-medium">
+                      ₹{backendTotals.platformFee.toLocaleString()}
+                    </span>
+                  </div>
+                )}
 
                 {paymentOption === 'cod' && backendTotals?.codFee > 0 && (
                   <div className="flex justify-between items-center bg-amber-50/50 text-amber-800 rounded px-2 py-1.5 border border-amber-100/50">

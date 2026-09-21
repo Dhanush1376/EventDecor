@@ -439,7 +439,7 @@ export function TopNavbar() {
                     Search products...
                   </span>
 
-                  {visualSearch.isEnabled && (
+                  {visualSearch.isEnabled && visualSearch.isCameraSearchEnabled && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();

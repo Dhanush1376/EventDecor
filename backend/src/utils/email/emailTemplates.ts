@@ -63,6 +63,8 @@ export const dataTable = (rows: { label: string; value: string }[]) => {
   `;
 };
 
+import { getStoreConfigSync } from '../../config/storeConfig';
+
 /**
  * Reusable heritage HTML wrapper featuring a warm luxury card layout, CSS resets,
  * elegant serif branding typography, dark mode rendering, and brand alignment.
@@ -70,12 +72,14 @@ export const dataTable = (rows: { label: string; value: string }[]) => {
 export const getLuxuryEmailWrapper = (
   subtitle: string,
   bodyContentHtml: string,
-  footerTextHtml: string = 'This is an automated transmission from Siri Arts & Crafts. If you did not request this, please safely disregard this email or contact support.',
+  footerTextHtml?: string,
   preheaderText?: string,
 ): string => {
-  // Logo removed in favor of text header
-
+  const store = getStoreConfigSync();
+  const defaultFooter = `This is an automated transmission from ${store.name}. If you did not request this, please safely disregard this email or contact support.`;
+  const footerText = footerTextHtml || defaultFooter;
   const previewText = preheaderText || subtitle;
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -84,7 +88,7 @@ export const getLuxuryEmailWrapper = (
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <meta name="color-scheme" content="light dark">
   <meta name="supported-color-schemes" content="light dark">
-  <title>Siri Arts & Crafts</title>
+  <title>${store.name}</title>
   <style>
     /* Reset & Standard client overrides */
     body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
@@ -153,8 +157,8 @@ export const getLuxuryEmailWrapper = (
           <tr>
             <td class="main-card">
               <div class="brand-header">
-                <a href="https://siriartsandcrafts.com" target="_blank" class="brand-link" style="display: block; text-align: center;">
-                  <h1 class="brand-name" style="color: #111827; margin: 0; font-size: 24px; text-decoration: none; font-weight: bold; text-align: center;">Siri Arts & Crafts</h1>
+                <a href="${store.websiteUrl}" target="_blank" class="brand-link" style="display: block; text-align: center;">
+                  <h1 class="brand-name" style="color: #111827; margin: 0; font-size: 24px; text-decoration: none; font-weight: bold; text-align: center;">${store.name}</h1>
                 </a>
               </div>
               <div class="body-content">
@@ -162,11 +166,11 @@ export const getLuxuryEmailWrapper = (
               </div>
               <div class="footer-divider">
                 <p class="footer-text">
-                  ${footerTextHtml}
+                  ${footerText}
                 </p>
                 <p class="footer-text">
-                  Siri Arts & Crafts<br/>
-                  <a href="https://siriartsandcrafts.com" target="_blank">siriartsandcrafts.com</a>
+                  ${store.name}<br/>
+                  <a href="${store.websiteUrl}" target="_blank">${store.websiteDomain}</a>
                 </p>
               </div>
             </td>
@@ -183,10 +187,11 @@ export const getLuxuryEmailWrapper = (
  * Generates the premium OTP Authentication Email
  */
 export const getOtpEmailTemplate = (otpCode: string, expiryMinutes: number = 5): string => {
+  const store = getStoreConfigSync();
   const preheader = `Use this code to verify your email. It expires in ${expiryMinutes} minutes.`;
   const body = `
     <h2>Security Verification</h2>
-    <p>Please use the code below to securely access your Siri Arts & Crafts account.</p>
+    <p>Please use the code below to securely access your ${store.name} account.</p>
     <div class="code-container">
       <span class="code-label">Verification Code</span>
       <div class="code-display">${otpCode}</div>
@@ -231,11 +236,12 @@ export const getTeamInviteEmailTemplate = (
   role: string,
   permissions: string,
 ): string => {
-  const preheader = `You've been invited to join the Siri Arts & Crafts team.`;
+  const store = getStoreConfigSync();
+  const preheader = `You've been invited to join the ${store.name} team.`;
   const body = `
     <h2>Join the Workspace</h2>
     <p>
-      You have been invited to join the Siri Arts & Crafts workspace as a <strong>${role}</strong> with <strong>${permissions}</strong> access.
+      You have been invited to join the ${store.name} workspace as a <strong>${role}</strong> with <strong>${permissions}</strong> access.
     </p>
     <div class="button-wrapper">
       <a href="${inviteUrl}" class="cta-button" target="_blank">Accept Invitation</a>
@@ -320,9 +326,10 @@ export const getAdminNotificationTemplate = (
  * Generates the premium Welcome Email
  */
 export const getWelcomeEmailTemplate = (name: string, frontendUrl: string): string => {
-  const preheader = `Welcome to Siri Arts & Crafts. Thank you for joining us.`;
+  const store = getStoreConfigSync();
+  const preheader = `Welcome to ${store.name}. Thank you for joining us.`;
   const body = `
-    <h2>Welcome to Siri Arts & Crafts</h2>
+    <h2>Welcome to ${store.name}</h2>
     <p>Hello ${name},</p>
     <p>
       Thank you for joining our community. We invite you to explore our curated collections and use our digital studio to plan your event decor.
@@ -334,7 +341,7 @@ export const getWelcomeEmailTemplate = (name: string, frontendUrl: string): stri
       If you have any questions or want to discuss a custom event setup, feel free to reply directly to this email. We are here to help.
     </p>
   `;
-  return getLuxuryEmailWrapper('Welcome to Siri Arts & Crafts', body, undefined, preheader);
+  return getLuxuryEmailWrapper(`Welcome to ${store.name}`, body, undefined, preheader);
 };
 
 /**
@@ -345,11 +352,12 @@ export const getSuspiciousLoginEmailTemplate = (
   loginTime: string,
   ipAddress: string,
 ): string => {
+  const store = getStoreConfigSync();
   const preheader = `New login detected for your account.`;
   const body = `
     <h2 style="color: #dc2626;">New Login Detected</h2>
     <p>Hello ${name},</p>
-    <p>We detected a new login to your Siri Arts & Crafts account.</p>
+    <p>We detected a new login to your ${store.name} account.</p>
     <div style="background-color: #fef2f2; border: 1px solid #fca5a5; padding: 20px; border-radius: 8px; margin: 24px 0; font-size: 14px; line-height: 1.6; color: #991b1b;">
       <strong>Time:</strong> ${loginTime}<br/>
       <strong>IP Address:</strong> ${ipAddress}<br/>

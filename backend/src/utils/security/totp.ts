@@ -49,8 +49,11 @@ export const generateTotpSecret = (): string => {
   return secret.slice(0, 32);
 };
 
+import { getStoreConfigSync } from '../../config/storeConfig';
+
 export const buildOtpAuthUrl = (email: string, secret: string): string => {
-  const issuer = encodeURIComponent('Siri Arts & Crafts');
+  const store = getStoreConfigSync();
+  const issuer = encodeURIComponent(store.name);
   const label = encodeURIComponent(email);
   return `otpauth://totp/${issuer}:${label}?secret=${secret}&issuer=${issuer}&algorithm=SHA1&digits=6&period=30`;
 };

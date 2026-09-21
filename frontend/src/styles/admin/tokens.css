@@ -48,9 +48,9 @@
   --admin-border-focus: #826237; /* Custom Theme Gold */
 
   --admin-text-primary: #000000; /* Pure Black */
-  --admin-text-secondary: #000000;
-  --admin-text-tertiary: #000000;
-  --admin-text-placeholder: #000000;
+  --admin-text-secondary: #5c564b;
+  --admin-text-tertiary: #78716c;
+  --admin-text-placeholder: #a8a29e;
   --admin-text-inverse: #ffffff;
 
   /* Accent: Warm Elegant Gold/Brown */

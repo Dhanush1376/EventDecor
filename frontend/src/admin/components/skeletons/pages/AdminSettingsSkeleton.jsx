@@ -36,17 +36,14 @@ export function AdminSettingsSkeleton({ hideHeader = false } = {}) {
           <div className="p-2 space-y-1">
             {[
               'Profile & Account',
-              'General Info',
-              'Shipping & Delivery',
-              'Payment Methods',
+              'Store Details & Legal',
+              'Shipping & Orders',
+              'Payments & Taxes',
               'Returns & Exchanges',
-              'Cancellation',
               'Loyalty & Rewards',
-              'Order Limits',
-              'Taxes & Invoicing',
-              'Notifications',
-              'Storefront SEO',
-              'Contact Details',
+              'Storefront & Customer Auth',
+              'AI & Visual Search',
+              'Security & Operations',
             ].map((name, idx) => (
               <div
                 key={idx}

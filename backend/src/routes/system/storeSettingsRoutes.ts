@@ -44,6 +44,44 @@ router.get('/admin', requireAuth, requireRole([...ADMIN_ROLES]), async (req, res
 });
 
 /**
+ * @route   PATCH /api/v1/settings/shipping-orders
+ * @desc    Atomically update both Shipping and Orders sections
+ * @access  Private/Admin
+ */
+router.patch(
+  '/shipping-orders',
+  requireAuth,
+  requireRole([...ADMIN_ROLES]),
+  async (req, res, next) => {
+    try {
+      const { shipping, orders } = req.body;
+
+      if (!shipping && !orders) {
+        return res.status(400).json({
+          success: false,
+          message: 'At least one of shipping or orders payload must be provided',
+        });
+      }
+
+      const updatedSettings = await storeSettingsService.updateShippingAndOrders(
+        shipping || {},
+        orders || {},
+        req.user!.id,
+      );
+
+      res.json({
+        success: true,
+        message: 'Shipping and Orders settings updated successfully',
+        data: updatedSettings,
+      });
+    } catch (error) {
+      logger.error('Error updating shipping-orders store settings:', error);
+      next(error);
+    }
+  },
+);
+
+/**
  * @route   PATCH /api/v1/settings/:section
  * @desc    Update a specific section of store settings
  * @access  Private/Admin

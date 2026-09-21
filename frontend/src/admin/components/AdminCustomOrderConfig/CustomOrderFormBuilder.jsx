@@ -221,7 +221,7 @@ export function CustomOrderFormBuilder({
                           <div className="ml-6.5 sm:ml-7 p-3 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border-subtle)] space-y-2">
                             <div>
                               <p className="text-[9.5px] uppercase font-bold text-[var(--admin-text-tertiary)] tracking-wider mb-1">
-                                WhatsApp Number (with country code, e.g. 919866006648)
+                                WhatsApp Number (e.g. +91 98765 43210)
                               </p>
                               <input
                                 type="text"
@@ -231,7 +231,7 @@ export function CustomOrderFormBuilder({
                                     whatsappNumber: e.target.value,
                                   })
                                 }
-                                placeholder="919866006648"
+                                placeholder="+91 98765 43210"
                                 className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] px-2.5 h-8 rounded-[4px] text-[12px] text-[var(--admin-text-primary)] outline-none"
                               />
                             </div>

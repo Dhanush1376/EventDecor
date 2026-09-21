@@ -5,12 +5,26 @@ import { Link } from 'react-router-dom';
 import { SiriLogo } from './SiriLogo';
 import { MandalaElement } from './MandalaElement';
 import { useConfig } from '../../context/ConfigContext';
+import { BRAND } from '../../config/brand';
 
 export function MaintenanceScreen({ isStoreDisabled = false }) {
-  const { storeSettings, storeName } = useConfig();
+  const {
+    storeSettings,
+    storeName,
+    whatsappNumber: configWa,
+    supportEmail: configEmail,
+  } = useConfig();
 
-  const whatsappNumber = storeSettings?.contact?.whatsappNumber || '+91 98660 06648';
-  const email = storeSettings?.contact?.email || 'Sirisha.atmakuri@gmail.com';
+  const whatsappNumber =
+    storeSettings?.general?.whatsappNumber ||
+    storeSettings?.contact?.whatsappNumber ||
+    configWa ||
+    BRAND.whatsappNumber;
+  const email =
+    storeSettings?.general?.supportEmail ||
+    storeSettings?.contact?.email ||
+    configEmail ||
+    BRAND.email;
   const instagram = storeSettings?.contact?.instagram || 'https://instagram.com/siriarts';
 
   const containerVariants = {
@@ -86,7 +100,7 @@ export function MaintenanceScreen({ isStoreDisabled = false }) {
 
           <div className="flex flex-wrap items-center justify-center gap-4">
             <a
-              href={`https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}`}
+              href={BRAND.getWhatsAppUrl(null, whatsappNumber)}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 px-6 py-3 rounded-full bg-surface-variant hover:bg-surface-variant-hover text-on-surface transition-colors duration-200"

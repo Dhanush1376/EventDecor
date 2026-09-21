@@ -63,8 +63,19 @@ export interface IOrderTaxSnapshot {
   igst: number;
   /** Total tax = cgst + sgst + igst */
   totalTax: number;
+  taxAmount?: number;
   /** Grand total charged to the customer */
   grandTotal: number;
+  /** Active tax configuration at time of order creation */
+  gstEnabled?: boolean;
+  taxInclusive?: boolean;
+  gstRate?: number;
+  cgstRate?: number;
+  sgstRate?: number;
+  isInterState?: boolean;
+  /** Regulatory & Invoicing Metadata */
+  hsnCode?: string;
+  invoiceFooter?: string;
   /** ISO 4217 currency code */
   currency: string;
   /** Currency display symbol */

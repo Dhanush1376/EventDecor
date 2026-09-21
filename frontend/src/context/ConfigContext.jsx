@@ -3,7 +3,9 @@ import api from '../services/api';
 import storeSettingsService from '../services/api/storeSettingsService';
 // socket.io is imported dynamically inside the useEffect to keep it out of the initial bundle
 import { getWebSocketUrl } from '../config/apiConfig';
+import { queryClient } from '../config/queryClient';
 import logger from '../utils/core/logger';
+import { BRAND, formatPhoneWithCountryCode } from '../config/brand';
 
 const ConfigContext = createContext(null);
 
@@ -51,6 +53,7 @@ export const ConfigProvider = ({ children }) => {
         const settingsRes = await storeSettingsService.getPublicSettings();
         if (isMounted && settingsRes) {
           setStoreSettings(settingsRes);
+          queryClient.invalidateQueries({ queryKey: ['cart'] });
         }
       } catch (_e) {
         // Ignored
@@ -115,21 +118,152 @@ export const ConfigProvider = ({ children }) => {
   }, [storeSettings]);
 
   const storeNameUpper = useMemo(() => storeName.toUpperCase(), [storeName]);
-  const storeTagline = storeSettings?.general?.tagline?.trim() || 'Handcrafted Heritage & Artistry';
-  const supportEmail = storeSettings?.general?.supportEmail?.trim() || 'sirisha.atmakuri@gmail.com';
+  const storeTagline =
+    storeSettings?.general?.tagline?.trim() || BRAND.tagline || 'Handcrafted Heritage & Artistry';
+  const supportEmail =
+    storeSettings?.general?.supportEmail?.trim() ||
+    storeSettings?.contact?.email?.trim() ||
+    BRAND.email;
+
+  const supportHours =
+    storeSettings?.contact?.supportHours?.trim() ||
+    BRAND.supportHours ||
+    'Mon - Sat, 10 AM to 6 PM';
+
+  const storeAddress = storeSettings?.contact?.address?.trim() || BRAND.address || '';
+
+  const storeCity = storeSettings?.contact?.city?.trim() || BRAND.city || 'Ongole';
+
+  const storeState = storeSettings?.contact?.state?.trim() || BRAND.state || 'Andhra Pradesh';
+
+  const storePostalCode =
+    storeSettings?.contact?.postalCode?.trim() || BRAND.postalCode || '523001';
+
+  const storeCountry = storeSettings?.contact?.country?.trim() || BRAND.country || 'India';
+
+  const companyName = storeSettings?.legal?.companyName?.trim() || BRAND.companyName || storeName;
+
+  const legalCompanyName =
+    storeSettings?.legal?.legalCompanyName?.trim() || BRAND.legalCompanyName || companyName;
+
+  const cin = storeSettings?.legal?.cin?.trim() || BRAND.cin || '';
+
+  const registeredAddress =
+    storeSettings?.legal?.registeredAddress?.trim() || BRAND.registeredAddress || storeAddress;
+
+  const gstin = storeSettings?.taxes?.gstNumber?.trim() || BRAND.gstin || '';
+
+  const supportPhone = useMemo(() => {
+    const raw =
+      storeSettings?.general?.phone?.trim() || storeSettings?.contact?.phone?.trim() || BRAND.phone;
+    return formatPhoneWithCountryCode(raw);
+  }, [storeSettings]);
+
+  const alternatePhone = useMemo(() => {
+    const raw =
+      storeSettings?.general?.alternatePhone?.trim() ||
+      storeSettings?.contact?.alternatePhone?.trim() ||
+      BRAND.alternatePhone;
+    return formatPhoneWithCountryCode(raw);
+  }, [storeSettings]);
+
+  const whatsappNumber = useMemo(() => {
+    const raw =
+      storeSettings?.general?.whatsappNumber?.trim() ||
+      storeSettings?.contact?.whatsappNumber?.trim() ||
+      BRAND.whatsappNumber;
+    return formatPhoneWithCountryCode(raw);
+  }, [storeSettings]);
+
+  const whatsappUrl = useMemo(() => {
+    return BRAND.getWhatsAppUrl(null, whatsappNumber);
+  }, [whatsappNumber]);
 
   const isMaintenanceMode = storeSettings?.general?.maintenanceMode === true;
   const isStoreClosed = storeSettings?.general?.storeEnabled === false && !isMaintenanceMode;
+
+  const shippingSettings = useMemo(() => {
+    const s = storeSettings?.shipping || {};
+    return {
+      deliveryCharge: s.deliveryCharge ?? 0,
+      freeShippingThreshold: s.freeShippingThreshold ?? 2000,
+      enableFreeShipping: s.enableFreeShipping ?? true,
+      expressDeliveryCharge: s.expressDeliveryCharge ?? 249,
+      enableExpressDelivery: s.enableExpressDelivery ?? true,
+      estimatedDeliveryDays: s.estimatedDeliveryDays || '5-7',
+      packagingFee: s.packagingFee ?? 0,
+      remoteAreaCharge: s.remoteAreaCharge ?? 0,
+      maxShippingDistance: s.maxShippingDistance ?? 0,
+      enableLocalDelivery: s.enableLocalDelivery ?? false,
+      originPincode: s.originPincode || '',
+      defaultCourierPartner: s.defaultCourierPartner || '',
+    };
+  }, [storeSettings]);
+
+  const orderLimits = useMemo(() => {
+    const o = storeSettings?.orders || {};
+    return {
+      maxItemsPerOrder: o.maxItemsPerOrder ?? 20,
+      maxQuantityPerItem: o.maxQuantityPerItem ?? 50,
+      minOrderValue: o.minOrderValue ?? 0,
+      maxOrderValue: o.maxOrderValue ?? 1000000,
+      platformFee: o.platformFee ?? 0,
+    };
+  }, [storeSettings]);
+
+  const deliveryCharge = shippingSettings.deliveryCharge;
+  const freeShippingThreshold = shippingSettings.freeShippingThreshold;
+  const enableFreeShipping = shippingSettings.enableFreeShipping;
+  const estimatedDeliveryDays = shippingSettings.estimatedDeliveryDays;
+  const maxItemsPerOrder = orderLimits.maxItemsPerOrder;
+  const maxQuantityPerItem = orderLimits.maxQuantityPerItem;
+  const minOrderValue = orderLimits.minOrderValue;
+  const maxOrderValue = orderLimits.maxOrderValue;
+  const platformFee = orderLimits.platformFee;
+  const customerAuthMethod = storeSettings?.storefront?.customerAuthMethod || 'both';
 
   const contextValue = useMemo(
     () => ({
       config,
       categories,
       storeSettings,
+      customerAuthMethod,
       storeName,
       storeNameUpper,
       storeTagline,
       supportEmail,
+      supportPhone,
+      alternatePhone,
+      hasAlternatePhone: Boolean(alternatePhone),
+      whatsappNumber,
+      whatsappUrl,
+      supportHours,
+      storeAddress,
+      address: storeAddress,
+      storeCity,
+      city: storeCity,
+      storeState,
+      state: storeState,
+      storePostalCode,
+      postalCode: storePostalCode,
+      storeCountry,
+      country: storeCountry,
+      companyName,
+      legalCompanyName,
+      cin,
+      registeredAddress,
+      gstin,
+      shippingSettings,
+      orderLimits,
+      deliveryCharge,
+      freeShippingThreshold,
+      enableFreeShipping,
+      estimatedDeliveryDays,
+      maxItemsPerOrder,
+      maxQuantityPerItem,
+      minOrderValue,
+      maxOrderValue,
+      platformFee,
       loading,
       error,
       isStoreClosed,
@@ -143,10 +277,37 @@ export const ConfigProvider = ({ children }) => {
       storeNameUpper,
       storeTagline,
       supportEmail,
+      supportPhone,
+      alternatePhone,
+      whatsappNumber,
+      whatsappUrl,
+      supportHours,
+      storeAddress,
+      storeCity,
+      storeState,
+      storePostalCode,
+      storeCountry,
+      companyName,
+      legalCompanyName,
+      cin,
+      registeredAddress,
+      gstin,
+      shippingSettings,
+      orderLimits,
+      deliveryCharge,
+      freeShippingThreshold,
+      enableFreeShipping,
+      estimatedDeliveryDays,
+      maxItemsPerOrder,
+      maxQuantityPerItem,
+      minOrderValue,
+      maxOrderValue,
+      platformFee,
       loading,
       error,
       isStoreClosed,
       isMaintenanceMode,
+      customerAuthMethod,
     ],
   );
 
@@ -164,4 +325,90 @@ export const useConfig = () => {
 export const useStoreName = () => {
   const { storeName } = useConfig();
   return storeName;
+};
+
+export const useContactInfo = () => {
+  const {
+    supportEmail,
+    supportPhone,
+    alternatePhone,
+    hasAlternatePhone,
+    whatsappNumber,
+    whatsappUrl,
+    supportHours,
+    address,
+    city,
+    state,
+    postalCode,
+    country,
+  } = useConfig();
+  return {
+    supportEmail,
+    supportPhone,
+    alternatePhone,
+    hasAlternatePhone,
+    whatsappNumber,
+    whatsappUrl,
+    supportHours,
+    address,
+    city,
+    state,
+    postalCode,
+    country,
+  };
+};
+
+export const useLegalInfo = () => {
+  const { companyName, legalCompanyName, cin, registeredAddress, gstin, storeName } = useConfig();
+  return {
+    companyName,
+    legalCompanyName,
+    cin,
+    registeredAddress,
+    gstin,
+    storeName,
+  };
+};
+
+export const useShippingInfo = () => {
+  const {
+    deliveryCharge,
+    freeShippingThreshold,
+    enableFreeShipping,
+    estimatedDeliveryDays,
+    shippingSettings,
+  } = useConfig();
+  return {
+    deliveryCharge,
+    freeShippingThreshold,
+    enableFreeShipping,
+    estimatedDeliveryDays,
+    ...shippingSettings,
+  };
+};
+
+export const useShippingSettings = useShippingInfo;
+
+export const useOrderLimits = () => {
+  const {
+    maxItemsPerOrder,
+    maxQuantityPerItem,
+    minOrderValue,
+    maxOrderValue,
+    platformFee,
+    orderLimits,
+  } = useConfig();
+  return {
+    maxItemsPerOrder: maxItemsPerOrder ?? 20,
+    maxQuantityPerItem: maxQuantityPerItem ?? 50,
+    minOrderValue: minOrderValue ?? 0,
+    maxOrderValue: maxOrderValue ?? 1000000,
+    platformFee: platformFee ?? 0,
+    ...orderLimits,
+  };
+};
+
+export const useAuthMethod = () => {
+  const { customerAuthMethod } = useConfig();
+  return customerAuthMethod || 'both';
 };

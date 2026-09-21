@@ -31,6 +31,7 @@ import {
 import { regenerateCsrfToken, clearCsrfCookie } from '../../middleware/csrfMiddleware';
 import { blacklistToken } from '../../utils/security/jwtBlacklist';
 import jwt from 'jsonwebtoken';
+import storeSettingsService from '../../services/StoreSettingsService';
 
 export const requestUnifiedOtp = asyncHandler(async (req: Request, res: Response) => {
   const { identifier } = req.body;
@@ -44,16 +45,31 @@ export const requestUnifiedOtp = asyncHandler(async (req: Request, res: Response
     throw new ApiError(429, 'Too many OTP requests. Please try again in a few minutes.');
   }
 
+  const settings = await storeSettingsService.getSettings();
+  const authMethod = settings?.storefront?.customerAuthMethod || 'both';
+
   let challengeId;
   const emailSchema = z.string().email();
   const emailResult = emailSchema.safeParse(identifier);
 
   if (emailResult.success) {
+    if (authMethod === 'phone_only') {
+      throw new ApiError(
+        400,
+        'Email login is currently disabled by store settings. Please log in using your mobile phone number.',
+      );
+    }
     const cleanEmail = canonicalizeEmail(emailResult.data);
     logger.info(`[AUTH] OTP send requested for email ${cleanEmail} from ${clientIp}`);
     const result = await OtpAuthService.generateOTP(cleanEmail, clientIp);
     challengeId = result.challengeId;
   } else {
+    if (authMethod === 'email_only') {
+      throw new ApiError(
+        400,
+        'Mobile phone login is currently disabled by store settings. Please log in using your email address.',
+      );
+    }
     try {
       const cleanPhone = PhoneAuthService.normalizePhone(identifier);
       logger.info(`[AUTH] OTP send requested for phone ${cleanPhone} from ${clientIp}`);

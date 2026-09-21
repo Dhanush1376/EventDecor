@@ -16,10 +16,18 @@ export interface OrderTotalsInput {
   isCod: boolean;
   /** COD surcharge from store settings. */
   codFee: number;
-  /** Order subtotal above which shipping is free. */
+  /** Whether free shipping over threshold is enabled in settings. */
+  enableFreeShipping?: boolean;
+  /** Order subtotal at or above which shipping is free. */
   freeShippingThreshold: number;
   /** Flat delivery charge applied below the free-shipping threshold. */
   deliveryCharge: number;
+  /** Optional platform convenience/processing fee from store settings. */
+  platformFee?: number;
+  /** Computed tax amount from TaxEngine (0 if GST disabled). */
+  taxAmount?: number;
+  /** Whether the prices are tax inclusive (default true). If false, tax is added on top. */
+  isTaxInclusive?: boolean;
   /** Whether the customer opted to redeem wallet (Siri Cash) balance. */
   useWallet: boolean;
   /** Current wallet balance available to redeem. */
@@ -28,7 +36,10 @@ export interface OrderTotalsInput {
 
 export interface OrderTotals {
   shippingFee: number;
+  platformFee: number;
   codFee: number;
+  taxAmount: number;
+  isTaxInclusive: boolean;
   /** Total before wallet redemption, floored at 0. */
   preliminaryTotal: number;
   /** Amount actually redeemed from the wallet. */
@@ -44,16 +55,32 @@ export const computeOrderTotals = (input: OrderTotalsInput): OrderTotals => {
     depositTotal,
     isCod,
     codFee: configuredCodFee,
+    enableFreeShipping = true,
     freeShippingThreshold,
     deliveryCharge,
+    platformFee = 0,
+    taxAmount = 0,
+    isTaxInclusive = true,
     useWallet,
     walletBalance,
   } = input;
 
-  const shippingFee = subtotal > freeShippingThreshold ? 0 : deliveryCharge;
+  const resolvedPlatformFee = Math.max(0, platformFee || 0);
+  const resolvedTax = Math.max(0, taxAmount || 0);
+  const addedTax = isTaxInclusive ? 0 : resolvedTax;
 
-  // Preliminary payable amount before COD fee
-  const preliminaryWithoutCod = Math.max(0, subtotal + shippingFee + depositTotal - discount);
+  // Authoritative free-shipping rule:
+  // 1. If cart is empty (subtotal === 0), shipping fee is always 0.
+  // 2. If enableFreeShipping is true AND subtotal >= freeShippingThreshold, shipping is free (0).
+  // 3. Otherwise, base delivery charge applies.
+  const isFreeShipping = enableFreeShipping && subtotal >= freeShippingThreshold;
+  const shippingFee = subtotal === 0 ? 0 : isFreeShipping ? 0 : deliveryCharge;
+
+  // Preliminary payable amount before COD fee (subtotal - discount + addedTax + shipping + deposit + platformFee)
+  const preliminaryWithoutCod = Math.max(
+    0,
+    subtotal - discount + addedTax + shippingFee + depositTotal + resolvedPlatformFee,
+  );
   const isFullyCoveredByWallet = Boolean(
     useWallet && (walletBalance || 0) >= preliminaryWithoutCod,
   );
@@ -73,5 +100,14 @@ export const computeOrderTotals = (input: OrderTotalsInput): OrderTotals => {
 
   const total = preliminaryTotal - walletDeduction;
 
-  return { shippingFee, codFee, preliminaryTotal, walletDeduction, total };
+  return {
+    shippingFee,
+    platformFee: resolvedPlatformFee,
+    codFee,
+    taxAmount: resolvedTax,
+    isTaxInclusive,
+    preliminaryTotal,
+    walletDeduction,
+    total,
+  };
 };

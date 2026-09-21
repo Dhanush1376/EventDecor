@@ -83,6 +83,54 @@ export function VisualSearchPanel() {
     }
   };
 
+  const handleToggle = async (key, val) => {
+    const updated = { ...config, [key]: val };
+    setConfig(updated);
+
+    if (activeRole === 'viewer') {
+      toast.error('Viewer role cannot modify settings');
+      return;
+    }
+
+    try {
+      const payload = { ...updated };
+      if (
+        payload.provider?.apiKey &&
+        (payload.provider.apiKey === '****' || payload.provider.apiKey.includes('*'))
+      ) {
+        delete payload.provider.apiKey;
+      }
+
+      const res = await visualSearchService.updateConfig(payload);
+      if (res.success) {
+        setConfig(res.data);
+        if (key === 'enabled') {
+          toast.success(
+            val
+              ? 'Visual search enabled globally across storefront'
+              : 'Visual search disabled globally (camera icon hidden across storefront searchbars)',
+            { id: 'vs-toggle-toast' },
+          );
+        } else if (key === 'cameraSearchEnabled') {
+          toast.success(
+            val
+              ? 'Camera search enabled'
+              : 'Camera search disabled (camera icon hidden across storefront searchbars)',
+            { id: 'vs-toggle-toast' },
+          );
+        } else {
+          toast.success('Setting updated successfully', { id: 'vs-toggle-toast' });
+        }
+        logAdminAction('VISUAL_SEARCH_CONFIG_UPDATED', `Toggled ${key} to ${val}`);
+      } else {
+        throw new Error(res.message);
+      }
+    } catch (err) {
+      toast.error(err.message || 'Failed to update setting', { id: 'vs-toggle-toast' });
+      setConfig(config);
+    }
+  };
+
   const handleValidateProvider = async () => {
     if (
       !config.provider.apiKey ||
@@ -125,79 +173,127 @@ export function VisualSearchPanel() {
         variants={fadeUp}
         className="admin-card p-6 border border-[var(--admin-border-subtle)] rounded-xl"
       >
-        <h3 className="text-[16px] font-bold mb-4 flex items-center gap-2">
-          <span className="material-symbols-outlined text-[var(--admin-accent)]">toggle_on</span>
-          Global Feature Controls
-        </h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-[16px] font-bold flex items-center gap-2 text-[var(--admin-text-primary)]">
+            <span className="material-symbols-outlined text-[var(--admin-accent)]">toggle_on</span>
+            Global Feature Controls
+          </h3>
+          <span
+            className={`text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-[4px] border ${
+              config.enabled
+                ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                : 'bg-stone-500/10 text-stone-500 border-stone-500/20'
+            }`}
+          >
+            {config.enabled ? 'Visual Search Active' : 'Visual Search Disabled'}
+          </span>
+        </div>
 
-        <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 bg-[var(--admin-surface-muted)] rounded-lg">
-            <div>
-              <h4 className="font-bold text-[14px]">Enable Visual Search</h4>
-              <p className="text-[11px] text-[var(--admin-text-secondary)] mt-1">
-                Turn the entire feature on or off globally.
-              </p>
+        {/* 1. Main Master Toggle */}
+        <div
+          className={`p-4 rounded-lg border transition-all flex items-center justify-between mb-4 ${
+            config.enabled
+              ? 'bg-[var(--admin-accent)]/8 border-[var(--admin-accent)]/30 shadow-2xs'
+              : 'bg-[var(--admin-surface-muted)] border-[var(--admin-border-subtle)]'
+          }`}
+        >
+          <div className="pr-4">
+            <div className="flex items-center gap-2">
+              <h4 className="font-bold text-[14px] text-[var(--admin-text-primary)]">
+                Enable Visual Search
+              </h4>
+              <span className="text-[9.5px] font-extrabold uppercase px-2 py-0.5 rounded-[4px] bg-[var(--admin-accent)] text-white tracking-wider">
+                Main Toggle
+              </span>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                className="sr-only peer"
-                checked={config.enabled}
-                onChange={(e) => setConfig({ ...config, enabled: e.target.checked })}
-              />
-              <div className="w-11 h-6 bg-[var(--admin-border)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--admin-accent)]"></div>
-            </label>
+            <p className="text-[11.5px] text-[var(--admin-text-secondary)] mt-1">
+              Master switch: turning this off completely hides the camera icon across all storefront
+              searchbars and disables image-based search.
+            </p>
           </div>
+          <label className="relative inline-flex items-center cursor-pointer shrink-0">
+            <input
+              type="checkbox"
+              className="sr-only peer"
+              checked={config.enabled}
+              onChange={(e) => handleToggle('enabled', e.target.checked)}
+            />
+            <div className="w-11 h-6 bg-[var(--admin-border)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--admin-accent)]"></div>
+          </label>
+        </div>
 
-          <div className="flex items-center justify-between p-4 bg-[var(--admin-surface-muted)] rounded-lg">
-            <div>
-              <h4 className="font-bold text-[14px]">Enable Camera Search</h4>
-              <p className="text-[11px] text-[var(--admin-text-secondary)] mt-1">
+        {/* Sub-controls side-by-side */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+          <div
+            className={`flex items-center justify-between p-3.5 bg-[var(--admin-surface-muted)] rounded-lg border border-[var(--admin-border-subtle)] transition-opacity ${
+              !config.enabled ? 'opacity-50 pointer-events-none' : ''
+            }`}
+          >
+            <div className="pr-2">
+              <h4 className="font-bold text-[13px] text-[var(--admin-text-primary)]">
+                Enable Camera Search
+              </h4>
+              <p className="text-[11px] text-[var(--admin-text-secondary)] mt-0.5">
                 Allow users to take live photos.
               </p>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer">
+            <label className="relative inline-flex items-center cursor-pointer shrink-0">
               <input
                 type="checkbox"
                 className="sr-only peer"
                 checked={config.cameraSearchEnabled}
-                onChange={(e) => setConfig({ ...config, cameraSearchEnabled: e.target.checked })}
+                onChange={(e) => handleToggle('cameraSearchEnabled', e.target.checked)}
+                disabled={!config.enabled}
               />
               <div className="w-11 h-6 bg-[var(--admin-border)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--admin-accent)]"></div>
             </label>
           </div>
 
-          <div className="flex items-center justify-between p-4 bg-[var(--admin-surface-muted)] rounded-lg">
-            <div>
-              <h4 className="font-bold text-[14px]">Enable Analytics Logging</h4>
-              <p className="text-[11px] text-[var(--admin-text-secondary)] mt-1">
-                Log search usage and accuracy data.
+          <div
+            className={`flex items-center justify-between p-3.5 bg-[var(--admin-surface-muted)] rounded-lg border border-[var(--admin-border-subtle)] transition-opacity ${
+              !config.enabled ? 'opacity-50 pointer-events-none' : ''
+            }`}
+          >
+            <div className="pr-2">
+              <h4 className="font-bold text-[13px] text-[var(--admin-text-primary)]">
+                Enable Analytics Logging
+              </h4>
+              <p className="text-[11px] text-[var(--admin-text-secondary)] mt-0.5">
+                Log search usage and accuracy.
               </p>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer">
+            <label className="relative inline-flex items-center cursor-pointer shrink-0">
               <input
                 type="checkbox"
                 className="sr-only peer"
                 checked={config.analyticsEnabled}
-                onChange={(e) => setConfig({ ...config, analyticsEnabled: e.target.checked })}
+                onChange={(e) => handleToggle('analyticsEnabled', e.target.checked)}
+                disabled={!config.enabled}
               />
               <div className="w-11 h-6 bg-[var(--admin-border)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--admin-accent)]"></div>
             </label>
           </div>
 
-          <div className="flex items-center justify-between p-4 bg-[var(--admin-surface-muted)] rounded-lg">
-            <div>
-              <h4 className="font-bold text-[14px]">Show Similar Products</h4>
-              <p className="text-[11px] text-[var(--admin-text-secondary)] mt-1">
-                Display grid of related items below Best Match.
+          <div
+            className={`flex items-center justify-between p-3.5 bg-[var(--admin-surface-muted)] rounded-lg border border-[var(--admin-border-subtle)] transition-opacity ${
+              !config.enabled ? 'opacity-50 pointer-events-none' : ''
+            }`}
+          >
+            <div className="pr-2">
+              <h4 className="font-bold text-[13px] text-[var(--admin-text-primary)]">
+                Show Similar Products
+              </h4>
+              <p className="text-[11px] text-[var(--admin-text-secondary)] mt-0.5">
+                Display grid below Best Match.
               </p>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer">
+            <label className="relative inline-flex items-center cursor-pointer shrink-0">
               <input
                 type="checkbox"
                 className="sr-only peer"
                 checked={config.similarProductsEnabled}
-                onChange={(e) => setConfig({ ...config, similarProductsEnabled: e.target.checked })}
+                onChange={(e) => handleToggle('similarProductsEnabled', e.target.checked)}
+                disabled={!config.enabled}
               />
               <div className="w-11 h-6 bg-[var(--admin-border)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--admin-accent)]"></div>
             </label>

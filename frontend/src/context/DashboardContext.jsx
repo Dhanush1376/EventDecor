@@ -18,30 +18,39 @@ import { useDashboardData } from '../hooks/useDashboardData';
 import { userService } from '../services/domainServices';
 import { useConfirm } from './ConfirmProvider';
 import { useConfig } from './ConfigContext';
+import { BRAND, formatPhoneWithCountryCode } from '../config/brand';
 import toast from 'react-hot-toast';
 
 const DashboardContext = createContext(null);
 
 export function DashboardProvider({ children }) {
-  const { storeSettings, storeName } = useConfig();
+  const {
+    storeSettings,
+    storeName,
+    storeAddress,
+    supportPhone,
+    whatsappUrl: configWhatsappUrl,
+    whatsappNumber,
+  } = useConfig();
   const _navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, logout, checkAuth, openAuthModal } = useAuth();
+  const { user, logout, checkAuth, openAuthModal, updateUser } = useAuth();
   const { items: wishlistItems, removeItem: removeFromWishlist } = useWishlist();
   const { cartCount, items: cartItems, updateQuantity, removeItem } = useCart();
   const fileInputRef = useRef(null);
 
   const { contact } = useWebsiteContent();
   const addressText =
-    contact?.address ||
-    storeSettings?.contact?.address ||
-    `${storeName}, #28-1-92, South Street, ONGOLE-523001, Prakasam District, Andhra Pradesh`;
-  const rawPhone = import.meta.env.VITE_CONTACT_PHONE || contact?.phone || '9866006648';
-  const phoneText = rawPhone.replace(/^\+91/, '').replace(/^91/, '').trim();
+    storeAddress || storeSettings?.contact?.address || contact?.address || BRAND.address || '';
+  const phoneText =
+    supportPhone ||
+    formatPhoneWithCountryCode(
+      storeSettings?.general?.phone || storeSettings?.contact?.phone || BRAND.phone,
+    );
 
-  const whatsappNum = rawPhone.replace(/[^0-9]/g, '');
-  const formattedWhatsappNum = whatsappNum.length === 10 ? `91${whatsappNum}` : whatsappNum;
-  const whatsappUrl = `https://wa.me/${formattedWhatsappNum}`;
+  const whatsappUrl =
+    configWhatsappUrl ||
+    BRAND.getWhatsAppUrl(null, whatsappNumber || storeSettings?.general?.whatsappNumber);
 
   const [activeTab, setActiveTab] = useState('profile');
   const [mobileShowContent, setMobileShowContent] = useState(false);

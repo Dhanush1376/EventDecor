@@ -53,7 +53,7 @@ export const OrderCreatedCustomerTemplate = (data: any) => {
     ])}
 
 
-    ${Footer('Siri Arts & Crafts', 'support@siriarts.com', '#28-1-92, South Street, ONGOLE-523001')}
+    ${Footer('Siri Arts & Crafts', 'support@siriarts.com', '')}
   `;
 
   return {

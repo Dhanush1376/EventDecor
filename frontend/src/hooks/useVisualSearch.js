@@ -8,7 +8,23 @@ import visualSearchService from '../services/api/visualSearchService';
  */
 export function useVisualSearch() {
   const [isOpen, setIsOpen] = useState(false);
-  const [config, setConfig] = useState(null);
+  const [config, setConfig] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('siri_visual_search_config');
+        if (stored) return JSON.parse(stored);
+        const storedEnabled = localStorage.getItem('siri_visual_search_enabled');
+        if (storedEnabled !== null) {
+          return {
+            enabled: storedEnabled === 'true',
+            cameraSearchEnabled:
+              localStorage.getItem('siri_visual_search_camera_enabled') !== 'false',
+          };
+        }
+      } catch (_e) {}
+    }
+    return null;
+  });
   const [configLoaded, setConfigLoaded] = useState(false);
 
   // Search states: 'idle' | 'preview' | 'scanning' | 'results' | 'error'
@@ -23,7 +39,7 @@ export function useVisualSearch() {
   const abortRef = useRef(null);
   const sessionId = useRef(crypto.randomUUID?.() || Date.now().toString());
 
-  // Fetch public config on mount
+  // Fetch public config on mount and listen to dynamic config changes across tabs
   useEffect(() => {
     let active = true;
     visualSearchService
@@ -37,12 +53,64 @@ export function useVisualSearch() {
       .catch(() => {
         if (active) setConfigLoaded(true);
       });
+
+    const handleConfigChange = (e) => {
+      if (active && e.detail) {
+        setConfig((prev) => ({ ...(prev || {}), ...e.detail }));
+      }
+    };
+
+    const handleStorageChange = (e) => {
+      if (
+        active &&
+        (e.key === 'siri_visual_search_config' ||
+          e.key === 'siri_visual_search_enabled' ||
+          e.key === 'siri_visual_search_camera_enabled')
+      ) {
+        try {
+          const stored = localStorage.getItem('siri_visual_search_config');
+          if (stored) {
+            setConfig(JSON.parse(stored));
+            return;
+          }
+          const storedEnabled = localStorage.getItem('siri_visual_search_enabled');
+          if (storedEnabled !== null) {
+            setConfig((prev) => ({
+              ...(prev || {}),
+              enabled: storedEnabled === 'true',
+              cameraSearchEnabled:
+                localStorage.getItem('siri_visual_search_camera_enabled') !== 'false',
+            }));
+          }
+        } catch (_e) {}
+      }
+    };
+
+    let channel = null;
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        channel = new BroadcastChannel('siri_visual_search_channel');
+        channel.onmessage = (msg) => {
+          if (active && msg.data?.type === 'config_updated' && msg.data?.data) {
+            setConfig((prev) => ({ ...(prev || {}), ...msg.data.data }));
+          }
+        };
+      }
+    } catch (_e) {}
+
+    window.addEventListener('visual-search-config-changed', handleConfigChange);
+    window.addEventListener('storage', handleStorageChange);
+
     return () => {
       active = false;
+      window.removeEventListener('visual-search-config-changed', handleConfigChange);
+      window.removeEventListener('storage', handleStorageChange);
+      channel?.close();
     };
   }, []);
 
   const isEnabled = config?.enabled === true;
+  const isCameraSearchEnabled = isEnabled && config?.cameraSearchEnabled !== false;
 
   // Open the visual search overlay
   const open = useCallback(() => {
@@ -277,6 +345,8 @@ export function useVisualSearch() {
     () => ({
       isOpen,
       isEnabled,
+      isCameraSearchEnabled,
+      isCameraEnabled: isCameraSearchEnabled,
       configLoaded,
       config,
       phase,
@@ -294,6 +364,7 @@ export function useVisualSearch() {
     [
       isOpen,
       isEnabled,
+      isCameraSearchEnabled,
       configLoaded,
       config,
       phase,

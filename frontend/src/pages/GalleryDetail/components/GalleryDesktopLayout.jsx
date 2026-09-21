@@ -9,6 +9,7 @@ import { LinkedProductCard } from './LinkedProductCard';
 import { ProductNoteCard } from '../../../components/ui/ProductNoteCard';
 import { fadeUp, scaleIn } from './GalleryAnimations';
 import { useConfig } from '../../../context/ConfigContext';
+import { BRAND } from '../../../config/brand';
 
 export function GalleryDesktopLayout({
   item,
@@ -368,12 +369,9 @@ export function GalleryDesktopLayout({
                       <button
                         onClick={() => {
                           if (!item) return;
-                          const num = '919866006648';
                           const link = `${window.location.origin}/gallery/${item._id || item.id}`;
-                          const msg = encodeURIComponent(
-                            `Hello, I'm interested in this gallery setup and would like to chat about it.\n\nLink: ${link}`,
-                          );
-                          window.open(`https://wa.me/${num}?text=${msg}`, '_blank');
+                          const msg = `Hello, I'm interested in this gallery setup and would like to chat about it.\n\nLink: ${link}`;
+                          window.open(BRAND.getWhatsAppUrl(msg), '_blank');
                         }}
                         className="bg-transparent border border-white/30 flex-1 text-white px-2 py-2.5 rounded-full font-label-sm text-[10px] uppercase tracking-[0.15em] hover:bg-white/10 transition-all whitespace-nowrap font-bold flex items-center justify-center gap-1.5 cursor-pointer"
                       >

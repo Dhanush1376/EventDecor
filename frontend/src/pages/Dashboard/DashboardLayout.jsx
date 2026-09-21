@@ -33,7 +33,7 @@ export function DashboardLayout() {
       className="bg-surface-container-low min-h-screen pt-20 pb-24 lg:pb-12 font-body text-on-surface modern-sans-headings"
     >
       <SEO
-        title="Your Premium Studio Account"
+        title={`Your ${storeName || 'Siri Arts & Crafts'} Account`}
         description={`Manage your ${storeName || 'Siri Arts & Crafts'} profile parameters, live orders, dynamic shipping addresses, wishlist collections, and personalized newsletter configurations.`}
         noindex
       />
