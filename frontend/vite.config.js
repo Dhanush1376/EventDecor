@@ -21,11 +21,6 @@ export default defineConfig({
     viteCompression({ algorithm: 'gzip', ext: '.gz' }),
   ],
 
-  esbuild: {
-    drop: ['debugger'],
-    pure: ['console.log', 'console.warn'],
-  },
-
   build: {
     target: 'es2022',
     cssTarget: 'chrome105',
@@ -149,14 +144,36 @@ export default defineConfig({
               err.code === 'ECONNABORTED' ||
               err.code === 'ECONNRESET'
             ) {
-              return; // Suppress expected dev proxy errors
+              if (_res && typeof _res.writeHead === 'function') {
+                if (!_res.headersSent) {
+                  _res.writeHead(503, {
+                    'Content-Type': 'application/json',
+                    'Retry-After': '2',
+                  });
+                  _res.end(
+                    JSON.stringify({
+                      error: 'Backend service is starting up. Please retry shortly.',
+                      code: err.code,
+                    }),
+                  );
+                }
+              } else if (_res && typeof _res.destroy === 'function') {
+                _res.destroy();
+              }
+              return; // Suppress expected dev proxy startup drops
             }
             console.warn('[Vite Proxy Error] Failed to connect to backend target:', err.message);
           });
           proxy.on('proxyReqWs', (proxyReq, req, socket, options, head) => {
             socket.removeAllListeners('error');
             socket.on('error', (err) => {
-              if (err.code === 'ECONNABORTED' || err.code === 'ECONNRESET') return;
+              if (
+                err.code === 'ECONNABORTED' ||
+                err.code === 'ECONNRESET' ||
+                err.code === 'ECONNREFUSED'
+              ) {
+                return;
+              }
               console.error('[Vite WS Proxy Error]', err.message);
             });
           });
@@ -175,7 +192,23 @@ export default defineConfig({
               err.code === 'ECONNABORTED' ||
               err.code === 'ECONNRESET'
             ) {
-              return; // Suppress expected dev proxy errors
+              if (_res && typeof _res.writeHead === 'function') {
+                if (!_res.headersSent) {
+                  _res.writeHead(503, {
+                    'Content-Type': 'application/json',
+                    'Retry-After': '2',
+                  });
+                  _res.end(
+                    JSON.stringify({
+                      error: 'Backend service is starting up. Please retry shortly.',
+                      code: err.code,
+                    }),
+                  );
+                }
+              } else if (_res && typeof _res.destroy === 'function') {
+                _res.destroy();
+              }
+              return; // Suppress expected dev proxy startup drops
             }
             console.warn('[Vite Proxy Error] Failed to connect to backend target:', err.message);
           });
@@ -183,7 +216,13 @@ export default defineConfig({
             // Remove noisy default listeners that dump stack traces on expected socket closes
             socket.removeAllListeners('error');
             socket.on('error', (err) => {
-              if (err.code === 'ECONNABORTED' || err.code === 'ECONNRESET') return;
+              if (
+                err.code === 'ECONNABORTED' ||
+                err.code === 'ECONNRESET' ||
+                err.code === 'ECONNREFUSED'
+              ) {
+                return;
+              }
               console.error('[Vite WS Proxy Error]', err.message);
             });
           });

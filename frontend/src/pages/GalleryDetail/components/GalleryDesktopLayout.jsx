@@ -27,6 +27,12 @@ export function GalleryDesktopLayout({
   const { storeName } = useConfig();
   const [activeTab, setActiveTab] = useState('details');
 
+  React.useEffect(() => {
+    if (hideProducts && activeTab === 'shop') {
+      setActiveTab('details');
+    }
+  }, [hideProducts, activeTab]);
+
   return (
     <div className="hidden md:grid lg:grid gallery-detail-grid">
       {/* ─── LEFT: Hero Image ─── */}

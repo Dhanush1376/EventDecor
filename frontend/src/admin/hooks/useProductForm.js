@@ -11,7 +11,7 @@ export function useProductForm({ id, isEditMode }) {
   const [categoriesList, setCategoriesList] = useState([]);
   const [isCustomCategory, setIsCustomCategory] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [showRentalSettings, setShowRentalSettings] = useState(false);
+  const [showRentalSettings, setShowRentalSettings] = useState(true);
 
   const initialData = useMemo(
     () => ({
@@ -198,6 +198,7 @@ export function useProductForm({ id, isEditMode }) {
     } else {
       setFormData(initialData);
       setCurrentStep(0);
+      setShowRentalSettings(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, isEditMode, dbCategories]);

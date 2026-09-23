@@ -32,24 +32,63 @@ export function useProductSubmission({
     }
   };
 
-  // Add Variants
+  // Add Variants with duplicate prevention and clean pricing
   const handleAddVariant = () => {
-    if (!newVariant.name || !newVariant.value) {
-      return toast.error('Please fill in Variant attribute name & value');
+    const trimmedName = (newVariant.name || '').trim();
+    const trimmedValue = (newVariant.value || '').trim();
+
+    if (!trimmedName || !trimmedValue) {
+      return toast.error('Please specify both Variant attribute name & value');
     }
-    setFormData({
-      ...formData,
-      variants: [...formData.variants, { ...newVariant, id: Date.now() }],
-    });
-    setNewVariant({ name: '', value: '', price: '', stock: '' });
-    toast.success('Added variant');
+
+    const isDuplicate = formData.variants?.some(
+      (v) =>
+        v.name?.trim().toLowerCase() === trimmedName.toLowerCase() &&
+        v.value?.trim().toLowerCase() === trimmedValue.toLowerCase(),
+    );
+
+    if (isDuplicate) {
+      return toast.error(`Variant "${trimmedName}: ${trimmedValue}" is already added.`);
+    }
+
+    const priceNum =
+      newVariant.price !== '' && !isNaN(Number(newVariant.price)) ? Number(newVariant.price) : 0;
+
+    setFormData((prev) => ({
+      ...prev,
+      variants: [
+        ...(prev.variants || []),
+        {
+          ...newVariant,
+          name: trimmedName,
+          value: trimmedValue,
+          price: priceNum,
+          id: Date.now(),
+        },
+      ],
+    }));
+
+    // Keep the current attribute name so the user can quickly add another option for the same attribute!
+    setNewVariant({ name: trimmedName, value: '', price: '', stock: '' });
+    toast.success(`Added ${trimmedName}: ${trimmedValue}`);
   };
 
   const handleRemoveVariant = (vid) => {
-    setFormData({
-      ...formData,
-      variants: formData.variants.filter((v) => v.id !== vid),
-    });
+    setFormData((prev) => ({
+      ...prev,
+      variants: (prev.variants || []).filter((v) => v.id !== vid),
+    }));
+  };
+
+  const handleRemoveAttributeGroup = (attributeName) => {
+    if (!attributeName) return;
+    setFormData((prev) => ({
+      ...prev,
+      variants: (prev.variants || []).filter(
+        (v) => v.name?.trim().toLowerCase() !== attributeName.trim().toLowerCase(),
+      ),
+    }));
+    toast.success(`Removed all ${attributeName} options`);
   };
 
   // Submit Handler
@@ -187,8 +226,9 @@ export function useProductSubmission({
           rentalDurationDays: Number(formData.rentalPricing?.rentalDurationDays) || 1,
         },
         securityDeposit: Number(formData.securityDeposit) || 0,
-        isDepositRefundable: Boolean(formData.isDepositRefundable),
-        rentalStock: Number(formData.rentalStock) || 0,
+        isDepositRefundable:
+          formData.isDepositRefundable !== undefined ? Boolean(formData.isDepositRefundable) : true,
+        rentalStock: Number(formData.rentalStock) || Number(formData.stock) || 0,
         rentalMinDays: Number(formData.rentalMinDays) || 1,
         rentalMaxDays: Number(formData.rentalMaxDays) || 365,
         customizationConfig: {
@@ -273,6 +313,7 @@ export function useProductSubmission({
     _swapPrimaryImage,
     handleAddVariant,
     handleRemoveVariant,
+    handleRemoveAttributeGroup,
     handleSubmit,
     newVariant,
     setNewVariant,

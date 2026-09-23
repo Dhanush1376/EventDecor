@@ -17,6 +17,13 @@ import PaymentWebhookEvent from '../../../src/models/PaymentWebhookEvent';
 import Order from '../../../src/models/Order';
 import PaymentAudit from '../../../src/models/PaymentAudit';
 
+vi.mock('../../../src/services/TransactionalEmailService', () => ({
+  TransactionalEmailService: {
+    sendPaymentFailedEmail: vi.fn().mockResolvedValue(true),
+    sendOrderConfirmationEmail: vi.fn().mockResolvedValue(true),
+  },
+}));
+
 const KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || 'test_razorpay_secret_key_12345';
 const WEBHOOK_SECRET = process.env.RAZORPAY_WEBHOOK_SECRET || 'test_webhook_secret_67890';
 

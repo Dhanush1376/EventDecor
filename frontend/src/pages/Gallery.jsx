@@ -20,7 +20,6 @@ import { useConfig } from '../context/ConfigContext';
 
 export function GalleryInner() {
   const navigate = useNavigate();
-  const { storeSettings } = useConfig();
 
   const [searchParams, setSearchParams] = useSearchParams();
   const searchParam = searchParams.get('search') || '';
@@ -254,10 +253,6 @@ export function GalleryInner() {
     ),
     [navigate],
   );
-
-  if (storeSettings?.storefront?.hideGallerySection) {
-    return <Navigate to="/" replace />;
-  }
 
   return (
     <div className="bg-[#fcfbf9] min-h-screen selection:bg-primary/20 relative pt-20 lg:pt-28 pb-32 lg:pb-20 transition-all duration-300">
@@ -594,6 +589,15 @@ export function GalleryInner() {
 }
 
 export function Gallery() {
+  const { storeSettings, hideGallerySection } = useConfig();
+  const isGalleryHidden = Boolean(
+    hideGallerySection || storeSettings?.storefront?.hideGallerySection,
+  );
+
+  if (isGalleryHidden) {
+    return <Navigate to="/" replace />;
+  }
+
   return <GalleryInner />;
 }
 

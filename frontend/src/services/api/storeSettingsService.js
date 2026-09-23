@@ -121,20 +121,47 @@ const storeSettingsService = {
     const response = await apiClient.patch(`/settings/${section}`, data);
     const result = response.data?.data || response.data;
     try {
-      const partial = { [section]: result };
-      syncCachedBrandSettings(partial);
+      const isFullDoc = result && typeof result === 'object' && result.storefront && result.general;
+      const sectionData = isFullDoc ? result[section] : result || data;
+
       const existing = localStorage.getItem('siri_public_settings');
+      let parsed = {};
       if (existing) {
-        const parsed = JSON.parse(existing);
-        parsed[section] = { ...(parsed[section] || {}), ...result };
-        localStorage.setItem('siri_public_settings', JSON.stringify(parsed));
-        syncCachedBrandSettings(parsed);
+        try {
+          parsed = JSON.parse(existing);
+        } catch (_e) {}
       }
+
+      if (isFullDoc) {
+        parsed = { ...parsed, ...result };
+      } else {
+        parsed[section] = { ...(parsed[section] || {}), ...sectionData };
+      }
+
+      localStorage.setItem('siri_public_settings', JSON.stringify(parsed));
+      syncCachedBrandSettings(parsed);
+
       window.dispatchEvent(
-        new CustomEvent('store-settings-updated', { detail: { section, data: result } }),
+        new CustomEvent('store-settings-updated', {
+          detail: { section, data: sectionData, fullSettings: parsed },
+        }),
       );
+
+      try {
+        const channel = new BroadcastChannel('siri_store_settings');
+        channel.postMessage({
+          type: 'SETTINGS_UPDATED',
+          section,
+          sectionData,
+          fullSettings: parsed,
+          timestamp: Date.now(),
+        });
+        channel.close();
+      } catch (_e) {}
+
       localStorage.setItem('store_settings_sync_time', Date.now().toString());
       queryClient.invalidateQueries({ queryKey: ['storeSettings'] });
+      queryClient.invalidateQueries({ queryKey: ['homepageGalleryPreview'] });
       queryClient.invalidateQueries({ queryKey: ['cart'] });
     } catch (_e) {
       // Ignored in non-browser environments

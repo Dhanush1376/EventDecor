@@ -23,6 +23,7 @@ export function AdminGallery() {
   const confirm = useConfirm();
   const [_showUpload, setShowUpload] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [storefrontSettings, setStorefrontSettings] = useState({
     hideGallerySection: false,
     hideProductsFromGallery: false,
@@ -63,7 +64,7 @@ export function AdminGallery() {
         galleryService.getAll({ limit: 1000 }),
         galleryService.getCategories(),
         productService.getAll({ limit: 150 }),
-        storeSettingsService.getAdminSettings(),
+        storeSettingsService.getAdminSettings(true),
       ]);
       if (res.success) setItems(res.data.data || res.data.items || res.data || []);
       if (catRes.success) {
@@ -74,10 +75,11 @@ export function AdminGallery() {
       }
       if (prodRes.success)
         setProducts(prodRes.data.data || prodRes.data.items || prodRes.data || []);
-      if (settingsRes && settingsRes.storefront) {
+      const sf = settingsRes?.storefront || settingsRes?.data?.storefront || settingsRes;
+      if (sf && (sf.hideGallerySection !== undefined || sf.hideProductsFromGallery !== undefined)) {
         setStorefrontSettings({
-          hideGallerySection: !!settingsRes.storefront.hideGallerySection,
-          hideProductsFromGallery: !!settingsRes.storefront.hideProductsFromGallery,
+          hideGallerySection: Boolean(sf.hideGallerySection),
+          hideProductsFromGallery: Boolean(sf.hideProductsFromGallery),
         });
       }
     } catch (err) {
@@ -224,16 +226,36 @@ export function AdminGallery() {
     return matchesFilter && matchesType && matchesSearch;
   });
 
+  const handleOpenSettingsModal = async () => {
+    setShowSettingsModal(true);
+    try {
+      const res = await storeSettingsService.getAdminSettings(true);
+      const sf = res?.storefront || res?.data?.storefront || res;
+      if (sf && (sf.hideGallerySection !== undefined || sf.hideProductsFromGallery !== undefined)) {
+        setStorefrontSettings({
+          hideGallerySection: Boolean(sf.hideGallerySection),
+          hideProductsFromGallery: Boolean(sf.hideProductsFromGallery),
+        });
+      }
+    } catch (e) {
+      // Keep existing storefrontSettings state
+    }
+  };
+
   const handleSaveSettings = async (e) => {
     e.preventDefault();
+    setIsSavingSettings(true);
     try {
       await storeSettingsService.updateSection('storefront', {
-        ...storefrontSettings,
+        hideGallerySection: Boolean(storefrontSettings.hideGallerySection),
+        hideProductsFromGallery: Boolean(storefrontSettings.hideProductsFromGallery),
       });
       toast.success('Gallery settings updated');
       setShowSettingsModal(false);
     } catch (err) {
       toast.error(getErrorMessage(err, 'Failed to update settings'));
+    } finally {
+      setIsSavingSettings(false);
     }
   };
 
@@ -435,7 +457,7 @@ export function AdminGallery() {
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <button
               type="button"
-              onClick={() => setShowSettingsModal(true)}
+              onClick={handleOpenSettingsModal}
               className="h-[42px] min-h-[42px] max-h-[42px] px-2.5 sm:px-3 rounded-[4px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-border-subtle)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] border border-[var(--admin-border)] font-semibold text-[12.5px] sm:text-[13px] flex items-center justify-center cursor-pointer transition-all active:scale-95 gap-1.5 shrink-0 shadow-2xs"
               title="Gallery Settings"
             >
@@ -814,13 +836,25 @@ export function AdminGallery() {
                 <div className="flex justify-end gap-2 pt-2 border-t border-[var(--admin-border-subtle)]">
                   <button
                     type="button"
+                    disabled={isSavingSettings}
                     onClick={() => setShowSettingsModal(false)}
                     className="admin-btn admin-btn-ghost"
                   >
                     Cancel
                   </button>
-                  <button type="submit" className="admin-btn admin-btn-primary">
-                    Save Changes
+                  <button
+                    type="submit"
+                    disabled={isSavingSettings}
+                    className="admin-btn admin-btn-primary flex items-center gap-1.5"
+                  >
+                    {isSavingSettings ? (
+                      <>
+                        <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block" />
+                        <span>Saving...</span>
+                      </>
+                    ) : (
+                      'Save Changes'
+                    )}
                   </button>
                 </div>
               </form>

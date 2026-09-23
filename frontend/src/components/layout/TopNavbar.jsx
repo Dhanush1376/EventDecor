@@ -48,7 +48,7 @@ const VisualSearchOverlay = lazy(() =>
 // Search caching is now handled by useSearchOverlay hook
 
 export function TopNavbar() {
-  const { storeSettings, storeNameUpper } = useConfig();
+  const { storeSettings, storeNameUpper, hideGallerySection } = useConfig();
   const { navigation } = useWebsiteContent();
   const logoText = navigation?.logo?.text || storeNameUpper || 'SIRI ARTS & CRAFTS';
   const logoWords = logoText.split(' ');
@@ -288,6 +288,25 @@ export function TopNavbar() {
     };
   }, [isOpen, isMobile]);
 
+  const isGalleryHidden = Boolean(
+    hideGallerySection || storeSettings?.storefront?.hideGallerySection,
+  );
+
+  const isGalleryLink = (link) => {
+    const href = (link?.href || link?.link || '').toLowerCase().trim();
+    const label = (link?.label || '').toLowerCase().trim();
+    return (
+      href === '/gallery' ||
+      href.startsWith('/gallery/') ||
+      href.startsWith('/gallery?') ||
+      href.includes('gallery') ||
+      label === 'gallery' ||
+      label.includes('gallery') ||
+      label === 'inspiration' ||
+      label === 'inspirations'
+    );
+  };
+
   // Purely dynamic, CMS-driven links. No hardcoded fallbacks.
   const dbLinks =
     navigation?.mainLinks
@@ -297,7 +316,7 @@ export function TopNavbar() {
         href: link.href || link.link,
       }))
       .filter((link) => {
-        if (storeSettings?.storefront?.hideGallerySection && link.href === '/gallery') {
+        if (isGalleryHidden && isGalleryLink(link)) {
           return false;
         }
         return true;
@@ -308,7 +327,12 @@ export function TopNavbar() {
     ...dbLinks,
     { label: 'My Orders', href: '/dashboard/orders', mobileOnly: true },
     { label: 'Contact Us', href: '/contact', mobileOnly: true },
-  ];
+  ].filter((link) => {
+    if (isGalleryHidden && isGalleryLink(link)) {
+      return false;
+    }
+    return true;
+  });
 
   const isActive = (href) => location.pathname === href;
 

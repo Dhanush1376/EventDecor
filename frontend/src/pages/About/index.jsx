@@ -13,8 +13,8 @@ import { AboutSkeleton } from '../../components/ui/Skeleton';
 import { useConfig } from '../../context/ConfigContext';
 
 export function About() {
-  const { storeSettings, storeName, storeNameUpper } = useConfig();
-  const hideGallery = storeSettings?.storefront?.hideGallerySection;
+  const { storeSettings, storeName, storeNameUpper, hideGallerySection } = useConfig();
+  const hideGallery = Boolean(hideGallerySection || storeSettings?.storefront?.hideGallerySection);
   const { navigation, loading: webLoading } = useWebsiteContent();
   const logoText = navigation?.logo?.text || storeNameUpper || 'SIRI ARTS & CRAFTS';
 

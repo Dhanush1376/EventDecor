@@ -48,8 +48,43 @@ export const ConfigProvider = ({ children }) => {
 
     fetchGlobalData();
 
-    const handleSettingsSync = async () => {
+    let settingsBroadcast = null;
+    try {
+      settingsBroadcast = new BroadcastChannel('siri_store_settings');
+      settingsBroadcast.onmessage = (event) => {
+        if (event.data?.type === 'SETTINGS_UPDATED' && isMounted) {
+          const { section, sectionData, fullSettings } = event.data;
+          setStoreSettings((prev) => {
+            if (fullSettings && fullSettings.general && fullSettings.storefront) {
+              return fullSettings;
+            }
+            return {
+              ...(prev || {}),
+              [section]: {
+                ...((prev && prev[section]) || {}),
+                ...sectionData,
+              },
+            };
+          });
+        }
+      };
+    } catch (_e) {}
+
+    const handleSettingsSync = async (event) => {
       try {
+        if (event?.detail?.fullSettings && isMounted) {
+          setStoreSettings(event.detail.fullSettings);
+          return;
+        }
+        if (event?.detail?.section && event?.detail?.data && isMounted) {
+          setStoreSettings((prev) => ({
+            ...(prev || {}),
+            [event.detail.section]: {
+              ...((prev && prev[event.detail.section]) || {}),
+              ...event.detail.data,
+            },
+          }));
+        }
         const settingsRes = await storeSettingsService.getPublicSettings();
         if (isMounted && settingsRes) {
           setStoreSettings(settingsRes);
@@ -103,6 +138,11 @@ export const ConfigProvider = ({ children }) => {
       isMounted = false;
       window.removeEventListener('store-settings-updated', handleSettingsSync);
       window.removeEventListener('storage', handleStorageEvent);
+      if (settingsBroadcast) {
+        try {
+          settingsBroadcast.close();
+        } catch (_e) {}
+      }
       if (socketRef) {
         socketRef.disconnect();
       }
@@ -221,6 +261,8 @@ export const ConfigProvider = ({ children }) => {
   const maxOrderValue = orderLimits.maxOrderValue;
   const platformFee = orderLimits.platformFee;
   const customerAuthMethod = storeSettings?.storefront?.customerAuthMethod || 'both';
+  const hideGallerySection = Boolean(storeSettings?.storefront?.hideGallerySection);
+  const hideProductsFromGallery = Boolean(storeSettings?.storefront?.hideProductsFromGallery);
 
   const contextValue = useMemo(
     () => ({
@@ -228,6 +270,8 @@ export const ConfigProvider = ({ children }) => {
       categories,
       storeSettings,
       customerAuthMethod,
+      hideGallerySection,
+      hideProductsFromGallery,
       storeName,
       storeNameUpper,
       storeTagline,
@@ -308,6 +352,8 @@ export const ConfigProvider = ({ children }) => {
       isStoreClosed,
       isMaintenanceMode,
       customerAuthMethod,
+      hideGallerySection,
+      hideProductsFromGallery,
     ],
   );
 

@@ -20,6 +20,8 @@ export function Footer() {
     supportEmail: configEmail,
     supportPhone: configPhone,
     alternatePhone: configAltPhone,
+    storeSettings,
+    hideGallerySection,
   } = useConfig();
   const { contact, footer, navigation } = useWebsiteContent();
   const { data: settings } = useQuery({
@@ -76,6 +78,12 @@ export function Footer() {
     storeName ||
     'Siri Arts & Crafts';
 
+  const isGalleryHidden = Boolean(
+    hideGallerySection ||
+    storeSettings?.storefront?.hideGallerySection ||
+    settings?.storefront?.hideGallerySection,
+  );
+
   // Dynamic CMS Link Mappings
   let exploreLinks =
     footer?.exploreLinks?.length > 0
@@ -86,8 +94,12 @@ export function Footer() {
           { label: 'Gallery', href: '/gallery' },
         ];
 
-  if (settings?.storefront?.hideGallerySection) {
-    exploreLinks = exploreLinks.filter((link) => link.href !== '/gallery');
+  if (isGalleryHidden) {
+    exploreLinks = exploreLinks.filter((link) => {
+      const href = (link?.href || link?.link || '').toLowerCase().trim();
+      const label = (link?.label || '').toLowerCase().trim();
+      return !href.includes('gallery') && !label.includes('gallery');
+    });
   }
 
   const studioLinks =

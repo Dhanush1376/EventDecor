@@ -136,6 +136,7 @@ export function AdminAddProduct({ editId }) {
     _swapPrimaryImage,
     handleAddVariant,
     handleRemoveVariant,
+    handleRemoveAttributeGroup,
     handleSubmit,
     newVariant,
     setNewVariant,
@@ -471,6 +472,7 @@ export function AdminAddProduct({ editId }) {
                     setNewVariant={setNewVariant}
                     handleAddVariant={handleAddVariant}
                     handleRemoveVariant={handleRemoveVariant}
+                    handleRemoveAttributeGroup={handleRemoveAttributeGroup}
                   />
                 )}
 

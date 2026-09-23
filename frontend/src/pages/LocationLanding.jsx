@@ -11,7 +11,10 @@ import { locationService } from '../services/domainServices';
 import { useConfig } from '../context/ConfigContext';
 
 export function LocationLanding() {
-  const { storeName } = useConfig();
+  const { storeName, storeSettings, hideGallerySection } = useConfig();
+  const isGalleryHidden = Boolean(
+    hideGallerySection || storeSettings?.storefront?.hideGallerySection,
+  );
   const { city } = useParams();
 
   const [locationObj, setLocationObj] = useState(null);
@@ -149,10 +152,12 @@ export function LocationLanding() {
 
             <div className="pt-6">
               <Link
-                to="/gallery"
+                to={isGalleryHidden ? '/collections' : '/gallery'}
                 className="inline-flex items-center text-primary font-bold text-lg hover:text-primary-dark transition-colors group"
               >
-                View Our Recent Work in {locationObj.city}
+                {isGalleryHidden
+                  ? `Browse Our Collection in ${locationObj.city}`
+                  : `View Our Recent Work in ${locationObj.city}`}
                 <ArrowRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-2" />
               </Link>
             </div>

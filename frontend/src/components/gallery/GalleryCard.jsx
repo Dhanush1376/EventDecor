@@ -31,8 +31,10 @@ const CardContent = React.memo(function CardContent({
     }
   };
 
-  const { storeSettings } = useConfig();
-  const hideProducts = storeSettings?.storefront?.hideProductsFromGallery;
+  const { storeSettings, hideProductsFromGallery } = useConfig();
+  const hideProducts = Boolean(
+    hideProductsFromGallery || storeSettings?.storefront?.hideProductsFromGallery,
+  );
 
   return (
     <div

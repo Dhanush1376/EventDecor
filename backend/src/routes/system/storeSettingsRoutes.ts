@@ -13,6 +13,7 @@ const router = Router();
  */
 router.get('/public', async (req, res, next) => {
   try {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     const settings = await storeSettingsService.getPublicSettings();
     res.json({
       success: true,
@@ -31,6 +32,7 @@ router.get('/public', async (req, res, next) => {
  */
 router.get('/admin', requireAuth, requireRole([...ADMIN_ROLES]), async (req, res, next) => {
   try {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     const bypassCache = req.query.fresh === 'true';
     const settings = await storeSettingsService.getSettings(bypassCache);
     res.json({

@@ -23,7 +23,7 @@ export function ProductPricingStep({
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
         <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px]">
           <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-2 block">
-            Curation Price (₹) <span className="text-error">*</span>
+            Product Price (₹) <span className="text-error">*</span>
           </label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--admin-text-secondary)] text-[13px] font-bold">
@@ -254,118 +254,33 @@ export function ProductPricingStep({
                         </div>
                       </div>
 
-                      {/* Row 2: Security Deposit & Refundable Toggle */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px]">
-                          <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-2 block">
+                      {/* Row 2: Security Deposit (100% Refundable by default) */}
+                      <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px]">
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider">
                             Security Deposit (₹)
                           </label>
-                          <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--admin-text-secondary)] text-[13px] font-bold">
-                              ₹
-                            </span>
-                            <input
-                              type="number"
-                              min="0"
-                              inputMode="decimal"
-                              value={formData.securityDeposit ?? ''}
-                              onChange={(e) =>
-                                setFormData((prev) => ({
-                                  ...prev,
-                                  securityDeposit: e.target.value,
-                                }))
-                              }
-                              placeholder="0"
-                              className="w-full bg-[var(--admin-surface)] rounded-[4px] pl-7 pr-3 h-9 text-[12.5px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-all"
-                            />
-                          </div>
+                          <span className="text-[10.5px] text-[var(--admin-text-tertiary)] font-medium">
+                            100% Refundable on return
+                          </span>
                         </div>
-
-                        <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] flex flex-col justify-between">
-                          <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-2 block">
-                            Deposit Refundable
-                          </label>
-                          <div className="flex items-center justify-between h-9 px-3 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px]">
-                            <span className="text-[12.5px] font-medium text-[var(--admin-text-primary)]">
-                              {formData.isDepositRefundable ? 'Refundable' : 'Non-Refundable'}
-                            </span>
-                            <AdminToggle
-                              checked={formData.isDepositRefundable}
-                              onChange={() =>
-                                setFormData({
-                                  ...formData,
-                                  isDepositRefundable: !formData.isDepositRefundable,
-                                })
-                              }
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Row 3: Stock & Booking Limits */}
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px]">
-                          <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-2 block">
-                            Rental Stock
-                          </label>
-                          <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--admin-text-secondary)] text-[13px] font-bold">
-                              #
-                            </span>
-                            <input
-                              type="number"
-                              min="0"
-                              inputMode="numeric"
-                              value={formData.rentalStock ?? ''}
-                              onChange={(e) =>
-                                setFormData({
-                                  ...formData,
-                                  rentalStock: e.target.value,
-                                })
-                              }
-                              placeholder="0"
-                              className="w-full bg-[var(--admin-surface)] rounded-[4px] pl-7 pr-3 h-9 text-[12.5px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-all"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px]">
-                          <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-2 block">
-                            Min Rental Days
-                          </label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--admin-text-secondary)] text-[13px] font-bold">
+                            ₹
+                          </span>
                           <input
                             type="number"
-                            min="1"
-                            inputMode="numeric"
-                            value={formData.rentalMinDays ?? ''}
+                            min="0"
+                            inputMode="decimal"
+                            value={formData.securityDeposit ?? ''}
                             onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                rentalMinDays: e.target.value,
-                              })
+                              setFormData((prev) => ({
+                                ...prev,
+                                securityDeposit: e.target.value,
+                              }))
                             }
-                            placeholder="1"
-                            className="w-full bg-[var(--admin-surface)] rounded-[4px] px-3 h-9 text-[12.5px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-all"
-                          />
-                        </div>
-
-                        <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px]">
-                          <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-2 block">
-                            Max Rental Days
-                          </label>
-                          <input
-                            type="number"
-                            min="1"
-                            inputMode="numeric"
-                            value={formData.rentalMaxDays ?? ''}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                rentalMaxDays: e.target.value,
-                              })
-                            }
-                            placeholder="365"
-                            className="w-full bg-[var(--admin-surface)] rounded-[4px] px-3 h-9 text-[12.5px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-all"
+                            placeholder="0"
+                            className="w-full bg-[var(--admin-surface)] rounded-[4px] pl-7 pr-3 h-9 text-[12.5px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-all"
                           />
                         </div>
                       </div>

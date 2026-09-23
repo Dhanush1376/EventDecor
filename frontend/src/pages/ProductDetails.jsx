@@ -1,4 +1,5 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
+import { m as motion } from 'framer-motion';
 import { ProductGallery } from '../components/ui/ProductGallery';
 import { ProductInfo, CustomThemeCard } from '../components/ui/ProductInfo';
 import { ProductCoupons } from '../components/ui/ProductCoupons';
@@ -33,13 +34,29 @@ const LazyProductReviews = React.lazy(() =>
 export function ProductDetails() {
   const { storeName } = useConfig();
   const { id } = useParams();
+  const location = useLocation();
   const atcRef = useRef(null);
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [localAppliedCoupon, setLocalAppliedCoupon] = useState(null);
   const [relatedShowcases, setRelatedShowcases] = useState([]);
 
-  const { data: product, isLoading: loading, error } = useProduct(id);
+  // Use product passed from QuickView if available for instantaneous zero-flicker render
+  const initialProduct = useMemo(() => {
+    const p = location.state?.product;
+    if (p && ((p._id && String(p._id) === String(id)) || (p.id && String(p.id) === String(id)))) {
+      return p;
+    }
+    return undefined;
+  }, [location.state, id]);
+
+  const {
+    data: product,
+    isLoading: loading,
+    error,
+  } = useProduct(id, {
+    initialData: initialProduct,
+  });
 
   // Track product view, dwell time, and scroll depth
   useRecommendationTracker({
@@ -155,7 +172,12 @@ export function ProductDetails() {
   }
 
   return (
-    <div className="bg-surface relative min-h-screen">
+    <motion.div
+      initial={location.state?.fromQuickView ? { opacity: 0.9, y: 14 } : false}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+      className="bg-surface relative min-h-screen"
+    >
       <SEO title={product.title} description={product.description} schema={productSchema} />
 
       {/* Decorative Mandalas */}
@@ -295,6 +317,6 @@ export function ProductDetails() {
 
       {/* ─── Mobile Floating Bottom Bar — Actually adds to cart ─── */}
       <StickyMobileATC product={product} triggerRef={atcRef} />
-    </div>
+    </motion.div>
   );
 }

@@ -325,10 +325,10 @@ export function AdminContent() {
         </motion.div>
       </div>
 
-      {/* Sticky Mobile Back Header Bar (Sticky at top navbar when editing a section on mobile) */}
+      {/* Sticky Mobile Back & Actions Header Bar (Sticky at top navbar when editing a section on mobile) */}
       {mobileSectionOpen && (
         <div className="lg:hidden sticky top-[var(--admin-topbar-height,56px)] z-20 -my-2 py-2 bg-[var(--admin-bg)]/95 backdrop-blur-md mb-4">
-          <div className="px-3 py-1.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[8px] shadow-xs flex items-center justify-between gap-3 min-h-[44px]">
+          <div className="px-2.5 sm:px-3 py-1.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[6px] shadow-xs flex items-center justify-between gap-2 min-h-[44px]">
             {/* Left: Back Button */}
             <button
               type="button"
@@ -336,27 +336,44 @@ export function AdminContent() {
                 setMobileSectionOpen(false);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
-              className="inline-flex items-center gap-2 text-[var(--admin-text-primary)] hover:text-[var(--admin-accent)] transition-all cursor-pointer active:scale-95 group shrink-0"
+              className="inline-flex items-center gap-1.5 text-[var(--admin-text-primary)] hover:text-[var(--admin-accent)] transition-all cursor-pointer active:scale-95 group shrink-0"
             >
-              <div className="w-7 h-7 rounded-[6px] bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] group-hover:border-[var(--admin-accent)] group-hover:bg-[var(--admin-accent)]/10 flex items-center justify-center transition-all shadow-2xs">
+              <div className="w-7 h-7 rounded-[4px] bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] group-hover:border-[var(--admin-accent)] group-hover:bg-[var(--admin-accent)]/10 flex items-center justify-center transition-all shadow-2xs">
                 <span className="material-symbols-outlined text-[17px] text-[var(--admin-text-secondary)] group-hover:text-[var(--admin-accent)] group-hover:-translate-x-0.5 transition-all">
                   arrow_back
                 </span>
               </div>
-              <span className="text-[12.5px] font-bold text-[var(--admin-text-primary)] group-hover:text-[var(--admin-accent)] transition-colors">
-                All CMS Sections
+              <span className="text-[12px] font-bold text-[var(--admin-text-primary)] group-hover:text-[var(--admin-accent)] transition-colors">
+                All Sections
               </span>
             </button>
 
-            {/* Right: Active Section Pill Badge */}
-            {currentActiveItem && (
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-[6px] bg-[var(--admin-accent)]/10 border border-[var(--admin-accent)]/20 text-[var(--admin-accent)] min-w-0 max-w-[50%] sm:max-w-[60%] shadow-2xs">
-                <span className="material-symbols-outlined text-[15px] shrink-0">
-                  {currentActiveItem.icon}
-                </span>
-                <span className="text-[12px] font-bold truncate">{currentActiveItem.label}</span>
-              </div>
-            )}
+            {/* Right: Actions (Preview & Publish Live) */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              <a
+                href="/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="h-8 px-2 text-[11.5px] font-semibold rounded-[4px] border border-[var(--admin-border)] bg-[var(--admin-surface)] hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] inline-flex items-center justify-center gap-1 transition-all shadow-2xs cursor-pointer"
+                title="Preview Live Storefront"
+              >
+                <span className="material-symbols-outlined text-[16px]">open_in_new</span>
+              </a>
+
+              <button
+                type="button"
+                onClick={handlePublishAll}
+                disabled={isPublishing}
+                className="h-8 px-3 rounded-[4px] bg-[var(--admin-accent)] hover:opacity-95 text-white text-[12px] font-bold inline-flex items-center justify-center gap-1.5 shadow-xs cursor-pointer transition-all active:scale-95 disabled:opacity-50 shrink-0"
+              >
+                {isPublishing ? (
+                  <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
+                ) : (
+                  <span className="material-symbols-outlined text-[16px]">publish</span>
+                )}
+                <span>Publish Live</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -557,6 +574,25 @@ export function AdminContent() {
               {activeSection === 'catalog' && <QuickCatalogControl />}
             </motion.div>
           </AnimatePresence>
+
+          {/* Mobile Bottom Publish Action Button */}
+          {mobileSectionOpen && (
+            <div className="lg:hidden pt-4 pb-2">
+              <button
+                type="button"
+                onClick={handlePublishAll}
+                disabled={isPublishing}
+                className="w-full h-10 rounded-[4px] bg-[var(--admin-accent)] hover:opacity-95 text-white text-[13px] font-bold inline-flex items-center justify-center gap-2 shadow-sm cursor-pointer transition-all active:scale-95 disabled:opacity-50"
+              >
+                {isPublishing ? (
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
+                ) : (
+                  <span className="material-symbols-outlined text-[18px]">publish</span>
+                )}
+                <span>Publish Live to Storefront</span>
+              </button>
+            </div>
+          )}
         </motion.div>
       </div>
 

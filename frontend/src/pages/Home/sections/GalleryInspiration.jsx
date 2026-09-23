@@ -14,8 +14,8 @@ import { useConfig } from '../../../context/ConfigContext';
  * Fashion Inspiration section using real gallery data and Admin-managed copy.
  */
 export function GalleryInspiration({ previewContent }) {
-  const { storeSettings } = useConfig();
-  const hideGallery = storeSettings?.storefront?.hideGallerySection;
+  const { storeSettings, hideGallerySection } = useConfig();
+  const hideGallery = Boolean(hideGallerySection || storeSettings?.storefront?.hideGallerySection);
 
   const cms = useWebsiteContent({ includeDefaults: false });
   const activeCms = previewContent || cms;
@@ -35,7 +35,7 @@ export function GalleryInspiration({ previewContent }) {
       return res.data.data || [];
     },
     staleTime: 5 * 60 * 1000,
-    enabled: galleryPreview?.isVisible !== false,
+    enabled: galleryPreview?.isVisible !== false && !hideGallery,
   });
 
   const galleryItems = useMemo(() => {

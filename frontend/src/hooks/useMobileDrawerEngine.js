@@ -12,6 +12,8 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 export function useMobileDrawerEngine({
   isOpen = false,
   onClose,
+  onExpand,
+  expandThreshold = -40,
   breakpoint = 640,
   dismissThreshold = 80,
   velocityThreshold = 300,
@@ -54,26 +56,26 @@ export function useMobileDrawerEngine({
     };
   }, [isOpen]);
 
-  // Dismiss callback for drag gesture
+  // Dismiss / Expand callback for drag gesture
   const handleDragEnd = useCallback(
     (_, info) => {
-      if (!onClose) return;
-
       if (axis === 'y') {
         const offset = info.offset?.y || 0;
         const velocity = info.velocity?.y || 0;
-        if (offset > dismissThreshold || velocity > velocityThreshold) {
+        if (onExpand && (offset < expandThreshold || velocity < -velocityThreshold)) {
+          onExpand();
+        } else if (onClose && (offset > dismissThreshold || velocity > velocityThreshold)) {
           onClose();
         }
       } else if (axis === 'x') {
         const offset = info.offset?.x || 0;
         const velocity = info.velocity?.x || 0;
-        if (offset > dismissThreshold || velocity > velocityThreshold) {
+        if (onClose && (offset > dismissThreshold || velocity > velocityThreshold)) {
           onClose();
         }
       }
     },
-    [onClose, dismissThreshold, velocityThreshold, axis],
+    [onClose, onExpand, expandThreshold, dismissThreshold, velocityThreshold, axis],
   );
 
   // Framer Motion drag props for the sheet element
@@ -93,11 +95,11 @@ export function useMobileDrawerEngine({
     return {
       drag: 'y',
       dragDirectionLock: true,
-      dragConstraints: { top: 0, bottom: 0 },
-      dragElastic: { top: 0.05, bottom: 0.5 },
+      dragConstraints: onExpand ? { top: -140, bottom: 0 } : { top: 0, bottom: 0 },
+      dragElastic: onExpand ? { top: 0.35, bottom: 0.5 } : { top: 0.05, bottom: 0.5 },
       onDragEnd: handleDragEnd,
     };
-  }, [isMobile, axis, handleDragEnd]);
+  }, [isMobile, axis, onExpand, handleDragEnd]);
 
   // Standard Material Ease Transition
   const sheetTransition = useMemo(

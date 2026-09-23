@@ -6,6 +6,7 @@ import { useEffect, useCallback, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useWishlist } from '../../context/WishlistContext';
 import { useCart } from '../../context/CartContext';
+import { useConfig } from '../../context/ConfigContext';
 import { useScrollLock } from '../../hooks/useScrollLock';
 
 const slideVariants = {
@@ -40,6 +41,10 @@ export function GallerySlideshow({
 
   const { toggleItem, isWishlisted } = useWishlist();
   const { addItem } = useCart();
+  const { storeSettings, hideProductsFromGallery } = useConfig();
+  const hideProducts = Boolean(
+    hideProductsFromGallery || storeSettings?.storefront?.hideProductsFromGallery,
+  );
 
   const actionSource = useRef('external');
 
@@ -290,7 +295,7 @@ export function GallerySlideshow({
                       </span>
                     </button>
 
-                    {currentItem.type === 'product' && (
+                    {currentItem.type === 'product' && !hideProducts && (
                       <button
                         onClick={() => addItem(currentItem, 1, currentItem.variants?.[0] || null)}
                         className="h-8 lg:h-9 px-4 lg:px-5 rounded-full bg-black text-white text-[9px] lg:text-[9.5px] font-bold tracking-widest uppercase hover:bg-black/80 transition-all shadow-sm active:scale-95 flex items-center gap-1.5"

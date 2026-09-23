@@ -33,13 +33,20 @@ import { useWebsiteContent } from '../../hooks/useWebsiteContent';
 import { useConfig } from '../../context/ConfigContext';
 
 export function Home({ previewContent }) {
-  const { storeName } = useConfig();
+  const { storeName, storeSettings, hideGallerySection } = useConfig();
+  const isGalleryHidden = Boolean(
+    hideGallerySection || storeSettings?.storefront?.hideGallerySection,
+  );
   const cms = useWebsiteContent({ includeDefaults: false });
   const activeCms = previewContent || cms;
   const loading = !previewContent && cms.loading;
 
   const isSectionVisible = useCallback(
     (id) => {
+      const baseId = id?.split('_')[0];
+      if ((id === 'galleryInspiration' || baseId === 'galleryInspiration') && isGalleryHidden) {
+        return false;
+      }
       const orderSection = activeCms?.homepageSections?.find((s) => s.id === id);
       if (orderSection && orderSection.isVisible !== undefined) {
         return orderSection.isVisible;
@@ -49,7 +56,7 @@ export function Home({ previewContent }) {
       }
       return true;
     },
-    [cms, activeCms],
+    [cms, activeCms, isGalleryHidden],
   );
 
   if (loading) {
@@ -132,6 +139,7 @@ export function Home({ previewContent }) {
                   </LazySection>
                 );
               case 'galleryInspiration':
+                if (isGalleryHidden) return null;
                 return (
                   <LazySection key={section.id} fallback={<SectionFallback />}>
                     <RevealSection>

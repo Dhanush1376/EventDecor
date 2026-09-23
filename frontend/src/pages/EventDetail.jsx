@@ -1,6 +1,6 @@
 import { ChevronRight, Star, Lock } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { SEO } from '../components/seo/SEO';
 import { EventDetailSkeleton } from '../components/ui/Skeleton';
@@ -34,13 +34,22 @@ import { ProductCard } from '../components/shared/ProductCard';
 export function EventDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isAuthenticated, runProtectedAction } = useAuth();
   const { toggleItem, isWishlisted } = useWishlist();
   const { isStoreClosed } = useConfig();
 
-  const [event, setEvent] = useState(null);
+  const initialEvent = React.useMemo(() => {
+    const p = location.state?.product;
+    if (p && ((p._id && String(p._id) === String(id)) || (p.id && String(p.id) === String(id)))) {
+      return p;
+    }
+    return null;
+  }, [location.state, id]);
+
+  const [event, setEvent] = useState(initialEvent);
   const [_relatedEvents, setRelatedEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialEvent);
   const [_error, setError] = useState(null);
 
   const reserveButtonRef = useRef(null);
@@ -106,7 +115,9 @@ export function EventDetail() {
 
   useEffect(() => {
     const fetchData = async () => {
-      setLoading(true);
+      if (!initialEvent) {
+        setLoading(true);
+      }
       try {
         let res = await showcaseService.getById(id).catch((err) => {
           logger.warn('Not found in showcases', err);
@@ -135,7 +146,7 @@ export function EventDetail() {
     };
     fetchData();
     window.scrollTo(0, 0);
-  }, [id]);
+  }, [id, initialEvent]);
 
   if (loading) return <EventDetailSkeleton />;
 
@@ -157,9 +168,10 @@ export function EventDetail() {
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+      initial={location.state?.fromQuickView ? { opacity: 0.9, y: 14 } : { opacity: 0 }}
+      animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
+      transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
       className="min-h-screen bg-surface selection:bg-[#826237]/30 selection:text-black"
     >
       <SEO

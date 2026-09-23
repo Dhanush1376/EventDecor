@@ -13,7 +13,10 @@ import { GalleryDiscoveryFeed } from './GalleryDetail/components/GalleryDiscover
 
 export function GalleryDetail() {
   const { id } = useParams();
-  const { storeSettings } = useConfig();
+  const { storeSettings, hideGallerySection, hideProductsFromGallery } = useConfig();
+  const isGalleryHidden = Boolean(
+    hideGallerySection || storeSettings?.storefront?.hideGallerySection,
+  );
 
   const {
     item,
@@ -32,10 +35,12 @@ export function GalleryDetail() {
     navigate,
   } = useGalleryViewer(id);
 
-  const hideProducts = storeSettings?.storefront?.hideProductsFromGallery;
+  const hideProducts = Boolean(
+    hideProductsFromGallery || storeSettings?.storefront?.hideProductsFromGallery,
+  );
   const finalLinkedProducts = hideProducts ? [] : linkedProducts;
 
-  if (storeSettings?.storefront?.hideGallerySection) {
+  if (isGalleryHidden) {
     return <Navigate to="/" replace />;
   }
 

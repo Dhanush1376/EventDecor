@@ -7,6 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useCartDispatch } from '../../context/CartContext';
 import { useWishlistState, useWishlistDispatch } from '../../context/WishlistContext';
 import { useQuickView } from '../../context/QuickViewContext';
+import { useConfig } from '../../context/ConfigContext';
 
 export const PremiumRecommendationCard = React.memo(function PremiumRecommendationCard({
   item,
@@ -22,6 +23,10 @@ export const PremiumRecommendationCard = React.memo(function PremiumRecommendati
   const [isHovered, setIsHovered] = useState(false);
   const [added, setAdded] = useState(false);
   const { openQuickView } = useQuickView();
+  const { storeSettings, hideGallerySection } = useConfig();
+  const isGalleryHidden = Boolean(
+    hideGallerySection || storeSettings?.storefront?.hideGallerySection,
+  );
 
   const handleQuickViewAction = (e, data) => {
     if (onQuickView) {
@@ -51,8 +56,11 @@ export const PremiumRecommendationCard = React.memo(function PremiumRecommendati
   const price = item.price || item.basePrice;
   const oldPrice = item.oldPrice;
   const score = item.score;
-  const _source = item.source;
+
   const targetType = item.targetType || item.type || 'product';
+  if (targetType === 'gallery' && isGalleryHidden) {
+    return null;
+  }
 
   const link =
     targetType === 'event'
