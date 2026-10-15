@@ -29,7 +29,7 @@
     "jspdf": "^4.2.1",
     "leaflet": "^1.9.4",
     "lodash.debounce": "^4.0.8",
-    "logrocket": "^12.1.1",
+    "logrocket": "^12.3.0",
     "lucide-react": "^1.23.0",
     "qrcode.react": "^4.2.0",
     "react": "^19.2.7",
