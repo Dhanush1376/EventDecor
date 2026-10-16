@@ -42,7 +42,7 @@
     "ioredis": "^5.10.1",
     "jsonwebtoken": "^9.0.3",
     "libphonenumber-js": "^1.13.8",
-    "mongoose": "^9.7.3",
+    "mongoose": "^9.9.5",
     "multer": "^2.2.0",
     "node-cron": "^4.6.0",
     "nodemailer": "^9.0.3",
