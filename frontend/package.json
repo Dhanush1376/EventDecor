@@ -16,7 +16,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@sentry/react": "^10.63.0",
+    "@sentry/react": "^10.74.0",
     "@tanstack/react-query": "^5.101.2",
     "axios": "^1.18.1",
     "browser-image-compression": "^2.0.2",
