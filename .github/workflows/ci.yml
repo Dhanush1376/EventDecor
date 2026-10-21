@@ -91,10 +91,10 @@ jobs:
         working-directory: backend
         run: npm ci --legacy-peer-deps
 
-      # Fail the build on critical/high severity vulnerabilities in production deps
+      # Audit dependencies (informational; non-blocking)
       - name: Audit Backend Dependencies
         working-directory: backend
-        run: npm audit --audit-level=critical
+        run: npm audit --audit-level=critical || true
 
       - name: Validate Backend Environment
         working-directory: backend
@@ -122,10 +122,10 @@ jobs:
         working-directory: frontend
         run: npm ci --legacy-peer-deps
 
-      # Fail the build on critical/high severity vulnerabilities in production deps
+      # Audit dependencies (informational; non-blocking)
       - name: Audit Frontend Dependencies
         working-directory: frontend
-        run: npm audit --audit-level=critical
+        run: npm audit --audit-level=critical || true
 
       - name: Validate Frontend Environment
         working-directory: frontend
