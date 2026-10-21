@@ -30,8 +30,8 @@ describe('RentalCheckoutService Calculations', () => {
     } as any);
 
     // Test 4-day duration (within 1 to 7 days package)
-    const startDate = new Date('2026-10-01T10:00:00.000Z');
-    const endDate = new Date('2026-10-05T10:00:00.000Z'); // 4 days
+    const startDate = new Date(Date.now() + 86400000); // Tomorrow
+    const endDate = new Date(startDate.getTime() + 4 * 86400000); // 4 days later
 
     const result = await RentalCheckoutService.calculateRentalCost(
       (product._id as mongoose.Types.ObjectId).toString(),
@@ -72,8 +72,8 @@ describe('RentalCheckoutService Calculations', () => {
     } as any);
 
     // 5-day duration (exceeds 3 days)
-    const startDate = new Date('2026-10-01T10:00:00.000Z');
-    const endDate = new Date('2026-10-06T10:00:00.000Z'); // 5 days
+    const startDate = new Date(Date.now() + 86400000);
+    const endDate = new Date(startDate.getTime() + 5 * 86400000); // 5 days
 
     await expect(
       RentalCheckoutService.calculateRentalCost(
@@ -107,8 +107,8 @@ describe('RentalCheckoutService Calculations', () => {
       },
     } as any);
 
-    const startDate = new Date('2026-10-01T10:00:00.000Z');
-    const endDate = new Date('2026-10-06T10:00:00.000Z'); // 5 days
+    const startDate = new Date(Date.now() + 86400000);
+    const endDate = new Date(startDate.getTime() + 5 * 86400000); // 5 days
 
     const result = await RentalCheckoutService.calculateRentalCost(
       (product._id as mongoose.Types.ObjectId).toString(),
