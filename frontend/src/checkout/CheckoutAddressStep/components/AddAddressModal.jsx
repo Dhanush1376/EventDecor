@@ -620,7 +620,7 @@ export function AddAddressModal({
                       </div>
 
                       <div>
-                        <label className="form-label">Landmark (Optional)</label>
+                        <label className="form-label">Landmark </label>
                         <input
                           type="text"
                           placeholder="e.g. Near Apollo Hospital"
