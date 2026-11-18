@@ -18,7 +18,7 @@
     "postinstall": "node -e \"const fs=require('fs'),p=require('path');const dir=p.join(__dirname,'node_modules','.bin');if(fs.existsSync(dir)){fs.readdirSync(dir).filter(f=>f.endsWith('.cmd')).forEach(f=>{const fp=p.join(dir,f);let c=fs.readFileSync(fp,'utf8');if(c.includes('SET dp0=%~dp0')){fs.writeFileSync(fp,c.replace(/SET dp0=%~dp0/g,'SET \\\"dp0=%~dp0\\\"'));}});}\""
   },
   "dependencies": {
-    "@sentry/react": "^10.63.0",
+    "@sentry/react": "^10.74.0",
     "@tanstack/react-query": "^5.101.2",
     "axios": "^1.18.1",
     "browser-image-compression": "^2.0.2",
