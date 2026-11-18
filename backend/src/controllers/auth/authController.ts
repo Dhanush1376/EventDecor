@@ -142,7 +142,6 @@ export const verifyOTP = asyncHandler(async (req: Request, res: Response) => {
   const payload: Record<string, unknown> = {
     user: result.user,
     accessToken: result.accessToken,
-    refreshToken: result.refreshToken,
     csrfToken,
   };
 
@@ -178,15 +177,12 @@ export const refreshSession = asyncHandler(async (req: Request, res: Response) =
     }
   }
 
-  // Only echo the rotated refresh token in the JSON body for clients that
-  // demonstrably cannot use cookies (e.g. Safari ITP blocking third-party
-  // cookies). Cookie-capable clients rotate via Set-Cookie alone, so the
-  // long-lived credential never becomes readable by page JavaScript.
+  // The refresh token is only ever delivered as an HttpOnly cookie (the API is served
+  // same-origin via the frontend's /api rewrite), so page JavaScript never sees it.
   res.status(200).json(
     new ApiResponse(true, 'Session refreshed', {
       user: result.user,
       accessToken: result.accessToken,
-      refreshToken: result.refreshToken,
     }),
   );
 });
@@ -353,7 +349,6 @@ export const googleAuth = asyncHandler(async (req: Request, res: Response) => {
   const payload: Record<string, unknown> = {
     user: r.user,
     accessToken: r.accessToken,
-    refreshToken: result.refreshToken,
     csrfToken,
   };
 

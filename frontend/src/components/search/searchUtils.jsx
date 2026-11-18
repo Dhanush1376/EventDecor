@@ -6,8 +6,6 @@ export const getTypeIcon = (type) => {
       return 'shopping_bag';
     case 'event':
       return 'celebration';
-    case 'gallery':
-      return 'photo_library';
     case 'category':
       return 'category';
     default:
@@ -21,8 +19,6 @@ export const getTypeLabel = (type) => {
       return 'Product';
     case 'event':
       return 'Event';
-    case 'gallery':
-      return 'Gallery';
     case 'category':
       return 'Category';
     default:

@@ -41,6 +41,7 @@ export interface IProduct extends ISoftDeleted {
   seoTitle?: string;
   seoDescription?: string;
   stock: number;
+  inventoryMode?: 'tracked' | 'made_to_order';
   reservedStock: number;
   inventory?: {
     available: number;
@@ -160,6 +161,8 @@ const ProductSchema: Schema = new Schema(
     seoTitle: { type: String },
     seoDescription: { type: String },
     stock: { type: Number, default: 0, min: 0 },
+    // 'tracked' enforces stock at checkout; 'made_to_order' accepts orders regardless of stock.
+    inventoryMode: { type: String, enum: ['tracked', 'made_to_order'], default: 'tracked' },
     reservedStock: { type: Number, default: 0, min: 0 },
     inventory: {
       available: { type: Number, default: 0 },

@@ -258,13 +258,8 @@ export async function processEvent(event: any): Promise<void> {
         );
       }
     } else if (eventName === 'RETURNREQUEST_WALLETREFUNDCOMPLETED') {
-      const returnReq = await ReturnRequest.findById(event.aggregateId).populate('userId');
-      if (returnReq) {
-        const {
-          ReturnNotificationService,
-        } = require('../services/returns/ReturnNotificationService');
-        await ReturnNotificationService.notifyCustomerRefundCompleted(returnReq);
-      }
+      // Legacy automated-return event; returns are now handled manually over WhatsApp.
+      logger.info(`[OUTBOX] Skipping legacy wallet-refund notification for ${event.aggregateId}`);
     } else if (eventName === 'RETURNREQUEST_EXCHANGE_PAYMENT_VERIFIED') {
       const returnReq = await ReturnRequest.findById(event.aggregateId).populate('userId');
       if (returnReq) {

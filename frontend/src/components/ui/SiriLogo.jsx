@@ -31,7 +31,9 @@ export function SiriLogo({
       }}
     >
       <img
-        src="/MainLogo.png"
+        src="/MainLogo-192.webp"
+        width={height}
+        height={height}
         alt={`${storeName} Logo`}
         title={storeName}
         loading="eager"

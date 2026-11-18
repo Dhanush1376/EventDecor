@@ -1,11 +1,12 @@
-import { useParams, Link, useLocation } from 'react-router-dom';
+import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
 import { m as motion } from 'framer-motion';
 import { ProductGallery } from '../components/ui/ProductGallery';
-import { ProductInfo, CustomThemeCard } from '../components/ui/ProductInfo';
+import { ProductInfo } from '../components/ui/ProductInfo';
 import { ProductCoupons } from '../components/ui/ProductCoupons';
 import { Skeleton, ProductDetailSkeleton } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/ui/FeedbackStates';
 import { SEO } from '../components/seo/SEO';
+import { categoryPath } from '../seo/seoConfig';
 import { MandalaElement } from '../components/ui/MandalaElement';
 import { StickyMobileATC } from '../components/ui/StickyMobileATC';
 import React, { useEffect, useMemo, useRef, Suspense, useState } from 'react';
@@ -17,7 +18,11 @@ import { useQueryClient } from '@tanstack/react-query';
 import recommendationService from '../services/api/recommendationService';
 import { ProductCard } from '../components/shared/ProductCard';
 import logger from '../utils/core/logger';
-import { useConfig } from '../context/ConfigContext';
+import {
+  getSharedPreviewSrc,
+  pathnameMatchesKey,
+  productTransitionKey,
+} from '../utils/navigation/sharedElementTransition';
 
 const RecommendationSystem = React.lazy(() =>
   import('../components/sections/RecommendationSystem').then((m) => ({
@@ -32,9 +37,9 @@ const LazyProductReviews = React.lazy(() =>
 );
 
 export function ProductDetails() {
-  const { storeName } = useConfig();
   const { id } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const atcRef = useRef(null);
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -57,6 +62,15 @@ export function ProductDetails() {
   } = useProduct(id, {
     initialData: initialProduct,
   });
+
+  // The hero image keeps the identity it was opened with (a card may link by id or by slug),
+  // so the image can travel back into the same card on Back.
+  const enteredKey = location.state?.vt?.key;
+  const heroKey =
+    enteredKey && pathnameMatchesKey(location.pathname, enteredKey)
+      ? enteredKey
+      : productTransitionKey(product?._id || product?.id || id);
+  const heroPreviewSrc = getSharedPreviewSrc(location.state, heroKey);
 
   // Track product view, dwell time, and scroll depth
   useRecommendationTracker({
@@ -118,54 +132,33 @@ export function ProductDetails() {
     fetchShowcases();
   }, [id]);
 
-  useEffect(() => {
-    // Immediate scroll to top on mount and ID change
-    if (typeof window !== 'undefined') {
-      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-    }
-  }, [id]);
-
   const galleryImages = useMemo(() => {
     if (!product) return [];
     return Array.from(new Set([product.imageSrc, ...(product.images || [])].filter(Boolean)));
   }, [product]);
 
-  const productSchema = useMemo(
-    () => ({
-      '@context': 'https://schema.org/',
-      '@type': 'Product',
-      name: product?.title || 'Artisanal Piece',
-      image: galleryImages,
-      description: product?.description || '',
-      sku: `SIRI-${product?.id || product?._id}`,
-      brand: {
-        '@type': 'Brand',
-        name: storeName || 'Siri Arts & Crafts',
-      },
-      offers: {
-        '@type': 'Offer',
-        url: typeof window !== 'undefined' ? window.location.href : '',
-        priceCurrency: 'INR',
-        price: product?.price || 0,
-        availability: 'https://schema.org/InStock',
-      },
-    }),
-    [product, galleryImages, storeName],
-  );
+  const productCategoryName =
+    (typeof product?.primaryCategory?.name === 'string' && product.primaryCategory.name) ||
+    (typeof product?.category === 'string' && !/^[a-f0-9]{24}$/i.test(product.category)
+      ? product.category
+      : '');
 
   if (loading) {
-    return <ProductDetailSkeleton />;
+    // Arriving from a product image: paint that image in the hero slot right away so the
+    // shared element transition has its destination before the product data arrives.
+    return <ProductDetailSkeleton heroSrc={heroPreviewSrc} heroKey={heroKey} />;
   }
 
   if (error || !product) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-surface p-6">
+        <SEO title="Product Not Found" noindex />
         <EmptyState
           title="Product Not Found"
           description="The product you are looking for may have been moved or is currently unavailable."
           icon="inventory_2"
-          actionLabel="Return to Collections"
-          onAction={() => (window.location.href = '/collections')}
+          actionLabel="Return to Shop"
+          onAction={() => navigate('/collections')}
         />
       </div>
     );
@@ -178,7 +171,25 @@ export function ProductDetails() {
       transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
       className="bg-surface relative min-h-screen"
     >
-      <SEO title={product.title} description={product.description} schema={productSchema} />
+      <SEO
+        title={product.seoTitle || product.title}
+        description={
+          product.seoDescription ||
+          product.description ||
+          `${product.title} by Siri Arts & Crafts. Handcrafted${productCategoryName ? ` ${productCategoryName.toLowerCase()}` : ''} available to order online.`
+        }
+        ogImage={product.imageSrc || galleryImages[0]}
+        ogType="product"
+        product={product}
+        breadcrumbs={[
+          { name: 'Home', url: '/' },
+          { name: 'Shop', url: '/collections' },
+          ...(productCategoryName
+            ? [{ name: productCategoryName, url: categoryPath(productCategoryName) }]
+            : []),
+          { name: product.title, url: `/product/${product._id || product.id || id}` },
+        ]}
+      />
 
       {/* Decorative Mandalas */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-0">
@@ -199,9 +210,20 @@ export function ProductDetails() {
           </Link>
           <span className="opacity-30">/</span>
           <Link to="/collections" className="hover:text-primary transition-colors">
-            Collections
+            Shop
           </Link>
           <span className="opacity-30">/</span>
+          {productCategoryName && (
+            <>
+              <Link
+                to={categoryPath(productCategoryName)}
+                className="hover:text-primary transition-colors"
+              >
+                {productCategoryName}
+              </Link>
+              <span className="opacity-30">/</span>
+            </>
+          )}
           <span className="text-on-surface font-bold truncate">{product.title}</span>
         </nav>
       </div>
@@ -209,7 +231,12 @@ export function ProductDetails() {
       <section className="pt-[68px] lg:pt-0 pb-12 lg:pb-20 lg:pb-24 max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 md:gap-8 lg:gap-12 xl:gap-20">
           <div className="flex flex-col gap-6 lg:gap-10 md:sticky md:top-24 lg:static lg:top-auto md:self-start lg:self-auto">
-            <ProductGallery images={galleryImages} product={product} />
+            <ProductGallery
+              images={galleryImages}
+              product={product}
+              previewSrc={heroPreviewSrc}
+              transitionKey={heroKey}
+            />
 
             <div className="hidden lg:flex flex-col gap-6 lg:gap-8">
               <ProductCoupons
@@ -218,11 +245,6 @@ export function ProductDetails() {
                 setLocalAppliedCoupon={setLocalAppliedCoupon}
               />
             </div>
-
-            {/* Show in left column ONLY on lg and above (Laptop) */}
-            <div className="hidden lg:flex flex-col gap-8 pt-4">
-              <CustomThemeCard product={product} />
-            </div>
           </div>
           <ProductInfo
             product={product}
@@ -230,11 +252,6 @@ export function ProductDetails() {
             localAppliedCoupon={localAppliedCoupon}
             setLocalAppliedCoupon={setLocalAppliedCoupon}
           />
-        </div>
-
-        {/* Show full width ONLY on md and below lg (Tablet) */}
-        <div className="hidden md:block lg:hidden mt-10 w-full">
-          <CustomThemeCard product={product} />
         </div>
       </section>
 

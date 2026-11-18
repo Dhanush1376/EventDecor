@@ -37,12 +37,17 @@ export function ShopPageEditor({ content, onUpdate }) {
           </span>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <AdminField label="Hero Title" description="The primary main headline of the shop page">
+            <AdminField
+              label="Hero Title"
+              description={
+                'Not displayed. The page heading is always "Shop" so navigation and Google results use one consistent name.'
+              }
+            >
               <AdminInput
                 value={hero.title || ''}
                 onChange={(e) => onUpdate('shopPage', { hero: { ...hero, title: e.target.value } })}
                 className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-md shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
-                placeholder="e.g. Heritage Collection"
+                placeholder="Not displayed"
               />
             </AdminField>
 

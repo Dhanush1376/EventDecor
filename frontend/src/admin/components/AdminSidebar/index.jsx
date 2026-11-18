@@ -25,10 +25,7 @@ export function AdminSidebar() {
   } else if (effectiveRole === 'production') {
     fabActions = [{ label: 'Start QA', icon: 'fact_check', path: '/admin/production/qa' }];
   } else if (effectiveRole === 'support') {
-    fabActions = [
-      { label: 'Find Order', icon: 'search', path: '/admin/enterprise-search' },
-      { label: 'New Return', icon: 'assignment_return', path: '/admin/returns/new' },
-    ];
+    fabActions = [{ label: 'Find Order', icon: 'search', path: '/admin/enterprise-search' }];
   } else {
     fabActions = [
       { label: 'Product', icon: 'inventory_2', path: '/admin/products/add' },

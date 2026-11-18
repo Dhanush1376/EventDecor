@@ -72,6 +72,27 @@ export function HeroCarousel({ previewContent }) {
     });
   }, [currentSlide, slides.length]);
 
+  // Remember the exact URL the first slide's image loaded from (its srcset choice for
+  // this device) so boot.js can preload it on the next visit, before React and the
+  // CMS/product requests run. Only the first slide is the LCP candidate.
+  const heroRef = useRef(null);
+  const firstSlideImage = slides[0]?.backgroundImage;
+  useEffect(() => {
+    const img = heroRef.current?.querySelector('.h1-hero__slide img.h1-hero__slide-image');
+    if (!img || !firstSlideImage) return;
+    const save = () => {
+      try {
+        if (img.currentSrc) localStorage.setItem('siri_hero_lcp_src', img.currentSrc);
+      } catch (_) {}
+    };
+    if (img.complete && img.naturalWidth > 0) {
+      save();
+      return;
+    }
+    img.addEventListener('load', save, { once: true });
+    return () => img.removeEventListener('load', save);
+  }, [firstSlideImage]);
+
   // Swipe tracking
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
@@ -170,7 +191,7 @@ export function HeroCarousel({ previewContent }) {
               </p>
               <div className="flex flex-wrap items-center gap-6 mt-4">
                 <Link to="/collections" className="h1-hero__slide-cta pointer-events-auto">
-                  Explore Collections
+                  Visit the Shop
                   <ArrowRight className="text-[14px]" strokeWidth={1.5} />
                 </Link>
               </div>
@@ -182,7 +203,7 @@ export function HeroCarousel({ previewContent }) {
   }
 
   return (
-    <section className="h1-hero">
+    <section className="h1-hero" ref={heroRef}>
       {/* Hero Carousel */}
       <div
         className="h1-hero__carousel"

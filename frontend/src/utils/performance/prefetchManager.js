@@ -50,15 +50,7 @@ class PrefetchManager {
     try {
       await this.prefetchRouteModule(route, opts);
 
-      if (route === '/gallery') {
-        await this.queryClient.prefetchInfiniteQuery({
-          queryKey: ['gallery', 'all', 'All', 'All', 'All', ''],
-          queryFn: async ({ pageParam = 1 }) => {
-            const res = await api.get('/gallery', { params: { page: pageParam, limit: 20 } });
-            return res.data.data;
-          },
-        });
-      } else if (route === '/wishlist') {
+      if (route === '/wishlist') {
         if (hasSessionMarker()) {
           await this.queryClient.prefetchQuery({
             queryKey: ['wishlist'],
@@ -132,7 +124,6 @@ class PrefetchManager {
     if (route.startsWith('/dashboard')) return '/dashboard';
     if (route.startsWith('/collections')) return '/collections';
     if (route.startsWith('/events')) return '/events';
-    if (route.startsWith('/gallery')) return '/gallery';
     return route.split('?')[0];
   }
 
@@ -147,7 +138,6 @@ class PrefetchManager {
       '/checkout': () => import('../../pages/Checkout'),
       '/dashboard': () => import('../../pages/Dashboard'),
       '/product/:id': () => import('../../pages/ProductDetails'),
-      '/gallery': () => import('../../pages/Gallery'),
       '/wishlist': () => import('../../pages/Wishlist'),
       '/events': () => import('../../pages/EventCollections'),
       '/about': () => import('../../pages/About'),

@@ -12,6 +12,11 @@ import { parseNumericPrice, formatPrice } from '../../utils/ecommerce/priceUtils
 import { getProductRoute } from '../../utils/ecommerce/productRouteUtils';
 import { DynamicRatingBadge } from '../ui/DynamicRatingBadge';
 import { useQuickView } from '../../context/QuickViewContext';
+import {
+  productTransitionKey,
+  sharedElementProps,
+  VT_SCOPE_ATTRIBUTE,
+} from '../../utils/navigation/sharedElementTransition';
 
 const isValidMediaUrl = (url) => {
   if (!url || typeof url !== 'string') return false;
@@ -72,6 +77,7 @@ export const ProductCard = React.memo(function ProductCard({
   cartType = 'purchase',
   stock,
   rentalStock,
+  inventoryMode,
   selectionMode = false,
   isSelected = false,
   isRectangular = false,
@@ -199,14 +205,23 @@ export const ProductCard = React.memo(function ProductCard({
   const resolvedCartType = isRental ? 'rental' : 'purchase';
   const resolvedPrice = isRental ? rentalPricing?.rentalPrice || price : price;
   const resolvedDeposit = isRental ? securityDeposit || deposit || 0 : 0;
-  const isOutOfStock = isRental
-    ? Number(rentalStock) > 0
-      ? rentalStock <= 0
-      : stock <= 0
-    : stock <= 0;
+  const isOutOfStock =
+    inventoryMode === 'made_to_order'
+      ? false
+      : isRental
+        ? Number(rentalStock) > 0
+          ? rentalStock <= 0
+          : stock <= 0
+        : stock <= 0;
+
+  // Products open into a page with a matching hero image; events have no shared element.
+  const transitionKey = itemType === 'event' ? undefined : productTransitionKey(productId);
 
   const handleCardClick = (e) => {
     if (longPressTriggered) return;
+    // A <Link> inside the card already navigated (and called preventDefault); navigating
+    // again here would add a second history entry for the same page.
+    if (e.defaultPrevented) return;
     // If the user clicked a button or any interactive element inside a button, don't trigger the card link
     if (e.target.closest('button')) return;
     navigate(getProductRoute(itemType, productId));
@@ -268,6 +283,7 @@ export const ProductCard = React.memo(function ProductCard({
       tabIndex={0}
       role="link"
       aria-label={`View details of ${title}`}
+      {...{ [VT_SCOPE_ATTRIBUTE]: '' }}
       onContextMenu={(e) => {
         // Prevent native context menu on touch devices during long press
         if (window.innerWidth < 1024) e.preventDefault();
@@ -286,7 +302,11 @@ export const ProductCard = React.memo(function ProductCard({
         >
           {availableImages.length > 0 ? (
             availableImages.map((img, idx) => (
-              <div key={idx} className="w-full h-full flex-shrink-0 snap-center relative">
+              <div
+                key={img}
+                className="w-full h-full flex-shrink-0 snap-center relative"
+                {...(idx === activeIndex ? sharedElementProps(transitionKey) : {})}
+              >
                 <Link
                   to={getProductRoute(itemType, productId)}
                   className="block h-full w-full"

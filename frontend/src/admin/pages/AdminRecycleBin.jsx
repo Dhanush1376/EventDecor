@@ -351,7 +351,6 @@ export default function AdminRecycleBin() {
                       <option value="ExchangeRequest">Exchanges</option>
                       <option value="User">Customers</option>
                       <option value="Review">Reviews</option>
-                      <option value="Gallery">Gallery</option>
                     </select>
                   </div>
 

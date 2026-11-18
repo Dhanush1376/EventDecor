@@ -5,6 +5,7 @@ import ApiError from '../utils/ApiError';
 import storeSettingsService from '../services/StoreSettingsService';
 import CustomOrder from '../models/CustomOrder';
 import { computeOrderTotals } from './orders/orderTotals';
+import { InventoryService } from './InventoryService';
 
 export class OrderValidationService {
   static async validateTotals(userId: string, data: any) {
@@ -63,7 +64,7 @@ export class OrderValidationService {
     ] as any[];
 
     const products = await Product.find({ _id: { $in: productIds } }).select(
-      'title price stock category isActive rentalEnabled rentalPricing securityDeposit isDepositRefundable',
+      'title price stock reservedStock inventoryMode category isActive rentalEnabled rentalPricing securityDeposit isDepositRefundable',
     );
 
     const customOrders = await CustomOrder.find({ _id: { $in: customOrderIds } }).select(
@@ -106,8 +107,7 @@ export class OrderValidationService {
       if (!product) throw new ApiError(404, `Product not found: ${item.productId}`);
       if (!product.isActive)
         throw new ApiError(400, `Product is no longer active: ${product.title}`);
-      const availableStock = product.stock - (product.reservedStock || 0);
-      if (availableStock < item.quantity) {
+      if (item.type !== 'rental' && InventoryService.availableQuantity(product) < item.quantity) {
         throw new ApiError(400, `Insufficient stock for product: ${product.title}`);
       }
 

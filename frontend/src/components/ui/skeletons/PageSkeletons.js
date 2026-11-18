@@ -10,8 +10,6 @@ export { BlogPostSkeleton } from './BlogPostSkeleton';
 export { LocationLandingSkeleton } from './LocationLandingSkeleton';
 export { AboutSkeleton } from './AboutSkeleton';
 export { ContactSkeleton } from './ContactSkeleton';
-export { GallerySkeleton } from './GallerySkeleton';
-export { GalleryDetailSkeleton } from './GalleryDetailSkeleton';
 export { CustomOrdersSkeleton } from './CustomOrdersSkeleton';
 export { DashboardSkeleton } from './DashboardSkeleton';
 export { FAQSkeleton } from './FAQSkeleton';

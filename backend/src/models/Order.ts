@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import mongoose, { Schema } from 'mongoose';
 import SoftDeletePlugin, { SoftDeleteModel } from '../utils/SoftDeletePlugin';
 
@@ -131,7 +132,11 @@ const OrderSchema: Schema = new Schema(
 
     needByDate: { type: Date },
     idempotencyKey: { type: String, unique: true, sparse: true },
-    publicTrackingToken: { type: String, select: false },
+    publicTrackingToken: {
+      type: String,
+      select: false,
+      default: () => crypto.randomBytes(24).toString('hex'),
+    },
     codCollected: { type: Boolean, default: false },
     settlementStatus: {
       type: String,

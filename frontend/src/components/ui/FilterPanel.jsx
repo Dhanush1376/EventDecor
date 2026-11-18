@@ -139,11 +139,18 @@ export function FilterPanel({
 
   // Initialize active sections for dynamic filters and build cumulative options
   useEffect(() => {
-    if (filterGroups && filterGroups.length > 0) {
+    const validGroups = (filterGroups || []).filter(
+      (fg) =>
+        fg &&
+        fg.id !== 'variants' &&
+        !fg.id.toLowerCase().includes('variant') &&
+        !fg.label?.toLowerCase().includes('variant'),
+    );
+    if (validGroups.length > 0) {
       setActiveSections((prev) => {
         const next = { ...prev };
         const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
-        filterGroups.forEach((group, idx) => {
+        validGroups.forEach((group, idx) => {
           if (next[group.id] === undefined) {
             next[group.id] = !isMobile || idx === 0;
           }
@@ -152,8 +159,14 @@ export function FilterPanel({
       });
 
       setCumulativeGroups((prev) => {
-        const next = [...prev];
-        filterGroups.forEach((fg) => {
+        const next = [...prev].filter(
+          (g) =>
+            g &&
+            g.id !== 'variants' &&
+            !g.id.toLowerCase().includes('variant') &&
+            !g.label?.toLowerCase().includes('variant'),
+        );
+        validGroups.forEach((fg) => {
           if (
             !next.find(
               (g) =>
@@ -169,7 +182,7 @@ export function FilterPanel({
 
       setCumulativeOptions((prev) => {
         const next = { ...prev };
-        filterGroups.forEach((group) => {
+        validGroups.forEach((group) => {
           if (!next[group.id]) {
             next[group.id] = new Map();
           }
@@ -275,7 +288,15 @@ export function FilterPanel({
         </FilterSection>
 
         {cumulativeGroups.length > 0
-          ? cumulativeGroups.map((group) => {
+          ? cumulativeGroups
+              .filter(
+                (group) =>
+                  group &&
+                  group.id !== 'variants' &&
+                  !group.id.toLowerCase().includes('variant') &&
+                  !group.label?.toLowerCase().includes('variant'),
+              )
+              .map((group) => {
               // Use cumulative options to prevent items from disappearing when their count drops to 0
               const cumulativeGroupOptions = cumulativeOptions[group.id]
                 ? Array.from(cumulativeOptions[group.id].values())

@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import Order from '../models/Order';
 import ApiError from '../utils/ApiError';
@@ -9,7 +10,66 @@ export class LogisticsService {
   static generateTrackingToken(orderId: string): string {
     const secret = process.env.JWT_SECRET;
     if (!secret) throw new Error('JWT_SECRET is required to generate tracking tokens');
-    return jwt.sign({ orderId }, secret, { expiresIn: '90d' }); // valid for 90 days
+    return jwt.sign({ orderId, purpose: 'logistics' }, secret, { expiresIn: '90d' }); // valid for 90 days
+  }
+
+  /**
+   * Returns the order's public tracking token, creating one for orders placed before tokens
+   * were generated at checkout.
+   */
+  static async ensurePublicTrackingToken(orderId: any): Promise<string> {
+    const existing = await Order.findById(orderId).select('+publicTrackingToken').lean();
+    if (existing?.publicTrackingToken) return existing.publicTrackingToken;
+    const token = crypto.randomBytes(24).toString('hex');
+    const updated = await Order.findOneAndUpdate(
+      {
+        _id: orderId,
+        $or: [
+          { publicTrackingToken: { $exists: false } },
+          { publicTrackingToken: '' },
+          { publicTrackingToken: null },
+        ],
+      },
+      { $set: { publicTrackingToken: token } },
+      { returnDocument: 'after' },
+    )
+      .select('+publicTrackingToken')
+      .lean();
+    if (updated?.publicTrackingToken) return updated.publicTrackingToken;
+    // Another request set it concurrently
+    const reread = await Order.findById(orderId).select('+publicTrackingToken').lean();
+    return reread?.publicTrackingToken || token;
+  }
+
+  /**
+   * Authorizes public (unauthenticated) tracking of order `orderId` using either its public
+   * tracking token or a logistics JWT issued for that same order.
+   */
+  static async verifyPublicTrackingAccess(orderId: string, token: string) {
+    const order = await Order.findById(orderId).select('+publicTrackingToken');
+    if (!order) throw new ApiError(404, 'Order not found');
+
+    const stored = order.publicTrackingToken || '';
+    if (stored && /^[0-9a-f]+$/i.test(token)) {
+      const provided = Buffer.from(token, 'hex');
+      const expected = Buffer.from(stored, 'hex');
+      if (provided.length === expected.length && crypto.timingSafeEqual(provided, expected)) {
+        return order;
+      }
+    }
+
+    const secret = process.env.JWT_SECRET;
+    if (secret) {
+      try {
+        const decoded = jwt.verify(token, secret, { algorithms: ['HS256'] }) as any;
+        if (decoded?.orderId === String(order._id) && decoded?.purpose === 'logistics') {
+          return order;
+        }
+      } catch {
+        // fall through
+      }
+    }
+    throw new ApiError(403, 'Invalid or expired tracking credentials for this order');
   }
 
   /**

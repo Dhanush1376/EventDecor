@@ -13,7 +13,6 @@ import User from '../models/User';
 import AnalyticsService from './analyticsService';
 import PaymentAttempt from '../models/PaymentAttempt';
 import PaymentEvent from '../models/PaymentEvent';
-import Coupon from '../models/Coupon';
 import { generateUuid } from '../shared/utils/uuidGenerator';
 import WalletTransaction from '../models/WalletTransaction';
 import { debitWalletBalance } from '../utils/payment/walletMutations';
@@ -24,6 +23,7 @@ import { EventResourcePlanningService } from './eventBooking/EventResourcePlanni
 import BookingMessage from '../models/BookingMessage';
 import { PaymentRefundService } from './PaymentRefundService';
 import { TransactionalEmailService } from './TransactionalEmailService';
+import { claimCouponUsage } from './couponUsage';
 
 export class PaymentVerificationService {
   static async verifyPayment(
@@ -328,26 +328,48 @@ export class PaymentVerificationService {
 
       if (attempt.type === 'purchase') {
         // --- PURCHASE VERIFICATION ---
+        // Payment-side anomalies recorded on the order so staff can reconcile them.
+        const reconciliationNotes: string[] = [];
+
         if (orderData.couponCode) {
-          const couponDoc = await Coupon.findOneAndUpdate(
-            { code: orderData.couponCode, isActive: true },
-            {
-              $inc: { usedCount: 1 },
-              $push: { usedBy: { userId, orderId: orderData.pendingOrderId } },
-            },
-            { session, returnDocument: 'after' },
+          const couponDoc = await claimCouponUsage(
+            orderData.couponCode,
+            userId,
+            orderData.pendingOrderId,
+            session,
           );
           if (!couponDoc) {
-            logger.warn(
-              `Coupon ${orderData.couponCode} became invalid during processing, but order is paid. Continuing.`,
-            );
+            // The customer already paid the discounted amount, so the order stands; flag it.
+            const note = `Coupon ${orderData.couponCode} could not be redeemed (limit reached or already used) but the discounted payment was captured.`;
+            reconciliationNotes.push(note);
+            logger.error(`[PAYMENT RECONCILIATION] ${note} Order ${orderData.pendingOrderId}`);
+            Sentry.captureMessage('Coupon over-redemption on paid order', {
+              level: 'warning',
+              extra: {
+                orderId: String(orderData.pendingOrderId),
+                couponCode: orderData.couponCode,
+              },
+            });
           }
         }
 
         if (orderData.walletDeduction > 0) {
-          const user = await User.findById(userId).session(session);
-          if (user && user.walletBalance >= orderData.walletDeduction) {
-            await debitWalletBalance(userId, orderData.walletDeduction, session);
+          const debited = await debitWalletBalance(userId, orderData.walletDeduction, session);
+          if (!debited) {
+            // Balance was spent elsewhere after checkout started; the gateway charged less than the
+            // order total, so the shortfall must be collected or written off by staff.
+            const note = `Wallet balance insufficient at payment time: ₹${orderData.walletDeduction} Siri Cash could not be debited. Shortfall needs reconciliation.`;
+            reconciliationNotes.push(note);
+            logger.error(`[PAYMENT RECONCILIATION] ${note} Order ${orderData.pendingOrderId}`);
+            Sentry.captureMessage('Wallet shortfall on paid order', {
+              level: 'error',
+              tags: { critical: 'payment_reconciliation' },
+              extra: {
+                orderId: String(orderData.pendingOrderId),
+                walletDeduction: orderData.walletDeduction,
+              },
+            });
+          } else {
             await WalletTransaction.create(
               [
                 {
@@ -439,6 +461,7 @@ export class PaymentVerificationService {
                   status: initialStatus as any,
                   note: initialNote,
                 },
+                ...reconciliationNotes.map((note) => ({ status: initialStatus as any, note })),
               ],
               invoiceNumber: orderData.invoiceNumber,
               // Transfer immutable invoice snapshots from PaymentAttempt

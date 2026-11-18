@@ -2,202 +2,159 @@ import React from 'react';
 import { AdminToggle } from '../../components/AdminUIKit';
 
 export function ProductReviewStep({ formData, setFormData }) {
+  const primaryImage = formData.images?.[0] || formData.imageSrc;
+
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 max-w-4xl">
       <div>
-        <h2 className="text-[11px] font-bold text-[var(--admin-text-primary)]">
-          Validation & Curation
-        </h2>
-        <p className="text-[11px] text-[var(--admin-text-secondary)]">
-          Review details and set visibility preferences before publishing.
+        <h2 className="text-[13px] font-bold text-[var(--admin-text-primary)]">Review & Publish</h2>
+        <p className="text-[11.5px] text-[var(--admin-text-secondary)] mt-0.5">
+          Everything looks good! Take a quick look before saving to your store.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Visibility Status Toggle */}
+      {/* Top Quick Settings */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+        {/* Visibility Status */}
         <div className="p-3.5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] flex items-center justify-between">
-          <p className="text-[12.5px] font-bold text-[var(--admin-text-primary)]">
-            Visibility Status
-          </p>
+          <div>
+            <p className="text-[12.5px] font-bold text-[var(--admin-text-primary)]">
+              Product Status
+            </p>
+            <p className="text-[10.5px] text-[var(--admin-text-secondary)]">
+              {formData.isActive ? 'Live and visible in store' : 'Saved as private draft'}
+            </p>
+          </div>
           <select
             value={formData.isActive ? 'active' : 'draft'}
             onChange={(e) => setFormData({ ...formData, isActive: e.target.value === 'active' })}
-            className="bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] px-3 h-8 text-[11px] font-bold text-[var(--admin-text-primary)] cursor-pointer outline-none"
+            className="bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] px-3 h-8 text-[11.5px] font-bold text-[var(--admin-text-primary)] cursor-pointer outline-none shadow-xs"
           >
-            <option value="active">Active (Visible)</option>
-            <option value="draft">Draft (Private)</option>
+            <option value="active">Live (Visible)</option>
+            <option value="draft">Draft (Hidden)</option>
           </select>
         </div>
 
-        {/* Curation Highlight Toggle */}
+        {/* Show on Home Screen */}
         <div className="p-3.5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] flex items-center justify-between">
-          <p className="text-[12.5px] font-bold text-[var(--admin-text-primary)]">
-            Featured Collection
-          </p>
+          <div>
+            <p className="text-[12.5px] font-bold text-[var(--admin-text-primary)]">
+              Show on Home Screen
+            </p>
+            <p className="text-[10.5px] text-[var(--admin-text-secondary)]">
+              Feature this item on the homepage
+            </p>
+          </div>
           <AdminToggle
             checked={formData.featured}
             onChange={() => setFormData({ ...formData, featured: !formData.featured })}
           />
         </div>
+      </div>
 
-        {/* Show in Gallery Toggle */}
-        <div className="p-3.5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] flex items-center justify-between col-span-1 sm:col-span-2">
-          <p className="text-[12.5px] font-bold text-[var(--admin-text-primary)]">
-            Show in Inspiration Gallery
+      {/* Clean Product Summary Card */}
+      <div className="p-4 sm:p-5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] space-y-4">
+        {/* Card Header */}
+        <div className="flex items-center justify-between pb-3 border-b border-[var(--admin-border)]">
+          <p className="text-[12px] font-bold text-[var(--admin-text-primary)] flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-[17px] text-[var(--admin-accent)]">
+              inventory_2
+            </span>
+            Product Summary
           </p>
-          <AdminToggle
-            checked={formData.showInGallery}
-            onChange={() => setFormData({ ...formData, showInGallery: !formData.showInGallery })}
-          />
+          <span className="text-[10.5px] font-semibold px-2 py-0.5 rounded-[3px] bg-[var(--admin-surface)] border border-[var(--admin-border)] text-[var(--admin-text-secondary)]">
+            {formData.isActive ? 'Active' : 'Draft'}
+          </span>
         </div>
 
-        {/* Summary Data Review list */}
-        <div className="col-span-1 sm:col-span-2 p-5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] space-y-4 text-[12px]">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] border-b border-[var(--admin-border)] pb-1.5 mb-4">
-            Curation Credentials Summary
-          </p>
-
-          <div className="flex items-start gap-4 mb-4 pb-4 border-b border-[var(--admin-border)]">
-            {formData.images && formData.images.length > 0 ? (
-              <div className="relative w-20 h-20 rounded-[4px] overflow-hidden border border-[var(--admin-border)] shadow-xs shrink-0">
-                <img
-                  src={formData.images[0]}
-                  className="w-full h-full object-cover"
-                  alt="Primary Cover"
-                />
-                <div className="absolute bottom-0 left-0 right-0 bg-[var(--admin-accent)] text-white text-[8px] font-bold tracking-widest text-center py-0.5 uppercase">
-                  Primary
-                </div>
-              </div>
+        {/* Visual Hero: Image + Title + Price */}
+        <div className="flex items-center gap-3.5 sm:gap-4 pb-4 border-b border-[var(--admin-border)]">
+          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-[4px] overflow-hidden border border-[var(--admin-border)] bg-[var(--admin-surface)] shrink-0 shadow-xs">
+            {primaryImage ? (
+              <img
+                src={primaryImage}
+                alt={formData.title || 'Product'}
+                className="w-full h-full object-cover"
+              />
             ) : (
-              <div className="w-20 h-20 rounded-[4px] bg-[var(--admin-surface)] border border-dashed border-[var(--admin-border)] flex flex-col items-center justify-center shrink-0">
-                <span className="material-symbols-outlined text-[var(--admin-text-tertiary)] text-[20px]">
-                  image_not_supported
-                </span>
-                <span className="text-[8px] font-bold text-[var(--admin-text-tertiary)] mt-1 uppercase">
-                  No Image
-                </span>
+              <div className="w-full h-full flex flex-col items-center justify-center text-[var(--admin-text-tertiary)]">
+                <span className="material-symbols-outlined text-[22px]">image_not_supported</span>
+                <span className="text-[8px] font-bold mt-1 uppercase">No Photo</span>
               </div>
             )}
-
-            <div className="flex-1 flex flex-col justify-center space-y-1 pt-1">
-              <span className="font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider text-[10px]">
-                Product Overview
-              </span>
-              <span className="font-bold text-[var(--admin-text-primary)] text-[14px]">
-                {formData.title || 'Untitled Product'}
-              </span>
-              <span className="font-bold text-[var(--admin-accent)] text-[13px]">
-                ₹{Number(formData.price || 0).toLocaleString()}
-              </span>
-            </div>
           </div>
 
-          <div className="space-y-3">
-            <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)] pb-2 gap-1">
-              <span className="font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider text-[11px]">
-                English Title
-              </span>
-              <span className="font-bold text-[var(--admin-text-primary)] sm:text-right">
-                {formData.title}
-              </span>
-            </div>
+          <div className="min-w-0 flex-1 space-y-1">
+            <h3 className="text-[15px] sm:text-[17px] font-bold text-[var(--admin-text-primary)] truncate">
+              {formData.title || 'Untitled Product'}
+            </h3>
             {formData.teluguTitle && (
-              <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)] pb-2 gap-1">
-                <span className="font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider text-[11px]">
-                  Telugu Title
-                </span>
-                <span className="font-semibold text-[var(--admin-text-primary)] sm:text-right">
-                  {formData.teluguTitle}
-                </span>
-              </div>
+              <p className="text-[12.5px] text-[var(--admin-text-secondary)] font-medium truncate">
+                {formData.teluguTitle}
+              </p>
             )}
-            <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)] pb-2 gap-1">
-              <span className="font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider text-[11px]">
-                Category
-              </span>
-              <span className="font-bold text-[var(--admin-text-primary)] sm:text-right">
-                {formData.primaryCategory || formData.category || 'Unassigned'}
-              </span>
-            </div>
-            <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)] pb-2 gap-1">
-              <span className="font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider text-[11px]">
-                Retail Price
-              </span>
-              <span className="font-bold text-[var(--admin-text-primary)] sm:text-right">
+            <div className="pt-0.5">
+              <span className="text-[17px] sm:text-[19px] font-extrabold text-[var(--admin-accent)]">
                 ₹{Number(formData.price || 0).toLocaleString()}
               </span>
-            </div>
-            <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)] pb-2 gap-1">
-              <span className="font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider text-[11px]">
-                Stock Quantity
-              </span>
-              <span className="font-bold text-[var(--admin-text-primary)] sm:text-right">
-                {formData.stock || 0} Units
-              </span>
-            </div>
-            {formData.material && (
-              <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)] pb-2 gap-1">
-                <span className="font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider text-[11px]">
-                  Core Material
+              {formData.oldPrice && Number(formData.oldPrice) > Number(formData.price) && (
+                <span className="text-[11.5px] text-[var(--admin-text-tertiary)] line-through ml-2">
+                  ₹{Number(formData.oldPrice).toLocaleString()}
                 </span>
-                <span className="font-bold text-[var(--admin-text-primary)] sm:text-right">
-                  {formData.material}
-                </span>
-              </div>
-            )}
-            <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)] pb-2 gap-1">
-              <span className="font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider text-[11px]">
-                Featured
-              </span>
-              <span className="font-bold text-[var(--admin-text-primary)] sm:text-right">
-                {formData.featured ? 'Yes' : 'No'}
-              </span>
-            </div>
-            <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)] pb-2 gap-1">
-              <span className="font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider text-[11px]">
-                Show in Gallery
-              </span>
-              <span className="font-bold text-[var(--admin-text-primary)] sm:text-right">
-                {formData.showInGallery ? 'Yes' : 'No'}
-              </span>
-            </div>
-
-            {/* New Added Fields */}
-            {formData.customerNote && (
-              <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)] pb-2 gap-1">
-                <span className="font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider text-[11px]">
-                  Customer Note
-                </span>
-                <span className="font-bold text-[var(--admin-text-primary)] sm:text-right max-w-[200px] truncate">
-                  {formData.customerNote}
-                </span>
-              </div>
-            )}
-
-            <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)] pb-2 gap-1">
-              <span className="font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider text-[11px]">
-                Personalization
-              </span>
-              <span className="font-bold text-[var(--admin-text-primary)] sm:text-right">
-                {formData.customizationConfig?.enabled
-                  ? `Yes (${formData.customizationConfig.label || 'Default Label'})`
-                  : 'No'}
-              </span>
-            </div>
-
-            <div className="flex flex-col sm:flex-row sm:justify-between pb-1 gap-1">
-              <span className="font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider text-[11px]">
-                Complimentary Gift
-              </span>
-              <span className="font-bold text-[var(--admin-text-primary)] sm:text-right">
-                {formData.complimentaryGift?.hasComplimentaryGift
-                  ? `Yes (${formData.complimentaryGift.giftQuantity || 1}x ${formData.complimentaryGift.giftName || 'Gift'})`
-                  : 'No'}
-              </span>
+              )}
             </div>
           </div>
         </div>
+
+        {/* Key Attributes (Clear & Simple) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-[12px]">
+          <div className="p-2.5 rounded-[4px] bg-[var(--admin-surface)] border border-[var(--admin-border)] flex items-center justify-between">
+            <span className="text-[var(--admin-text-secondary)] font-medium">Category</span>
+            <span className="font-bold text-[var(--admin-text-primary)] truncate max-w-[180px]">
+              {formData.primaryCategory || formData.category || 'Unassigned'}
+            </span>
+          </div>
+
+          <div className="p-2.5 rounded-[4px] bg-[var(--admin-surface)] border border-[var(--admin-border)] flex items-center justify-between">
+            <span className="text-[var(--admin-text-secondary)] font-medium">Fulfillment</span>
+            <span className="font-bold text-[var(--admin-accent)]">
+              {formData.inventoryMode === 'made_to_order'
+                ? 'Always Available'
+                : `${formData.stock || 0} Units in Stock`}
+            </span>
+          </div>
+
+          <div className="p-2.5 rounded-[4px] bg-[var(--admin-surface)] border border-[var(--admin-border)] flex items-center justify-between">
+            <span className="text-[var(--admin-text-secondary)] font-medium">Home Screen</span>
+            <span
+              className={`font-bold ${formData.featured ? 'text-emerald-600' : 'text-[var(--admin-text-secondary)]'}`}
+            >
+              {formData.featured ? 'Yes' : 'No'}
+            </span>
+          </div>
+        </div>
+
+        {/* Customization Details (Only shown if enabled) */}
+        {formData.customizationConfig?.enabled && (
+          <div className="p-2.5 rounded-[4px] bg-emerald-500/10 border border-emerald-500/20 text-[11.5px] flex items-center gap-2 text-emerald-700 dark:text-emerald-300 font-medium">
+            <span className="material-symbols-outlined text-[16px]">edit_note</span>
+            <span>
+              Personalization is allowed ({formData.customizationConfig.label || 'Customization'})
+            </span>
+          </div>
+        )}
+
+        {/* Customer Care Note (Only shown if provided) */}
+        {formData.customerNote && (
+          <div className="p-3 rounded-[4px] bg-[var(--admin-surface)] border border-[var(--admin-border)] text-[12px] space-y-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] block">
+              Customer Note
+            </span>
+            <p className="text-[var(--admin-text-primary)] whitespace-pre-line leading-relaxed text-[11.5px]">
+              {formData.customerNote}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

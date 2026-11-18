@@ -339,7 +339,7 @@ export function CartView({ isEmbedded = false }) {
 
   const innerContent = (
     <>
-      {!isEmbedded && <SEO title="Your Bag" description="Review your selected items." />}
+      {!isEmbedded && <SEO title="Your Bag" description="Review your selected items." noindex />}
 
       <AnimatePresence>
         {notification && (

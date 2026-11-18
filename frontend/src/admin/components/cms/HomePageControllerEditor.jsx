@@ -12,8 +12,6 @@ export function HomePageControllerEditor({ content, onUpdate }) {
   const [loadingCoupons, setLoadingCoupons] = useState(false);
   const [showcases, setShowcases] = useState([]);
   const [loadingShowcases, setLoadingShowcases] = useState(false);
-  const [galleryItems, setGalleryItems] = useState([]);
-  const [loadingGallery, setLoadingGallery] = useState(false);
 
   const uniqueCategories = React.useMemo(() => {
     const cats = new Set(products?.map((p) => p.category));
@@ -23,7 +21,7 @@ export function HomePageControllerEditor({ content, onUpdate }) {
   // HTML5 Drag & Drop State
   const [draggedIdx, setDraggedIdx] = useState(null);
 
-  const fetchAttempted = useRef({ promo: false, hero: false, gallery: false });
+  const fetchAttempted = useRef({ promo: false, hero: false });
   useEffect(() => {
     if (activeTab === 'promo' && !fetchAttempted.current.promo) {
       fetchAttempted.current.promo = true;
@@ -59,29 +57,6 @@ export function HomePageControllerEditor({ content, onUpdate }) {
             setShowcases([]);
           })
           .finally(() => setLoadingShowcases(false));
-      });
-    }
-
-    if (activeTab === 'gallery' && !fetchAttempted.current.gallery) {
-      fetchAttempted.current.gallery = true;
-      setLoadingGallery(true);
-      import('../../../services/domainServices').then(({ galleryService }) => {
-        galleryService
-          .getAll({ limit: 1000 })
-          .then((res) => {
-            let list = [];
-            if (res?.success) {
-              list = res.data?.data || res.data?.items || res.data || [];
-            } else {
-              list = res?.data || res || [];
-            }
-            setGalleryItems(Array.isArray(list) ? list : []);
-          })
-          .catch((err) => {
-            logger.error('Failed to load gallery items', err);
-            setGalleryItems([]);
-          })
-          .finally(() => setLoadingGallery(false));
       });
     }
   }, [activeTab]);
@@ -175,7 +150,6 @@ export function HomePageControllerEditor({ content, onUpdate }) {
     { id: 'shopByOccasion_1', isVisible: true },
     { id: 'featuredProducts_1', isVisible: true },
     { id: 'recommendedProducts_1', isVisible: true },
-    { id: 'galleryInspiration_1', isVisible: true },
   ];
 
   const homepageSections = content.homepageSections || defaultSections;
@@ -259,11 +233,6 @@ export function HomePageControllerEditor({ content, onUpdate }) {
       icon: 'recommend',
       tabKey: 'recommended',
     },
-    galleryInspiration: {
-      title: 'Inspiration Gallery',
-      icon: 'photo_library',
-      tabKey: 'gallery',
-    },
   };
 
   const HOMEPAGE_TABS = [
@@ -275,7 +244,6 @@ export function HomePageControllerEditor({ content, onUpdate }) {
     { id: 'occasions', label: 'Occasions', icon: 'celebration' },
     { id: 'featured', label: 'Featured', icon: 'star' },
     { id: 'recommended', label: 'Recommended', icon: 'recommend' },
-    { id: 'gallery', label: 'Gallery', icon: 'photo_library' },
   ];
 
   return (
@@ -1200,119 +1168,6 @@ export function HomePageControllerEditor({ content, onUpdate }) {
             </AdminField>
           </div>
           {renderProductSelector('recommendedProducts')}
-        </div>
-      )}
-
-      {activeTab === 'gallery' && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <AdminField label="Section Title">
-              <AdminInput
-                value={content.galleryInspiration?.sectionTitle || 'Inspiration Gallery'}
-                onChange={(e) =>
-                  updateSectionState('galleryInspiration', 'sectionTitle', e.target.value)
-                }
-              />
-            </AdminField>
-            <AdminField label="Section Subtitle">
-              <AdminInput
-                value={
-                  content.galleryInspiration?.sectionSubtitle ||
-                  'A visual journey through our finest installations'
-                }
-                onChange={(e) =>
-                  updateSectionState('galleryInspiration', 'sectionSubtitle', e.target.value)
-                }
-              />
-            </AdminField>
-          </div>
-
-          <div className="pt-4 border-t border-[var(--admin-border-subtle)] space-y-4">
-            <span className="text-[14px] sm:text-[15px] font-semibold text-[var(--admin-text-primary)] tracking-tight block mb-4">
-              Select Gallery Highlights
-            </span>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[400px] overflow-y-auto p-1 pr-2 scrollbar-thin">
-              {loadingGallery ? (
-                <div className="col-span-full p-4 text-center text-[var(--admin-text-secondary)] text-[12px] bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border)]">
-                  Loading gallery items...
-                </div>
-              ) : !galleryItems || galleryItems.length === 0 ? (
-                <div className="col-span-full p-4 text-center text-[var(--admin-text-secondary)] text-[12px] bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border)]">
-                  No gallery items available.
-                </div>
-              ) : (
-                galleryItems.map((gi, index) => {
-                  const giId = gi._id || gi.id;
-                  const currentIds = content.galleryInspiration?.galleryIds || [];
-
-                  // The storefront only respects IDs that actually exist, otherwise falls back
-                  const validIds = currentIds.filter((id) =>
-                    galleryItems.some((item) => (item._id || item.id) === id),
-                  );
-                  const isDefaultMode = validIds.length === 0;
-
-                  // Storefront shows max 5 items in fallback mode
-                  const isSelected = isDefaultMode ? index < 5 : validIds.includes(giId);
-
-                  return (
-                    <div
-                      key={giId}
-                      onClick={() => {
-                        let newIds;
-                        if (isDefaultMode) {
-                          newIds = galleryItems.slice(0, 5).map((g) => g._id || g.id);
-                          if (isSelected) {
-                            newIds = newIds.filter((id) => id !== giId);
-                          } else {
-                            newIds.push(giId);
-                          }
-                        } else {
-                          if (isSelected) {
-                            newIds = validIds.filter((id) => id !== giId);
-                          } else {
-                            newIds = [...validIds, giId];
-                          }
-                        }
-                        updateSectionState('galleryInspiration', 'galleryIds', newIds);
-                      }}
-                      className={`relative p-3 rounded-md border cursor-pointer transition-all duration-300 flex flex-col gap-3 group ${
-                        isSelected
-                          ? 'bg-[var(--admin-surface)] border-[var(--admin-accent)] ring-1 ring-[var(--admin-accent)] shadow-[var(--admin-shadow-sm)]'
-                          : 'bg-[var(--admin-surface)] border-[var(--admin-border)] opacity-70 hover:opacity-100 hover:border-[var(--admin-accent)]/50 shadow-[var(--admin-shadow-xs)]'
-                      }`}
-                    >
-                      <div
-                        className={`absolute top-2 right-2 w-6 h-6 rounded-sm flex items-center justify-center z-10 transition-colors ${
-                          isSelected
-                            ? 'bg-[var(--admin-accent)] text-[var(--admin-text-inverse)]'
-                            : 'bg-[var(--admin-surface-muted)] border border-[var(--admin-border-strong)] text-transparent group-hover:border-[var(--admin-accent)]/50'
-                        }`}
-                      >
-                        <span className="material-symbols-outlined text-[14px] font-bold">
-                          check
-                        </span>
-                      </div>
-                      <img
-                        src={gi.image || gi.images?.[0] || gi.thumbnail}
-                        alt={gi.title}
-                        className="w-full aspect-square object-cover rounded shadow-inner border border-[var(--admin-border-subtle)]"
-                      />
-                      <div className="space-y-1">
-                        <span className="text-[11px] font-bold text-[var(--admin-text-primary)] block line-clamp-1">
-                          {gi.title}
-                        </span>
-                        {gi.category && (
-                          <span className="text-[10px] font-semibold text-[var(--admin-accent)] uppercase tracking-wider block">
-                            {gi.category.replace('_', ' ')}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
         </div>
       )}
     </div>

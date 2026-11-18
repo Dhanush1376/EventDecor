@@ -10,7 +10,6 @@ import { useMobileDrawerEngine, DrawerDragHandle } from '../../../components/ui/
 const SCOPES = [
   { id: 'product', label: 'Product Catalog', icon: 'inventory_2' },
   { id: 'event', label: 'Real Events', icon: 'celebration' },
-  { id: 'gallery', label: 'Inspiration Gallery', icon: 'photo_library' },
   { id: 'global', label: 'Global Scope', icon: 'public' },
 ];
 

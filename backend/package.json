@@ -12,7 +12,8 @@
     "create-indexes": "tsx scripts/create_indexes.ts",
     "seed:catalog": "tsx scripts/seedCatalogRegistry.ts",
     "lint": "eslint src",
-    "test": "vitest run"
+    "test": "vitest run",
+    "postinstall": "node -e \"const fs=require('fs'),p=require('path');const dir=p.join(__dirname,'node_modules','.bin');if(fs.existsSync(dir)){fs.readdirSync(dir).filter(f=>f.endsWith('.cmd')).forEach(f=>{const fp=p.join(dir,f);let c=fs.readFileSync(fp,'utf8');if(c.includes('SET dp0=%~dp0')){fs.writeFileSync(fp,c.replace(/SET dp0=%~dp0/g,'SET \\\"dp0=%~dp0\\\"'));}});}\""
   },
   "keywords": [],
   "author": "",
@@ -45,7 +46,7 @@
     "mongoose": "^9.7.3",
     "multer": "^2.2.0",
     "node-cron": "^4.6.0",
-    "nodemailer": "^9.0.3",
+    "nodemailer": "^10.3.1",
     "pdfkit": "^0.19.1",
     "prom-client": "^15.1.3",
     "qrcode": "^1.5.4",

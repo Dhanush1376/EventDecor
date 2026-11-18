@@ -8,11 +8,17 @@ export class OrderTimelineService {
   /**
    * Fetches the unified timeline for an order, aggregating all related events.
    */
-  static async getOrderTimeline(orderId: string): Promise<any[]> {
+  static async getOrderTimeline(
+    orderId: string,
+    { includeGatewayPayloads = false }: { includeGatewayPayloads?: boolean } = {},
+  ): Promise<any[]> {
     try {
       const [orderEvents, paymentEvents, inventoryEvents] = await Promise.all([
         OrderEvent.find({ orderId }).lean(),
-        PaymentEvent.find({ orderId }).lean(),
+        // Raw gateway responses contain customer payment details; staff only.
+        includeGatewayPayloads
+          ? PaymentEvent.find({ orderId }).lean()
+          : PaymentEvent.find({ orderId }).select('-gatewayResponse').lean(),
         InventoryEvent.find({ orderId }).lean(),
       ]);
 

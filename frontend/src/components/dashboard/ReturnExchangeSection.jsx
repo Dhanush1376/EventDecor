@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
 import {
   CornerDownLeft,
   ArrowLeftRight,
@@ -9,8 +8,7 @@ import {
   ArrowDown,
   Truck,
 } from 'lucide-react';
-import { returnService } from '../../services/api/returnService';
-import toast from 'react-hot-toast';
+import { useLegacyReturnSummary } from '../../hooks/useLegacyReturnSummary';
 
 const formatReplacementStatus = (status) => {
   switch (status) {
@@ -47,99 +45,31 @@ const formatPaymentStatus = (status) => {
 };
 
 export function ReturnExchangeSection({ orderId }) {
-  const [returns, setReturns] = useState([]);
-  const [exchanges, setExchanges] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data, isLoading } = useLegacyReturnSummary(orderId);
   const [openSection, setOpenSection] = useState(null); // 'returns' or 'exchanges'
-  const [cancellingId, setCancellingId] = useState(null);
 
-  const fetchRequests = async () => {
-    if (!orderId) return;
-    try {
-      setIsLoading(true);
-      const [returnsRes, exchangesRes] = await Promise.all([
-        returnService.getMyReturns(),
-        returnService.getMyExchanges(),
-      ]);
+  const { returns, exchanges } = useMemo(() => {
+    const allReturns = data?.returns || [];
+    const matchedReturns = allReturns.filter((r) => r.returnType !== 'exchange');
+    const finalExchanges = (data?.exchanges || []).map((e) => {
+      const returnId =
+        typeof e.returnRequestId === 'object' ? e.returnRequestId?._id : e.returnRequestId;
+      const correspondingReturn = allReturns.find((r) => String(r._id) === String(returnId));
+      return {
+        ...e,
+        pickup: e.pickup || correspondingReturn?.pickup,
+        returnStatus: correspondingReturn?.status,
+        parentReturnId: correspondingReturn?._id || correspondingReturn?.returnId,
+      };
+    });
+    return { returns: matchedReturns, exchanges: finalExchanges };
+  }, [data]);
 
-      if (returnsRes.data?.success) {
-        const allReturns = returnsRes.data.data.returns || returnsRes.data.data || [];
-        const matchedReturns = allReturns.filter(
-          (r) =>
-            (typeof r.orderId === 'object' ? r.orderId._id || r.orderId.id : r.orderId) ===
-              orderId && r.returnType !== 'exchange',
-        );
-        setReturns(matchedReturns);
-
-        if (exchangesRes.data?.success) {
-          const allExchanges = exchangesRes.data.data.exchanges || exchangesRes.data.data || [];
-          const validExchanges = allExchanges;
-          const finalExchanges = validExchanges
-            .filter((e) => {
-              const retId =
-                typeof e.returnRequestId === 'object' ? e.returnRequestId.orderId : null;
-              if (retId === orderId) return true;
-              const correspondingReturn = allReturns.find((r) => r._id === e.returnRequestId);
-              return (
-                correspondingReturn &&
-                (typeof correspondingReturn.orderId === 'object'
-                  ? correspondingReturn.orderId._id || correspondingReturn.orderId.id
-                  : correspondingReturn.orderId) === orderId
-              );
-            })
-            .map((e) => {
-              const correspondingReturn = allReturns.find(
-                (r) =>
-                  r._id ===
-                  (typeof e.returnRequestId === 'object'
-                    ? e.returnRequestId._id
-                    : e.returnRequestId),
-              );
-              return {
-                ...e,
-                pickup: e.pickup || correspondingReturn?.pickup,
-                returnStatus: correspondingReturn?.status,
-                parentReturnId: correspondingReturn?._id || correspondingReturn?.returnId,
-              };
-            });
-          setExchanges(finalExchanges);
-
-          // Auto-open if there are requests
-          if (finalExchanges.length > 0) {
-            setOpenSection('exchanges');
-          } else if (matchedReturns.length > 0) {
-            setOpenSection('returns');
-          }
-        }
-      }
-    } catch (err) {
-      console.error('Failed to load return/exchange details', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+  // Open the most relevant section once the history has loaded.
   useEffect(() => {
-    fetchRequests();
-  }, [orderId]);
-
-  const handleCancelRequest = async (targetId) => {
-    if (!window.confirm('Are you sure you want to cancel this request?')) return;
-    try {
-      setCancellingId(targetId);
-      const res = await returnService.cancelReturn(targetId);
-      if (res.data?.success) {
-        toast.success('Request cancelled successfully');
-        await fetchRequests();
-      } else {
-        toast.error(res.data?.message || 'Failed to cancel request');
-      }
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to cancel request');
-    } finally {
-      setCancellingId(null);
-    }
-  };
+    if (exchanges.length > 0) setOpenSection('exchanges');
+    else if (returns.length > 0) setOpenSection('returns');
+  }, [exchanges.length, returns.length]);
 
   if (isLoading || (returns.length === 0 && exchanges.length === 0)) return null;
 
@@ -173,7 +103,6 @@ export function ReturnExchangeSection({ orderId }) {
               >
                 <div className="p-5 space-y-4">
                   {returns.map((r) => {
-                    const isPending = ['submitted', 'pending'].includes(r.status?.toLowerCase());
                     const pickupAddr = r.pickup?.address;
 
                     return (
@@ -193,18 +122,6 @@ export function ReturnExchangeSection({ orderId }) {
                               </span>
                             </div>
                           </div>
-
-                          {isPending && (
-                            <button
-                              onClick={() => handleCancelRequest(r._id || r.returnId)}
-                              disabled={cancellingId === (r._id || r.returnId)}
-                              className="text-[9px] font-bold uppercase tracking-wider text-red-600 hover:text-red-800 transition-colors border-0 bg-transparent cursor-pointer disabled:opacity-50"
-                            >
-                              {cancellingId === (r._id || r.returnId)
-                                ? 'Cancelling...'
-                                : 'Cancel Request'}
-                            </button>
-                          )}
                         </div>
 
                         {/* Items */}
@@ -280,14 +197,6 @@ export function ReturnExchangeSection({ orderId }) {
                           ) : (
                             <div />
                           )}
-
-                          <Link
-                            to={`/dashboard/returns/${r.returnId || r._id}`}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-bold uppercase tracking-wider transition-colors shadow-2xs self-start sm:self-auto no-underline"
-                          >
-                            Track Return Details
-                            <ArrowRight className="w-3 h-3" />
-                          </Link>
                         </div>
                       </div>
                     );
@@ -327,9 +236,6 @@ export function ReturnExchangeSection({ orderId }) {
               >
                 <div className="p-5 space-y-4">
                   {exchanges.map((e) => {
-                    const isPending = ['submitted', 'pending'].includes(
-                      (e.returnStatus || '').toLowerCase(),
-                    );
                     const pickupAddr = e.pickup?.address;
 
                     return (
@@ -349,20 +255,6 @@ export function ReturnExchangeSection({ orderId }) {
                               </span>
                             </div>
                           </div>
-
-                          {isPending && (
-                            <button
-                              onClick={() =>
-                                handleCancelRequest(e.parentReturnId || e.returnRequestId)
-                              }
-                              disabled={cancellingId === (e.parentReturnId || e.returnRequestId)}
-                              className="text-[9px] font-bold uppercase tracking-wider text-red-600 hover:text-red-800 transition-colors border-0 bg-transparent cursor-pointer disabled:opacity-50"
-                            >
-                              {cancellingId === (e.parentReturnId || e.returnRequestId)
-                                ? 'Cancelling...'
-                                : 'Cancel Request'}
-                            </button>
-                          )}
                         </div>
 
                         {/* Comparison Card: Returning vs Receiving */}
@@ -476,58 +368,7 @@ export function ReturnExchangeSection({ orderId }) {
                             )}
                           </div>
 
-                          <div className="flex items-center gap-3 self-start sm:self-auto">
-                            {e.paymentStatus === 'payment_required' && e.additionalPaymentId && (
-                              <button
-                                onClick={async () => {
-                                  const loadRazorpay = () =>
-                                    new Promise((resolve) => {
-                                      const script = document.createElement('script');
-                                      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-                                      script.onload = () => resolve(true);
-                                      script.onerror = () => resolve(false);
-                                      document.body.appendChild(script);
-                                    });
-                                  const isLoaded = await loadRazorpay();
-                                  if (!isLoaded) return alert('Failed to load payment gateway');
-                                  const options = {
-                                    key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-                                    amount: Math.round(e.priceDifference * 100),
-                                    currency: 'INR',
-                                    name: 'Event Decor',
-                                    description: 'Exchange Price Difference',
-                                    order_id: e.additionalPaymentId,
-                                    handler: async function (response) {
-                                      try {
-                                        await returnService.verifyExchangePayment({
-                                          razorpayOrderId: response.razorpay_order_id,
-                                          razorpayPaymentId: response.razorpay_payment_id,
-                                          razorpaySignature: response.razorpay_signature,
-                                        });
-                                        window.location.reload();
-                                      } catch (err) {
-                                        alert('Payment verification failed');
-                                      }
-                                    },
-                                    theme: { color: '#2A2927' },
-                                  };
-                                  const rzp = new window.Razorpay(options);
-                                  rzp.open();
-                                }}
-                                className="bg-[#2A2927] text-white px-3 py-1.5 rounded text-[9px] font-bold uppercase tracking-widest hover:bg-black transition-colors cursor-pointer border-0"
-                              >
-                                Pay Difference
-                              </button>
-                            )}
-
-                            <Link
-                              to={`/dashboard/returns/${e.parentReturnId || e.exchangeId || e._id}`}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold uppercase tracking-wider transition-colors shadow-2xs self-start sm:self-auto no-underline"
-                            >
-                              Track Exchange Details
-                              <ArrowRight className="w-3 h-3" />
-                            </Link>
-                          </div>
+                          <div className="flex items-center gap-3 self-start sm:self-auto"></div>
                         </div>
                       </div>
                     );

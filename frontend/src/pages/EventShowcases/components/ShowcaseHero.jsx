@@ -45,13 +45,14 @@ export function ShowcaseHero({ eventsPageContent }) {
         >
           {eventsPageContent.hero.subtitle}
         </motion.span>
+        {/* The page H1 is the section name so navigation, breadcrumbs and search results all use the same label. */}
         <motion.h1
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
           className="font-headline-xl text-[32px] sm:text-[42px] lg:text-[56px] lg:text-[72px] text-surface mb-4 lg:mb-8 text-gold leading-tight"
         >
-          {eventsPageContent.hero.title}
+          Events
         </motion.h1>
         <motion.p
           initial={{ opacity: 0, y: 20 }}

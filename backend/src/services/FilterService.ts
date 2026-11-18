@@ -38,15 +38,6 @@ export class FilterService {
           },
         },
       ],
-      variants: [
-        { $unwind: '$variants' },
-        {
-          $group: {
-            _id: { name: '$variants.name', value: '$variants.value' },
-            count: { $sum: 1 },
-          },
-        },
-      ],
     };
 
     const aggregation = await Product.aggregate([{ $match: filter }, { $facet: facetPipeline }]);
@@ -96,98 +87,6 @@ export class FilterService {
           options: priceOptions,
         });
       }
-    }
-
-    // Process Dynamic Variants (e.g., Color, Size, Material) with Canonical Registry
-    if (result.variants?.length > 0) {
-      const variantMap = new Map<string, any[]>();
-
-      // Load canonical values for all variants found
-      const variantSlugs = result.variants.map((v: any) =>
-        v._id.value.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-      );
-      const canonicalValues = await CatalogValue.find({
-        slug: { $in: variantSlugs },
-        isVisible: true,
-      }).lean();
-
-      const canonicalMap = new Map();
-      canonicalValues.forEach((cv) => canonicalMap.set(cv.slug, cv));
-
-      result.variants.forEach((v: any) => {
-        const name = v._id.name;
-        const slug = v._id.value.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-        const canonical = canonicalMap.get(slug);
-
-        // Hide minimum threshold (count < 2) unless we have a canonical override
-        if (v.count < 2 && !canonical) return;
-
-        if (!variantMap.has(name)) variantMap.set(name, []);
-        variantMap.get(name)!.push({
-          value: canonical ? canonical.value : v._id.value,
-          label: canonical ? canonical.value : v._id.value,
-          count: v.count,
-          parentId: canonical?.parentId,
-          sortOrder: canonical?.sortOrder || 999,
-          slug: slug,
-        });
-      });
-
-      variantMap.forEach((options, name) => {
-        // Merge duplicates that resolved to the same canonical value
-        const mergedOptions = Object.values(
-          options.reduce((acc: any, curr: any) => {
-            if (!acc[curr.value]) {
-              acc[curr.value] = { ...curr };
-            } else {
-              acc[curr.value].count += curr.count;
-            }
-            return acc;
-          }, {}),
-        );
-
-        // Handle Hierarchical Grouping (e.g., for Colors)
-        const rootOptions: any[] = [];
-        const childOptions: any[] = [];
-
-        mergedOptions.forEach((opt: any) => {
-          if (opt.parentId) childOptions.push(opt);
-          else rootOptions.push(opt);
-        });
-
-        // Attach children to parents
-        childOptions.forEach((child) => {
-          const parent = canonicalValues.find(
-            (cv) => cv._id.toString() === child.parentId.toString(),
-          );
-          if (parent) {
-            let rootParent = rootOptions.find((r) => r.value === parent.value);
-            if (!rootParent) {
-              // Add parent even if it has count 0 to show hierarchy
-              rootParent = {
-                value: parent.value,
-                label: parent.value,
-                count: 0,
-                sortOrder: parent.sortOrder,
-                children: [],
-              };
-              rootOptions.push(rootParent);
-            }
-            if (!rootParent.children) rootParent.children = [];
-            rootParent.children.push(child);
-            rootParent.count += child.count; // Bubble up count
-          }
-        });
-
-        if (rootOptions.length > 1) {
-          filterGroups.push({
-            id: name,
-            label: name,
-            type: 'checkbox',
-            options: rootOptions.sort((a, b) => a.sortOrder - b.sortOrder || b.count - a.count), // Canonical order first, then popularity
-          });
-        }
-      });
     }
 
     // Process Tags

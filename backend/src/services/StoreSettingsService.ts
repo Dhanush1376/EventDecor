@@ -163,8 +163,8 @@ class StoreSettingsService {
       storefront: {
         seoTitle: settings.storefront?.seoTitle || '',
         seoDescription: settings.storefront?.seoDescription || '',
-        hideGallerySection: Boolean(settings.storefront?.hideGallerySection),
-        hideProductsFromGallery: Boolean(settings.storefront?.hideProductsFromGallery),
+        hideGallerySection: true,
+        hideProductsFromGallery: true,
         customerAuthMethod: settings.storefront?.customerAuthMethod || 'both',
       },
     };

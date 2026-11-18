@@ -117,6 +117,7 @@ export interface IOrder extends ISoftDeleted {
   holdReason?: string;
   needByDate?: string;
   idempotencyKey?: string;
+  publicTrackingToken?: string;
   codCollected?: boolean;
   settlementStatus?: 'Pending' | 'Settled' | 'Not Applicable';
   settledAmount?: number;

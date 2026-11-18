@@ -1,5 +1,6 @@
 import React from 'react';
 import { Skeleton } from '../SkeletonBase';
+import { sharedElementProps } from '../../../utils/navigation/sharedElementTransition';
 
 // ─── Product Listing Skeleton ───
 export function ProductListSkeleton() {
@@ -51,7 +52,7 @@ export function ProductCardSkeleton() {
 }
 
 // ─── Product Detail Skeleton ───
-export function ProductDetailSkeleton() {
+export function ProductDetailSkeleton({ heroSrc = null, heroKey } = {}) {
   return (
     <div className="bg-surface min-h-screen">
       {/* Desktop Breadcrumbs Skeleton */}
@@ -66,19 +67,34 @@ export function ProductDetailSkeleton() {
       </div>
 
       <section className="pt-[68px] lg:pt-0 pb-12 lg:pb-20 lg:pb-24 max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 lg:gap-12 xl:gap-20">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 md:gap-8 lg:gap-12 xl:gap-20">
           {/* Left Column: Image Gallery & Extra Cards */}
           <div className="flex flex-col gap-6 lg:gap-10">
-            {/* Main Image & Thumbnails */}
-            <div className="space-y-4">
-              <Skeleton className="w-full aspect-[4/5] lg:aspect-square rounded-[24px] lg:rounded-[32px]" />
-              <div className="flex gap-4 overflow-x-hidden">
+            {/* Main Image & Thumbnails: same geometry as ProductGallery so nothing moves when
+                the real gallery replaces it */}
+            <div className="flex flex-col-reverse lg:flex-row gap-4 lg:gap-6 items-start w-full">
+              <div className="w-full lg:w-[85px] flex lg:flex-col gap-3 sm:gap-4 overflow-hidden py-3 px-2 lg:px-3 items-center">
                 {[...Array(4)].map((_, i) => (
                   <Skeleton
                     key={i}
-                    className="w-20 h-20 lg:w-24 lg:h-24 rounded-2xl flex-shrink-0"
+                    className="shrink-0 w-12 sm:w-14 lg:w-[60px] aspect-square rounded-[16px] lg:rounded-[20px]"
                   />
                 ))}
+              </div>
+              <div className="flex-1 w-full relative aspect-square max-h-[580px] rounded-2xl lg:rounded-3xl overflow-hidden bg-[#fafafa] border border-black/[0.04]">
+                {heroSrc ? (
+                  <div className="w-full h-full" {...sharedElementProps(heroKey)}>
+                    <img
+                      src={heroSrc}
+                      alt=""
+                      className="w-full h-full object-cover"
+                      decoding="async"
+                      fetchPriority="high"
+                    />
+                  </div>
+                ) : (
+                  <Skeleton className="w-full h-full !rounded-none" />
+                )}
               </div>
             </div>
             {/* Desktop-only secondary elements (Coupons, Custom Theme) */}

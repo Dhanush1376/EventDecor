@@ -219,7 +219,7 @@ export default function OrderPricingSummaryCard({
                     </button>
                   ) : (
                     <Link
-                      to={`/dashboard/returns/new?orderId=${order._id || order.id}`}
+                      to={`/dashboard/returns/new?orderId=${order._id || order.id}${item?._id ? `&itemId=${item._id}` : ''}`}
                       className="w-full sm:w-auto px-6 py-2.5 bg-surface hover:bg-surface-container-low text-on-surface font-bold uppercase tracking-widest text-[9px] rounded-lg border border-outline-variant/30 shadow-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap"
                     >
                       <CornerDownLeft className="text-[14px]" strokeWidth={1.5} />
@@ -244,7 +244,7 @@ export default function OrderPricingSummaryCard({
                     </button>
                   ) : (
                     <Link
-                      to={`/dashboard/returns/exchanges/new?orderId=${order._id || order.id}`}
+                      to={`/dashboard/returns/exchanges/new?orderId=${order._id || order.id}${item?._id ? `&itemId=${item._id}` : ''}`}
                       className="w-full sm:w-auto px-6 py-2.5 bg-surface hover:bg-surface-container-low text-on-surface font-bold uppercase tracking-widest text-[9px] rounded-lg border border-outline-variant/30 shadow-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap"
                     >
                       <ArrowLeftRight className="text-[14px]" strokeWidth={1.5} />

@@ -25,13 +25,6 @@ export const navSections = [
         keywords: 'policy, terms, legal, privacy',
         domain: 'settings',
       },
-      {
-        label: 'Photo Gallery',
-        icon: 'photo_library',
-        path: '/admin/gallery',
-        keywords: 'photos, heritage, images',
-        domain: 'settings',
-      },
     ],
   },
   {
@@ -54,21 +47,6 @@ export const navSections = [
         domain: 'orders',
       },
       {
-        label: 'Custom Orders',
-        icon: 'architecture',
-        path: '/admin/custom-orders',
-        keywords: 'customization, consultation, bespoke',
-        domain: 'orders',
-      },
-      {
-        label: 'Returns & Exchanges',
-        icon: 'assignment_return',
-        path: '/admin/returns',
-        matchPaths: ['/admin/returns', '/admin/exchanges'],
-        keywords: 'returns, refunds, exchanges, replacement, dashboard',
-        domain: 'orders',
-      },
-      {
         label: 'Payments',
         icon: 'payments',
         path: '/admin/payments',
@@ -78,15 +56,15 @@ export const navSections = [
     ],
   },
   {
-    label: 'Products & Stock',
-    subtitle: 'Manage catalog and inventory',
+    label: 'Products',
+    subtitle: 'Manage catalog & categories',
     roles: ['owner', 'manager', 'website_manager', 'warehouse'],
     items: [
       {
         label: 'Products',
         icon: 'inventory_2',
         path: '/admin/products',
-        keywords: 'items, stock, catalog',
+        keywords: 'items, catalog, products',
         domain: 'products',
       },
       {

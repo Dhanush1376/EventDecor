@@ -28,28 +28,20 @@ export function useProductValidation({
       if (!formData.title || !formData.title.trim()) errors.title = 'Product title is required';
       if (!formData.category && !formData.primaryCategory) errors.category = 'Category is required';
     }
-    if (currentStep === 3) {
-      // Pricing step
+    if (currentStep === 2) {
+      // Pricing & Policies step
       if (!formData.price || Number(formData.price) <= 0) errors.price = 'Enter a valid price';
-      if (formData.stock === '' || Number(formData.stock) < 0)
+      if (
+        formData.inventoryMode !== 'made_to_order' &&
+        (formData.stock === '' || Number(formData.stock) < 0)
+      )
         errors.stock = 'Enter stock quantity';
-    }
-    if (currentStep === 4) {
+
       if (formData.returnSettings?.isReturnable) {
-        if (
-          !formData.returnSettings?.returnWindowDays ||
-          formData.returnSettings.returnWindowDays < 1
-        ) {
-          errors.returnWindowDays = 'Return window (days) is required when returns are enabled';
-        }
-      }
-      if (formData.returnSettings?.isExchangeable) {
-        if (
-          !formData.returnSettings?.exchangeWindowDays ||
-          formData.returnSettings.exchangeWindowDays < 1
-        ) {
-          errors.exchangeWindowDays =
-            'Exchange window (days) is required when exchanges are enabled';
+        const days = Number(formData.returnSettings?.returnWindowDays);
+        if (!days || days < 1 || days > 365) {
+          errors.returnWindowDays =
+            'Request window must be between 1 and 365 days when return & exchange is enabled';
         }
       }
     }

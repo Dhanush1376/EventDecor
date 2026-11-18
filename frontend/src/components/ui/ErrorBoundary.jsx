@@ -3,6 +3,30 @@ import { Component } from 'react';
 import { getSentry } from '../../utils/core/sentryLoader';
 
 import logger from '../../utils/core/logger';
+
+const ERROR_ROBOTS_ID = 'error-boundary-robots';
+
+/**
+ * An error screen must never be indexed. Googlebot renders pages with cached JS; after a
+ * deploy an old chunk can fail to load and this boundary used to become the indexed content
+ * of the page (that is how "Update Available" ended up as a Google sitelink). Adding a
+ * noindex directive while the fallback is shown keeps that state out of search results.
+ * Written directly to the DOM because the root-level boundary sits outside HelmetProvider.
+ */
+function setErrorNoindex(active) {
+  if (typeof document === 'undefined') return;
+  const existing = document.getElementById(ERROR_ROBOTS_ID);
+  if (!active) {
+    existing?.remove();
+    return;
+  }
+  if (existing) return;
+  const meta = document.createElement('meta');
+  meta.id = ERROR_ROBOTS_ID;
+  meta.name = 'robots';
+  meta.content = 'noindex, nofollow';
+  document.head.appendChild(meta);
+}
 /**
  * Enterprise-grade Error Boundary with:
  * - Sentry error reporting
@@ -22,6 +46,7 @@ export class ErrorBoundary extends Component {
 
   componentDidCatch(error, errorInfo) {
     this.setState({ errorInfo });
+    setErrorNoindex(true);
 
     // Log to console in development
     logger.error('ErrorBoundary caught:', error, errorInfo);
@@ -35,7 +60,12 @@ export class ErrorBoundary extends Component {
     });
   }
 
+  componentWillUnmount() {
+    setErrorNoindex(false);
+  }
+
   handleRetry = () => {
+    setErrorNoindex(false);
     this.setState((prev) => ({
       hasError: false,
       error: null,
@@ -71,9 +101,9 @@ export class ErrorBoundary extends Component {
               <AlertCircle className="text-[36px] text-rose-500 font-light" strokeWidth={1.5} />
             </div>
 
-            <h2 className="font-display text-2xl lg:text-3xl font-semibold text-on-surface mb-3 tracking-tight">
+            <p className="font-display text-2xl lg:text-3xl font-semibold text-on-surface mb-3 tracking-tight">
               {isChunkError ? 'Update Available' : 'Something went wrong'}
-            </h2>
+            </p>
 
             <p className="font-body-md text-on-surface-variant/70 mb-8 text-sm lg:text-base leading-relaxed max-w-sm mx-auto">
               {isChunkError
@@ -111,7 +141,7 @@ export class ErrorBoundary extends Component {
                 </a>
                 <span className="text-outline-variant/50">·</span>
                 <a href="/collections" className="text-primary hover:underline">
-                  Collections
+                  Shop
                 </a>
                 <span className="text-outline-variant/50">·</span>
                 <a href="/contact" className="text-primary hover:underline">

@@ -158,8 +158,10 @@ export class LocalStorageProvider implements StorageProvider {
 }
 
 // -----------------------------------------------------------------------------
-// AWS S3 STORAGE PROVIDER (MOCK IMPLEMENTATION FOR PLAN)
+// AWS S3 STORAGE PROVIDER (NOT IMPLEMENTED)
 // -----------------------------------------------------------------------------
+// No S3 client is wired up. Every operation throws so a backup can never be
+// recorded as uploaded or verified to S3 when nothing was written.
 export class S3StorageProvider implements StorageProvider {
   public name: string;
   public type: StorageProviderType = 's3';
@@ -170,44 +172,40 @@ export class S3StorageProvider implements StorageProvider {
     this.region = region;
     this.name = `s3-${region}`;
     this.bucket = bucket;
-    // AWS SDK init goes here
+  }
+
+  private notImplemented(op: string): never {
+    throw new Error(
+      `[S3] ${op} is not implemented (s3://${this.bucket}, ${this.region}). Use MongoDB Atlas snapshots for off-site backups.`,
+    );
   }
 
   async upload(
-    filePath: string,
-    remotePath: string,
+    _filePath: string,
+    _remotePath: string,
     _options?: UploadOptions,
   ): Promise<UploadResult> {
-    logger.info(`[S3] Uploading ${filePath} to s3://${this.bucket}/${remotePath} (${this.region})`);
-    // Implement standard S3 PutObject or parallel upload here
-    // If options.immutable is true, set ObjectRetention
-    return {
-      location: `s3://${this.bucket}/${remotePath}`,
-      sizeBytes: fs.statSync(filePath).size,
-      checksum: 'mock-s3-hash-placeholder', // Would use ETag or x-amz-checksum-sha256
-    };
+    return this.notImplemented('upload');
   }
 
-  async download(remotePath: string, localPath: string): Promise<void> {
-    logger.info(`[S3] Downloading s3://${this.bucket}/${remotePath} to ${localPath}`);
+  async download(_remotePath: string, _localPath: string): Promise<void> {
+    return this.notImplemented('download');
   }
 
   async verify(_remotePath: string, _expectedChecksum: string): Promise<boolean> {
-    return true; // Use HeadObject to get checksum
+    return this.notImplemented('verify');
   }
 
-  async delete(remotePath: string): Promise<void> {
-    logger.info(`[S3] Deleting s3://${this.bucket}/${remotePath}`);
+  async delete(_remotePath: string): Promise<void> {
+    return this.notImplemented('delete');
   }
 
   async list(_prefix: string): Promise<RemoteFile[]> {
-    return [];
+    return this.notImplemented('list');
   }
 
-  async setImmutable(remotePath: string, retainUntil: Date): Promise<void> {
-    logger.info(
-      `[S3] Setting object lock on s3://${this.bucket}/${remotePath} until ${retainUntil.toISOString()}`,
-    );
+  async setImmutable(_remotePath: string, _retainUntil: Date): Promise<void> {
+    return this.notImplemented('setImmutable');
   }
 }
 
@@ -230,6 +228,9 @@ export class StorageManager {
     const s3Regions = process.env.BACKUP_S3_REGIONS?.split(',') || [];
 
     if (s3Bucket && s3Regions.length > 0) {
+      logger.error(
+        '[BACKUP] BACKUP_S3_BUCKET is set but the S3 provider is not implemented; S3 uploads will fail.',
+      );
       for (const region of s3Regions) {
         this.providers.push(new S3StorageProvider(region.trim(), s3Bucket));
       }

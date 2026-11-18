@@ -16,6 +16,8 @@ import { computeOrderTotals } from './orderTotals';
 import { InventoryService } from '../InventoryService';
 import { InvoiceService } from '../InvoiceService';
 import { TaxEngine } from '../taxes/TaxEngine';
+import { claimCouponUsage, hasUserUsedCoupon } from '../couponUsage';
+import { PhoneAuthService } from '../PhoneAuthService';
 
 export class OrderCheckoutService {
   static async createOrder(userId: string, orderData: any) {
@@ -106,7 +108,9 @@ export class OrderCheckoutService {
           ...new Set(items.map((item: any) => String(item.productId)).filter(Boolean)),
         ] as any[];
         const products = await Product.find({ _id: { $in: productIds } })
-          .select('title price stock reservedStock isActive imageSrc category isNonRefundable')
+          .select(
+            'title price stock reservedStock inventoryMode isActive imageSrc category isNonRefundable',
+          )
           .session(session);
         const productsById = new Map<string, any>(products.map((p: any) => [p._id.toString(), p]));
 
@@ -121,8 +125,7 @@ export class OrderCheckoutService {
           if (!product) throw new ApiError(404, `Product ${item.productId} not found`);
           if (!product.isActive)
             throw new ApiError(400, `Product is no longer active: ${product.title}`);
-          const availableStock = product.stock - (product.reservedStock || 0);
-          if (availableStock < item.quantity) {
+          if (InventoryService.availableQuantity(product) < item.quantity) {
             throw new ApiError(400, `Insufficient stock for product: ${product.title}`);
           }
         }
@@ -175,6 +178,10 @@ export class OrderCheckoutService {
           code: couponCode.toUpperCase().trim(),
           isActive: true,
         }).session(session);
+
+        if (couponDoc && hasUserUsedCoupon(couponDoc, userId)) {
+          throw new ApiError(400, 'You have already used this coupon.');
+        }
 
         if (
           couponDoc &&
@@ -302,7 +309,6 @@ export class OrderCheckoutService {
           );
         }
 
-        const { PhoneAuthService } = require('../PhoneAuthService');
         let normalizedShippingPhone: string;
         try {
           normalizedShippingPhone = PhoneAuthService.normalizePhone(shippingAddress.phone);
@@ -384,6 +390,26 @@ export class OrderCheckoutService {
       walletDeduction = totals.walletDeduction;
       if (walletDeduction > 0) walletDeducted = true;
 
+      // Siri Cash for online payments is only debited once payment is verified, so any other
+      // checkout started meanwhile could spend the same balance. Allow one pending wallet checkout.
+      if (walletDeducted) {
+        const pendingWalletAttempt = await PaymentAttempt.findOne({
+          userId,
+          status: { $in: ['initiated', 'processing'] },
+          'orderData.walletDeduction': { $gt: 0 },
+          createdAt: { $gte: new Date(Date.now() - 15 * 60 * 1000) },
+        })
+          .select('_id')
+          .session(session)
+          .lean();
+        if (pendingWalletAttempt) {
+          throw new ApiError(
+            409,
+            'Another checkout using Siri Cash is still in progress. Complete it or try again in 15 minutes.',
+          );
+        }
+      }
+
       // Generate immutable invoice snapshots (sequential number, store identity, self-contained tax breakdown)
       const invoiceSnapshots = await InvoiceService.generateOrderSnapshots(
         { subtotal, discount, shippingFee, codFee, walletDeduction, total },
@@ -409,14 +435,10 @@ export class OrderCheckoutService {
       if (isInstantCheckout) {
         // FOR COD: Perform all actual database mutations (Coupon, Wallet, Order)
         if (couponValid && couponDoc) {
-          await Coupon.findByIdAndUpdate(
-            couponDoc._id,
-            {
-              $inc: { usedCount: 1 },
-              $push: { usedBy: { userId, orderId: pendingOrderId } },
-            },
-            { session },
-          );
+          const claimed = await claimCouponUsage(couponDoc.code, userId, pendingOrderId, session);
+          if (!claimed) {
+            throw new ApiError(400, 'Coupon is invalid, expired, or usage limit reached');
+          }
         }
 
         if (walletDeducted && walletDeduction > 0) {
@@ -447,7 +469,6 @@ export class OrderCheckoutService {
           }
         }
 
-        const { PhoneAuthService } = require('../PhoneAuthService');
         const normalizedShippingPhone = shippingAddress?.phone
           ? PhoneAuthService.normalizePhone(shippingAddress.phone)
           : '';
@@ -634,9 +655,8 @@ export class OrderCheckoutService {
           );
         }
 
-        const { PhoneAuthService: PhoneAuthSvc } = require('../PhoneAuthService');
         const normalizedAttemptShippingPhone = shippingAddress?.phone
-          ? PhoneAuthSvc.normalizePhone(shippingAddress.phone)
+          ? PhoneAuthService.normalizePhone(shippingAddress.phone)
           : '';
 
         const attemptData = {

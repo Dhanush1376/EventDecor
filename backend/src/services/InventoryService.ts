@@ -7,6 +7,19 @@ import logger from '../config/logger';
 import * as Sentry from '@sentry/node';
 
 export class InventoryService {
+  /** Whether checkout must enforce `stock` for this product (absent mode = tracked). */
+  static tracksStock(product: { inventoryMode?: string } | null | undefined): boolean {
+    return product?.inventoryMode !== 'made_to_order';
+  }
+
+  /** Units a customer can still buy, or Infinity for made-to-order products. */
+  static availableQuantity(
+    product: { inventoryMode?: string; stock?: number; reservedStock?: number } | null | undefined,
+  ): number {
+    if (!InventoryService.tracksStock(product)) return Infinity;
+    return Math.max(0, (product?.stock || 0) - (product?.reservedStock || 0));
+  }
+
   private static async createInventoryEvent(
     productId: string,
     quantity: number,
@@ -59,20 +72,30 @@ export class InventoryService {
   ) {
     const expiresAt = new Date(Date.now() + ttlMinutes * 60 * 1000);
 
-    // ATOMIC: Reserve stock using $inc with $expr pre-condition
-    // This prevents concurrent checkouts from overselling
+    const current = await Product.findById(productId)
+      .select('isActive inventoryMode')
+      .session(session || null)
+      .lean();
+    if (!current) throw new ApiError(404, 'Product not found');
+    if (!current.isActive) throw new ApiError(400, 'Product is no longer active');
+    const tracksStock = InventoryService.tracksStock(current);
+
+    // ATOMIC: Reserve stock using $inc with $expr pre-condition so concurrent checkouts cannot
+    // oversell. Made-to-order products skip the availability condition but still count
+    // reservedStock so reconciliation stays consistent.
     const product = await Product.findOneAndUpdate(
       {
         _id: productId,
         isActive: true,
-        $expr: { $gte: [{ $subtract: ['$stock', '$reservedStock'] }, quantity] },
+        ...(tracksStock
+          ? { $expr: { $gte: [{ $subtract: ['$stock', '$reservedStock'] }, quantity] } }
+          : {}),
       },
       { $inc: { reservedStock: quantity } },
       { session: session || null, returnDocument: 'after' },
     );
 
     if (!product) {
-      // Determine whether product doesn't exist or stock is insufficient
       const existingProduct = await Product.findById(productId)
         .select('stock reservedStock isActive')
         .session(session || null)
@@ -93,6 +116,7 @@ export class InventoryService {
           quantity,
           status: 'reserved',
           expiresAt,
+          tracksStock,
         },
       ],
       { session },
@@ -121,6 +145,35 @@ export class InventoryService {
     const reservation = await InventoryReservation.findById(reservationId).session(session || null);
     if (!reservation) throw new ApiError(404, 'Reservation not found');
     if (reservation.status !== 'reserved') return reservation;
+
+    if (reservation.tracksStock === false) {
+      // Made-to-order: release the reservation count only; stock is not consumed.
+      const mtoProduct = await Product.findOneAndUpdate(
+        { _id: reservation.product, reservedStock: { $gte: reservation.quantity } },
+        { $inc: { reservedStock: -reservation.quantity } },
+        { session: session || null, returnDocument: 'after' },
+      );
+      if (!mtoProduct) {
+        await Product.findOneAndUpdate(
+          { _id: reservation.product },
+          { $set: { reservedStock: 0 } },
+          { session: session || null },
+        );
+      }
+      reservation.status = 'confirmed';
+      await reservation.save({ session });
+      await InventoryService.createInventoryEvent(
+        reservation.product.toString(),
+        0,
+        'confirmed',
+        'api',
+        'system',
+        `Made-to-order reservation confirmed (no stock deducted). ReservationId: ${reservationId}`,
+        undefined,
+        session,
+      );
+      return reservation;
+    }
 
     // ATOMIC: Deduct stock and release reservedStock in a single operation
     const product = await Product.findOneAndUpdate(
@@ -279,15 +332,17 @@ export class InventoryService {
     performedBy?: string,
     session?: mongoose.ClientSession,
   ) {
-    // ATOMIC: Restore stock
+    // ATOMIC: Restore stock (made-to-order products never had stock deducted)
     const product = await Product.findOneAndUpdate(
-      { _id: productId },
+      { _id: productId, inventoryMode: { $ne: 'made_to_order' } },
       { $inc: { stock: quantity } },
       { session: session || null, returnDocument: 'after' },
     );
 
     if (!product) {
-      logger.error(`[INVENTORY] Cannot restore stock for missing product ${productId}`);
+      logger.info(
+        `[INVENTORY] Stock not restored for ${productId} (missing or made-to-order product)`,
+      );
       return;
     }
 

@@ -3,17 +3,23 @@ import { OptimizedImage } from './OptimizedImage';
 import { ShareButton } from './ShareButton';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import React, { useState, useRef, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import { createPortal, flushSync } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useWishlist } from '../../context/WishlistContext';
 import { useScrollLock } from '../../hooks/useScrollLock';
 import { MandalaElement } from './MandalaElement';
+import {
+  canAnimateSharedElements,
+  productTransitionKey,
+  runSharedElementTransition,
+  sharedElementProps,
+} from '../../utils/navigation/sharedElementTransition';
 
 const RecommendationSystem = React.lazy(() =>
   import('../sections/RecommendationSystem').then((m) => ({ default: m.RecommendationSystem })),
 );
 
-export function ProductGallery({ images = [], product }) {
+export function ProductGallery({ images = [], product, previewSrc = null, transitionKey }) {
   const { toggleItem, isWishlisted } = useWishlist();
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
@@ -23,6 +29,8 @@ export function ProductGallery({ images = [], product }) {
   const navigate = useNavigate();
 
   useScrollLock(isLightboxOpen || isSimilarOpen);
+  // With view transitions the viewer's fade is part of the page transition, not framer-motion.
+  const lightboxFadeOwnedByVT = canAnimateSharedElements();
 
   useEffect(() => {
     if (isLightboxOpen) {
@@ -35,60 +43,86 @@ export function ProductGallery({ images = [], product }) {
     };
   }, [isLightboxOpen]);
 
-  const openLightbox = (idx) => {
-    setSelectedIdx(idx);
-    setIsLightboxOpen(true);
-    setTimeout(() => {
-      if (lightboxScrollRef.current) {
-        lightboxScrollRef.current.scrollTo({
-          left: idx * lightboxScrollRef.current.clientWidth,
-          behavior: 'instant',
-        });
-      }
-    }, 10);
+  const heroKey = transitionKey || productTransitionKey(product?._id || product?.id);
+
+  const scrollMainTo = (idx, behavior) => {
+    const el = scrollRef.current;
+    if (el) el.scrollTo({ left: idx * el.clientWidth, behavior });
   };
 
+  const scrollLightboxTo = (idx, behavior) => {
+    const el = lightboxScrollRef.current;
+    if (el) el.scrollTo({ left: idx * el.clientWidth, behavior });
+  };
+
+  // Main image → full-screen viewer: the picture itself grows into the viewer.
+  const openLightbox = (idx, event) => {
+    runSharedElementTransition({
+      key: heroKey,
+      fromElement: event?.currentTarget,
+      timeoutMs: 300,
+      update: () => {
+        flushSync(() => {
+          setSelectedIdx(idx);
+          setIsLightboxOpen(true);
+        });
+        scrollLightboxTo(idx, 'instant');
+      },
+    });
+  };
+
+  // Viewer → main image: shrinks back to wherever the viewer was left.
+  const closeLightbox = () => {
+    const slide = lightboxScrollRef.current?.children?.[selectedIdx];
+    runSharedElementTransition({
+      key: heroKey,
+      fromElement: slide?.querySelector('img') || slide,
+      direction: 'back',
+      timeoutMs: 300,
+      update: () => {
+        flushSync(() => setIsLightboxOpen(false));
+        scrollMainTo(selectedIdx, 'instant');
+      },
+    });
+  };
+
+  useEffect(() => {
+    if (!isLightboxOpen) return undefined;
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') closeLightbox();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  });
+
+  // Back goes through history, so the image travels back into the card it came from.
   const handleBack = (e) => {
     e.preventDefault();
     e.stopPropagation();
-
-    // Animate the entire page sliding off to the right
-    const rootEl = document.getElementById('root');
-    if (rootEl) {
-      rootEl.style.transition =
-        'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.35s ease';
-      rootEl.style.transform = 'translateX(100vw)';
-      rootEl.style.opacity = '0';
+    if (window.history.state && window.history.state.idx > 0) {
+      navigate(-1);
+    } else {
+      navigate('/collections');
     }
-
-    // Wait for the slide out animation to finish before routing
-    setTimeout(() => {
-      // Clean up styles so the next page renders normally
-      if (rootEl) {
-        rootEl.style.transition = '';
-        rootEl.style.transform = '';
-        rootEl.style.opacity = '';
-      }
-
-      if (window.history.state && window.history.state.idx > 0) {
-        navigate(-1);
-      } else {
-        navigate('/collections');
-        // Force scroll reset on fallback
-        window.scrollTo(0, 0);
-      }
-    }, 350);
   };
 
-  const handleThumbnailClick = (idx) => {
-    setSelectedIdx(idx);
-    if (scrollRef.current) {
-      const width = scrollRef.current.clientWidth;
-      scrollRef.current.scrollTo({
-        left: idx * width,
-        behavior: 'smooth',
-      });
+  // Thumbnail → main image: the chosen thumbnail expands into the main slot.
+  const handleThumbnailClick = (idx, event) => {
+    if (idx === selectedIdx) return;
+    if (!canAnimateSharedElements()) {
+      setSelectedIdx(idx);
+      scrollMainTo(idx, 'smooth');
+      return;
     }
+    runSharedElementTransition({
+      key: heroKey,
+      fromElement: event?.currentTarget,
+      timeoutMs: 200,
+      update: () => {
+        flushSync(() => setSelectedIdx(idx));
+        scrollMainTo(idx, 'instant');
+      },
+    });
   };
 
   const handleScroll = (e) => {
@@ -117,7 +151,9 @@ export function ProductGallery({ images = [], product }) {
         {images.map((img, idx) => (
           <button
             key={idx}
-            onClick={() => handleThumbnailClick(idx)}
+            onClick={(event) => handleThumbnailClick(idx, event)}
+            aria-label={`Show image ${idx + 1}`}
+            aria-pressed={selectedIdx === idx}
             className={`shrink-0 w-12 sm:w-14 lg:w-16 lg:w-[60px] aspect-square rounded-[16px] lg:rounded-[20px] overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] relative group cursor-pointer ${
               selectedIdx === idx
                 ? 'scale-[1.15] shadow-[0_8px_20px_-6px_rgba(196,168,124,0.4)] z-10 opacity-100'
@@ -147,12 +183,16 @@ export function ProductGallery({ images = [], product }) {
           {images.map((img, idx) => (
             <div
               key={idx}
-              onClick={() => openLightbox(idx)}
+              onClick={(event) => openLightbox(idx, event)}
+              {...(idx === selectedIdx ? sharedElementProps(heroKey) : {})}
               className="w-full h-full shrink-0 snap-center relative overflow-hidden bg-white flex items-center justify-center cursor-zoom-in"
             >
               <OptimizedImage
                 src={img}
-                alt={`Product Primary View ${idx + 1}`}
+                alt={`${product?.title || 'Product'} – image ${idx + 1}`}
+                eager={idx === 0}
+                fetchPriority={idx === 0 ? 'high' : undefined}
+                placeholderSrc={idx === 0 ? previewSrc : undefined}
                 containerClassName="w-full h-full"
                 className="w-full h-full object-cover origin-center select-none transition-transform duration-500"
                 width={800}
@@ -236,13 +276,16 @@ export function ProductGallery({ images = [], product }) {
           <AnimatePresence>
             {isLightboxOpen && (
               <motion.div
-                initial={{ opacity: 0 }}
+                initial={lightboxFadeOwnedByVT ? false : { opacity: 0 }}
                 animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
+                exit={lightboxFadeOwnedByVT ? undefined : { opacity: 0 }}
                 transition={{ duration: 0.25 }}
                 className="fixed inset-0 z-[99999] flex flex-col touch-none"
                 style={{ background: 'linear-gradient(180deg, #f5f0ea 0%, #ece6dd 100%)' }}
-                onClick={() => setIsLightboxOpen(false)}
+                role="dialog"
+                aria-modal="true"
+                aria-label="Product images"
+                onClick={closeLightbox}
               >
                 {/* Top Controls Bar */}
                 <div
@@ -253,7 +296,7 @@ export function ProductGallery({ images = [], product }) {
                     {selectedIdx + 1} / {images.length}
                   </span>
                   <button
-                    onClick={() => setIsLightboxOpen(false)}
+                    onClick={closeLightbox}
                     className="w-10 h-10 rounded-full bg-[#1a1817]/8 text-[#1a1817]/70 flex items-center justify-center hover:bg-[#1a1817]/15 hover:text-[#1a1817] transition-all duration-200"
                     aria-label="Close lightbox"
                   >
@@ -288,6 +331,7 @@ export function ProductGallery({ images = [], product }) {
                       className="w-full h-full shrink-0 snap-center flex items-center justify-center p-2 sm:p-4 lg:p-6"
                     >
                       <OptimizedImage
+                        {...(idx === selectedIdx ? sharedElementProps(heroKey) : {})}
                         src={img}
                         alt={`Lightbox view ${idx + 1}`}
                         className="max-w-full max-h-full object-contain rounded-none shadow-2xl"

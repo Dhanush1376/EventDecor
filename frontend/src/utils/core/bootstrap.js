@@ -1,5 +1,5 @@
 /**
- * Post-paint bootstrap: prefetch public data and warm connections without blocking first render.
+ * Startup bootstrap: start public data requests and warm connections without blocking first render.
  */
 import { cmsService } from '../../services/domainServices';
 import { getApiOrigin } from '../../config/apiConfig';
@@ -35,11 +35,8 @@ export const runAppBootstrap = () => {
   if (bootstrapStarted) return;
   bootstrapStarted = true;
 
-  const run = () => prefetchCriticalData();
-
-  if (typeof requestIdleCallback === 'function') {
-    requestIdleCallback(run, { timeout: 2500 });
-  } else {
-    setTimeout(run, 150);
-  }
+  // Start immediately: the homepage CMS payload is on the critical path to LCP.
+  // This is a single network request (no main-thread work worth deferring), and
+  // waiting for an idle period used to push it behind React's first render.
+  prefetchCriticalData();
 };

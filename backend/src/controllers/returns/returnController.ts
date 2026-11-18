@@ -1,283 +1,80 @@
-import mongoose from 'mongoose';
 import { Request, Response } from 'express';
 import asyncHandler from '../../utils/asyncHandler';
-import { ReturnService } from '../../services/returns/ReturnService';
 import ReturnRequest from '../../models/ReturnRequest';
 import ExchangeRequest from '../../models/ExchangeRequest';
-
 import '../../models/Product';
 import ApiError from '../../utils/ApiError';
-import { ReturnStateMachine } from '../../services/returns/ReturnStateMachine';
+import ApiResponse from '../../utils/ApiResponse';
+import { STAFF_ROLES } from '../../config/adminConfig';
+import { WhatsAppReturnService } from '../../services/returns/WhatsAppReturnService';
 
 /**
- * @desc    Create a return request (multi-item)
- * @route   POST /api/v1/returns
- * @access  Private
+ * @desc    Items of the customer's order that can be returned or exchanged over WhatsApp
+ * @route   GET /api/v1/returns/whatsapp/:orderId
+ * @access  Private (order owner)
  */
-export const createReturn = asyncHandler(async (req: Request, res: Response) => {
-  const { orderId, items, refundMethod, upiId, pickupAddress, idempotencyKey } = req.body;
-  const userId = req.user?.id;
-
-  if (!userId) throw new ApiError(401, 'Unauthorized');
-
-  // Call service to validate and create return
-  const returnRequest = await ReturnService.createReturnRequest(
-    userId,
-    orderId,
-    items,
-    refundMethod || 'original',
-    pickupAddress,
-    upiId,
-    idempotencyKey,
+export const getWhatsAppEligibility = asyncHandler(async (req: Request, res: Response) => {
+  const { summary, customer, items, requestTypes, whatsappConfigured } =
+    await WhatsAppReturnService.getEligibility(req.params.orderId as string, req.user!.id);
+  res.status(200).json(
+    new ApiResponse(true, 'Return eligibility fetched', {
+      ...summary,
+      customer,
+      items,
+      requestTypes,
+      whatsappConfigured,
+    }),
   );
-
-  // hasActiveReturn is updated within the transaction in ReturnService
-  res.status(201).json({
-    success: true,
-    data: returnRequest,
-  });
 });
 
 /**
- * @desc    Get current user's returns with stats
+ * @desc    Build the pre-filled WhatsApp message for a return/exchange request.
+ *          Nothing is stored: the request is made when the customer sends the message.
+ * @route   POST /api/v1/returns/whatsapp/:orderId
+ * @access  Private (order owner)
+ */
+export const buildWhatsAppRequest = asyncHandler(async (req: Request, res: Response) => {
+  const result = await WhatsAppReturnService.buildRequest(
+    req.params.orderId as string,
+    req.user!.id,
+    req.body,
+  );
+  res.status(200).json(new ApiResponse(true, 'WhatsApp message ready', result));
+});
+
+/**
+ * @desc    Return requests created by the previous automated flow (read-only history)
  * @route   GET /api/v1/returns/my-returns
  * @access  Private
  */
 export const getMyReturns = asyncHandler(async (req: Request, res: Response) => {
-  const userId = req.user?.id;
-  if (!userId) throw new ApiError(401, 'Unauthorized');
-
-  const returns = await ReturnRequest.find({ userId })
+  const returns = await ReturnRequest.find({ userId: req.user!.id })
     .sort({ createdAt: -1, _id: -1 })
     .populate('orderId', 'orderStatus paymentStatus total trackingNumber')
     .populate('items.productId', 'title imageSrc')
     .lean();
 
-  const validReturns = returns; // Return all, including payment_required, so storefront can show 'Pay Now'
-
-  res.status(200).json({
-    success: true,
-    data: {
-      returns: validReturns,
-    },
-  });
+  res.status(200).json({ success: true, data: { returns } });
 });
 
 /**
- * @desc    Get single return by ID (for customer)
- * @route   GET /api/v1/returns/:id
- * @access  Private
- */
-export const getReturnById = asyncHandler(async (req: Request, res: Response) => {
-  const paramId = req.params.id;
-  const userId = req.user?.id;
-  if (!userId) throw new ApiError(401, 'Unauthorized');
-
-  const isObjectId = mongoose.isValidObjectId(paramId);
-  let returnRequest = await ReturnRequest.findOne(
-    isObjectId ? { _id: paramId, userId } : { returnId: paramId, userId },
-  )
-    .populate('orderId')
-    .populate('items.productId', 'title imageSrc');
-
-  if (!returnRequest) {
-    const linkedExchange = await ExchangeRequest.findOne(
-      isObjectId ? { _id: paramId } : { exchangeId: paramId },
-    );
-    if (linkedExchange) {
-      returnRequest = await ReturnRequest.findOne({ _id: linkedExchange.returnRequestId, userId })
-        .populate('orderId')
-        .populate('items.productId', 'title imageSrc');
-    }
-  }
-
-  if (!returnRequest) {
-    throw new ApiError(404, 'Return request not found');
-  }
-
-  // Fetch exchange details if applicable
-  let exchangeDetails = null;
-  if (returnRequest.returnType === 'exchange') {
-    exchangeDetails = await ExchangeRequest.findOne({
-      returnRequestId: returnRequest._id,
-    }).populate('replacementItem.productId', 'title imageSrc price');
-  }
-
-  // Filter out internal notes in conversation
-  const safeData = returnRequest.toObject();
-  safeData.conversation = (safeData.conversation || []).filter((msg: any) => !msg.isInternal);
-  (safeData as any).exchangeDetails = exchangeDetails;
-
-  res.status(200).json({
-    success: true,
-    data: safeData,
-  });
-});
-
-/**
- * @desc    Check return eligibility for an order
- * @route   GET /api/v1/returns/eligibility/:orderId
- * @access  Private
- */
-export const checkEligibility = asyncHandler(async (req: Request, res: Response) => {
-  const userId = req.user?.id;
-  const orderId = req.params.orderId as string;
-
-  if (!userId) throw new ApiError(401, 'Unauthorized');
-
-  const eligibility = await ReturnService.getReturnEligibility(orderId, userId);
-
-  res.status(200).json({
-    success: true,
-    data: eligibility,
-  });
-});
-
-/**
- * @desc    Add a message to the return conversation thread
- * @route   POST /api/v1/returns/:id/message
- * @access  Private
- */
-export const addConversationMessage = asyncHandler(async (req: Request, res: Response) => {
-  const { message, attachments } = req.body;
-  const userId = req.user?.id;
-  const paramId = req.params.id;
-
-  if (!userId) throw new ApiError(401, 'Unauthorized');
-
-  const isObjectId = mongoose.isValidObjectId(paramId);
-  const returnRequest = await ReturnRequest.findOne(
-    isObjectId ? { _id: paramId, userId } : { returnId: paramId, userId },
-  );
-
-  if (!returnRequest) {
-    throw new ApiError(404, 'Return request not found');
-  }
-
-  returnRequest.conversation.push({
-    sender: 'customer',
-    senderId: new (mongoose as any).Types.ObjectId(userId),
-    senderName: req.user?.name,
-    message,
-    attachments: attachments || [],
-    isInternal: false,
-    createdAt: new Date(),
-  });
-
-  await returnRequest.save();
-
-  res.status(200).json({
-    success: true,
-    data: returnRequest,
-  });
-});
-
-/**
- * @desc    Cancel a return request (if still pending)
- * @route   POST /api/v1/returns/:id/cancel
- * @access  Private
- */
-export const cancelReturn = asyncHandler(async (req: Request, res: Response) => {
-  const userId = req.user?.id;
-  const paramId = req.params.id;
-  if (!userId) throw new ApiError(401, 'Unauthorized');
-
-  const isObjectId = mongoose.isValidObjectId(paramId);
-  const returnRequest = await ReturnRequest.findOne(
-    isObjectId ? { _id: paramId, userId } : { returnId: paramId, userId },
-  );
-
-  if (!returnRequest) {
-    throw new ApiError(404, 'Return request not found');
-  }
-
-  if (!['submitted', 'approved', 'return_courier_assigned'].includes(returnRequest.status)) {
-    throw new ApiError(400, `Cannot cancel a return that is in ${returnRequest.status} stage`);
-  }
-
-  // Use ReturnStateMachine to transition so side effects (like unlocking items) run
-  const updatedRequest = await ReturnStateMachine.transition(
-    returnRequest._id.toString(),
-    'cancelled',
-    userId,
-    { reason: 'Customer cancelled the return request' },
-  );
-
-  res.status(200).json({
-    success: true,
-    data: updatedRequest,
-  });
-});
-
-/**
- * @desc    Get order return summary
+ * @desc    Legacy return/exchange records for one order (read-only history)
  * @route   GET /api/v1/returns/order/:orderId/summary
- * @access  Private/Admin
+ * @access  Private (order owner or staff)
  */
 export const getReturnForOrder = asyncHandler(async (req: Request, res: Response) => {
-  const { orderId } = req.params;
-  const userId = req.user?.id;
+  if (!req.user?.id) throw new ApiError(401, 'Unauthorized');
+  const isStaff = (STAFF_ROLES as readonly string[]).includes(req.user.role);
 
-  if (!userId) throw new ApiError(401, 'Unauthorized');
-
-  // Check if admin or owner
-  const isAdmin =
-    req.user?.role &&
-    ['super_admin', 'main_admin', 'admin', 'editor', 'analyst'].includes(req.user.role);
-
-  const query: any = { orderId };
-  if (!isAdmin) {
-    query.userId = userId;
-  }
+  const query: any = { orderId: req.params.orderId };
+  if (!isStaff) query.userId = req.user.id;
 
   const returns = await ReturnRequest.find(query)
     .populate('items.productId', 'title imageSrc')
     .lean();
+  const exchanges = await ExchangeRequest.find({
+    returnRequestId: { $in: returns.map((r) => r._id) },
+  }).lean();
 
-  const ExchangeRequest = require('../../models/ExchangeRequest').default;
-  const returnIds = returns.map((r) => r._id);
-  const exchanges = await ExchangeRequest.find({ returnRequestId: { $in: returnIds } }).lean();
-
-  res.status(200).json({
-    success: true,
-    data: { returns, exchanges },
-  });
-});
-
-/**
- * @desc    Update refund destination preference (does not execute refund)
- * @route   PATCH /api/v1/returns/:id/refund-method
- * @access  Private
- */
-export const updateRefundMethod = asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const { refundMethod } = req.body;
-  const userId = req.user?.id;
-
-  if (!userId) throw new ApiError(401, 'Unauthorized');
-
-  const isObjectId = mongoose.isValidObjectId(id);
-  const returnRequest = await ReturnRequest.findOne(
-    isObjectId ? { _id: id, userId } : { returnId: id, userId },
-  );
-  if (!returnRequest) throw new ApiError(404, 'Return request not found');
-
-  if (returnRequest.status !== 'inspection_completed') {
-    throw new ApiError(400, `Cannot trigger refund from status: ${returnRequest.status}`);
-  }
-
-  returnRequest.refundMethod = refundMethod;
-
-  returnRequest.timeline.push({
-    action: 'Refund Method Updated',
-    description: `Customer selected refund method: ${refundMethod}`,
-    timestamp: new Date(),
-  });
-
-  await returnRequest.save();
-
-  res.status(200).json({
-    success: true,
-    data: returnRequest,
-  });
+  res.status(200).json({ success: true, data: { returns, exchanges } });
 });

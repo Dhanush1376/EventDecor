@@ -10,12 +10,10 @@ import { useState, useEffect } from 'react';
 import { locationService } from '../services/domainServices';
 import { useConfig } from '../context/ConfigContext';
 
-export function LocationLanding() {
-  const { storeName, storeSettings, hideGallerySection } = useConfig();
-  const isGalleryHidden = Boolean(
-    hideGallerySection || storeSettings?.storefront?.hideGallerySection,
-  );
-  const { city } = useParams();
+export function LocationLanding({ slug } = {}) {
+  const { storeName } = useConfig();
+  const params = useParams();
+  const city = slug || params.city;
 
   const [locationObj, setLocationObj] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -23,6 +21,8 @@ export function LocationLanding() {
 
   useEffect(() => {
     const fetchLocation = async () => {
+      setLoading(true);
+      setError(false);
       try {
         const response = await locationService.getLocationBySlug(city);
         if (response?.success) {
@@ -152,12 +152,10 @@ export function LocationLanding() {
 
             <div className="pt-6">
               <Link
-                to={isGalleryHidden ? '/collections' : '/gallery'}
+                to="/collections"
                 className="inline-flex items-center text-primary font-bold text-lg hover:text-primary-dark transition-colors group"
               >
-                {isGalleryHidden
-                  ? `Browse Our Collection in ${locationObj.city}`
-                  : `View Our Recent Work in ${locationObj.city}`}
+                Browse Our Collection in {locationObj.city}
                 <ArrowRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-2" />
               </Link>
             </div>

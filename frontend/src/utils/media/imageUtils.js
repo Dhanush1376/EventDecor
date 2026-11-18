@@ -75,31 +75,13 @@ export const getOptimizedUrl = (url, widthOrPreset, height, quality = 'auto', fo
   let resultUrl = url;
 
   if (isCloudinary) {
-    // HIGH-PRIORITY FIX: Support for 'original' quality to serve the uncompressed, unscaled raw image
-    if (q === 'original') {
-      const urlParts = url.split('/upload/');
-      if (urlParts.length === 2) {
-        let pathPart = urlParts[1];
-        const pathSegments = pathPart.split('/');
-        let cleanPathSegments = [];
-        let foundVersionOrFile = false;
-        for (const segment of pathSegments) {
-          if (foundVersionOrFile) {
-            cleanPathSegments.push(segment);
-          } else if (segment.match(/^v\d+$/) || !segment.includes('_') || segment.includes('.')) {
-            foundVersionOrFile = true;
-            cleanPathSegments.push(segment);
-          }
-        }
-        pathPart = cleanPathSegments.join('/');
-        const rawUrl = `${urlParts[0]}/upload/${pathPart}`;
-        urlCache.set(cacheKey, rawUrl);
-        return rawUrl;
-      }
-    }
+    // 'original' means "no visible compression": best quality, but still resized to the
+    // requested width and served as WebP/AVIF. Serving the raw upload cost ~0.5 MB per image.
+    const keepBestQuality = q === 'original';
+    if (keepBestQuality) q = 'auto:best';
 
     // HIGH-PRIORITY FIX: If auto:best is requested, we strip old constraints but forcefully apply an ultra-HD transform
-    if (q === 'auto:best') {
+    if (q === 'auto:best' && !keepBestQuality) {
       const urlParts = url.split('/upload/');
       if (urlParts.length === 2) {
         let pathPart = urlParts[1];

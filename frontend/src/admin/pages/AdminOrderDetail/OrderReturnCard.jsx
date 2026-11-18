@@ -1,25 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { StatusBadge } from '../../components/AdminUIKit';
-import { useReturnManagement } from '../../hooks/useReturnManagement';
+import { returnService } from '../../../services/api/returnService';
 
 export const OrderReturnCard = ({ order }) => {
-  const { getOrderReturnSummary } = useReturnManagement();
   const [returnSummary, setReturnSummary] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (order && order.id) {
-      const fetchSummary = async () => {
-        const data = await getOrderReturnSummary(order.id);
-        if (data) {
-          setReturnSummary(data);
-        }
-        setLoading(false);
-      };
-      fetchSummary();
+      returnService
+        .getOrderReturnSummary(order.id)
+        .then((res) => setReturnSummary(res.data?.data || null))
+        .catch(() => setReturnSummary(null))
+        .finally(() => setLoading(false));
     }
-  }, [order, getOrderReturnSummary]);
+  }, [order]);
 
   if (loading) {
     return null;
@@ -42,7 +37,7 @@ export const OrderReturnCard = ({ order }) => {
             Returns & Exchanges
           </h3>
           <p className="text-[12px] text-[var(--admin-text-tertiary)] font-medium">
-            Active reverse logistics for this order
+            Requests from the previous automated flow (read-only). New requests arrive on WhatsApp.
           </p>
         </div>
       </div>
@@ -90,13 +85,6 @@ export const OrderReturnCard = ({ order }) => {
                 </p>
               )}
             </div>
-
-            <Link
-              to={`/admin/returns/requests/${ret._id}`}
-              className="admin-btn admin-btn-outline shrink-0 w-full sm:w-auto justify-center h-8 px-4 text-[12px] font-bold !rounded-[4px] border-[var(--admin-border-strong)] hover:border-[var(--admin-text-primary)] hover:text-[var(--admin-text-primary)] shadow-sm"
-            >
-              View Details
-            </Link>
           </div>
         ))}
       </div>

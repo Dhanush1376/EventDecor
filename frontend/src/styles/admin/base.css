@@ -192,3 +192,41 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DEEP HEX CONTRAST OPTIMIZATION (WCAG AAA Accessible Admin Portal)
+   Guarantees high visibility across all admin pages, forms, and tables
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Map muted Tailwind utility classes to high-contrast WCAG AAA variables */
+.admin-section-root .text-stone-400,
+.admin-section-root .text-gray-400,
+.admin-section-root .text-slate-400,
+.admin-section-root .text-zinc-400,
+.admin-section-root .text-neutral-400 {
+  color: var(--admin-text-tertiary) !important;
+}
+
+.admin-section-root .text-stone-500,
+.admin-section-root .text-gray-500,
+.admin-section-root .text-slate-500,
+.admin-section-root .text-zinc-500,
+.admin-section-root .text-neutral-500 {
+  color: var(--admin-text-secondary) !important;
+}
+
+.admin-section-root .text-stone-600,
+.admin-section-root .text-gray-600,
+.admin-section-root .text-slate-600,
+.admin-section-root .text-zinc-600,
+.admin-section-root .text-neutral-600 {
+  color: var(--admin-text-secondary) !important;
+}
+
+/* Ensure descriptions, subtexts, and metadata are crisp and clearly legible */
+.admin-section-root p,
+.admin-section-root span,
+.admin-section-root label,
+.admin-section-root div {
+  text-rendering: optimizeLegibility;
+}

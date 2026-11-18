@@ -25,6 +25,9 @@ function BaseOptimizedImage({
   priority,
   quality,
   fallback,
+  // An already-loaded image of the same picture (e.g. the card image a shared element
+  // transition started from). Shown instead of the blur until this image has loaded.
+  placeholderSrc,
   ...props
 }) {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -173,7 +176,7 @@ function BaseOptimizedImage({
       {!isLoaded && !hasError && (
         <div
           className="absolute inset-0 bg-cover bg-center rounded-[inherit] transition-opacity duration-700 pointer-events-none"
-          style={{ backgroundImage: `url(${blurPlaceholder})` }}
+          style={{ backgroundImage: `url(${placeholderSrc || blurPlaceholder})` }}
         />
       )}
 

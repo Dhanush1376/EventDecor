@@ -6,6 +6,7 @@ import { maintenanceService } from '../../services/api/maintenanceService';
 import { useMaintenanceSession } from '../hooks/useMaintenanceSession';
 import { useAuth } from '../../context/AuthContext';
 import { SiriLogo } from '../../components/ui/SiriLogo';
+import '../../styles/admin-tailwind.css';
 
 export function MaintenanceGateway() {
   const [step, setStep] = useState(1); // 1: Credentials, 2: OTP

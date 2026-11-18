@@ -21,7 +21,9 @@ export function EventsPageEditor({ content, onUpdate }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <AdminField
               label="Hero Title"
-              description="The primary main headline of the events page"
+              description={
+                'Not displayed. The page heading is always "Events" so navigation and Google results use one consistent name.'
+              }
             >
               <AdminInput
                 value={hero.title || ''}
@@ -29,7 +31,7 @@ export function EventsPageEditor({ content, onUpdate }) {
                   onUpdate('eventsPage', { hero: { ...hero, title: e.target.value } })
                 }
                 className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-md shadow-[var(--admin-shadow-xs)] border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
-                placeholder="e.g. Luxury Event Scapes"
+                placeholder="Not displayed"
               />
             </AdminField>
 

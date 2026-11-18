@@ -1,36 +1,16 @@
-import api from '../api';
-
+/**
+ * Discontinued gallery service stub.
+ * Safely resolves with empty arrays/defaults to prevent breaking changes.
+ */
 export const galleryService = {
-  getAll: async (params) => {
-    const response = await api.get('/gallery', { params });
-    return response.data;
-  },
-  getDynamicFilters: async (params) => {
-    const response = await api.get('/gallery/filters', { params });
-    return response.data;
-  },
-  getById: async (id) => {
-    const response = await api.get(`/gallery/${id}`);
-    return response.data;
-  },
-  getCategories: async () => {
-    const response = await api.get('/gallery/categories');
-    return response.data;
-  },
-  create: async (data) => {
-    const response = await api.post('/gallery', data);
-    return response.data;
-  },
-  update: async (id, data) => {
-    const response = await api.put(`/gallery/${id}`, data);
-    return response.data;
-  },
-  delete: async (id) => {
-    const response = await api.delete(`/gallery/${id}`);
-    return response.data;
-  },
-  like: async (id) => {
-    const response = await api.post(`/gallery/${id}/like`);
-    return response.data;
-  },
+  getAll: async () => ({ success: true, data: { items: [], data: [], total: 0 } }),
+  getDynamicFilters: async () => ({ success: true, data: {} }),
+  getById: async () => ({ success: false, message: 'Gallery discontinued' }),
+  getCategories: async () => ({ success: true, data: [] }),
+  create: async () => ({ success: false, message: 'Gallery discontinued' }),
+  update: async () => ({ success: false, message: 'Gallery discontinued' }),
+  delete: async () => ({ success: true }),
+  like: async () => ({ success: true }),
 };
+
+export default galleryService;

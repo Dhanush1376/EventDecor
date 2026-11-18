@@ -41,8 +41,6 @@ export {
   LocationLandingSkeleton,
   AboutSkeleton,
   ContactSkeleton,
-  GallerySkeleton,
-  GalleryDetailSkeleton,
   CustomOrdersSkeleton,
   DashboardSkeleton,
   FAQSkeleton,

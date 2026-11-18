@@ -14,8 +14,6 @@ import {
   AdminBookingDetailSkeleton,
   AdminAddEventSkeleton,
   AdminAddShowcaseSkeleton,
-  AdminGallerySkeleton,
-  AdminAddGallerySkeleton,
   AdminCategoriesSkeleton,
   AdminPoliciesSkeleton,
   AdminInventorySkeleton,
@@ -29,8 +27,6 @@ import {
   AdminTeamSkeleton,
   AdminSettingsSkeleton,
   AdminReviewsSkeleton,
-  AdminReturnsHubSkeleton,
-  AdminReturnDetailSkeleton,
   AdminRecycleBinSkeleton,
   AdminServiceAreasSkeleton,
   AdminServiceabilitySkeleton,
@@ -134,14 +130,6 @@ export function getAdminRouteSkeleton(pathname = '') {
     return <AdminExecutiveDashboardSkeleton />;
   }
 
-  // 13. Gallery
-  if (cleanPath === '/admin/gallery/add' || cleanPath.startsWith('/admin/gallery/edit/')) {
-    return <AdminAddGallerySkeleton />;
-  }
-  if (cleanPath === '/admin/gallery') {
-    return <AdminGallerySkeleton />;
-  }
-
   // 14. Categories
   if (cleanPath.startsWith('/admin/categories')) {
     return <AdminCategoriesSkeleton />;
@@ -215,19 +203,6 @@ export function getAdminRouteSkeleton(pathname = '') {
     cleanPath.endsWith('/recycle-bin')
   ) {
     return <AdminRecycleBinSkeleton />;
-  }
-
-  // 29. Returns & Exchanges
-  if (
-    cleanPath.startsWith('/admin/returns/requests/') ||
-    cleanPath.match(/^\/admin\/returns\/[^/]+$/) ||
-    cleanPath.startsWith('/admin/exchanges/requests/') ||
-    cleanPath.match(/^\/admin\/exchanges\/[^/]+$/)
-  ) {
-    return <AdminReturnDetailSkeleton />;
-  }
-  if (cleanPath === '/admin/returns' || cleanPath === '/admin/exchanges') {
-    return <AdminReturnsHubSkeleton />;
   }
 
   // 30. Backup Center

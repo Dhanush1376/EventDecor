@@ -11,8 +11,6 @@ export function getRouteSkeletonVariant(path) {
   if (path === '/cart') return 'cart';
   if (path === '/checkout') return 'checkout';
   if (path.startsWith('/dashboard')) return 'dashboard';
-  if (path.match(/^\/gallery\/[^/]+$/)) return 'gallery-detail';
-  if (path.startsWith('/gallery')) return 'gallery';
   if (path === '/wishlist') return 'wishlist';
   if (path === '/events/collections') return 'event-collections';
   if (path.startsWith('/events')) return 'event-showcases';
@@ -44,10 +42,6 @@ const LazySkeletons = {
   cart: lazy(() => import('./Skeleton').then((m) => ({ default: m.CartSkeleton }))),
   checkout: lazy(() => import('./Skeleton').then((m) => ({ default: m.CheckoutStepSkeleton }))),
   dashboard: lazy(() => import('./Skeleton').then((m) => ({ default: m.DashboardSkeleton }))),
-  gallery: lazy(() => import('./Skeleton').then((m) => ({ default: m.GallerySkeleton }))),
-  'gallery-detail': lazy(() =>
-    import('./Skeleton').then((m) => ({ default: m.GalleryDetailSkeleton })),
-  ),
   wishlist: lazy(() => import('./Skeleton').then((m) => ({ default: m.WishlistPageSkeleton }))),
   event: lazy(() => import('./Skeleton').then((m) => ({ default: m.EventDetailSkeleton }))),
   contact: lazy(() => import('./Skeleton').then((m) => ({ default: m.ContactSkeleton }))),

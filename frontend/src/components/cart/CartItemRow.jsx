@@ -21,6 +21,7 @@ import { useProduct } from '../../hooks/useProductQueries';
 import { customOrderService } from '../../services/domainServices';
 import { useConfig } from '../../context/ConfigContext';
 import ArrowRight from 'lucide-react/dist/esm/icons/arrow-right';
+import { productTransitionKey, sharedElementProps } from '../../utils/navigation/sharedElementTransition';
 
 export const CartItemRow = React.memo(function CartItemRow({
   item,
@@ -149,7 +150,11 @@ export const CartItemRow = React.memo(function CartItemRow({
               </span>
             </div>
           )}
-          <Link to={`/product/${item.id || item._id}`} className="w-full h-full block">
+          <Link
+            to={`/product/${item.id || item._id}`}
+            className="w-full h-full block"
+            {...sharedElementProps(productTransitionKey(item.id || item._id))}
+          >
             <motion.img
               onError={handleImageError}
               whileHover={{ scale: 1.05 }}
@@ -175,16 +180,6 @@ export const CartItemRow = React.memo(function CartItemRow({
               {displayTitle}
             </h3>
           </Link>
-          {activeCartMode === 'custom' && (
-            <div className="mt-2 space-y-1">
-              <span className="inline-block bg-primary/10 text-primary text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-[3px] border border-primary/20">
-                Custom Order
-              </span>
-              <p className="text-[10px] text-secondary/80 leading-snug font-medium line-clamp-2 pr-2">
-                Bespoke customized order based on approved quotation.
-              </p>
-            </div>
-          )}
 
           {/* Size & Qty controls */}
           <div className="flex items-center gap-3 mt-4">

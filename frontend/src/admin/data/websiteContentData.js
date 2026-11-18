@@ -150,22 +150,18 @@ export const initialWebsiteContent = {
       { label: 'Our Story', href: '/about', isVisible: true },
       { label: 'Shop', href: '/collections', isVisible: true },
       { label: 'Events', href: '/events', isVisible: true },
-      { label: 'Gallery', href: '/gallery', isVisible: true },
-      { label: 'Custom Orders', href: '/custom-orders', isVisible: true },
     ],
   },
 
   footer: {
     description: 'Ancient craftsmanship meets modern elegance.',
     exploreLinks: [
-      { label: 'Collections', href: '/collections' },
+      { label: 'Shop', href: '/collections' },
       { label: 'Events', href: '/events' },
-      { label: 'Gallery', href: '/gallery' },
     ],
     studioLinks: [
       { label: 'Our Story', href: '/about' },
-      { label: 'Bespoke', href: '/custom-orders' },
-      { label: 'Contact', href: '/contact' },
+      { label: 'Contact Us', href: '/contact' },
     ],
     phone: '',
     alternatePhone: '',
@@ -403,10 +399,6 @@ export const initialWebsiteContent = {
       shop: {
         title: 'Shop Collections — Siri Arts & Crafts',
         description: 'Explore our curated collection of luxury handcrafted ceremonial decorations.',
-      },
-      gallery: {
-        title: 'Inspiration Gallery — Siri Arts & Crafts',
-        description: 'Browse our portfolio of stunning event installations and artisan creations.',
       },
       events: {
         title: 'Event Decorations — Siri Arts & Crafts',

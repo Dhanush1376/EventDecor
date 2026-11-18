@@ -468,13 +468,5 @@ export const initJobs = () => {
     });
   });
 
-  // 22. Return & Exchange Reconciliation (Every 6 hours)
-  cron.schedule('0 */6 * * *', async () => {
-    await withCronLock('return-reconciliation', 55 * 60, async () => {
-      const { ReturnReconciliationJob } = require('./ReturnReconciliationJob');
-      await ReturnReconciliationJob.run();
-    });
-  });
-
   logger.info('⏰ Background jobs initialized (distributed locks active when REDIS_URL is set)');
 };

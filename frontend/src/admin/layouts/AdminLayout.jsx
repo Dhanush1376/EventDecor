@@ -21,6 +21,7 @@ const AdminInviteModal = lazy(() =>
   import('../../components/auth/AdminInviteModal').then((m) => ({ default: m.AdminInviteModal })),
 );
 
+import '../../styles/admin-tailwind.css';
 import '../../styles/admin.css';
 
 function AdminLayoutInner() {

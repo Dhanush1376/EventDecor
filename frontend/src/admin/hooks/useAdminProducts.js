@@ -67,7 +67,6 @@ export function useAdminProducts({
           queryClient?.invalidateQueries({ queryKey: ['products'] });
           queryClient?.invalidateQueries({ queryKey: ['product', productId] });
           queryClient?.invalidateQueries({ queryKey: ['product_categories'] });
-          queryClient?.invalidateQueries({ queryKey: ['gallery'] });
 
           logAdminAction('SOFT_DELETE_PRODUCT', `Moved product to recycle bin ID: ${productId}`);
           toast.success('Product moved to recycle bin');
@@ -129,7 +128,6 @@ export function useAdminProducts({
           queryClient?.invalidateQueries({ queryKey: ['products'] });
           queryClient?.invalidateQueries({ queryKey: ['product', productId] });
           queryClient?.invalidateQueries({ queryKey: ['product_categories'] });
-          queryClient?.invalidateQueries({ queryKey: ['gallery'] });
 
           logAdminAction('UPDATE_PRODUCT_STATUS', `Set product ${productId} to ${status}`);
           toast.success(`Product is now ${status}`);
@@ -180,7 +178,6 @@ export function useAdminProducts({
           queryClient?.invalidateQueries({ queryKey: ['products'] });
           queryClient?.invalidateQueries({ queryKey: ['product', productId] });
           queryClient?.invalidateQueries({ queryKey: ['product_categories'] });
-          queryClient?.invalidateQueries({ queryKey: ['gallery'] });
 
           logAdminAction(
             'PERMANENT_DELETE_PRODUCT',

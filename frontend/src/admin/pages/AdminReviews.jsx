@@ -376,7 +376,7 @@ export function AdminReviews() {
           <AdminReviewCardsSkeleton />
         ) : filtered.length === 0 ? (
           <div className="py-16 text-center admin-card flex flex-col items-center justify-center p-6 shadow-xs">
-            <span className="material-symbols-outlined text-[48px] text-[var(--admin-text-secondary)]/40 mb-2 block">
+            <span className="material-symbols-outlined text-[48px] text-[var(--admin-text-tertiary)] mb-2 block">
               search_off
             </span>
             <p className="text-[14px] font-bold text-[var(--admin-text-primary)] mt-1">

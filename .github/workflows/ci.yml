@@ -91,10 +91,10 @@ jobs:
         working-directory: backend
         run: npm ci --legacy-peer-deps
 
-      # Audit dependencies (informational; non-blocking)
+      # Block on critical advisories in production dependencies (dev-only advisories don't ship)
       - name: Audit Backend Dependencies
         working-directory: backend
-        run: npm audit --audit-level=critical || true
+        run: npm audit --omit=dev --audit-level=critical
 
       - name: Validate Backend Environment
         working-directory: backend
@@ -122,10 +122,10 @@ jobs:
         working-directory: frontend
         run: npm ci --legacy-peer-deps
 
-      # Audit dependencies (informational; non-blocking)
+      # Block on critical advisories in production dependencies (dev-only advisories don't ship)
       - name: Audit Frontend Dependencies
         working-directory: frontend
-        run: npm audit --audit-level=critical || true
+        run: npm audit --omit=dev --audit-level=critical
 
       - name: Validate Frontend Environment
         working-directory: frontend

@@ -3,8 +3,8 @@ import React, { useEffect } from 'react';
 import { useDashboard } from '../../context/DashboardContext';
 import { OptimizedImage } from '../ui/OptimizedImage';
 import { useRazorpay } from '../../hooks/useRazorpay';
-import { useUserSocket } from '../../context/UserSocketProvider';
 import { ReturnExchangeSection } from './ReturnExchangeSection';
+import { useLegacyReturnSummary } from '../../hooks/useLegacyReturnSummary';
 import {
   OrderDeliveryAddressCard,
   RentalDepositStatusCard,
@@ -25,11 +25,8 @@ export function OrderDetail() {
   } = useDashboard();
   const { resumePayment } = useRazorpay();
   const [isResuming, setIsResuming] = React.useState(false);
-  const [returnRequest, setReturnRequest] = React.useState(null);
-  const [exchangeDetails, setExchangeDetails] = React.useState(null);
   const activeStepRef = React.useRef(null);
 
-  const socket = useUserSocket();
 
   useEffect(() => {
     if (!order?.statusHistory?.length) return;
@@ -41,66 +38,24 @@ export function OrderDetail() {
     window.dispatchEvent(new Event('siri_order_views_updated'));
   }, [order]);
 
-  React.useEffect(() => {
-    if (!order || !item) return;
-    const fetchReturn = async () => {
-      try {
-        const { returnService } = await import('../../services/api/returnService');
-        const res = await returnService.getMyReturns();
-        let activeReturn = null;
-        if (res.data?.success) {
-          const returns = res.data.data.returns || res.data.data || [];
-          activeReturn = returns.find(
-            (r) =>
-              (typeof r.orderId === 'object' ? r.orderId._id || r.orderId.id : r.orderId) ===
-                (order._id || order.id) &&
-              r.items.some(
-                (ri) =>
-                  (typeof ri.productId === 'object' ? ri.productId._id : ri.productId) ===
-                  (typeof item.productId === 'object' ? item.productId._id : item.productId),
-              ),
-          );
-          setReturnRequest(activeReturn || null);
-        }
-
-        if (activeReturn && activeReturn.returnType === 'exchange') {
-          const exRes = await returnService.getMyExchanges();
-          if (exRes.data?.success) {
-            const exchanges = exRes.data.data.exchanges || exRes.data.data || [];
-            const activeEx = exchanges.find(
-              (e) =>
-                (typeof e.returnRequestId === 'object'
-                  ? e.returnRequestId._id
-                  : e.returnRequestId) === activeReturn._id,
-            );
-            setExchangeDetails(activeEx || null);
-          }
-        } else {
-          setExchangeDetails(null);
-        }
-      } catch (err) {
-        console.error('Failed to load return details', err);
-      }
-    };
-
-    fetchReturn();
-
-    if (!socket) return;
-
-    const handleUpdate = (data) => {
-      if (!data || data.orderId === (order._id || order.id)) {
-        fetchReturn();
-      }
-    };
-
-    socket.on('return:status_updated', handleUpdate);
-    socket.on('return:created', handleUpdate);
-
-    return () => {
-      socket.off('return:status_updated', handleUpdate);
-      socket.off('return:created', handleUpdate);
-    };
-  }, [order, item, socket]);
+  // Legacy (pre-WhatsApp) return/exchange records for this item, shown on the timeline.
+  const { data: legacyReturns } = useLegacyReturnSummary(order?._id || order?.id);
+  const { returnRequest, exchangeDetails } = React.useMemo(() => {
+    if (!legacyReturns || !item) return { returnRequest: null, exchangeDetails: null };
+    const idOf = (value) => (typeof value === 'object' && value !== null ? value._id : value);
+    const itemProductId = String(idOf(item.productId));
+    const activeReturn =
+      legacyReturns.returns.find((r) =>
+        (r.items || []).some((ri) => String(idOf(ri.productId)) === itemProductId),
+      ) || null;
+    const activeExchange =
+      activeReturn && activeReturn.returnType === 'exchange'
+        ? legacyReturns.exchanges.find(
+            (e) => String(idOf(e.returnRequestId)) === String(activeReturn._id),
+          ) || null
+        : null;
+    return { returnRequest: activeReturn, exchangeDetails: activeExchange };
+  }, [legacyReturns, item]);
 
   if (!order || !item) return null;
 

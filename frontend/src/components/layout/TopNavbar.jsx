@@ -31,10 +31,15 @@ import { prefetchManager } from '../../utils/performance/prefetchManager';
 import { useScrollLock } from '../../hooks/useScrollLock';
 import { useScrollDirection } from '../../hooks/useScrollDirection';
 import { useVisualSearch } from '../../hooks/useVisualSearch';
-import { customOrderService } from '../../services/api/customOrderService';
 import { productService } from '../../services/api/productService';
 import { lazyWithRetry as lazy } from '../../utils/performance/lazyWithRetry';
 import { useConfig } from '../../context/ConfigContext';
+import { PRIMARY_NAV, canonicalNavLabel } from '../../seo/seoConfig';
+
+const primaryNavRank = (href) => {
+  const i = PRIMARY_NAV.findIndex((item) => item.href === href);
+  return i === -1 ? PRIMARY_NAV.length : i;
+};
 
 const IntelligentSearchOverlay = lazy(() =>
   import('../search/IntelligentSearchOverlay').then((m) => ({
@@ -166,48 +171,6 @@ export function TopNavbar() {
     };
   }, [isAuthenticated, user]);
 
-  const [hasUnreadCustomOrders, setHasUnreadCustomOrders] = useState(false);
-  const [orderViewsUpdated, setOrderViewsUpdated] = useState(0);
-
-  useEffect(() => {
-    const handleUpdate = () => setOrderViewsUpdated((prev) => prev + 1);
-    window.addEventListener('siri_order_views_updated', handleUpdate);
-    return () => window.removeEventListener('siri_order_views_updated', handleUpdate);
-  }, []);
-
-  useEffect(() => {
-    let active = true;
-    if (isAuthenticated && user) {
-      customOrderService
-        .getMyOrders()
-        .then((res) => {
-          if (active && res?.success && res?.data) {
-            const now = Date.now();
-            let views = {};
-            try {
-              views = JSON.parse(localStorage.getItem('siri_order_views') || '{}');
-            } catch (e) {}
-
-            const hasUnread = res.data.some((order) => {
-              if (!order.statusHistory || !order.statusHistory.length) return false;
-              const lastUpdate = new Date(
-                order.statusHistory[order.statusHistory.length - 1].timestamp,
-              ).getTime();
-              const lastViewTime = views[order._id || order.id] || 0;
-              return now - lastUpdate < 24 * 60 * 60 * 1000 && lastUpdate > lastViewTime;
-            });
-            setHasUnreadCustomOrders(hasUnread);
-          }
-        })
-        .catch(() => {});
-    } else {
-      setHasUnreadCustomOrders(false);
-    }
-    return () => {
-      active = false;
-    };
-  }, [isAuthenticated, user, location.pathname, orderViewsUpdated]);
-
   // ─── INTELLIGENT SEARCH OVERLAYS ───
   const search = useSearchOverlay();
   const visualSearch = useVisualSearch();
@@ -292,7 +255,7 @@ export function TopNavbar() {
     hideGallerySection || storeSettings?.storefront?.hideGallerySection,
   );
 
-  const isGalleryLink = (link) => {
+  const isExcludedLink = (link) => {
     const href = (link?.href || link?.link || '').toLowerCase().trim();
     const label = (link?.label || '').toLowerCase().trim();
     return (
@@ -303,36 +266,35 @@ export function TopNavbar() {
       label === 'gallery' ||
       label.includes('gallery') ||
       label === 'inspiration' ||
-      label === 'inspirations'
+      label === 'inspirations' ||
+      href === '/custom-orders' ||
+      href.startsWith('/custom-orders') ||
+      href.startsWith('/custom-order') ||
+      label === 'custom orders' ||
+      label === 'custom order'
     );
   };
 
-  // Purely dynamic, CMS-driven links. No hardcoded fallbacks.
-  const dbLinks =
+  // CMS-driven links, with labels normalised to the canonical section names (Shop, Events,
+  // Our Story, Contact Us) and ordered like the primary navigation, so every navigation
+  // surface and every crawler sees one consistent name per section.
+  const dbLinks = (
     navigation?.mainLinks
       ?.filter((link) => link.isVisible)
-      .map((link) => ({
-        label: link.label,
-        href: link.href || link.link,
-      }))
-      .filter((link) => {
-        if (isGalleryHidden && isGalleryLink(link)) {
-          return false;
-        }
-        return true;
-      }) || [];
+      .map((link) => {
+        const href = link.href || link.link;
+        return { label: canonicalNavLabel(href, link.label), href };
+      })
+      .filter((link) => !isExcludedLink(link) && link.href !== '/') || []
+  ).sort((a, b) => primaryNavRank(a.href) - primaryNavRank(b.href));
+  const hasContactLink = dbLinks.some((link) => link.href === '/contact');
 
   const navLinks = [
     { label: 'Home', href: '/', mobileOnly: true },
     ...dbLinks,
+    ...(hasContactLink ? [] : [{ label: 'Contact Us', href: '/contact' }]),
     { label: 'My Orders', href: '/dashboard/orders', mobileOnly: true },
-    { label: 'Contact Us', href: '/contact', mobileOnly: true },
-  ].filter((link) => {
-    if (isGalleryHidden && isGalleryLink(link)) {
-      return false;
-    }
-    return true;
-  });
+  ].filter((link) => !isExcludedLink(link));
 
   const isActive = (href) => location.pathname === href;
 
@@ -423,9 +385,6 @@ export function TopNavbar() {
                         >
                           <span className="flex items-center">
                             <span>{link.label}</span>
-                            {link.label === 'Custom Orders' && hasUnreadCustomOrders && (
-                              <span className="ml-0.5 relative w-1.5 h-1.5 rounded-full bg-[#ff5a00] shadow-sm"></span>
-                            )}
                           </span>
                           {active && (
                             <span
@@ -749,9 +708,6 @@ export function TopNavbar() {
                             >
                               <span className="text-left relative flex items-center justify-start gap-2 w-full">
                                 <span>{link.label}</span>
-                                {link.label === 'Custom Orders' && hasUnreadCustomOrders && (
-                                  <span className="relative w-2 h-2 rounded-full bg-[#ff5a00] shadow-sm"></span>
-                                )}
                               </span>
                             </Link>
                           )}

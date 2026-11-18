@@ -498,7 +498,7 @@ export default function AdminEnterpriseSearch() {
                           <h4 className="font-bold text-blue-900 mb-2">Algorithm Settings</h4>
                           <p className="text-sm text-blue-700/80 mb-4 leading-relaxed">
                             The search engine utilizes an advanced n-gram and Levenshtein fuzzy
-                            matching system. Products, events, and gallery items are pre-indexed for
+                            matching system. Products and events are pre-indexed for
                             high-performance retrieval.
                           </p>
                         </div>

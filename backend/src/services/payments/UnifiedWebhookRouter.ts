@@ -166,14 +166,21 @@ export class UnifiedWebhookRouter {
           );
           break;
         case 'ExchangeRequest': {
-          const { ExchangeWebhookHandler } = require('../returns/ExchangeWebhookHandler');
-          result = await ExchangeWebhookHandler.handleWebhookEvent(
-            event,
-            body,
-            signature,
-            eventId,
-            entityId!,
+          // Exchange price-difference payments belonged to the retired automated exchange flow.
+          // A payment can still arrive for an old link, so make sure a person reconciles it.
+          const { AlertingService } = require('../AlertingService');
+          await AlertingService.fire({
+            title: 'Payment received for a legacy exchange request',
+            message: `Razorpay event ${event} (${eventId}) matched ExchangeRequest ${entityId}. Exchanges are now handled manually; reconcile this payment by hand.`,
+            severity: 'high',
+            category: 'payment',
+            metadata: { eventId, entityId, event },
+          });
+          await PaymentWebhookEvent.updateOne(
+            { razorpayEventId: eventId },
+            { $set: { status: 'processed', updatedAt: new Date() } },
           );
+          result = { status: 200, message: 'Legacy exchange payment flagged for manual review' };
           break;
         }
         default:

@@ -1,0 +1,121 @@
+/*
+ * Shared element transitions (see src/utils/navigation/sharedElementTransition.js).
+ *
+ * Names are assigned from JavaScript to exactly one element per key, only while a transition
+ * runs, so nothing here needs to know product ids.
+ */
+
+/* The page underneath: the old page stays opaque while the new one fades in on top of it.
+   Plain crossfading would let the background show through mid-way (a "white flash"). */
+::view-transition-old(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-new(root) {
+  mix-blend-mode: normal;
+  animation: vt-page-in calc(var(--vt-shared-duration, 340ms) * 0.75) var(--ease-standard) both;
+}
+
+/* Every named group (only shared media is ever named) moves and resizes on one curve. */
+::view-transition-group(*) {
+  animation-duration: var(--vt-shared-duration, 380ms);
+  animation-timing-function: var(--ease-emphasized);
+}
+
+/* Keep the picture's proportions while the box changes shape: crop, never stretch. */
+::view-transition-old(*),
+::view-transition-new(*) {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+  overflow: clip;
+}
+
+/* Browsers with view-transition-class: rounded corners, layered above sticky headers, and a
+   short crossfade between the card crop and the product-page crop. */
+::view-transition-group(.vt-media) {
+  z-index: var(--z-vt-media);
+}
+
+::view-transition-image-pair(.vt-media) {
+  border-radius: var(--radius-lg);
+  overflow: clip;
+}
+
+::view-transition-old(.vt-media) {
+  animation: vt-fade-out calc(var(--vt-shared-duration, 380ms) * 0.45) linear both;
+}
+
+::view-transition-new(.vt-media) {
+  animation: vt-fade-in calc(var(--vt-shared-duration, 380ms) * 0.45) linear both;
+}
+
+/* Product information arrives just behind the image. Set only once the destination exists. */
+html[data-vt-reveal][data-vt-direction='forward'] .vt-reveal {
+  animation: vt-rise 420ms var(--ease-emphasized) both;
+  animation-delay: calc(var(--vt-shared-duration, 380ms) * 0.35);
+}
+
+html[data-vt-reveal][data-vt-direction='forward'] .vt-reveal-late {
+  animation: vt-rise 420ms var(--ease-emphasized) both;
+  animation-delay: calc(var(--vt-shared-duration, 380ms) * 0.5);
+}
+
+/* Hover zoom on cards must not be baked into the captured snapshot. */
+html[data-vt-direction] [data-vt] img {
+  transform: none !important;
+  transition: none !important;
+}
+
+@keyframes vt-page-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes vt-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes vt-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes vt-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* JavaScript already skips transitions for reduced motion; this covers anything else. */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+
+  html[data-vt-reveal] .vt-reveal,
+  html[data-vt-reveal] .vt-reveal-late {
+    animation: none !important;
+  }
+}

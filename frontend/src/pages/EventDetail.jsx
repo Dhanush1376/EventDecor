@@ -145,7 +145,6 @@ export function EventDetail() {
       }
     };
     fetchData();
-    window.scrollTo(0, 0);
   }, [id, initialEvent]);
 
   if (loading) return <EventDetailSkeleton />;
@@ -153,6 +152,7 @@ export function EventDetail() {
   if (!event) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center text-center px-4">
+        <SEO title="Event Not Found" noindex />
         <EmptyState
           title="Masterpiece Not Found"
           description="This event setup might have been archived or customized for a private client."
@@ -175,9 +175,17 @@ export function EventDetail() {
       className="min-h-screen bg-surface selection:bg-[#826237]/30 selection:text-black"
     >
       <SEO
-        title={`${event.title} | Premium Decor`}
-        description={event.description}
-        image={event.image}
+        title={event.title}
+        description={
+          event.description ||
+          `${event.title}: event decoration by Siri Arts & Crafts. View the setup, inclusions and pricing, and book it for your occasion.`
+        }
+        ogImage={event.image}
+        breadcrumbs={[
+          { name: 'Home', url: '/' },
+          { name: 'Events', url: '/events' },
+          { name: event.title, url: `/events/${event._id || event.id || id}` },
+        ]}
       />
 
       <section className="pt-24 pb-8 lg:pt-32 lg:pb-12 bg-surface">
@@ -188,7 +196,7 @@ export function EventDetail() {
             </Link>
             <ChevronRight className="text-[12px]" strokeWidth={1.5} />
             <Link to="/events" className="hover:text-primary transition-colors">
-              Collections
+              Events
             </Link>
             <ChevronRight className="text-[12px]" strokeWidth={1.5} />
             <span className="text-black line-clamp-1">{event.title}</span>

@@ -2,7 +2,9 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { prefetchManager } from '../../utils/performance/prefetchManager';
-import { preloadRazorpay } from '../../hooks/useRazorpay';
+// Loaded on demand: the payment hook module is not needed for the first paint.
+const preloadRazorpay = () =>
+  import('../../hooks/useRazorpay').then((m) => m.preloadRazorpay()).catch(() => {});
 
 const _PRIORITY_ROUTES = ['/cart', '/checkout', '/dashboard', '/collections'];
 

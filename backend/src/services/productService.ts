@@ -567,10 +567,14 @@ class ProductService {
         data.qrCode = QRCodeService.generateProductQrPayload(data.productUuid, data.sku);
       }
 
+      if (data.stock === undefined || data.stock === null) {
+        data.stock = 999999;
+      }
+
       // Initialize inventory object
       if (!data.inventory) {
         data.inventory = {
-          available: Number(data.stock) || 0,
+          available: Number(data.stock) || 999999,
           reserved: Number(data.reservedStock) || 0,
           production: 0,
           packing: 0,

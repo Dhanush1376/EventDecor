@@ -384,29 +384,6 @@
   }
 }
 
-/* ─── Immersive Gallery / Slideshow Mode Navbar Hiding ─── */
-body.slideshow-active .top-navbar {
-  transform: translateY(-100%) !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-}
-
-body.slideshow-active .bottom-nav {
-  transform: translateY(150%) !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-}
-
-body.slideshow-active .whatsapp-widget {
-  transform: scale(0) !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-}
-
-body.slideshow-active footer {
-  display: none !important;
-}
-
 /* ─── Hide BottomNav when StickyMobileATC is active on PDP/EDP ─── */
 body.sticky-atc-active .bottom-nav {
   transform: translateY(150%) !important;
@@ -442,39 +419,6 @@ body.filters-open img[src*='mandala'] {
   opacity: 0 !important;
   pointer-events: none !important;
   transition: opacity 0.2s ease-out !important;
-}
-
-/* ─── Gallery Detail — Pinterest-Style Layout ─── */
-.gallery-detail-grid {
-  display: none;
-}
-
-@media (min-width: 768px) {
-  .gallery-detail-grid {
-    display: grid;
-    grid-template-columns: 1.05fr 1fr;
-    gap: 2.5rem;
-    align-items: start;
-  }
-}
-
-@media (min-width: 1024px) {
-  .gallery-detail-grid {
-    grid-template-columns: 1.15fr 1fr;
-    gap: 3.5rem;
-    align-items: start;
-  }
-}
-
-@media (min-width: 1280px) {
-  .gallery-detail-grid {
-    grid-template-columns: 1.2fr 1fr;
-    gap: 4.5rem;
-  }
-}
-
-.gallery-detail-image {
-  /* Tailwind classes handle the sticky positioning */
 }
 
 /* Discovery masonry feed */
@@ -540,53 +484,6 @@ body.filters-open img[src*='mandala'] {
   box-shadow:
     0 8px 32px rgba(115, 92, 0, 0.06),
     0 2px 8px rgba(0, 0, 0, 0.04);
-}
-
-/* Floating action pill */
-.gallery-action-pill {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.5rem;
-  border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.1),
-    0 0 0 1px rgba(0, 0, 0, 0.04);
-  transition: box-shadow 0.3s ease;
-}
-
-.gallery-action-pill:hover {
-  box-shadow:
-    0 6px 28px rgba(0, 0, 0, 0.14),
-    0 0 0 1px rgba(0, 0, 0, 0.06);
-}
-
-.gallery-action-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: transparent;
-  transition:
-    background 0.2s ease,
-    transform 0.2s var(--ease-bounce);
-  cursor: pointer;
-  color: #1a1817;
-  border: none;
-  outline: none;
-}
-
-.gallery-action-btn:hover {
-  background: rgba(0, 0, 0, 0.06);
-}
-
-.gallery-action-btn:active {
-  transform: scale(0.92);
 }
 
 /* Linked product card */

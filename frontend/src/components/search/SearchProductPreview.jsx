@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { CloudinaryImage } from '../ui/CloudinaryImage';
 import { formatPrice, getStockLabel, formatDiscount } from './searchUtils';
 import { m as motion, AnimatePresence } from 'framer-motion';
+import { productTransitionKey, sharedElementProps, VT_SCOPE_ATTRIBUTE } from '../../utils/navigation/sharedElementTransition';
 
 export function SearchProductPreview({ product, onClose }) {
   const navigate = useNavigate();
@@ -31,6 +32,8 @@ export function SearchProductPreview({ product, onClose }) {
         <div
           className="relative w-full aspect-square bg-stone-100 flex-shrink-0 cursor-pointer overflow-hidden group"
           onClick={handleNavigate}
+          {...{ [VT_SCOPE_ATTRIBUTE]: '' }}
+          {...(product.image ? sharedElementProps(productTransitionKey(product.id)) : {})}
         >
           {product.image ? (
             <CloudinaryImage

@@ -1,8 +1,13 @@
 import axios from 'axios';
-import toast from 'react-hot-toast';
 import logger from '../utils/core/logger';
 import { logCartTrace } from '../utils/forensic/cartTrace';
-import { getCachedGet, setCachedGet, clearApiCache } from '../utils/api/apiCache';
+import {
+  getCachedGet,
+  setCachedGet,
+  clearApiCache,
+  isCacheableGet,
+  buildGetKey,
+} from '../utils/api/apiCache';
 import {
   hasSessionMarker,
   setSessionMarker,
@@ -94,7 +99,6 @@ const dispatchUnauthorized = () => {
     // Already unauthorized, avoid infinite loop of queryClient.clear() triggers
     return;
   }
-  toast.error('Session Error 3: API returned 401/403 unhandled.');
   setAccessToken(null);
   clearAuthStorage();
   clearCachedProfile();
@@ -181,6 +185,11 @@ api.interceptors.response.use(onResponse, onError);
 const originalGet = api.get;
 
 let cartGetSequenceCounter = 0;
+const inflightGets = new Map();
+const clearGetCaches = () => {
+  clearApiCache();
+  inflightGets.clear();
+};
 
 api.get = function (url, config) {
   const isCart = url.includes('/users/cart');
@@ -210,6 +219,14 @@ api.get = function (url, config) {
     });
   }
 
+  // De-duplicate concurrent identical GETs for cacheable public endpoints (the same
+  // rules as the response cache above, so private/user data is never shared).
+  // Requests carrying an AbortSignal keep their own network request.
+  const inflightKey = !config?.signal && isCacheableGet(url, config) ? buildGetKey(url, config) : null;
+  if (inflightKey && inflightGets.has(inflightKey)) {
+    return inflightGets.get(inflightKey);
+  }
+
   if (isCart) {
     logCartTrace('API_GET_NETWORK_START', {
       cartGetSeq: currentSeq,
@@ -217,7 +234,7 @@ api.get = function (url, config) {
     });
   }
 
-  return originalGet
+  const request = originalGet
     .call(this, url, config)
     .then((response) => {
       if (response?.data !== undefined) {
@@ -256,12 +273,35 @@ api.get = function (url, config) {
       }
       throw error;
     });
+
+  if (inflightKey) {
+    inflightGets.set(inflightKey, request);
+    const release = () => {
+      if (inflightGets.get(inflightKey) === request) inflightGets.delete(inflightKey);
+    };
+    request.then(release, release);
+  }
+  return request;
 };
 
 // High-performance POST request de-duplication wrapper for token refresh to avoid concurrent replay race conditions
+// Fire-and-forget telemetry POSTs never change data served by cached public GETs.
+// Clearing the whole GET cache on every analytics beacon made pages refetch CMS,
+// product and category data right after load (duplicate /cms requests etc.).
+const CACHE_NEUTRAL_POST_PREFIXES = [
+  '/tracking/',
+  '/analytics/events',
+  '/search/analytics/track',
+  '/csrf-token',
+];
+const isCacheNeutralPost = (url = '') => {
+  const path = String(url).split('?')[0];
+  return CACHE_NEUTRAL_POST_PREFIXES.some((prefix) => path.includes(prefix));
+};
+
 const originalPost = api.post;
 api.post = function (url, data, config) {
-  clearApiCache();
+  if (!isCacheNeutralPost(url)) clearGetCaches();
   if (url === '/auth/refresh' || url?.includes('/auth/refresh')) {
     const body = data && Object.keys(data).length ? data : buildRefreshBody();
     if (!refreshPostPromise) {
@@ -276,19 +316,19 @@ api.post = function (url, data, config) {
 
 const originalPut = api.put;
 api.put = function (url, data, config) {
-  clearApiCache();
+  clearGetCaches();
   return originalPut.call(this, url, data, config);
 };
 
 const originalPatch = api.patch;
 api.patch = function (url, data, config) {
-  clearApiCache();
+  clearGetCaches();
   return originalPatch.call(this, url, data, config);
 };
 
 const originalDelete = api.delete;
 api.delete = function (url, config) {
-  clearApiCache();
+  clearGetCaches();
   return originalDelete.call(this, url, config);
 };
 

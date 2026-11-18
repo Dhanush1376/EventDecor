@@ -40,7 +40,6 @@ export function useShowcaseForm({ id, isEditMode, navigate }) {
       seoTitle: '',
       seoDescription: '',
       featured: false,
-      showInGallery: false,
       isActive: true,
     },
     initialPageState: { activeStep: 0, mobileTab: 'form' },
@@ -84,7 +83,6 @@ export function useShowcaseForm({ id, isEditMode, navigate }) {
               seoTitle: sc.seoTitle || '',
               seoDescription: sc.seoDescription || '',
               featured: sc.featured || false,
-              showInGallery: sc.showInGallery || false,
               isActive: sc.isActive !== undefined ? sc.isActive : true,
             });
           } else {

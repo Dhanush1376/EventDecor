@@ -1,6 +1,6 @@
 import React, { Suspense } from 'react';
 import { lazyWithRetry as lazy } from '../utils/performance/lazyWithRetry';
-import { Routes, Route, useLocation, Navigate, useParams } from 'react-router-dom';
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { logRouteDiagnostic } from '../utils/core/diagnostics';
 import { RouteSkeleton, getRouteSkeletonVariant } from '../components/ui/RouteSkeleton';
 import { MainLayout, MinimalLayout } from '../layouts/MainLayout';
@@ -25,11 +25,6 @@ function AppRouteFallback() {
   return <RouteSkeleton variant={variant} />;
 }
 
-function RedirectToCustomOrder() {
-  const { productId } = useParams();
-  return <Navigate to={`/custom-orders?product=${productId}`} replace />;
-}
-
 const RouteDiagnostics = React.memo(function RouteDiagnostics() {
   const location = useLocation();
   React.useEffect(() => {
@@ -37,6 +32,21 @@ const RouteDiagnostics = React.memo(function RouteDiagnostics() {
   }, [location.pathname]);
   return null;
 });
+
+// SEO landing pages. React Router v7 has no regex params, so each slug is its own route
+// (a `/:city(a|b)` pattern matches nothing and sent every one of these pages to 404).
+const LOCATION_LANDING_SLUGS = [
+  'wedding-decorations-hyderabad',
+  'event-decorators-telangana',
+  'event-decorators-secunderabad',
+  'event-decorators-ongole',
+  'wedding-decorations-ongole',
+  'handmade-gifts-ongole',
+  'event-decorators-vijayawada',
+  'event-decorators-guntur',
+  'wedding-decorations-bangalore',
+  'event-decorators-chennai',
+];
 
 // Lazy load pages for performance optimization
 const Home = lazy(() => import('../pages/Home/Home').then((m) => ({ default: m.Home })));
@@ -58,17 +68,6 @@ const OrderSuccess = lazy(() =>
   import('../pages/OrderSuccess').then((m) => ({ default: m.OrderSuccess })),
 );
 const About = lazy(() => import('../pages/About').then((m) => ({ default: m.About })));
-const CustomOrders = lazy(() =>
-  import('../pages/CustomOrders').then((m) => ({ default: m.CustomOrders })),
-);
-
-const MyCustomOrders = lazy(() =>
-  import('../pages/MyCustomOrders').then((m) => ({ default: m.MyCustomOrders })),
-);
-const Gallery = lazy(() => import('../pages/Gallery').then((m) => ({ default: m.Gallery })));
-const GalleryDetail = lazy(() =>
-  import('../pages/GalleryDetail').then((m) => ({ default: m.GalleryDetail })),
-);
 const Contact = lazy(() => import('../pages/Contact').then((m) => ({ default: m.Contact })));
 const Wishlist = lazy(() => import('../pages/Wishlist').then((m) => ({ default: m.Wishlist })));
 const CollectionDetail = lazy(() =>
@@ -140,17 +139,6 @@ const AdminOrders = lazy(() =>
 const AdminOrderDetail = lazy(() =>
   import('../admin/pages/AdminOrderDetail').then((m) => ({ default: m.AdminOrderDetail })),
 );
-const AdminReturnsHub = lazy(() => import('../admin/pages/returns/AdminReturnsHub'));
-const AdminReturnDetail = lazy(() =>
-  import('../admin/pages/returns/AdminReturnDetail').then((m) => ({
-    default: m.default || m.AdminReturnDetail,
-  })),
-);
-const AdminExchangeHub = lazy(() =>
-  import('../admin/pages/returns/AdminExchangeHub').then((m) => ({
-    default: m.default || m.AdminExchangeHub,
-  })),
-);
 const AdminAddEvent = lazy(() =>
   import('../admin/pages/AdminAddEvent').then((m) => ({ default: m.AdminAddEvent })),
 );
@@ -168,12 +156,6 @@ const AdminCatalogRegistry = lazy(() => import('../admin/pages/AdminCatalogRegis
 
 const AdminExecutiveDashboard = lazy(() => import('../admin/pages/ExecutiveDashboard'));
 // const CustomerProfile360 = lazy(() => import('../admin/pages/CustomerProfile360'));
-const AdminGallery = lazy(() =>
-  import('../admin/pages/AdminGallery').then((m) => ({ default: m.AdminGallery })),
-);
-const AdminAddGalleryItem = lazy(() =>
-  import('../admin/pages/AdminAddGalleryItem').then((m) => ({ default: m.AdminAddGalleryItem })),
-);
 const AdminEvents = lazy(() =>
   import('../admin/pages/AdminEvents').then((m) => ({ default: m.AdminEvents })),
 );
@@ -241,8 +223,6 @@ const AdminReviews = lazy(() =>
 const AdminServiceAreas = lazy(() => import('../admin/pages/AdminServiceAreas'));
 const AdminServiceability = lazy(() => import('../admin/pages/AdminServiceability'));
 
-// Returns & Exchanges (Admin)
-
 const AdminSystemHub = lazy(() =>
   import('../admin/pages/AdminSystemHub').then((m) => ({ default: m.default })),
 );
@@ -284,10 +264,9 @@ export function AppRoutes() {
                 <Route path="/" element={<Home />} />
                 <Route path="/blog" element={<BlogListing />} />
                 <Route path="/blog/:slug" element={<BlogPost />} />
-                <Route
-                  path="/:city(wedding-decorations-hyderabad|event-decorators-telangana|event-decorators-secunderabad|event-decorators-ongole|wedding-decorations-ongole|handmade-gifts-ongole|event-decorators-vijayawada|event-decorators-guntur|wedding-decorations-bangalore|event-decorators-chennai)"
-                  element={<LocationLanding />}
-                />
+                {LOCATION_LANDING_SLUGS.map((slug) => (
+                  <Route key={slug} path={`/${slug}`} element={<LocationLanding slug={slug} />} />
+                ))}
                 <Route path="/collections" element={<ProductListing />} />
                 <Route path="/product/:id" element={<ProductDetails />} />
                 <Route path="/product/:id/reviews" element={<ProductAllReviews />} />
@@ -295,14 +274,17 @@ export function AppRoutes() {
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/order-success" element={<OrderSuccess />} />
                 <Route path="/about" element={<About />} />
-                <Route path="/custom-orders" element={<CustomOrders />} />
-                <Route path="/customize/:productId" element={<RedirectToCustomOrder />} />
+                <Route path="/custom-orders" element={<Navigate to="/collections" replace />} />
+                <Route
+                  path="/customize/:productId"
+                  element={<Navigate to="/collections" replace />}
+                />
                 <Route
                   path="/my-custom-orders"
-                  element={<Navigate to="/dashboard/custom-orders" replace />}
+                  element={<Navigate to="/dashboard/orders" replace />}
                 />
-                <Route path="/gallery" element={<Gallery />} />
-                <Route path="/gallery/:id" element={<GalleryDetail />} />
+                <Route path="/gallery" element={<Navigate to="/collections" replace />} />
+                <Route path="/gallery/*" element={<Navigate to="/collections" replace />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/wishlist" element={<Wishlist />} />
                 <Route path="/collection/:id" element={<CollectionDetail />} />
@@ -328,9 +310,10 @@ export function AppRoutes() {
                     </ProtectedRoute>
                   }
                 />
-                <Route path="/showcases" element={<EventShowcases />} />
+                <Route path="/showcases" element={<Navigate to="/events" replace />} />
                 <Route path="/policy/:slug" element={<GenericPolicyPage />} />
-                {/* Legacy routes redirect to dynamic paths */}
+                {/* Legacy routes redirect to dynamic paths (also 301-redirected at the edge in vercel.json) */}
+                <Route path="/shop" element={<Navigate to="/collections" replace />} />
                 <Route
                   path="/shipping"
                   element={<Navigate to="/policy/shipping-policy" replace />}
@@ -341,9 +324,10 @@ export function AppRoutes() {
                   element={<Navigate to="/policy/exchange-policy" replace />}
                 />
                 <Route path="/refund" element={<Navigate to="/policy/refund-policy" replace />} />
+                {/* No standalone cancellation policy exists; cancellations are covered in the terms. */}
                 <Route
                   path="/cancellation"
-                  element={<Navigate to="/policy/cancellation-policy" replace />}
+                  element={<Navigate to="/policy/terms-and-conditions" replace />}
                 />
                 <Route path="/privacy" element={<Navigate to="/policy/privacy-policy" replace />} />
                 <Route
@@ -391,13 +375,12 @@ export function AppRoutes() {
               <Route path="rental-policies" element={<AdminRentalPolicies />} />
               <Route path="service-areas" element={<AdminServiceAreas />} />
               <Route path="serviceability" element={<AdminServiceability />} />
-              <Route path="custom-orders" element={<AdminInquiries />} />
+              <Route path="custom-orders" element={<Navigate to="/admin/orders" replace />} />
               <Route path="customers" element={<AdminCustomers />} />
               <Route path="customers/:customerId" element={<AdminCustomers />} />
               <Route path="executive" element={<AdminExecutiveDashboard />} />
-              <Route path="gallery" element={<AdminGallery />} />
-              <Route path="gallery/add" element={<AdminAddGalleryItem />} />
-              <Route path="gallery/edit/:id" element={<AdminAddGalleryItem />} />
+              <Route path="gallery" element={<Navigate to="/admin" replace />} />
+              <Route path="gallery/*" element={<Navigate to="/admin" replace />} />
               <Route path="categories" element={<AdminCategories />} />
               <Route path="categories/add" element={<AdminCategories />} />
               <Route path="categories/edit/:id" element={<AdminCategories />} />
@@ -447,11 +430,9 @@ export function AppRoutes() {
                 element={<Navigate to="/admin/recycle-bin" replace />}
               />
 
-              <Route path="returns" element={<AdminReturnsHub />} />
-              <Route path="returns/requests/:id" element={<AdminReturnDetail />} />
-              <Route path="exchanges" element={<AdminExchangeHub />} />
-              <Route path="exchanges/requests/:id" element={<AdminReturnDetail />} />
-              <Route path="exchanges/:id" element={<AdminReturnDetail />} />
+              {/* Returns & exchanges are handled manually on WhatsApp */}
+              <Route path="returns/*" element={<Navigate to="/admin/orders" replace />} />
+              <Route path="exchanges/*" element={<Navigate to="/admin/orders" replace />} />
 
               <Route path="enterprise-search" element={<AdminEnterpriseSearch />} />
 

@@ -1,73 +1,142 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { useLocation, useNavigationType } from 'react-router-dom';
+import { markScrollSettled } from '../../utils/navigation/sharedElementTransition';
 
+const STORAGE_PREFIX = 'scroll-pos-';
+const MAX_RESTORE_FRAMES = 45; // ~750ms for lazily loaded content to grow the page
+
+function readStored(key) {
+  try {
+    const value = sessionStorage.getItem(`${STORAGE_PREFIX}${key}`);
+    return value === null ? null : Number.parseInt(value, 10);
+  } catch {
+    return null;
+  }
+}
+
+function writeStored(key, value) {
+  try {
+    sessionStorage.setItem(`${STORAGE_PREFIX}${key}`, String(Math.round(value)));
+  } catch {
+    // Storage full or blocked (private mode): in-memory positions still work for this tab.
+  }
+}
+
+function scrollToY(top) {
+  window.scrollTo({ top, left: 0, behavior: 'instant' });
+}
+
+/**
+ * The only owner of window scroll on route changes:
+ * - Back/Forward restore the position the entry was left at, waiting for content to load.
+ * - A new pathname starts at the top (or at #hash when present).
+ * - Search-param-only changes (filters, sorting, pagination) keep the current position.
+ * Tells the shared element transition when the final position is in place.
+ */
 export function ScrollManager() {
   const location = useLocation();
   const navigationType = useNavigationType();
-  const prevPathnameRef = useRef(location.pathname);
+  const positions = useRef(new Map());
+  const activeKey = useRef(location.key);
+  const prevPathname = useRef(null);
 
-  // Save scroll position on unmount/navigation
+  useLayoutEffect(() => {
+    if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual';
+  }, []);
+
+  // Track the position of whichever entry is current. Kept in memory on every scroll so the
+  // value is exact at navigation time, and persisted (throttled) for reloads.
   useEffect(() => {
-    const handleScroll = () => {
-      sessionStorage.setItem(`scroll-pos-${location.key}`, window.scrollY.toString());
+    let persistTimer = null;
+    const onScroll = () => {
+      positions.current.set(activeKey.current, window.scrollY);
+      if (persistTimer) return;
+      persistTimer = setTimeout(() => {
+        persistTimer = null;
+        writeStored(activeKey.current, window.scrollY);
+      }, 200);
     };
-
-    let scrollTimeout;
-    const throttledScroll = () => {
-      if (!scrollTimeout) {
-        scrollTimeout = setTimeout(() => {
-          handleScroll();
-          scrollTimeout = null;
-        }, 150);
-      }
-    };
-
-    window.addEventListener('scroll', throttledScroll, { passive: true });
-
+    const onPageHide = () => writeStored(activeKey.current, window.scrollY);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('pagehide', onPageHide);
     return () => {
-      window.removeEventListener('scroll', throttledScroll);
-      clearTimeout(scrollTimeout);
-      sessionStorage.setItem(`scroll-pos-${location.key}`, window.scrollY.toString());
+      clearTimeout(persistTimer);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('pagehide', onPageHide);
     };
-  }, [location.key]);
+  }, []);
 
-  // Restore scroll position or scroll to top on route change
-  useEffect(() => {
-    const isPathnameChange = prevPathnameRef.current !== location.pathname;
-    prevPathnameRef.current = location.pathname;
-
-    // Do NOT scroll to top on in-page query param or hash changes
-    if (!isPathnameChange && navigationType !== 'POP') {
-      return;
+  useLayoutEffect(() => {
+    const previousKey = activeKey.current;
+    if (previousKey !== location.key && positions.current.has(previousKey)) {
+      writeStored(previousKey, positions.current.get(previousKey));
     }
+    activeKey.current = location.key;
+
+    const isFirstRender = prevPathname.current === null;
+    const pathnameChanged = !isFirstRender && prevPathname.current !== location.pathname;
+    prevPathname.current = location.pathname;
+
+    let frame = null;
+    let cancelled = false;
+    const cancelOnUserScroll = () => {
+      cancelled = true;
+    };
+    const settle = () => {
+      window.removeEventListener('wheel', cancelOnUserScroll);
+      window.removeEventListener('touchstart', cancelOnUserScroll);
+      window.removeEventListener('keydown', cancelOnUserScroll);
+      markScrollSettled(location.key);
+    };
 
     if (navigationType === 'POP') {
-      const savedPos = sessionStorage.getItem(`scroll-pos-${location.key}`);
-      if (savedPos !== null) {
-        requestAnimationFrame(() => {
-          setTimeout(() => {
-            window.scrollTo({
-              top: parseInt(savedPos, 10),
-              left: 0,
-              behavior: 'instant',
-            });
-          }, 10);
-        });
-        return;
+      const target = positions.current.get(location.key) ?? readStored(location.key);
+      if (target === null || target === undefined || Number.isNaN(target)) {
+        if (pathnameChanged) scrollToY(0);
+        settle();
+        return undefined;
       }
+      window.addEventListener('wheel', cancelOnUserScroll, { passive: true });
+      window.addEventListener('touchstart', cancelOnUserScroll, { passive: true });
+      window.addEventListener('keydown', cancelOnUserScroll);
+      let attempts = 0;
+      const attempt = () => {
+        frame = null;
+        if (cancelled) {
+          settle();
+          return;
+        }
+        const maxY = document.documentElement.scrollHeight - window.innerHeight;
+        scrollToY(Math.min(target, Math.max(0, maxY)));
+        attempts += 1;
+        if (maxY >= target - 2 || attempts >= MAX_RESTORE_FRAMES) {
+          settle();
+        } else {
+          frame = requestAnimationFrame(attempt);
+        }
+      };
+      attempt();
+      return () => {
+        if (frame) cancelAnimationFrame(frame);
+        settle();
+      };
     }
 
-    // For actual pathname changes (navigating to a new page)
-    if (isPathnameChange) {
-      requestAnimationFrame(() => {
-        window.scrollTo({
-          top: 0,
-          left: 0,
-          behavior: 'instant',
-        });
-      });
+    if (pathnameChanged) {
+      let hashTarget = null;
+      if (location.hash) {
+        try {
+          hashTarget = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+        } catch {
+          hashTarget = null; // malformed escape sequence in the URL
+        }
+      }
+      if (hashTarget) hashTarget.scrollIntoView({ block: 'start' });
+      else scrollToY(0);
     }
-  }, [location.key, location.pathname, navigationType]);
+    settle();
+    return undefined;
+  }, [location.key, location.pathname, location.hash, navigationType]);
 
   return null;
 }

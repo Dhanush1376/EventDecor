@@ -58,7 +58,7 @@
 .admin-section-root input::placeholder,
 .admin-section-root textarea::placeholder {
   color: var(--admin-text-placeholder) !important;
-  opacity: 0.6 !important;
+  opacity: 1 !important;
   font-weight: 400 !important;
 }
 

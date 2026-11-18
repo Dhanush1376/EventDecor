@@ -86,10 +86,7 @@ export function EventShowcases() {
 
   return (
     <div className="bg-surface min-h-screen font-body">
-      <SEO
-        title="Event Decorations"
-        description="Explore our stunning handcrafted event decorations, wedding mandaps, pooja setups, and floral styling."
-      />
+      <SEO />
 
       <ShowcaseHero eventsPageContent={eventsPageContent} />
 
@@ -142,7 +139,7 @@ export function EventShowcases() {
             {/* Desktop Contextual Header */}
             <div className="hidden lg:flex items-center justify-between mb-6 pb-4 border-b border-outline-variant/15">
               <div>
-                <h1 className="font-heading text-[26px] xl:text-[30px] font-bold text-on-surface">
+                <h2 className="font-heading text-[26px] xl:text-[30px] font-bold text-on-surface">
                   {searchQuery ? (
                     <>
                       Event Packages for{' '}
@@ -153,7 +150,7 @@ export function EventShowcases() {
                   ) : (
                     `${activeCategory} Event Packages`
                   )}
-                </h1>
+                </h2>
                 <p className="font-body-sm text-on-surface-variant/70 font-medium mt-0.5">
                   <span className="font-semibold text-on-surface">{totalCount}</span>{' '}
                   {totalCount === 1 ? 'package' : 'packages'}{' '}

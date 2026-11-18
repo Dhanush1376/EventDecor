@@ -79,7 +79,7 @@ const flushEvents = async () => {
       await api.post('/analytics/events', { events: eventsToSend });
     }
   } catch (error) {
-    console.error('Failed to flush analytics events', error);
+    if (error?.response?.status !== 503) { console.warn('Failed to flush analytics events', error?.message || error); }
     // Put them back in queue if not too big
     if (eventQueue.length < 100) {
       eventQueue = [...eventsToSend, ...eventQueue];

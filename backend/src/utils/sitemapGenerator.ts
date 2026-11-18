@@ -1,173 +1,55 @@
-import fs from 'fs';
-import path from 'path';
 import mongoose from 'mongoose';
 import logger from '../config/logger';
 
-const SITE_URL =
-  process.env.FRONTEND_URLS?.split(',')[0]?.trim() || 'https://siriartsandcrafts.com';
+/**
+ * Canonical production origin. Sitemap URLs must always use it (never a preview or API host),
+ * and must match the canonical tags emitted by the frontend (frontend/src/seo/seoConfig.js).
+ */
+const SITE_URL = (process.env.SITEMAP_SITE_URL || 'https://siriartsandcrafts.com').replace(
+  /\/+$/,
+  '',
+);
 
 /**
- * Enterprise dynamic sitemap generator.
- * Fetches all static, product, gallery, and event routes from database,
- * builds a valid XML output with Google Image Sitemap tags,
- * and writes to the frontend public static folder.
+ * Only canonical, public, indexable URLs belong here. Deliberately excluded:
+ *  - private/transactional routes (cart, checkout, wishlist, dashboard, track, admin…) — noindex
+ *  - redirecting legacy URLs (/gallery, /custom-orders, /showcases, /shipping, /terms…)
+ *  - search/filter variants of the Shop page
  */
-export async function generateSitemap(): Promise<string> {
-  try {
-    const today = new Date().toISOString().split('T')[0];
+const STATIC_PATHS = ['/', '/collections', '/events', '/about', '/contact', '/blog'];
 
-    const staticRoutes = [
-      { loc: '', changefreq: 'daily', priority: '1.0' },
-      { loc: '/collections', changefreq: 'daily', priority: '0.9' },
+/** Location landing slugs that have a route in frontend/src/routes/AppRoutes.jsx. */
+const ROUTED_LOCATION_SLUGS = new Set([
+  'wedding-decorations-hyderabad',
+  'event-decorators-telangana',
+  'event-decorators-secunderabad',
+  'event-decorators-ongole',
+  'wedding-decorations-ongole',
+  'handmade-gifts-ongole',
+  'event-decorators-vijayawada',
+  'event-decorators-guntur',
+  'wedding-decorations-bangalore',
+  'event-decorators-chennai',
+]);
 
-      { loc: '/wedding-decorations-hyderabad', changefreq: 'monthly', priority: '0.9' },
-      { loc: '/event-decorators-telangana', changefreq: 'monthly', priority: '0.9' },
-      { loc: '/event-decorators-secunderabad', changefreq: 'monthly', priority: '0.9' },
-      { loc: '/event-decorators-ongole', changefreq: 'monthly', priority: '0.9' },
-      { loc: '/about', changefreq: 'monthly', priority: '0.6' },
-      { loc: '/contact', changefreq: 'monthly', priority: '0.6' },
-      { loc: '/gallery', changefreq: 'weekly', priority: '0.7' },
-      { loc: '/custom-orders', changefreq: 'monthly', priority: '0.8' },
-      { loc: '/events', changefreq: 'weekly', priority: '0.8' },
-      { loc: '/showcases', changefreq: 'weekly', priority: '0.7' },
-      { loc: '/policy/shipping-policy', changefreq: 'monthly', priority: '0.4' },
-      { loc: '/policy/return-policy', changefreq: 'monthly', priority: '0.4' },
-      { loc: '/policy/exchange-policy', changefreq: 'monthly', priority: '0.4' },
-      { loc: '/policy/refund-policy', changefreq: 'monthly', priority: '0.4' },
-      { loc: '/policy/cancellation-policy', changefreq: 'monthly', priority: '0.4' },
-      { loc: '/policy/privacy-policy', changefreq: 'yearly', priority: '0.3' },
-      { loc: '/policy/terms-and-conditions', changefreq: 'yearly', priority: '0.3' },
-    ];
+const CACHE_TTL_MS = 10 * 60 * 1000;
+let cachedXml: string | null = null;
+let cachedAt = 0;
+let inflight: Promise<string> | null = null;
 
-    let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
-    xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n`;
-    xml += `        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n`;
-
-    // Append static pages
-    for (const route of staticRoutes) {
-      xml += `  <url>\n`;
-      xml += `    <loc>${SITE_URL}${route.loc}</loc>\n`;
-      xml += `    <lastmod>${today}</lastmod>\n`;
-      xml += `    <changefreq>${route.changefreq}</changefreq>\n`;
-      xml += `    <priority>${route.priority}</priority>\n`;
-      xml += `  </url>\n`;
-    }
-
-    // Ensure models are registered by dynamically requiring them first
-    require('../models/Product');
-    require('../models/Gallery');
-    require('../models/Event');
-
-    // Retrieve models dynamically from mongoose to prevent circular imports
-    const Product = mongoose.model('Product');
-    const Gallery = mongoose.model('Gallery');
-    const Event = mongoose.model('Event');
-
-    // 2. Fetch Active Products
-    if (Product) {
-      const products = (await Product.find({ isActive: true })
-        .select('_id updatedAt imageSrc title')
-        .lean()) as any[];
-
-      for (const prod of products) {
-        const prodDate = new Date(prod.updatedAt || new Date()).toISOString().split('T')[0];
-        xml += `  <url>\n`;
-        xml += `    <loc>${SITE_URL}/product/${prod._id}</loc>\n`;
-        xml += `    <lastmod>${prodDate}</lastmod>\n`;
-        xml += `    <changefreq>weekly</changefreq>\n`;
-        xml += `    <priority>0.8</priority>\n`;
-        if (prod.imageSrc) {
-          xml += `    <image:image>\n`;
-          xml += `      <image:loc>${prod.imageSrc}</image:loc>\n`;
-          xml += `      <image:title>${escapeXml(prod.title || 'Siri Masterpiece')}</image:title>\n`;
-          xml += `    </image:image>\n`;
-        }
-        xml += `  </url>\n`;
-      }
-    }
-
-    // 3. Fetch Active Gallery Items
-    if (Gallery) {
-      const galleries = (await Gallery.find({ isActive: true })
-        .select('_id updatedAt image title')
-        .lean()) as any[];
-
-      for (const item of galleries) {
-        const itemDate = new Date(item.updatedAt || new Date()).toISOString().split('T')[0];
-        xml += `  <url>\n`;
-        xml += `    <loc>${SITE_URL}/gallery/${item._id}</loc>\n`;
-        xml += `    <lastmod>${itemDate}</lastmod>\n`;
-        xml += `    <changefreq>weekly</changefreq>\n`;
-        xml += `    <priority>0.7</priority>\n`;
-        if (item.image) {
-          xml += `    <image:image>\n`;
-          xml += `      <image:loc>${item.image}</image:loc>\n`;
-          xml += `      <image:title>${escapeXml(item.title || 'Siri Gallery Showcase')}</image:title>\n`;
-          xml += `    </image:image>\n`;
-        }
-        xml += `  </url>\n`;
-      }
-    }
-
-    // 4. Fetch Active Events
-    if (Event) {
-      const events = (await Event.find({ isActive: true })
-        .select('_id updatedAt image title')
-        .lean()) as any[];
-
-      for (const ev of events) {
-        const evDate = new Date(ev.updatedAt || new Date()).toISOString().split('T')[0];
-        xml += `  <url>\n`;
-        xml += `    <loc>${SITE_URL}/events/${ev._id}</loc>\n`;
-        xml += `    <lastmod>${evDate}</lastmod>\n`;
-        xml += `    <changefreq>weekly</changefreq>\n`;
-        xml += `    <priority>0.8</priority>\n`;
-        if (ev.image) {
-          xml += `    <image:image>\n`;
-          xml += `      <image:loc>${ev.image}</image:loc>\n`;
-          xml += `      <image:title>${escapeXml(ev.title || 'Siri Event Styling')}</image:title>\n`;
-          xml += `    </image:image>\n`;
-        }
-        xml += `  </url>\n`;
-      }
-    }
-
-    xml += `</urlset>\n`;
-
-    // 5. Autowrite to static public folder for static host serving
-    // Determine the path to the workspace root dynamically based on whether we are running from dist or src
-    const isCompiled = __dirname.replace(/\\/g, '/').includes('/dist/');
-    const relativePathToRoot = isCompiled ? '../../../../' : '../../../';
-    const frontendPublicDir = path.resolve(__dirname, relativePathToRoot, 'frontend/public');
-    const frontendPublicPath = path.join(frontendPublicDir, 'sitemap.xml');
-
-    if (fs.existsSync(frontendPublicDir)) {
-      try {
-        fs.writeFileSync(frontendPublicPath, xml, 'utf8');
-        logger.info(`[SITEMAP] Static sitemap successfully written to ${frontendPublicPath}`);
-      } catch (fsErr: any) {
-        logger.warn(
-          `[SITEMAP] Could not write sitemap file to frontend public folder: ${fsErr.message}`,
-        );
-      }
-    } else {
-      logger.info(
-        `[SITEMAP] Frontend public folder not found at ${frontendPublicDir}. Skipping static sitemap write.`,
-      );
-    }
-
-    return xml;
-  } catch (error: any) {
-    logger.error(`[SITEMAP GENERATOR ERROR] ${error.message}`);
-    throw error;
-  }
+interface SitemapImage {
+  loc: string;
+  title?: string;
 }
 
-/**
- * Escapes unsafe string characters for valid XML nesting.
- */
+interface SitemapEntry {
+  path: string;
+  lastmod?: Date | string | null;
+  images?: SitemapImage[];
+}
+
 function escapeXml(unsafe: string): string {
-  return unsafe.replace(/[<>&'"]/g, (c) => {
+  return String(unsafe).replace(/[<>&'"]/g, (c) => {
     switch (c) {
       case '<':
         return '&lt;';
@@ -177,35 +59,216 @@ function escapeXml(unsafe: string): string {
         return '&amp;';
       case "'":
         return '&apos;';
-      case '"':
-        return '&quot;';
       default:
-        return c;
+        return '&quot;';
     }
   });
 }
 
-// Debounce timer reference
-let sitemapTimeout: any = null;
+function toLastmod(value?: Date | string | null): string | null {
+  if (!value) return null;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString().split('T')[0];
+}
+
+function absolute(path: string): string {
+  return path === '/' ? `${SITE_URL}/` : `${SITE_URL}${path}`;
+}
+
+/** Same encoding as categoryPath() in the frontend so sitemap URLs equal canonical URLs. */
+function categoryPath(name: string): string {
+  return `/collections?category=${encodeURIComponent(name)}`;
+}
+
+function maxDate(dates: (Date | string | null | undefined)[]): Date | null {
+  const times = dates
+    .map((d) => (d ? new Date(d).getTime() : NaN))
+    .filter((t) => Number.isFinite(t));
+  return times.length ? new Date(Math.max(...times)) : null;
+}
+
+function renderXml(entries: SitemapEntry[]): string {
+  const seen = new Set<string>();
+  let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+  xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n';
+  xml += '        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n';
+  for (const entry of entries) {
+    const loc = absolute(entry.path);
+    if (seen.has(loc)) continue;
+    seen.add(loc);
+    xml += '  <url>\n';
+    xml += `    <loc>${escapeXml(loc)}</loc>\n`;
+    const lastmod = toLastmod(entry.lastmod);
+    // lastmod is only emitted when we have a real modification date — never "today".
+    if (lastmod) xml += `    <lastmod>${lastmod}</lastmod>\n`;
+    for (const image of entry.images || []) {
+      if (!image.loc || !/^https?:\/\//i.test(image.loc)) continue;
+      xml += '    <image:image>\n';
+      xml += `      <image:loc>${escapeXml(image.loc)}</image:loc>\n`;
+      if (image.title) xml += `      <image:title>${escapeXml(image.title)}</image:title>\n`;
+      xml += '    </image:image>\n';
+    }
+    xml += '  </url>\n';
+  }
+  xml += '</urlset>\n';
+  return xml;
+}
+
+const notDeleted = { isDeleted: { $ne: true } };
+
+async function buildEntries(): Promise<SitemapEntry[]> {
+  // Models are normally registered by the app already; require lazily (avoids circular imports).
+  const registered = new Set(mongoose.modelNames());
+  const ensure = (name: string, load: () => unknown) => {
+    if (!registered.has(name)) load();
+  };
+  ensure('Product', () => require('../models/Product'));
+  ensure('Category', () => require('../models/Category'));
+  ensure('ShowcaseCollection', () => require('../models/ShowcaseCollection'));
+  ensure('Event', () => require('../models/Event'));
+  ensure('Policy', () => require('../models/Policy'));
+  ensure('Blog', () => require('../models/Blog'));
+  ensure('Location', () => require('../models/Location'));
+
+  const Product = mongoose.model('Product');
+  const Category = mongoose.model('Category');
+  const Showcase = mongoose.model('ShowcaseCollection');
+  const Event = mongoose.model('Event');
+  const Policy = mongoose.model('Policy');
+  const Blog = mongoose.model('Blog');
+  const Location = mongoose.model('Location');
+
+  const [products, showcases, events, policies, blogs, locations] = await Promise.all([
+    Product.find({ isActive: true, ...notDeleted })
+      .select('_id updatedAt imageSrc title primaryCategory')
+      .lean() as Promise<any[]>,
+    Showcase.find({ isActive: true, ...notDeleted })
+      .select('_id updatedAt image title')
+      .lean() as Promise<any[]>,
+    Event.find({ isActive: true, ...notDeleted })
+      .select('_id updatedAt image title')
+      .lean() as Promise<any[]>,
+    Policy.find({ status: 'published' }).select('slug updatedAt').lean() as Promise<any[]>,
+    Blog.find({ ...notDeleted })
+      .select('slug updatedAt publishDate')
+      .lean() as Promise<any[]>,
+    Location.find({ ...notDeleted })
+      .select('slug updatedAt')
+      .lean() as Promise<any[]>,
+  ]);
+
+  // Category pages = categories that actually contain at least one active product.
+  const categoryIds = Array.from(
+    new Set(products.map((p) => p.primaryCategory && String(p.primaryCategory)).filter(Boolean)),
+  );
+  const categories = categoryIds.length
+    ? ((await Category.find({ _id: { $in: categoryIds }, isActive: true, ...notDeleted })
+        .select('_id name updatedAt')
+        .lean()) as any[])
+    : [];
+
+  const productDates = products.map((p) => p.updatedAt);
+  const showcaseDates = [...showcases, ...events].map((s) => s.updatedAt);
+
+  const entries: SitemapEntry[] = [];
+
+  // Static pages: lastmod only where it reflects real content changes.
+  for (const path of STATIC_PATHS) {
+    let lastmod: Date | null = null;
+    if (path === '/collections') lastmod = maxDate(productDates);
+    if (path === '/events') lastmod = maxDate(showcaseDates);
+    if (path === '/blog') lastmod = maxDate(blogs.map((b) => b.updatedAt || b.publishDate));
+    entries.push({ path, lastmod });
+  }
+
+  for (const cat of categories) {
+    if (!cat.name) continue;
+    const id = String(cat._id);
+    const catProducts = products.filter((p) => String(p.primaryCategory) === id);
+    entries.push({
+      path: categoryPath(cat.name),
+      lastmod: maxDate([cat.updatedAt, ...catProducts.map((p) => p.updatedAt)]),
+    });
+  }
+
+  for (const prod of products) {
+    entries.push({
+      path: `/product/${prod._id}`,
+      lastmod: prod.updatedAt,
+      images: prod.imageSrc ? [{ loc: prod.imageSrc, title: prod.title }] : [],
+    });
+  }
+
+  // /events/:id resolves showcases first, then legacy events (see EventDetail.jsx).
+  for (const item of [...showcases, ...events]) {
+    entries.push({
+      path: `/events/${item._id}`,
+      lastmod: item.updatedAt,
+      images: item.image ? [{ loc: item.image, title: item.title }] : [],
+    });
+  }
+
+  for (const policy of policies) {
+    if (!policy.slug) continue;
+    entries.push({ path: `/policy/${policy.slug}`, lastmod: policy.updatedAt });
+  }
+
+  for (const blog of blogs) {
+    if (!blog.slug) continue;
+    entries.push({ path: `/blog/${blog.slug}`, lastmod: blog.updatedAt || blog.publishDate });
+  }
+
+  for (const location of locations) {
+    if (!ROUTED_LOCATION_SLUGS.has(location.slug)) continue;
+    entries.push({ path: `/${location.slug}`, lastmod: location.updatedAt });
+  }
+
+  return entries;
+}
 
 /**
- * Enterprise debounced sitemap updater.
- * Delays sitemap regeneration to avoid overhead on bulk modifications.
+ * Builds the XML sitemap from the database. Results are cached in memory for 10 minutes and
+ * concurrent requests share one build, so crawlers hitting /sitemap.xml never trigger a full
+ * set of collection scans per request.
+ */
+export async function generateSitemap({
+  force = false,
+}: { force?: boolean } = {}): Promise<string> {
+  if (!force && cachedXml && Date.now() - cachedAt < CACHE_TTL_MS) return cachedXml;
+  if (inflight) return inflight;
+
+  inflight = (async () => {
+    try {
+      const xml = renderXml(await buildEntries());
+      cachedXml = xml;
+      cachedAt = Date.now();
+      return xml;
+    } catch (error: any) {
+      logger.error(`[SITEMAP GENERATOR ERROR] ${error.message}`);
+      if (cachedXml) return cachedXml; // serve the last good sitemap rather than an error
+      throw error;
+    } finally {
+      inflight = null;
+    }
+  })();
+  return inflight;
+}
+
+let sitemapTimeout: ReturnType<typeof setTimeout> | null = null;
+
+/**
+ * Debounced cache refresh, called after product/category/event/policy changes so the next
+ * sitemap request reflects them. (The sitemap is served dynamically via /sitemap.xml; it is no
+ * longer written into frontend/public, where it went stale and was committed by accident.)
  */
 export function triggerSitemapUpdate(): void {
-  if (process.env.NODE_ENV === 'test') {
-    return;
-  }
-
-  if (sitemapTimeout) {
-    (globalThis as any).clearTimeout(sitemapTimeout);
-  }
-
-  sitemapTimeout = (globalThis as any).setTimeout(async () => {
+  if (process.env.NODE_ENV === 'test') return;
+  if (sitemapTimeout) clearTimeout(sitemapTimeout);
+  sitemapTimeout = setTimeout(async () => {
     try {
-      await generateSitemap();
+      await generateSitemap({ force: true });
     } catch (err: any) {
       logger.error(`[SITEMAP AUTO-UPDATE ERROR] ${err.message}`);
     }
-  }, 5000); // 5 seconds debounce
+  }, 5000);
 }

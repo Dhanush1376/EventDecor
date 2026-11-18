@@ -63,10 +63,10 @@ export default defineConfig({
             return 'framework';
           }
 
-          // Animations
-          if (id.includes('node_modules/framer-motion/')) {
-            return 'animation';
-          }
+          // framer-motion is intentionally NOT forced into one chunk. The storefront
+          // shell only uses `m` + LazyMotion(domAnimation); the full `motion` component
+          // is used by cart/dashboard/checkout routes. A single 'animation' chunk made
+          // every visitor download all of it (~142 KB) at startup.
 
           // Group 2: State & Networking
           if (
@@ -132,7 +132,7 @@ export default defineConfig({
     host: true,
     proxy: {
       '/api': {
-        target: process.env.VITE_BACKEND_URL || 'http://127.0.0.1:5000',
+        target: process.env.VITE_BACKEND_URL || 'http://127.0.0.1:5001',
         changeOrigin: true,
         secure: false,
         ws: true,
@@ -154,6 +154,7 @@ export default defineConfig({
                     JSON.stringify({
                       error: 'Backend service is starting up. Please retry shortly.',
                       code: err.code,
+                      retryAfterMs: 1500,
                     }),
                   );
                 }
@@ -180,7 +181,7 @@ export default defineConfig({
         },
       },
       '/socket.io': {
-        target: process.env.VITE_BACKEND_URL || 'http://127.0.0.1:5000',
+        target: process.env.VITE_BACKEND_URL || 'http://127.0.0.1:5001',
         changeOrigin: true,
         secure: false,
         ws: true,
@@ -202,6 +203,7 @@ export default defineConfig({
                     JSON.stringify({
                       error: 'Backend service is starting up. Please retry shortly.',
                       code: err.code,
+                      retryAfterMs: 1500,
                     }),
                   );
                 }

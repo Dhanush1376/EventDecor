@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AdminToggle } from '../../components/AdminUIKit';
 import { AiProviderDropdown } from '../../components/AiProviderDropdown';
 
@@ -16,14 +16,22 @@ export function ProductInfoStep({
   const [selectedProviderId, setSelectedProviderId] = useState(null);
   const [showAiInput, setShowAiInput] = useState(false);
   const [aiPromptTitle, setAiPromptTitle] = useState('');
+  const [hasCareNote, setHasCareNote] = useState(() => Boolean(formData.customerNote?.trim()));
+
+  useEffect(() => {
+    if (formData.customerNote?.trim() && !hasCareNote) {
+      setHasCareNote(true);
+    }
+  }, [formData.customerNote]);
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-row justify-between items-start gap-2 sm:gap-3">
-        <div className="flex-1 min-w-0 pr-1 sm:pr-2">
-          <h2 className="text-[11px] font-bold text-[var(--admin-text-primary)]">Product Info</h2>
-          <p className="text-[10px] sm:text-[11px] text-[var(--admin-text-secondary)] mt-0.5">
-            Detail product info, category, and materials.
+    <div className="space-y-4 max-w-4xl">
+      {/* Header & AI Assistant */}
+      <div className="flex flex-row justify-between items-center gap-2 sm:gap-3 pb-1 border-b border-[var(--admin-border)]">
+        <div className="flex-1 min-w-0">
+          <h2 className="text-[13px] font-bold text-[var(--admin-text-primary)]">Basic Details</h2>
+          <p className="text-[11px] text-[var(--admin-text-secondary)] mt-0.5">
+            Essential title, category, and description for your product.
           </p>
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
@@ -36,7 +44,7 @@ export function ProductInfoStep({
             type="button"
             onClick={() => setShowAiInput(!showAiInput)}
             disabled={isAIGenerating}
-            className="bg-[var(--admin-accent)] text-white px-2.5 sm:px-3 h-9 min-h-[36px] box-border rounded-[4px] text-[10.5px] sm:text-[11px] font-bold uppercase tracking-wider flex items-center gap-1 sm:gap-1.5 shadow-xs hover:opacity-95 transition-all active:scale-95 disabled:opacity-70 cursor-pointer shrink-0"
+            className="bg-[var(--admin-accent)] text-white px-2.5 sm:px-3 h-8 min-h-[32px] box-border rounded-[4px] text-[10.5px] sm:text-[11px] font-bold uppercase tracking-wider flex items-center gap-1 sm:gap-1.5 shadow-xs hover:opacity-95 transition-all active:scale-95 disabled:opacity-70 cursor-pointer shrink-0"
             title="Auto-Fill with AI"
           >
             {isAIGenerating ? (
@@ -53,22 +61,22 @@ export function ProductInfoStep({
       </div>
 
       {showAiInput && (
-        <div className="bg-[var(--admin-surface)] p-4 rounded-[4px] border border-[var(--admin-border)] mb-4 mt-4 animate-in fade-in slide-in-from-top-2 shadow-xs">
-          <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-2 block">
-            Enter Title for AI Generation
+        <div className="bg-[var(--admin-surface)] p-3.5 rounded-[4px] border border-[var(--admin-border)] my-3 animate-in fade-in slide-in-from-top-2 shadow-xs">
+          <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
+            Enter Prompt or Title for AI
           </label>
           <textarea
             value={aiPromptTitle}
             onChange={(e) => setAiPromptTitle(e.target.value)}
-            className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] rounded-[4px] p-2.5 text-[12.5px] mb-3 outline-none transition-all resize-none"
-            placeholder="e.g. Traditional Brass Diya..."
+            className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] rounded-[4px] p-2.5 text-[12px] mb-2.5 outline-none transition-all resize-none"
+            placeholder="e.g. Traditional Brass Diya with peacock design..."
             rows={2}
           />
           <div className="flex justify-end gap-2">
             <button
               type="button"
               onClick={() => setShowAiInput(false)}
-              className="h-8 px-3 text-[11px] text-[var(--admin-text-secondary)] hover:bg-[var(--admin-surface-muted)] rounded-[4px] font-bold border border-[var(--admin-border)] transition-colors cursor-pointer"
+              className="h-7.5 px-3 text-[11px] text-[var(--admin-text-secondary)] hover:bg-[var(--admin-surface-muted)] rounded-[4px] font-bold border border-[var(--admin-border)] transition-colors cursor-pointer"
             >
               Cancel
             </button>
@@ -79,7 +87,7 @@ export function ProductInfoStep({
                 handleAIFill(aiPromptTitle, selectedProviderId);
               }}
               disabled={!aiPromptTitle.trim()}
-              className="h-8 px-3.5 text-[11px] text-white bg-[var(--admin-accent)] rounded-[4px] font-bold disabled:opacity-50 hover:opacity-95 transition-all cursor-pointer shadow-xs"
+              className="h-7.5 px-3.5 text-[11px] text-white bg-[var(--admin-accent)] rounded-[4px] font-bold disabled:opacity-50 hover:opacity-95 transition-all cursor-pointer shadow-xs"
             >
               Generate
             </button>
@@ -88,90 +96,58 @@ export function ProductInfoStep({
       )}
 
       {aiError && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-[4px] p-3.5 flex items-start gap-3 mt-4 mb-2 shadow-xs animate-in fade-in slide-in-from-top-2">
-          <span className="material-symbols-outlined text-red-500 shrink-0 mt-0.5">error</span>
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-[4px] p-3 flex items-start gap-2.5 my-2 shadow-xs animate-in fade-in slide-in-from-top-2">
+          <span className="material-symbols-outlined text-red-500 shrink-0 text-[18px]">error</span>
           <div className="flex-1">
-            <h3 className="text-red-800 dark:text-red-400 font-bold text-[13px] mb-1">
-              AI Auto-Fill Failed
+            <h3 className="text-red-800 dark:text-red-400 font-bold text-[12px] mb-0.5">
+              AI Auto-Fill Error
             </h3>
-            <p className="text-red-600 dark:text-red-300 text-[12px] leading-relaxed">{aiError}</p>
+            <p className="text-red-600 dark:text-red-300 text-[11.5px] leading-relaxed">
+              {aiError}
+            </p>
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              // Usually the parent or hook exposes a way to clear the error, or we can just ignore it until the next run.
-              // Since we don't have setAiError here, we can just leave it, or let the user try again which clears it.
-            }}
-            className="text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors pointer-events-none opacity-0" // Hidden but takes space, or we can just remove the close button for now since re-trying clears it.
-          ></button>
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-4">
+      {/* Main Form Fields */}
+      <div className="grid grid-cols-2 gap-3.5 pt-1">
+        {/* Title */}
         <div className="col-span-2 sm:col-span-1">
-          <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
-            English Title <span className="text-error">*</span>
+          <label className="text-[11.5px] font-semibold text-[var(--admin-text-primary)] mb-1 block">
+            Product Title <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
             required
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            placeholder="Product title"
-            className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-[4px] px-3 h-9 text-[12.5px] outline-none transition-all"
+            placeholder="e.g. Red & Green Kalu Kadigey Set"
+            className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-[4px] px-3 h-9 text-[12.5px] outline-none transition-all shadow-xs"
           />
         </div>
 
+        {/* Telugu Title */}
         <div className="col-span-2 sm:col-span-1">
-          <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
-            Telugu Title (optional)
+          <label className="text-[11.5px] font-semibold text-[var(--admin-text-primary)] mb-1 block">
+            Telugu Title{' '}
+            <span className="text-[10px] text-[var(--admin-text-secondary)] font-normal">
+              (optional)
+            </span>
           </label>
           <input
             type="text"
             value={formData.teluguTitle}
             onChange={(e) => setFormData({ ...formData, teluguTitle: e.target.value })}
             placeholder="సాంప్రదాయ పూజా పీఠం"
-            className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-[4px] px-3 h-9 text-[12.5px] outline-none transition-all"
+            className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-[4px] px-3 h-9 text-[12.5px] outline-none transition-all shadow-xs"
           />
         </div>
 
+        {/* Category */}
         <div className="col-span-2 sm:col-span-1">
-          <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
-            Slug (auto-generated from title)
-          </label>
-          <input
-            type="text"
-            readOnly
-            value={
-              formData.title
-                ? formData.title
-                    .toLowerCase()
-                    .replace(/[^a-z0-9]+/g, '-')
-                    .replace(/(^-|-$)/g, '')
-                : ''
-            }
-            placeholder="vintage-teak-mirror"
-            className="w-full bg-[var(--admin-bg-subtle)] rounded-[4px] px-3 h-9 text-[12.5px] outline-none transition-all border border-[var(--admin-border)] opacity-70 cursor-not-allowed text-[var(--admin-text-primary)] font-medium"
-          />
-        </div>
-
-        <div className="col-span-2 sm:col-span-1">
-          <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
-            Material
-          </label>
-          <input
-            type="text"
-            value={formData.material}
-            onChange={(e) => setFormData({ ...formData, material: e.target.value })}
-            placeholder="e.g. Teak wood, Pure Brass"
-            className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-[4px] px-3 h-9 text-[12.5px] outline-none transition-all"
-          />
-        </div>
-
-        <div className="col-span-2 sm:col-span-1">
-          <div className="flex justify-between items-center h-5 mb-1.5">
-            <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block">
-              Primary Category <span className="text-error">*</span>
+          <div className="flex justify-between items-center h-5 mb-1">
+            <label className="text-[11.5px] font-semibold text-[var(--admin-text-primary)]">
+              Category <span className="text-red-500">*</span>
             </label>
             <button
               type="button"
@@ -179,12 +155,12 @@ export function ProductInfoStep({
                 setIsCustomCategory(!isCustomCategory);
                 setFormData({ ...formData, primaryCategory: '' });
               }}
-              className="text-[11px] font-bold text-[var(--admin-accent)] hover:underline cursor-pointer flex items-center gap-0.5"
+              className="min-h-0 h-auto py-0 text-[11px] font-semibold text-[var(--admin-accent)] hover:underline cursor-pointer flex items-center gap-1"
             >
-              <span className="material-symbols-outlined text-[12px]">
+              <span className="material-symbols-outlined text-[13px]">
                 {isCustomCategory ? 'list' : 'add_circle'}
               </span>
-              {isCustomCategory ? 'Select from list' : 'Add Custom'}
+              <span>{isCustomCategory ? 'Select from list' : 'Add Custom'}</span>
             </button>
           </div>
           {isCustomCategory ? (
@@ -193,15 +169,15 @@ export function ProductInfoStep({
               required
               value={formData.primaryCategory}
               onChange={(e) => setFormData({ ...formData, primaryCategory: e.target.value })}
-              placeholder="Traditional Urlis, Brass Lamps"
-              className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-[4px] px-3 h-9 text-[12.5px] outline-none transition-all"
+              placeholder="e.g. Urlis, Brass Lamps"
+              className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-[4px] px-3 h-9 text-[12.5px] outline-none transition-all shadow-xs"
             />
           ) : (
             <select
               required
               value={formData.primaryCategory}
               onChange={(e) => setFormData({ ...formData, primaryCategory: e.target.value })}
-              className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-[4px] px-3 h-9 text-[12.5px] outline-none transition-all"
+              className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-[4px] px-3 h-9 text-[12.5px] outline-none transition-all shadow-xs cursor-pointer"
             >
               <option value="">Select Category</option>
               {categoriesList.map((c) => (
@@ -213,134 +189,87 @@ export function ProductInfoStep({
           )}
         </div>
 
-        <div className="col-span-2">
-          <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
-            Secondary Categories (Optional)
-          </label>
-          <div className="flex flex-wrap gap-2 p-3 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] max-h-40 overflow-y-auto">
-            {categoriesList
-              .filter((c) => c !== formData.primaryCategory)
-              .map((c) => {
-                const isSelected = formData.secondaryCategories?.includes(c);
-                return (
-                  <button
-                    type="button"
-                    key={c}
-                    onClick={() => {
-                      const current = formData.secondaryCategories || [];
-                      if (isSelected) {
-                        setFormData({
-                          ...formData,
-                          secondaryCategories: current.filter((cat) => cat !== c),
-                        });
-                      } else {
-                        setFormData({ ...formData, secondaryCategories: [...current, c] });
-                      }
-                    }}
-                    className={`px-2.5 py-1 text-[11px] font-semibold rounded-[4px] border transition-all ${
-                      isSelected
-                        ? 'bg-[var(--admin-accent)] text-white border-[var(--admin-accent)]'
-                        : 'bg-[var(--admin-bg-subtle)] text-[var(--admin-text-secondary)] border-[var(--admin-border)] hover:border-[var(--admin-accent)]'
-                    }`}
-                  >
-                    {c}
-                  </button>
-                );
-              })}
-            {categoriesList.length === 0 && (
-              <p className="text-[11px] text-[var(--admin-text-tertiary)] italic py-1">
-                No other categories available.
-              </p>
-            )}
-          </div>
-        </div>
-
+        {/* Dimensions */}
         <div className="col-span-2 sm:col-span-1">
-          <div className="flex items-center h-5 mb-1.5">
-            <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block">
-              Dimensions (L x W x H)
+          <div className="flex items-center h-5 mb-1">
+            <label className="text-[11.5px] font-semibold text-[var(--admin-text-primary)]">
+              Dimensions{' '}
+              <span className="text-[10px] text-[var(--admin-text-secondary)] font-normal">
+                (optional)
+              </span>
             </label>
           </div>
           <input
             type="text"
             value={formData.dimensions}
             onChange={(e) => setFormData({ ...formData, dimensions: e.target.value })}
-            placeholder='Dimensions (e.g. 18" x 4" x 24")'
-            className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-[4px] px-3 h-9 text-[12.5px] outline-none transition-all"
+            placeholder='e.g. 12" x 12"'
+            className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-[4px] px-3 h-9 text-[12.5px] outline-none transition-all shadow-xs"
           />
         </div>
 
+        {/* Description */}
         <div className="col-span-2">
-          <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
-            Product Description
-          </label>
+          <div className="flex justify-between items-center mb-1">
+            <label className="text-[11.5px] font-semibold text-[var(--admin-text-primary)]">
+              Product Description
+            </label>
+            <span className="text-[10px] text-[var(--admin-text-tertiary)]">
+              Brief summary for customers
+            </span>
+          </div>
           <textarea
-            rows={4}
+            rows={2}
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            placeholder="Enter product description..."
-            className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-[4px] p-3 text-[12.5px] outline-none transition-all resize-none"
+            placeholder="Write a short description..."
+            className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-[4px] px-3 py-2 text-[12px] outline-none transition-all resize-y min-h-[58px] shadow-xs"
           />
         </div>
       </div>
 
-      {/* Product Personalization Settings */}
-      <div
-        className={`p-4 bg-[var(--admin-bg-subtle)] border rounded-[4px] space-y-4 mt-6 transition-all duration-300 ${focusedField === 'isCustomizable' ? 'border-[var(--admin-accent)] ring-2 ring-[var(--admin-accent)]/50' : 'border-[var(--admin-border)]'}`}
-      >
-        <div className="flex justify-between items-start">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-primary)]">
-              Customer Personalization Notes
-            </p>
-            <p className="text-[10.5px] text-[var(--admin-text-secondary)] mt-0.5">
-              Allow custom text or engravings at checkout
-            </p>
+      {/* Additional Options (Streamlined & Lightweight) */}
+      <div className="space-y-2.5 pt-2">
+        {/* Custom Text / Personalization */}
+        <div
+          className={`p-3 bg-[var(--admin-bg-subtle)] border rounded-[4px] transition-all duration-200 ${
+            formData.customizationConfig?.enabled
+              ? 'border-[var(--admin-accent)]/50 bg-[var(--admin-surface)]'
+              : 'border-[var(--admin-border)]'
+          }`}
+        >
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-[12px] font-bold text-[var(--admin-text-primary)]">
+                Custom Text / Personalization
+              </p>
+              <p className="text-[10.5px] text-[var(--admin-text-secondary)]">
+                Allow customers to enter names or custom notes at checkout
+              </p>
+            </div>
+            <AdminToggle
+              checked={formData.customizationConfig?.enabled || false}
+              onChange={() =>
+                setFormData((prev) => ({
+                  ...prev,
+                  customizationConfig: {
+                    ...prev.customizationConfig,
+                    enabled: !prev.customizationConfig?.enabled,
+                  },
+                }))
+              }
+            />
           </div>
-          <AdminToggle
-            checked={formData.customizationConfig?.enabled || false}
-            onChange={() =>
-              setFormData((prev) => ({
-                ...prev,
-                customizationConfig: {
-                  ...prev.customizationConfig,
-                  enabled: !prev.customizationConfig?.enabled,
-                },
-              }))
-            }
-          />
-        </div>
 
-        {formData.customizationConfig?.enabled && (
-          <div className="space-y-4 pt-2 border-t border-[var(--admin-border)] mt-2">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {formData.customizationConfig?.enabled && (
+            <div className="pt-2.5 border-t border-[var(--admin-border)] mt-2.5 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <div>
-                <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
-                  Input Label
+                <label className="text-[10.5px] font-semibold text-[var(--admin-text-secondary)] mb-1 block">
+                  Input Placeholder
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Name to Print"
-                  value={formData.customizationConfig?.label || ''}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      customizationConfig: {
-                        ...prev.customizationConfig,
-                        label: e.target.value,
-                      },
-                    }))
-                  }
-                  className={`w-full bg-[var(--admin-surface)] rounded-[4px] px-3 h-9 text-[12.5px] border outline-none transition-all ${focusedField === 'customizationNote' ? 'border-[var(--admin-accent)] ring-2 ring-[var(--admin-accent)]/50' : 'border-[var(--admin-border)] focus:border-[var(--admin-accent)]'}`}
-                />
-              </div>
-              <div>
-                <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
-                  Placeholder Text
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Enter name here..."
+                  placeholder="e.g. Enter name for engraving..."
                   value={formData.customizationConfig?.placeholder || ''}
                   onChange={(e) =>
                     setFormData((prev) => ({
@@ -351,209 +280,73 @@ export function ProductInfoStep({
                       },
                     }))
                   }
-                  className="w-full bg-[var(--admin-surface)] rounded-[4px] px-3 h-9 text-[12.5px] border border-[var(--admin-border)] outline-none focus:border-[var(--admin-accent)] transition-all"
+                  className="w-full bg-[var(--admin-surface)] rounded-[4px] px-3 h-8 text-[11.5px] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] outline-none"
                 />
               </div>
-            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
-                  Max Length (chars)
-                </label>
-                <input
-                  type="number"
-                  placeholder="500"
-                  value={formData.customizationConfig?.maxLength || 500}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      customizationConfig: {
-                        ...prev.customizationConfig,
-                        maxLength: e.target.value,
-                      },
-                    }))
-                  }
-                  className="w-full bg-[var(--admin-surface)] rounded-[4px] px-3 h-9 text-[12.5px] border border-[var(--admin-border)] outline-none focus:border-[var(--admin-accent)] transition-all"
-                />
-              </div>
-              <div>
-                <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
-                  Required Field?
-                </label>
-                <div className="flex items-center mt-2">
-                  <AdminToggle
+              <div className="flex items-center sm:pt-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
                     checked={formData.customizationConfig?.required || false}
-                    onChange={() =>
+                    onChange={(e) =>
                       setFormData((prev) => ({
                         ...prev,
                         customizationConfig: {
                           ...prev.customizationConfig,
-                          required: !prev.customizationConfig?.required,
+                          required: e.target.checked,
                         },
                       }))
                     }
+                    className="accent-[var(--admin-accent)] rounded"
                   />
-                  <span className="ml-2 text-[11px] text-[var(--admin-text-secondary)]">
-                    Customers must provide this note to checkout.
+                  <span className="text-[11px] font-medium text-[var(--admin-text-secondary)]">
+                    Required for checkout
                   </span>
-                </div>
+                </label>
               </div>
             </div>
-
-            <div>
-              <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
-                Helper Description (Optional)
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. Please double check spelling before submitting."
-                value={formData.customizationConfig?.helperText || ''}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    customizationConfig: {
-                      ...prev.customizationConfig,
-                      helperText: e.target.value,
-                    },
-                  }))
-                }
-                className="w-full bg-[var(--admin-surface)] rounded-[4px] px-3 h-9 text-[12.5px] border border-[var(--admin-border)] outline-none focus:border-[var(--admin-accent)] transition-all"
-              />
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Product Notes & Complimentary Gift Information */}
-      <div
-        className={`p-4 bg-[var(--admin-bg-subtle)] border rounded-[4px] space-y-4 mt-6 transition-all duration-300 ${focusedField === 'customerNote' ? 'border-[var(--admin-accent)] ring-2 ring-[var(--admin-accent)]/50' : 'border-[var(--admin-border)]'}`}
-      >
-        <div>
-          <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-primary)] mb-0.5">
-            Customer Note / Important Information
-          </p>
-          <p className="text-[10.5px] text-[var(--admin-text-secondary)] mb-2">
-            Displays on the product page as a Designer's Note
-          </p>
-          <textarea
-            rows={3}
-            value={formData.customerNote || ''}
-            onChange={(e) => setFormData({ ...formData, customerNote: e.target.value })}
-            placeholder="e.g. Crafted with pure brass... Please note that slight color variations may occur."
-            className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-[4px] p-3 text-[12.5px] outline-none transition-all resize-none"
-          />
+          )}
         </div>
 
-        <div className="pt-4 border-t border-[var(--admin-border)]">
-          <div className="flex justify-between items-start mb-4">
+        {/* Care / Handcraft Note */}
+        <div
+          className={`p-3 bg-[var(--admin-bg-subtle)] border rounded-[4px] transition-all duration-200 ${
+            hasCareNote
+              ? 'border-[var(--admin-accent)]/50 bg-[var(--admin-surface)]'
+              : 'border-[var(--admin-border)]'
+          }`}
+        >
+          <div className="flex justify-between items-center">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-primary)]">
-                Complimentary Gift Included
+              <p className="text-[12px] font-bold text-[var(--admin-text-primary)]">
+                Handcraft / Care Note
               </p>
-              <p className="text-[10.5px] text-[var(--admin-text-secondary)] mt-0.5">
-                Offer a free gift with this product purchase
+              <p className="text-[10.5px] text-[var(--admin-text-secondary)]">
+                Special instructions or disclaimers for handmade items
               </p>
             </div>
             <AdminToggle
-              checked={formData.complimentaryGift?.enabled || false}
-              onChange={() =>
-                setFormData((prev) => ({
-                  ...prev,
-                  complimentaryGift: {
-                    ...prev.complimentaryGift,
-                    enabled: !prev.complimentaryGift?.enabled,
-                  },
-                }))
-              }
+              checked={hasCareNote}
+              onChange={() => {
+                const next = !hasCareNote;
+                setHasCareNote(next);
+                if (!next) {
+                  setFormData((prev) => ({ ...prev, customerNote: '' }));
+                }
+              }}
             />
           </div>
 
-          {formData.complimentaryGift?.enabled && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
-                  Gift Name
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Welcome Chocolate Gift"
-                  value={formData.complimentaryGift?.name || ''}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      complimentaryGift: {
-                        ...prev.complimentaryGift,
-                        name: e.target.value,
-                      },
-                    }))
-                  }
-                  className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-[4px] px-3 h-9 text-[12.5px] outline-none transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
-                  Quantity
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  value={formData.complimentaryGift?.quantity || 1}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      complimentaryGift: {
-                        ...prev.complimentaryGift,
-                        quantity: parseInt(e.target.value, 10) || 1,
-                      },
-                    }))
-                  }
-                  className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-[4px] px-3 h-9 text-[12.5px] outline-none transition-all"
-                />
-              </div>
-
-              <div className="sm:col-span-2">
-                <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
-                  Gift Description (Optional)
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Premium assorted Belgian chocolates."
-                  value={formData.complimentaryGift?.description || ''}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      complimentaryGift: {
-                        ...prev.complimentaryGift,
-                        description: e.target.value,
-                      },
-                    }))
-                  }
-                  className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-[4px] px-3 h-9 text-[12.5px] outline-none transition-all"
-                />
-              </div>
-
-              <div className="sm:col-span-2">
-                <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
-                  Display Badge (Optional)
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. FREE GIFT"
-                  value={formData.complimentaryGift?.displayBadge || ''}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      complimentaryGift: {
-                        ...prev.complimentaryGift,
-                        displayBadge: e.target.value,
-                      },
-                    }))
-                  }
-                  className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-[4px] px-3 h-9 text-[12.5px] outline-none transition-all"
-                />
-              </div>
+          {hasCareNote && (
+            <div className="pt-2.5 mt-2.5 border-t border-[var(--admin-border)]">
+              <textarea
+                rows={2}
+                value={formData.customerNote || ''}
+                onChange={(e) => setFormData({ ...formData, customerNote: e.target.value })}
+                placeholder="e.g. • Handcrafted item • Minor variations in color are normal"
+                className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-[4px] p-2 text-[11.5px] outline-none transition-all resize-y min-h-[48px]"
+              />
             </div>
           )}
         </div>

@@ -1,7 +1,6 @@
 import {
   Award,
   CornerDownLeft,
-  ArrowLeftRight,
   Heart,
   Star,
   Truck,
@@ -23,10 +22,9 @@ import { useQuery } from '@tanstack/react-query';
 import { couponService } from '../../services/domainServices';
 import { MandalaArtDecor } from './MandalaArtDecor';
 import { ProductCoupons } from './ProductCoupons';
-import { BRAND } from '../../config/brand';
-import { WhatsAppIcon } from './WhatsAppIcon';
 import { useConfig } from '../../context/ConfigContext';
 import toast from 'react-hot-toast';
+import { getPurchasableStock, isMadeToOrder } from '../../utils/ecommerce/inventory';
 
 export function ProductInfo({
   product,
@@ -70,6 +68,9 @@ export function ProductInfo({
   }
 
   const canPurchase = !product?.availabilityMode || product.availabilityMode !== 'rent_only';
+  const isOutOfStock = getPurchasableStock(product) <= 0;
+  const showLowStock =
+    !isMadeToOrder(product) && product?.stock != null && product.stock > 0 && product.stock <= 5;
   const canRent =
     product?.rentalEnabled &&
     (product.availabilityMode === 'rent_only' || product.availabilityMode === 'both');
@@ -129,7 +130,7 @@ export function ProductInfo({
   };
 
   return (
-    <div className="flex flex-col gap-6 lg:gap-7 lg:sticky lg:top-32 relative lg:self-start">
+    <div className="vt-reveal flex flex-col gap-6 lg:gap-7 lg:sticky lg:top-32 relative lg:self-start">
       <MandalaArtDecor
         variant={1}
         size={400}
@@ -184,23 +185,18 @@ export function ProductInfo({
               </span>
             </button>
           )}
-          {product.returnSettings?.isReturnable && (
+          {product.isNonRefundable === false && (
             <div className="relative group/badge">
-              <div className="w-9 h-9 rounded-full bg-surface-container-high border border-outline-variant/30 flex items-center justify-center shadow-sm cursor-default hover:scale-110 transition-transform">
+              <div
+                className="w-9 h-9 rounded-full bg-surface-container-high border border-outline-variant/30 flex items-center justify-center shadow-sm cursor-default hover:scale-110 transition-transform"
+                aria-label="Return and exchange available"
+              >
                 <CornerDownLeft className="text-[16px] text-on-surface" strokeWidth={1.5} />
               </div>
               <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-on-surface text-surface text-[12px] uppercase tracking-widest rounded-md opacity-0 group-hover/badge:opacity-100 transition-opacity whitespace-nowrap pointer-events-none font-bold shadow-xl z-10">
-                {product.returnSettings.returnWindowDays} Days Returnable
-              </span>
-            </div>
-          )}
-          {product.returnSettings?.isExchangeable && (
-            <div className="relative group/badge">
-              <div className="w-9 h-9 rounded-full bg-surface-container-high border border-outline-variant/30 flex items-center justify-center shadow-sm cursor-default hover:scale-110 transition-transform">
-                <ArrowLeftRight className="text-[16px] text-on-surface" strokeWidth={1.5} />
-              </div>
-              <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-on-surface text-surface text-[12px] uppercase tracking-widest rounded-md opacity-0 group-hover/badge:opacity-100 transition-opacity whitespace-nowrap pointer-events-none font-bold shadow-xl z-10">
-                {product.returnSettings.exchangeWindowDays} Days Exchangeable
+                {Number(product.returnSettings?.returnWindow) > 0
+                  ? `${product.returnSettings.returnWindow}-Day Return & Exchange`
+                  : 'Return & Exchange Available'}
               </span>
             </div>
           )}
@@ -210,7 +206,7 @@ export function ProductInfo({
       {/* Product Title & Metadata - Luxury Editorial */}
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2 lg:space-y-3 flex-1">
-          <h2 className="flex flex-col gap-1.5 font-display text-[26px] sm:text-[30px] lg:text-[38px] text-on-surface leading-[1.1] tracking-[-0.01em] font-light">
+          <h1 className="flex flex-col gap-1.5 font-display text-[26px] sm:text-[30px] lg:text-[38px] text-on-surface leading-[1.1] tracking-[-0.01em] font-light">
             <span>{product.title}</span>
             {(product.teluguTitle || product.nameTE || product.teluguName) && (
               <div className="flex items-center gap-3 mt-1">
@@ -224,7 +220,7 @@ export function ProductInfo({
                 />
               </div>
             )}
-          </h2>
+          </h1>
           {product.isFeatured && (
             <div className="flex items-center gap-2 pt-0.5">
               <span className="font-label-sm text-[11px] sm:text-[12px] text-green-700 font-bold flex items-center gap-1.5">
@@ -400,7 +396,7 @@ export function ProductInfo({
 
       {/* Action CTA Stack */}
       <div className="space-y-6 mt-4">
-        {canPurchase && product.stock != null && product.stock <= 5 && product.stock > 0 && (
+        {canPurchase && showLowStock && (
           <div className="flex items-center gap-3 px-4 py-3 rounded-full bg-[#fcfbf9] border border-primary/20 shadow-sm">
             <Zap className="text-primary text-[16px] animate-pulse font-bold" strokeWidth={1.5} />
             <span className="font-label-sm text-[10px] text-primary uppercase tracking-[0.2em] font-bold">
@@ -423,15 +419,15 @@ export function ProductInfo({
                       toast(
                         'Online ordering is temporarily paused while the store is in catalog-only mode.',
                       )
-                  : product.stock <= 0 || added
+                  : isOutOfStock || added
                     ? undefined
                     : handleAddToCart
               }
-              disabled={!isStoreClosed && (product.stock <= 0 || added)}
+              disabled={!isStoreClosed && (isOutOfStock || added)}
               className={`!py-3 rounded-full flex items-center justify-center gap-2 group shadow-sm transition-all font-bold px-4 ${
                 isStoreClosed
                   ? 'bg-stone-100 text-stone-600 hover:bg-stone-200/80 border border-stone-300/80 cursor-pointer'
-                  : product.stock <= 0
+                  : isOutOfStock
                     ? 'bg-stone-200 text-stone-400 cursor-not-allowed'
                     : added
                       ? 'bg-[#e0d6b8] text-[#1a1c1a] cursor-pointer'
@@ -453,10 +449,10 @@ export function ProductInfo({
               ) : (
                 <>
                   <span className="material-symbols-outlined text-[16px] group-hover:rotate-12 transition-transform shrink-0">
-                    {product.stock <= 0 ? 'remove_shopping_cart' : 'shopping_bag'}
+                    {isOutOfStock ? 'remove_shopping_cart' : 'shopping_bag'}
                   </span>
                   <span className="text-[11px] uppercase tracking-widest">
-                    {product.stock <= 0 ? 'Out of Stock' : 'Bag'}
+                    {isOutOfStock ? 'Out of Stock' : 'Bag'}
                   </span>
                 </>
               )}
@@ -485,50 +481,39 @@ export function ProductInfo({
             </span>
           </button>
 
-          {canRent &&
-            (() => {
-              const maxRentalStock = product.rentalStock > 0 ? product.rentalStock : product.stock;
-              return (
-                <button
-                  onClick={
-                    isStoreClosed
-                      ? () =>
-                          toast(
-                            'Rental bookings are temporarily paused while the store is in catalog-only mode.',
-                          )
-                      : maxRentalStock <= 0
-                        ? undefined
-                        : handleRentNow
-                  }
-                  disabled={!isStoreClosed && maxRentalStock <= 0}
-                  className={`!py-3 rounded-full flex items-center justify-center gap-2 group shadow-sm transition-all font-bold px-4 ${
-                    isStoreClosed
-                      ? 'bg-stone-100 text-stone-600 hover:bg-stone-200/80 border border-stone-300/80 cursor-pointer'
-                      : maxRentalStock <= 0
-                        ? 'bg-stone-200 text-stone-400 cursor-not-allowed'
-                        : 'bg-[#8c7335] text-white hover:bg-[#725c29] cursor-pointer'
-                  } ${canPurchase && canRent ? 'col-span-2' : ''}`}
-                >
-                  {isStoreClosed ? (
-                    <>
-                      <Lock className="w-3.5 h-3.5 text-stone-500 shrink-0" strokeWidth={2} />
-                      <span className="text-[11px] uppercase tracking-widest font-semibold">
-                        Rentals Paused
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="material-symbols-outlined text-[16px] group-hover:scale-110 transition-transform shrink-0">
-                        {maxRentalStock <= 0 ? 'event_busy' : 'event_available'}
-                      </span>
-                      <span className="text-[11px] uppercase tracking-widest">
-                        {maxRentalStock <= 0 ? 'No Rental Stock' : 'Rent'}
-                      </span>
-                    </>
-                  )}
-                </button>
-              );
-            })()}
+          {canRent && (
+            <button
+              onClick={
+                isStoreClosed
+                  ? () =>
+                      toast(
+                        'Rental bookings are temporarily paused while the store is in catalog-only mode.',
+                      )
+                  : handleRentNow
+              }
+              className={`!py-3 rounded-full flex items-center justify-center gap-2 group shadow-sm transition-all font-bold px-4 ${
+                isStoreClosed
+                  ? 'bg-stone-100 text-stone-600 hover:bg-stone-200/80 border border-stone-300/80 cursor-pointer'
+                  : 'bg-[#8c7335] text-white hover:bg-[#725c29] cursor-pointer'
+              } ${canPurchase && canRent ? 'col-span-2' : ''}`}
+            >
+              {isStoreClosed ? (
+                <>
+                  <Lock className="w-3.5 h-3.5 text-stone-500 shrink-0" strokeWidth={2} />
+                  <span className="text-[11px] uppercase tracking-widest font-semibold">
+                    Rentals Paused
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="material-symbols-outlined text-[16px] group-hover:scale-110 transition-transform shrink-0">
+                    event_available
+                  </span>
+                  <span className="text-[11px] uppercase tracking-widest">Rent</span>
+                </>
+              )}
+            </button>
+          )}
         </div>
 
         {/* Dynamic Delivery Reassurance Badge */}
@@ -545,11 +530,6 @@ export function ProductInfo({
               </span>
             )}
           </span>
-        </div>
-
-        {/* Custom Design Consultation Card */}
-        <div className="md:hidden">
-          <CustomThemeCard product={product} />
         </div>
       </div>
 
@@ -573,52 +553,6 @@ export function FeatureItem({ icon, label }) {
       <span className="font-label-sm text-[11px] text-on-surface/60 uppercase tracking-widest font-normal">
         {label}
       </span>
-    </div>
-  );
-}
-
-export function CustomThemeCard({ product }) {
-  const navigate = useNavigate();
-  const { runProtectedAction } = useAuth();
-
-  const handleWhatsAppChat = () => {
-    if (!product) return;
-    const productLink = `${window.location.origin}/product/${product._id || product.id}`;
-    const baseMsg = `Hello, I'm interested in this product and would like to chat about it.\n\nProduct Link: ${productLink}`;
-    window.open(BRAND.getWhatsAppUrl(baseMsg), '_blank');
-  };
-
-  return (
-    <div className="p-6 md:p-8 lg:p-6 rounded-3xl bg-[#2A2825] text-white relative overflow-hidden shadow-lg border border-white/5 w-full">
-      <div className="relative z-10 flex flex-col md:flex-row lg:flex-col items-center justify-between lg:justify-center text-center md:text-left lg:text-center gap-5 md:gap-8 lg:gap-5 w-full">
-        <div className="flex-1 lg:flex-none">
-          <h4 className="font-headline-sm mb-1 text-[#826237] font-normal tracking-wide">
-            Need a Custom Theme?
-          </h4>
-          <p className="font-body-sm text-white/90 font-medium">
-            Personalize this setup to perfectly match your vision.
-          </p>
-        </div>
-        <div className="flex flex-row gap-3 md:gap-3 lg:gap-2 w-full md:w-auto lg:w-full shrink-0">
-          <button
-            onClick={() =>
-              runProtectedAction(() =>
-                navigate(`/custom-orders?product=${product._id || product.id}`),
-              )
-            }
-            className="bg-white text-black flex-1 md:flex-none lg:flex-1 px-6 py-3 lg:px-2 lg:py-2.5 rounded-full font-label-sm text-[11px] lg:text-[10px] uppercase tracking-[0.15em] hover:bg-stone-200 transition-all whitespace-nowrap font-bold shadow-sm flex items-center justify-center"
-          >
-            Customize
-          </button>
-          <button
-            onClick={() => runProtectedAction(handleWhatsAppChat)}
-            className="bg-transparent border border-white/30 flex-1 md:flex-none lg:flex-1 text-white px-6 py-3 lg:px-2 lg:py-2.5 rounded-full font-label-sm text-[11px] lg:text-[10px] uppercase tracking-[0.15em] hover:bg-white/10 transition-all whitespace-nowrap font-bold flex items-center justify-center gap-1.5"
-          >
-            <WhatsAppIcon className="w-[14px] h-[14px]" />
-            WhatsApp
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

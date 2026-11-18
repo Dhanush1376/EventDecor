@@ -2,21 +2,36 @@ import { Link, useParams } from 'react-router-dom';
 import { m as motion } from 'framer-motion';
 import { PolicySidebar, MobilePolicyNav } from '../components/layout/PolicySidebar';
 import { SEO } from '../components/seo/SEO';
+import { POLICY_BY_SLUG } from '../seo/seoConfig';
 import { Skeleton } from '../components/ui';
 import { useQuery } from '@tanstack/react-query';
 import { policyService } from '../services/domainServices';
 import { createSafeHtml } from '../utils/security/sanitize';
 import { MandalaElement } from '../components/ui/MandalaElement';
-import { useConfig } from '../context/ConfigContext';
+import {
+  ReturnExchangeHelpCard,
+  RETURN_EXCHANGE_POLICY_SLUGS,
+} from '../components/policy/ReturnExchangeHelpCard';
+
+// Policy content is either a JSON list of {heading, paragraph} sections or legacy HTML.
+function parseSections(content) {
+  if (typeof content !== 'string' || !content.trim().startsWith('[')) return null;
+  try {
+    const sections = JSON.parse(content);
+    return Array.isArray(sections) ? sections : null;
+  } catch {
+    return null; // not JSON: rendered as sanitized HTML below
+  }
+}
 
 export function GenericPolicyPage({ slug: propSlug, defaultTitle }) {
-  const { storeName } = useConfig();
   const { slug: paramSlug } = useParams();
   const slug = propSlug || paramSlug;
   const {
     data: response,
     isLoading,
     isError,
+    refetch,
   } = useQuery({
     queryKey: ['policy', slug],
     queryFn: () => policyService.getBySlug(slug),
@@ -25,10 +40,10 @@ export function GenericPolicyPage({ slug: propSlug, defaultTitle }) {
     enabled: !!slug,
   });
 
+  const policyMeta = POLICY_BY_SLUG[slug];
   const policy = response?.data || {
     title: defaultTitle,
     content: '<p>Policy content is not available.</p>',
-    updatedAt: new Date().toISOString(),
   };
 
   return (
@@ -46,10 +61,15 @@ export function GenericPolicyPage({ slug: propSlug, defaultTitle }) {
         variant={2}
         className="absolute bottom-0 left-0 translate-y-1/4 -translate-x-1/4 text-primary opacity-5 lg:opacity-10 pointer-events-none"
       />
-      <SEO
-        title={policy.title}
-        description={`Read our ${policy.title} at ${storeName || 'Siri Arts & Crafts'}.`}
-      />
+      {isError || (!isLoading && !response?.data) ? (
+        <SEO title="Policy Not Found" noindex />
+      ) : (
+        <SEO
+          title={policyMeta?.title || policy.title}
+          description={policyMeta?.description || policy.seoMetadata?.description}
+          canonicalUrl={`/policy/${slug}`}
+        />
+      )}
 
       <div className="max-w-[1400px] mx-auto px-4 lg:px-8 lg:px-12 relative z-10">
         {/* Help Center Header */}
@@ -71,9 +91,16 @@ export function GenericPolicyPage({ slug: propSlug, defaultTitle }) {
           <div className="text-[12px] text-on-surface-variant uppercase tracking-widest font-medium">
             {isLoading ? (
               <Skeleton className="h-4 w-40" />
-            ) : (
-              `Last updated: ${new Date(policy.updatedAt).toLocaleDateString()}`
-            )}
+            ) : response?.data?.updatedAt ? (
+              <time dateTime={response.data.updatedAt}>
+                Last updated:{' '}
+                {new Date(response.data.updatedAt).toLocaleDateString('en-IN', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                })}
+              </time>
+            ) : null}
           </div>
         </div>
 
@@ -101,32 +128,41 @@ export function GenericPolicyPage({ slug: propSlug, defaultTitle }) {
                   </div>
                 </div>
               ) : isError ? (
-                <div className="text-red-500">Failed to load policy. Please try again later.</div>
+                <div role="alert" className="space-y-3">
+                  <p className="text-[13px] text-on-surface/80">
+                    We couldn&apos;t load this policy right now.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => refetch()}
+                    className="text-[11px] font-bold uppercase tracking-widest text-primary underline underline-offset-4"
+                  >
+                    Try again
+                  </button>
+                </div>
               ) : (
                 (() => {
-                  try {
-                    const sets = JSON.parse(policy.content);
-                    if (Array.isArray(sets)) {
-                      return (
-                        <div className="space-y-8">
-                          {sets.map((set, i) => (
-                            <div key={i} className="space-y-3">
-                              {set.heading && (
-                                <h2 className="font-serif-heading font-medium text-base sm:text-[17px] text-on-surface">
-                                  {set.heading}
-                                </h2>
-                              )}
-                              {set.paragraph && (
-                                <p className="text-[13px] text-on-surface/80 leading-relaxed font-normal whitespace-pre-wrap">
-                                  {set.paragraph}
-                                </p>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      );
-                    }
-                  } catch (e) {}
+                  const sets = parseSections(policy.content);
+                  if (sets) {
+                    return (
+                      <div className="space-y-8">
+                        {sets.map((set, i) => (
+                          <div key={i} className="space-y-3">
+                            {set.heading && (
+                              <h2 className="font-serif-heading font-medium text-base sm:text-[17px] text-on-surface">
+                                {set.heading}
+                              </h2>
+                            )}
+                            {set.paragraph && (
+                              <p className="text-[13px] text-on-surface/80 leading-relaxed font-normal whitespace-pre-wrap">
+                                {set.paragraph}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  }
 
                   // Fallback for legacy raw HTML content
                   return (
@@ -138,6 +174,7 @@ export function GenericPolicyPage({ slug: propSlug, defaultTitle }) {
                 })()
               )}
             </div>
+            {RETURN_EXCHANGE_POLICY_SLUGS.has(slug) && <ReturnExchangeHelpCard />}
           </main>
         </div>
       </div>

@@ -171,7 +171,8 @@ export function WishlistView({ isEmbedded = false }) {
       {!isEmbedded && (
         <SEO
           title="My Wishlist"
-          description={`A private gallery of your favorite ${storeName} masterpieces. Artisanal decor saved for your future heritage celebrations.`}
+          description={`Your saved items at ${storeName}.`}
+          noindex
         />
       )}
 

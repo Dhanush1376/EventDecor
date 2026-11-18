@@ -1,9 +1,9 @@
-import { ArrowRight, Eye } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { m as motion, useScroll, useTransform } from 'framer-motion';
 import { SEO } from '../../components/seo/SEO';
-import { cmsService, galleryService } from '../../services/domainServices';
+import { cmsService } from '../../services/domainServices';
 import { useWebsiteContent } from '../../hooks/useWebsiteContent';
 import logger from '../../utils/core/logger';
 import { CloudinaryImage } from '../../components/ui/CloudinaryImage';
@@ -13,13 +13,10 @@ import { AboutSkeleton } from '../../components/ui/Skeleton';
 import { useConfig } from '../../context/ConfigContext';
 
 export function About() {
-  const { storeSettings, storeName, storeNameUpper, hideGallerySection } = useConfig();
-  const hideGallery = Boolean(hideGallerySection || storeSettings?.storefront?.hideGallerySection);
-  const { navigation, loading: webLoading } = useWebsiteContent();
-  const logoText = navigation?.logo?.text || storeNameUpper || 'SIRI ARTS & CRAFTS';
+  const { storeName } = useConfig();
+  const { loading: webLoading } = useWebsiteContent();
 
   const [cmsContent, setCmsContent] = useState(null);
-  const [galleryPreview, setGalleryPreview] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [openFaqs, setOpenFaqs] = useState([0]);
 
@@ -39,18 +36,10 @@ export function About() {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const [cmsRes, galleryRes] = await Promise.all([
-          cmsService.getSection('aboutPage').catch(() => null),
-          galleryService.getAll({ limit: 6 }).catch(() => null),
-        ]);
+        const cmsRes = await cmsService.getSection('aboutPage').catch(() => null);
 
         if (cmsRes?.success && cmsRes?.data) {
           setCmsContent(cmsRes.data.data || cmsRes.data);
-        }
-        if (galleryRes?.success) {
-          setGalleryPreview(
-            galleryRes.data?.items || galleryRes.data?.data || galleryRes.data || [],
-          );
         }
       } catch (err) {
         logger.error('About page data fetch failed:', err);
@@ -67,6 +56,15 @@ export function About() {
 
   const founders = cmsContent?.founders || [];
 
+  const showcaseImages = cmsContent?.showcaseImages || [
+    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80',
+    'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=600&q=80',
+    'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80',
+    'https://images.unsplash.com/photo-1582562124811-c09040d0a901?auto=format&fit=crop&w=600&q=80',
+    'https://images.unsplash.com/photo-1567225557594-88d73e55f2cb?auto=format&fit=crop&w=600&q=80',
+    'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=600&q=80',
+  ];
+
   const getSrc = (img, fallback) => img?.url || (typeof img === 'string' ? img : fallback);
 
   const heroTitle = cmsContent?.heroTitle || '';
@@ -77,10 +75,7 @@ export function About() {
       ref={containerRef}
       className="bg-[#EAE5DB] min-h-screen relative overflow-hidden text-[#1A1A1A]"
     >
-      <SEO
-        title={`Our Story | ${logoText}`}
-        description={`Discover the cinematic luxury of ${logoText}. Handcrafted Telugu cultural decor.`}
-      />
+      <SEO />
 
       {/* Global Delicate Accents */}
       <div className="fixed top-0 left-0 w-full h-1 bg-[var(--color-gold)]/20 z-50" />
@@ -101,7 +96,7 @@ export function About() {
               transition={{ repeat: Infinity, duration: 40, ease: 'linear' }}
               className="flex gap-6 w-max"
             >
-              {[...galleryPreview, ...galleryPreview, ...galleryPreview, ...galleryPreview].map(
+              {[...showcaseImages, ...showcaseImages, ...showcaseImages, ...showcaseImages].map(
                 (item, idx) => (
                   <div
                     key={`r1-${idx}`}
@@ -125,7 +120,7 @@ export function About() {
               transition={{ repeat: Infinity, duration: 45, ease: 'linear' }}
               className="flex gap-6 w-max -ml-24"
             >
-              {[...galleryPreview, ...galleryPreview, ...galleryPreview, ...galleryPreview]
+              {[...showcaseImages, ...showcaseImages, ...showcaseImages, ...showcaseImages]
                 .reverse()
                 .map((item, idx) => (
                   <div
@@ -152,7 +147,7 @@ export function About() {
               transition={{ repeat: Infinity, duration: 35, ease: 'linear' }}
               className="flex gap-6 w-max"
             >
-              {[...galleryPreview, ...galleryPreview, ...galleryPreview, ...galleryPreview].map(
+              {[...showcaseImages, ...showcaseImages, ...showcaseImages, ...showcaseImages].map(
                 (item, idx) => (
                   <div
                     key={`r3-${idx}`}
@@ -176,7 +171,7 @@ export function About() {
               transition={{ repeat: Infinity, duration: 42, ease: 'linear' }}
               className="flex gap-6 w-max -ml-16"
             >
-              {[...galleryPreview, ...galleryPreview, ...galleryPreview, ...galleryPreview]
+              {[...showcaseImages, ...showcaseImages, ...showcaseImages, ...showcaseImages]
                 .reverse()
                 .map((item, idx) => (
                   <div
@@ -239,7 +234,7 @@ export function About() {
               className="group inline-flex items-center gap-4 border-b border-[var(--color-gold-dark)] pb-2 text-[#1A1A1A] hover:text-[var(--color-gold-dark)] transition-colors duration-500"
             >
               <span className="font-label text-[11px] uppercase tracking-[0.2em] font-bold">
-                Explore Collections
+                Visit the Shop
               </span>
               <ArrowRight
                 className="text-[18px] group-hover:translate-x-2 transition-transform duration-500"
@@ -372,7 +367,6 @@ export function About() {
                 <CloudinaryImage
                   src={
                     cmsContent?.aboutImage ||
-                    galleryPreview[0]?.image ||
                     'https://lh3.googleusercontent.com/aida-public/AB6AXuC6Cy1TlK9jjSUwKlKlXEL_AKlV3Ff5c2VdyViS7GGN3dgR1UB3SgmAto5fKc__pxujkfieY8wFl8MLAhbv7fZHW-oIWdXX0Xqg7SaMj5Szj9w6aGsuChZguzRLBppvcE_7OyVd9N7Ldchm0izPUhXOQGyYaQUsd43cUxBLr5ift2YUa0I_rr4_34hldd6L-V9MeNbxa-BUn2gvZq7JQypKg2Wl6-8TPta6D_ZooOmuUfcwSJJUjNe8-voUHsu7mBKM_CeD9YFd204'
                   }
                   alt="Our Story"
@@ -479,93 +473,6 @@ export function About() {
                 </div>
               );
             })}
-          </div>
-        </section>
-      )}
-
-      {/* 5. Heritage Gallery (Flowing Masonry) */}
-      {galleryPreview.length > 0 && !hideGallery && (
-        <section className="py-32 bg-[#EAE5DB] relative z-10 border-t border-outline-variant/20 overflow-hidden">
-          {/* Subtle Mandala Watermark */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-0">
-            <MandalaElement size={1200} opacity={0.12} variant={4} />
-          </div>
-          <div className="max-w-[1600px] mx-auto px-6 lg:px-20 relative z-10">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 lg:mb-24 gap-8 md:gap-0">
-              <div className="max-w-2xl">
-                <span className="font-label text-[10px] uppercase tracking-[0.4em] text-[var(--color-gold-dark)] font-bold mb-6 block">
-                  Our Portfolio
-                </span>
-                <h2 className="font-display text-4xl lg:text-6xl text-[#1A1A1A] leading-[1.1] mb-6">
-                  Curated Moments
-                </h2>
-                <p className="font-body text-lg text-[#4A4A4A] font-light leading-relaxed">
-                  Glimpses into our grandest celebrations. Every setup is a testament to our
-                  dedication to authentic heritage arts, lovingly reimagined for modern elegance.
-                </p>
-              </div>
-              <div className="shrink-0 hidden md:block">
-                <Link
-                  to="/gallery"
-                  className="group inline-flex items-center gap-4 border-b border-[var(--color-gold-dark)] pb-2 text-[#1A1A1A] hover:text-[var(--color-gold-dark)] transition-colors duration-500"
-                >
-                  <span className="font-label text-[11px] uppercase tracking-[0.2em] font-bold">
-                    Explore Full Gallery
-                  </span>
-                  <ArrowRight
-                    className="text-[18px] group-hover:translate-x-2 transition-transform duration-500"
-                    strokeWidth={1.5}
-                  />
-                </Link>
-              </div>
-            </div>
-
-            {/* True Masonry Layout */}
-            <div className="columns-2 lg:columns-3 gap-4 md:gap-6 lg:gap-8 space-y-4 md:space-y-6 lg:space-y-8">
-              {galleryPreview.map((item, idx) => (
-                <motion.div
-                  key={idx}
-                  initial={{ opacity: 0, y: 40 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: '-50px' }}
-                  transition={{ duration: 0.7, ease: 'easeOut', delay: (idx % 3) * 0.1 }}
-                  className="relative w-full break-inside-avoid overflow-hidden group bg-[#EAE5DB] rounded-2xl shadow-xl shadow-black/5"
-                >
-                  <Link to="/gallery" className="block w-full relative cursor-pointer">
-                    <CloudinaryImage
-                      src={getSrc(item.image, getSrc(item, ''))}
-                      alt="Gallery Inspiration"
-                      className="w-full h-auto object-cover scale-[1.02] group-hover:scale-[1.08] transition-transform duration-[1.5s] ease-out block"
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-500 flex items-center justify-center">
-                      <div className="opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-500 flex flex-col items-center">
-                        <Eye className="text-white text-[32px] mb-3 font-light" strokeWidth={1.5} />
-                        <span className="font-label text-[10px] uppercase tracking-[0.2em] text-white font-bold">
-                          View in Gallery
-                        </span>
-                      </div>
-                    </div>
-                  </Link>
-                </motion.div>
-              ))}
-            </div>
-
-            {/* Mobile Explore Link (Bottom) */}
-            <div className="mt-12 flex justify-center md:hidden">
-              <Link
-                to="/gallery"
-                className="group inline-flex items-center gap-4 border-b border-[var(--color-gold-dark)] pb-2 text-[#1A1A1A] hover:text-[var(--color-gold-dark)] transition-colors duration-500"
-              >
-                <span className="font-label text-[11px] uppercase tracking-[0.2em] font-bold">
-                  Explore Full Gallery
-                </span>
-                <ArrowRight
-                  className="text-[18px] group-hover:translate-x-2 transition-transform duration-500"
-                  strokeWidth={1.5}
-                />
-              </Link>
-            </div>
           </div>
         </section>
       )}

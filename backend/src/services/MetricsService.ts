@@ -182,6 +182,19 @@ export class MetricsService {
         }
       }
 
+      // Stuck outbox events mean customer emails, notifications or refunds never went out.
+      // Email/admin-notify (not just Sentry) so a human sees it.
+      if (oldestOutboxAgeMinutes > 60) {
+        const { AlertingService } = require('./AlertingService');
+        await AlertingService.fire({
+          title: 'Outbox events stuck',
+          message: `${pendingOutbox} outbox event(s) pending or failed; oldest is ${oldestOutboxAgeMinutes} minutes old. Review them in Admin → System → Dead-letter queue.`,
+          severity: 'high',
+          category: 'queue',
+          metadata: { pendingOutbox, oldestOutboxAgeMinutes },
+        }).catch((err: any) => logger.error('[METRICS] Failed to fire outbox alert', err));
+      }
+
       return metrics;
     } catch (error) {
       logger.error('[METRICS] Failed to report hourly metrics:', error);

@@ -1,250 +1,32 @@
 import { Request, Response } from 'express';
+import mongoose from 'mongoose';
 import asyncHandler from '../../utils/asyncHandler';
-import { ExchangeService } from '../../services/returns/ExchangeService';
 import ExchangeRequest from '../../models/ExchangeRequest';
-import Order from '../../models/Order';
+import ReturnRequest from '../../models/ReturnRequest';
 import ApiError from '../../utils/ApiError';
-import ApiResponse from '../../utils/ApiResponse';
-import { AdminAuditService } from '../../services/AdminAuditService';
 
 /**
- * @desc    Create exchange request
- * @route   POST /api/v1/exchanges
- * @access  Private
- */
-export const createExchange = asyncHandler(async (req: Request, res: Response) => {
-  const userId = req.user?.id;
-  const {
-    orderId,
-    originalProductId,
-    replacementProductId,
-    exchangeType,
-    quantity,
-    reason,
-    pickupAddress,
-    idempotencyKey,
-    refundMethod,
-    upiId,
-  } = req.body;
-
-  if (!userId) throw new ApiError(401, 'Unauthorized');
-
-  const { returnRequest, exchangeRequest, razorpayOrderId, amountToPay } =
-    await ExchangeService.createExchangeRequest(
-      userId,
-      orderId,
-      originalProductId,
-      replacementProductId,
-      exchangeType,
-      quantity,
-      reason,
-      pickupAddress,
-      idempotencyKey,
-      refundMethod,
-      upiId,
-    );
-
-  if (amountToPay === 0) {
-    await Order.findByIdAndUpdate(orderId, { hasActiveExchange: true });
-  }
-
-  res.status(201).json({
-    success: true,
-    data: {
-      exchangeRequest,
-      returnRequest,
-      razorpayOrderId,
-      amountToPay,
-    },
-  });
-});
-
-/**
- * @desc    Get my exchanges
+ * @desc    Exchanges created by the previous automated flow (read-only history).
+ *          New exchange requests are made over WhatsApp (see returnController).
  * @route   GET /api/v1/exchanges/my-exchanges
  * @access  Private
  */
 export const getMyExchanges = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user?.id;
-
   if (!userId) throw new ApiError(401, 'Unauthorized');
 
-  // Find exchanges where the related return request belongs to this user
-  const exchanges = await ExchangeRequest.aggregate([
-    {
-      $lookup: {
-        from: 'returnrequests',
-        localField: 'returnRequestId',
-        foreignField: '_id',
-        as: 'returnRequest',
-      },
-    },
-    { $unwind: '$returnRequest' },
-    {
-      $match: {
-        'returnRequest.userId': new (require('mongoose').Types.ObjectId)(userId),
-      },
-    },
-  ]);
+  // Index-backed two-step lookup: the customer's return requests (userId index), then the
+  // exchanges for those (returnRequestId). The previous $lookup started from every exchange in
+  // the collection, so its cost grew with all customers' data rather than this customer's.
+  const returns = await ReturnRequest.find({ userId: new mongoose.Types.ObjectId(userId) }).lean();
+  const returnsById = new Map(returns.map((r: any) => [String(r._id), r]));
+  const exchanges = returns.length
+    ? (
+        await ExchangeRequest.find({ returnRequestId: { $in: returns.map((r: any) => r._id) } })
+          .sort({ createdAt: -1 })
+          .lean()
+      ).map((e: any) => ({ ...e, returnRequest: returnsById.get(String(e.returnRequestId)) }))
+    : [];
 
-  res.status(200).json({
-    success: true,
-    data: exchanges,
-    count: exchanges.length,
-  });
-});
-
-/**
- * @desc    Get all exchange requests (admin)
- * @route   GET /api/v1/exchanges/admin/all
- * @access  Admin
- */
-export const getAllExchanges = asyncHandler(async (req: Request, res: Response) => {
-  const page = parseInt(req.query.page as string) || 1;
-  const limit = parseInt(req.query.limit as string) || 20;
-  const skip = (page - 1) * limit;
-
-  const exchanges = await ExchangeRequest.find()
-    .populate({
-      path: 'returnRequestId',
-      select: 'status returnId orderId userId items upiId refundMethod',
-      populate: { path: 'userId', select: 'name email phone' },
-    })
-    .sort({ createdAt: -1, _id: -1 })
-    .skip(skip)
-    .limit(limit);
-
-  const total = await ExchangeRequest.countDocuments();
-
-  res.status(200).json({
-    success: true,
-    data: exchanges,
-    pagination: {
-      page,
-      limit,
-      total,
-      pages: Math.ceil(total / limit),
-    },
-  });
-});
-
-/**
- * @desc    Verify Razorpay payment for exchange
- * @route   POST /api/v1/exchanges/verify-payment
- * @access  Private
- */
-export const verifyPayment = asyncHandler(async (req: Request, res: Response) => {
-  const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body;
-
-  if (!razorpayOrderId || !razorpayPaymentId || !razorpaySignature) {
-    throw new ApiError(400, 'Missing payment details');
-  }
-
-  const { RazorpayGateway } = require('../../utils/payment/RazorpayGateway');
-  const isValid = RazorpayGateway.getInstance().verifySignature(
-    razorpayOrderId,
-    razorpayPaymentId,
-    razorpaySignature,
-  );
-
-  if (!isValid) {
-    throw new ApiError(400, 'Invalid payment signature');
-  }
-
-  const exchangeRequest = await ExchangeRequest.findOne({
-    additionalPaymentId: razorpayOrderId,
-  }).populate('returnRequestId');
-
-  if (!exchangeRequest) {
-    throw new ApiError(404, 'Exchange request not found for this payment');
-  }
-
-  // Authorization check
-  const returnReqDoc = exchangeRequest.returnRequestId as any;
-  if (!returnReqDoc || returnReqDoc.userId.toString() !== (req.user as any)?._id?.toString()) {
-    throw new ApiError(403, 'Not authorized to verify payment for this exchange');
-  }
-
-  if (exchangeRequest.paymentStatus === 'payment_paid') {
-    return res.status(200).json({ success: true, message: 'Payment already verified' });
-  }
-
-  exchangeRequest.paymentStatus = 'payment_paid';
-  // inspectionStatus remains 'pending' - admin must explicitly approve
-
-  exchangeRequest.timeline.push({
-    action: 'Payment Verified',
-    timestamp: new Date(),
-  });
-
-  await exchangeRequest.save();
-
-  // Lock the order now that payment is verified
-  const returnReq = await require('../../models/ReturnRequest')
-    .default.findById(exchangeRequest.returnRequestId)
-    .lean();
-  if (returnReq) {
-    await Order.findByIdAndUpdate(returnReq.orderId, { hasActiveExchange: true });
-  }
-
-  // Trigger side effects: Send Payment Verified Email
-  const { ReturnNotificationService } = require('../../services/returns/ReturnNotificationService');
-  await ReturnNotificationService.notifyCustomerExchangeVerified(exchangeRequest.returnRequestId);
-
-  res.status(200).json({
-    success: true,
-    message: 'Payment verified successfully',
-    data: {
-      exchangeId: exchangeRequest.exchangeId,
-      returnId: returnReq?.returnId || exchangeRequest.returnRequestId,
-      _id: exchangeRequest._id,
-    },
-  });
-});
-
-/**
- * @desc    Soft delete completed or cancelled exchange request (Move to Recycle Bin)
- * @route   DELETE /api/v1/exchanges/admin/:id
- * @access  Admin
- */
-export const softDeleteExchange = asyncHandler(async (req: Request, res: Response) => {
-  const exchangeId = req.params.id;
-  const exchange = await ExchangeRequest.findById(exchangeId).populate('returnRequestId');
-
-  if (!exchange) {
-    throw new ApiError(404, 'Exchange request not found');
-  }
-
-  const replacementStatus = (exchange.replacementStatus || '').toLowerCase();
-  const returnStatus = ((exchange.returnRequestId as any)?.status || '').toLowerCase();
-
-  const isTerminal =
-    ['delivered', 'cancelled', 'completed', 'rejected'].includes(replacementStatus) ||
-    ['completed', 'cancelled', 'rejected'].includes(returnStatus);
-
-  if (!isTerminal) {
-    throw new ApiError(
-      400,
-      'Only completed or cancelled exchanges can be moved to the recycle bin',
-    );
-  }
-
-  await (exchange as any).softDelete(req.user, 'Deleted by admin');
-
-  if (req.user && req.user.role !== 'user') {
-    await AdminAuditService.logAction({
-      actorId: req.user.id,
-      actorEmail: req.user.email || 'unknown',
-      actorRole: req.user.role,
-      method: req.method,
-      path: req.originalUrl,
-      entityType: 'ExchangeRequest',
-      entityId: exchange.id,
-      action: 'soft_delete',
-      previousValue: null,
-      newValue: { status: 'deleted' },
-    });
-  }
-
-  res.status(200).json(new ApiResponse(true, 'Exchange request moved to recycle bin successfully'));
+  res.status(200).json({ success: true, data: exchanges, count: exchanges.length });
 });

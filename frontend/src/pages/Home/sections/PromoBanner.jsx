@@ -10,6 +10,8 @@ import Tag from 'lucide-react/dist/esm/icons/tag';
  * A slim, elegant promotional banner that highlights an offer or campaign.
  * Supports smooth continuous auto-scroll and free hand touch scrolling/dragging.
  */
+const MARQUEE_SPEED_PX_PER_S = 38; // Elegant luxury speed
+
 export function PromoBanner({ previewContent }) {
   const cms = useWebsiteContent({ includeDefaults: false });
   const activeCms = previewContent || cms;
@@ -24,8 +26,12 @@ export function PromoBanner({ previewContent }) {
   const trackRef = useRef(null);
   const singleSetRef = useRef(null);
 
-  const offsetRef = useRef(0);
   const singleWidthRef = useRef(0);
+  // Auto-scroll runs as a Web Animations API transform animation (compositor thread),
+  // not a per-frame JS loop. Drag / wheel / momentum seek the animation instead.
+  const marqueeAnimRef = useRef(null);
+  const isOffscreenRef = useRef(false);
+  const prefersReducedMotionRef = useRef(false);
 
   const isInteractingRef = useRef(false);
   const isPointerDownRef = useRef(false);
@@ -41,12 +47,39 @@ export function PromoBanner({ previewContent }) {
   const totalDragDistanceRef = useRef(0);
   const isNavigatingRef = useRef(false);
 
-  const animFrameRef = useRef(null);
   const momentumRafRef = useRef(null);
   const inactivityTimerRef = useRef(null);
-  const lastTickTimeRef = useRef(performance.now());
 
   const loading = !previewContent && cms?.loading;
+
+  // Current scroll offset in px within one item set, derived from the animation clock.
+  function getOffset() {
+    const anim = marqueeAnimRef.current;
+    const width = singleWidthRef.current;
+    if (!anim || !width) return 0;
+    const duration = anim.effect.getTiming().duration;
+    const t = (Number(anim.currentTime) || 0) % duration;
+    return (t / duration) * width;
+  }
+
+  // Seek the animation to an offset (wrapped into [0, width)).
+  function setOffset(offset) {
+    const anim = marqueeAnimRef.current;
+    const width = singleWidthRef.current;
+    if (!anim || !width) return;
+    const wrapped = ((offset % width) + width) % width;
+    anim.currentTime = (wrapped / width) * anim.effect.getTiming().duration;
+  }
+
+  // Run only when visible, not being interacted with, and motion is allowed.
+  function syncPlayback() {
+    const anim = marqueeAnimRef.current;
+    if (!anim) return;
+    const shouldRun =
+      !isInteractingRef.current && !isOffscreenRef.current && !prefersReducedMotionRef.current;
+    if (shouldRun && anim.playState !== 'running') anim.play();
+    else if (!shouldRun && anim.playState === 'running') anim.pause();
+  }
   const bannerCoupon = activeCoupons.find((c) => c.displayLocations?.includes('banner'));
 
   let promoText = '';
@@ -101,66 +134,63 @@ export function PromoBanner({ previewContent }) {
   }
   promoLink = targetLink;
 
-  // Measure single set width
+  // Auto-scroll: one infinite transform animation across exactly one item set. The
+  // browser runs it on the compositor, so idle scrolling costs no main-thread work.
   useEffect(() => {
     if (!promoText) return;
+    const track = trackRef.current;
+    const set = singleSetRef.current;
+    if (!track || !set || typeof track.animate !== 'function') return;
 
-    const measure = () => {
-      if (singleSetRef.current) {
-        const w = singleSetRef.current.offsetWidth;
-        if (w > 0) {
-          singleWidthRef.current = w;
-        }
-      }
+    try {
+      prefersReducedMotionRef.current = window.matchMedia(
+        '(prefers-reduced-motion: reduce)',
+      ).matches;
+    } catch (_) {}
+
+    const build = () => {
+      const width = set.offsetWidth;
+      if (!width) return;
+      if (width === singleWidthRef.current && marqueeAnimRef.current) return;
+
+      // Preserve the visible position when the width changes (resize, font swap).
+      const prev = marqueeAnimRef.current;
+      const progress =
+        prev && prev.effect ? (Number(prev.currentTime) || 0) / prev.effect.getTiming().duration : 0;
+      prev?.cancel();
+
+      singleWidthRef.current = width;
+      const anim = track.animate(
+        [{ transform: 'translate3d(0, 0, 0)' }, { transform: `translate3d(-${width}px, 0, 0)` }],
+        { duration: (width / MARQUEE_SPEED_PX_PER_S) * 1000, iterations: Infinity },
+      );
+      anim.currentTime = (progress % 1) * anim.effect.getTiming().duration;
+      marqueeAnimRef.current = anim;
+      syncPlayback();
     };
 
-    measure();
-    const resizeObserver = new ResizeObserver(measure);
-    if (singleSetRef.current) resizeObserver.observe(singleSetRef.current);
-    if (containerRef.current) resizeObserver.observe(containerRef.current);
+    build();
+    const resizeObserver = new ResizeObserver(build);
+    resizeObserver.observe(set);
 
-    return () => resizeObserver.disconnect();
-  }, [promoText]);
-
-  // Main continuous auto-scroll ticker (silky 60/120fps GPU transform)
-  useEffect(() => {
-    if (!promoText) return;
-
-    lastTickTimeRef.current = performance.now();
-
-    const tick = (now) => {
-      const delta = Math.min((now - lastTickTimeRef.current) / 1000, 0.1);
-      lastTickTimeRef.current = now;
-
-      if (!isInteractingRef.current && trackRef.current) {
-        const speed = 38; // Elegant luxury speed (pixels per second)
-        let newOffset = offsetRef.current + speed * delta;
-        const singleWidth = singleWidthRef.current;
-
-        if (singleWidth > 0) {
-          while (newOffset >= singleWidth) {
-            newOffset -= singleWidth;
-          }
-          while (newOffset < 0) {
-            newOffset += singleWidth;
-          }
-        }
-
-        offsetRef.current = newOffset;
-        trackRef.current.style.transform = `translate3d(-${newOffset.toFixed(2)}px, 0, 0)`;
-      }
-
-      animFrameRef.current = requestAnimationFrame(tick);
-    };
-
-    animFrameRef.current = requestAnimationFrame(tick);
+    // Stop the animation entirely while the banner is scrolled out of view.
+    const io = new IntersectionObserver(([entry]) => {
+      isOffscreenRef.current = !entry.isIntersecting;
+      syncPlayback();
+    });
+    if (containerRef.current) io.observe(containerRef.current);
 
     return () => {
-      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+      resizeObserver.disconnect();
+      io.disconnect();
+      marqueeAnimRef.current?.cancel();
+      marqueeAnimRef.current = null;
+      singleWidthRef.current = 0;
       if (momentumRafRef.current) cancelAnimationFrame(momentumRafRef.current);
       if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
     };
-  }, [promoText]);
+    // `loading` matters because the banner renders nothing (no refs) while loading.
+  }, [promoText, loading]);
 
   if (loading || !promoText) return null;
 
@@ -170,6 +200,7 @@ export function PromoBanner({ previewContent }) {
     inactivityTimerRef.current = setTimeout(() => {
       if (!isPointerDownRef.current && !isHoveringRef.current) {
         isInteractingRef.current = false;
+        syncPlayback();
       }
     }, delayMs);
   };
@@ -183,10 +214,11 @@ export function PromoBanner({ previewContent }) {
 
     if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
     if (momentumRafRef.current) cancelAnimationFrame(momentumRafRef.current);
+    syncPlayback();
 
     startXRef.current = e.clientX;
     startYRef.current = e.clientY;
-    startOffsetRef.current = offsetRef.current;
+    startOffsetRef.current = getOffset();
     lastXRef.current = e.clientX;
     lastTimeRef.current = performance.now();
     velocityRef.current = 0;
@@ -218,17 +250,7 @@ export function PromoBanner({ previewContent }) {
     lastXRef.current = e.clientX;
     lastTimeRef.current = now;
 
-    let newOffset = startOffsetRef.current - dx;
-    const singleWidth = singleWidthRef.current;
-    if (singleWidth > 0) {
-      while (newOffset >= singleWidth) newOffset -= singleWidth;
-      while (newOffset < 0) newOffset += singleWidth;
-    }
-
-    offsetRef.current = newOffset;
-    if (trackRef.current) {
-      trackRef.current.style.transform = `translate3d(-${newOffset.toFixed(2)}px, 0, 0)`;
-    }
+    setOffset(startOffsetRef.current - dx);
   };
 
   // Pointer Up / Cancel - start momentum inertia if flicked, then pause & schedule resume
@@ -258,17 +280,7 @@ export function PromoBanner({ previewContent }) {
         momentumTime = now;
         currentVelocity *= 0.93; // Smooth friction decay
 
-        let newOffset = offsetRef.current + currentVelocity * dt;
-        const singleWidth = singleWidthRef.current;
-        if (singleWidth > 0) {
-          while (newOffset >= singleWidth) newOffset -= singleWidth;
-          while (newOffset < 0) newOffset += singleWidth;
-        }
-
-        offsetRef.current = newOffset;
-        if (trackRef.current) {
-          trackRef.current.style.transform = `translate3d(-${newOffset.toFixed(2)}px, 0, 0)`;
-        }
+        setOffset(getOffset() + currentVelocity * dt);
 
         if (Math.abs(currentVelocity) > 25) {
           momentumRafRef.current = requestAnimationFrame(momentumStep);
@@ -291,6 +303,7 @@ export function PromoBanner({ previewContent }) {
     isHoveringRef.current = true;
     isInteractingRef.current = true;
     if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+    syncPlayback();
   };
 
   const handleMouseLeave = (e) => {
@@ -306,20 +319,10 @@ export function PromoBanner({ previewContent }) {
     isInteractingRef.current = true;
     if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
     if (momentumRafRef.current) cancelAnimationFrame(momentumRafRef.current);
+    syncPlayback();
 
     const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-    let newOffset = offsetRef.current + delta;
-    const singleWidth = singleWidthRef.current;
-
-    if (singleWidth > 0) {
-      while (newOffset >= singleWidth) newOffset -= singleWidth;
-      while (newOffset < 0) newOffset += singleWidth;
-    }
-
-    offsetRef.current = newOffset;
-    if (trackRef.current) {
-      trackRef.current.style.transform = `translate3d(-${newOffset.toFixed(2)}px, 0, 0)`;
-    }
+    setOffset(getOffset() + delta);
 
     scheduleResume(2000);
   };
@@ -393,7 +396,6 @@ export function PromoBanner({ previewContent }) {
         <div
           ref={trackRef}
           className="flex w-max will-change-transform select-none"
-          style={{ transform: 'translate3d(0px, 0, 0)' }}
         >
           <div
             ref={singleSetRef}

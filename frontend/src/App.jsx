@@ -23,6 +23,9 @@ function App() {
 
   useEffect(() => {
     setIsMounted(true);
+    // React has committed real UI (navbar + page or its skeleton): drop the
+    // pre-JS brand bar from index.html.
+    document.getElementById('boot-shell')?.remove();
 
     if ('requestIdleCallback' in window) {
       window.requestIdleCallback(() => ensureCsrfToken().catch(() => {}));

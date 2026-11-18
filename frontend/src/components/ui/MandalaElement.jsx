@@ -57,11 +57,16 @@ export const MandalaElement = React.memo(function MandalaElement({
         maxWidth: '100%',
         maxHeight: '100%',
         animation: rotate ? `slow-spin ${duration}s linear infinite` : 'none',
+        // These large images use mix-blend-mode + a mask, so every rotation frame is
+        // repainted on the main thread. Pause the spin while the mandala is off-screen
+        // (reduced-motion users get no spin via the global CSS rule).
+        animationPlayState: isInView ? 'running' : 'paused',
         mixBlendMode: 'darken',
         WebkitMaskImage: fadeMask,
         maskImage: fadeMask,
       }}
       loading="lazy"
+      decoding="async"
     />
   );
 });

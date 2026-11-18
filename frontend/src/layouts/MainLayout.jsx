@@ -1,4 +1,4 @@
-import { useEffect, Suspense } from 'react';
+import { Suspense } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useConfig } from '../context/ConfigContext';
@@ -12,7 +12,8 @@ import { MandalaElement } from '../components/ui/MandalaElement';
 import { ErrorBoundary } from '../components/ui/ErrorBoundary';
 import { getRouteSkeletonVariant, RouteSkeleton } from '../components/ui/RouteSkeleton';
 import { AuthGate } from '../components/auth/AuthGate';
-import { ScrollToTopButton } from '../components/ui';
+// Direct import: the components/ui barrel would pull every UI module into the entry chunk.
+import { ScrollToTopButton } from '../components/ui/ScrollToTopButton';
 import { lazyWithRetry as lazy } from '../utils/performance/lazyWithRetry';
 
 const CartDrawer = lazy(() =>
@@ -44,24 +45,8 @@ export function MainLayout() {
     _activeCartMode,
   } = useCart();
 
-  // Scroll to top on route change with a slight delay to allow exit animations if any
-  useEffect(() => {
-    const originalScrollBehavior = document.documentElement.style.scrollBehavior;
-    document.documentElement.style.scrollBehavior = 'auto';
-
-    const timer = setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: 'instant' });
-      // Restore after a short delay
-      setTimeout(() => {
-        document.documentElement.style.scrollBehavior = originalScrollBehavior;
-      }, 50);
-    }, 10);
-
-    return () => {
-      clearTimeout(timer);
-      document.documentElement.style.scrollBehavior = originalScrollBehavior;
-    };
-  }, [pathname]);
+  // Scroll position on route changes is owned by ScrollManager (top for new pages, restored
+  // position for Back/Forward). Scrolling here as well used to undo the restore on Back.
 
   const isHighDensityPage = pathname === '/auth' || pathname === '/checkout';
 
@@ -69,7 +54,7 @@ export function MainLayout() {
 
   return (
     <div className="bg-surface text-on-surface min-h-screen flex flex-col relative overflow-x-clip">
-      <SEO />
+      <SEO routeDefault />
       {/* Global Background Art - Performance Optimized Gradients & Mandalas */}
       {!isHighDensityPage && (
         <div
@@ -92,12 +77,14 @@ export function MainLayout() {
 
       <GlobalAnnouncementBanner />
       <TopNavbar />
-      {isCartOpen && location.pathname !== '/cart' && (
+      {isCartOpen && pathname !== '/cart' && (
         <Suspense fallback={null}>
           <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
         </Suspense>
       )}
-      <main id="main-content" className="flex-1 relative" tabIndex={-1}>
+      {/* min-h keeps the footer below the first viewport while page data streams in,
+          so it is never pushed down after content arrives (was CLS ~0.78 on mobile). */}
+      <main id="main-content" className="flex-1 relative min-h-[100svh]" tabIndex={-1}>
         <ErrorBoundary>
           <AuthGate>
             <Suspense fallback={<RouteSkeleton variant={fallbackVariant} />}>
@@ -141,10 +128,6 @@ export function MainLayout() {
  */
 export function MinimalLayout() {
   const { pathname } = useLocation();
-
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'instant' });
-  }, [pathname]);
 
   return (
     <div className="bg-surface text-on-surface min-h-screen flex flex-col relative overflow-hidden">

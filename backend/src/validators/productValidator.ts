@@ -30,6 +30,7 @@ export const createProductSchema = z.object({
   seoTitle: z.string().optional(),
   seoDescription: z.string().optional(),
   stock: z.number().min(0).optional(),
+  inventoryMode: z.enum(['tracked', 'made_to_order']).optional(),
   lowStockThreshold: z.number().min(0).optional(),
   featured: z.boolean().optional(),
   isActive: z.boolean().optional(),

@@ -47,50 +47,6 @@ export const productFilterConfig = {
       },
     },
 
-    // 3. Canonical Stock Health Status
-    // out_of_stock (0), critical_low (1-5), low_warning (6-15), in_stock (>15)
-    stockStatus: {
-      label: 'Stock Status',
-      defaultValue: 'all',
-      isDefault: (val) => val === 'all' || !val,
-      predicate: (p, val) => {
-        const stock = Number(p.stock ?? p.countInStock ?? 0);
-        if (val === 'out_of_stock') return stock === 0;
-        if (val === 'critical_low') return stock >= 1 && stock <= 5;
-        if (val === 'low_warning') return stock >= 6 && stock <= 15;
-        if (val === 'in_stock') return stock > 15;
-        return true;
-      },
-      getChipLabel: (val) => {
-        const labels = {
-          out_of_stock: 'Stock: Out of Stock (0)',
-          critical_low: 'Stock: Critical Low (1–5)',
-          low_warning: 'Stock: Low Warning (6–15)',
-          in_stock: 'Stock: In Stock (>15)',
-        };
-        return labels[val] || `Stock: ${val}`;
-      },
-    },
-
-    // 4. Custom Stock Range (Min & Max exact units)
-    stockRange: {
-      label: 'Stock Range',
-      defaultValue: { min: '', max: '' },
-      isDefault: (val) => !val || (val.min === '' && val.max === ''),
-      predicate: (p, val) => {
-        const stock = Number(p.stock ?? p.countInStock ?? 0);
-        if (val.min !== '' && stock < Number(val.min)) return false;
-        if (val.max !== '' && stock > Number(val.max)) return false;
-        return true;
-      },
-      getChipLabel: (val) => {
-        if (val.min !== '' && val.max !== '') return `Stock Units: ${val.min}–${val.max}`;
-        if (val.min !== '') return `Stock Units: ≥ ${val.min}`;
-        if (val.max !== '') return `Stock Units: ≤ ${val.max}`;
-        return null;
-      },
-    },
-
     // 5. Price Range (Min & Max ₹)
     priceRange: {
       label: 'Price Range',

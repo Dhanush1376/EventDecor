@@ -1,34 +1,10 @@
 import express from 'express';
-import { requireAuth, authorize } from '../../middleware/authMiddleware';
+import { requireAuth } from '../../middleware/authMiddleware';
 import * as exchangeController from '../../controllers/returns/exchangeController';
-import { validateRequest } from '../../middleware/zodValidationMiddleware';
-import { createExchangeSchema } from '../../validators/returnValidator';
 
 const router = express.Router();
 
-router.post(
-  '/',
-  requireAuth,
-  validateRequest(createExchangeSchema),
-  exchangeController.createExchange,
-);
-
-router.post('/verify-payment', requireAuth, exchangeController.verifyPayment);
-
+// Read-only history of exchanges from the previous automated flow.
 router.get('/my-exchanges', requireAuth, exchangeController.getMyExchanges);
-
-router.get(
-  '/admin/all',
-  requireAuth,
-  authorize('super_admin', 'main_admin', 'admin', 'editor', 'analyst'),
-  exchangeController.getAllExchanges,
-);
-
-router.delete(
-  '/admin/:id',
-  requireAuth,
-  authorize('super_admin', 'main_admin', 'admin'),
-  exchangeController.softDeleteExchange,
-);
 
 export default router;

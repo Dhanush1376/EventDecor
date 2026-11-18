@@ -24,27 +24,20 @@ const RecommendedGrid = lazy(() =>
 const ShopByOccasion = lazy(() =>
   import('./sections/ShopByOccasion').then((m) => ({ default: m.ShopByOccasion })),
 );
-const GalleryInspiration = lazy(() =>
-  import('./sections/GalleryInspiration').then((m) => ({ default: m.GalleryInspiration })),
-);
 
 import './home.css';
 import { useWebsiteContent } from '../../hooks/useWebsiteContent';
-import { useConfig } from '../../context/ConfigContext';
 
 export function Home({ previewContent }) {
-  const { storeName, storeSettings, hideGallerySection } = useConfig();
-  const isGalleryHidden = Boolean(
-    hideGallerySection || storeSettings?.storefront?.hideGallerySection,
-  );
   const cms = useWebsiteContent({ includeDefaults: false });
   const activeCms = previewContent || cms;
   const loading = !previewContent && cms.loading;
 
   const isSectionVisible = useCallback(
     (id) => {
+      // The gallery section was removed; saved CMS layouts may still list it.
       const baseId = id?.split('_')[0];
-      if ((id === 'galleryInspiration' || baseId === 'galleryInspiration') && isGalleryHidden) {
+      if (id === 'galleryInspiration' || baseId === 'galleryInspiration') {
         return false;
       }
       const orderSection = activeCms?.homepageSections?.find((s) => s.id === id);
@@ -56,7 +49,7 @@ export function Home({ previewContent }) {
       }
       return true;
     },
-    [cms, activeCms, isGalleryHidden],
+    [cms, activeCms],
   );
 
   if (loading) {
@@ -67,10 +60,7 @@ export function Home({ previewContent }) {
 
   return (
     <>
-      <SEO
-        title={cms?.seo?.homeTitle || cms?.siteName || storeName || 'Siri Arts & Crafts'}
-        description={cms?.seo?.homeDescription}
-      />
+      <SEO title={cms?.seo?.homeTitle || undefined} description={cms?.seo?.homeDescription} />
 
       <div className="h1-page relative bg-surface-bright overflow-hidden">
         {/* Global Background Art - Performance Optimized Gradients & Mandalas */}
@@ -78,6 +68,12 @@ export function Home({ previewContent }) {
         <div className="absolute top-0 right-0 w-[600px] lg:w-[1000px] h-[600px] lg:h-[1000px] bg-primary-container/10 rounded-full blur-[100px] translate-x-1/3 -translate-y-1/3 pointer-events-none z-0"></div>
 
         <div className="relative z-10">
+          {/* Page-level heading for screen readers and crawlers; hero slides use h2. */}
+          {sections.length > 0 && (
+            <h1 className="sr-only">
+              Siri Arts &amp; Crafts: Handcrafted Wedding &amp; Event Decor
+            </h1>
+          )}
           {sections.length === 0 && <HomepageEmptyState />}
           {sections.map((section) => {
             if (!isSectionVisible(section.id)) return null;
@@ -135,15 +131,6 @@ export function Home({ previewContent }) {
                   <LazySection key={section.id} fallback={<SectionFallback />}>
                     <RevealSection>
                       <RecommendedGrid previewContent={activeCms} />
-                    </RevealSection>
-                  </LazySection>
-                );
-              case 'galleryInspiration':
-                if (isGalleryHidden) return null;
-                return (
-                  <LazySection key={section.id} fallback={<SectionFallback />}>
-                    <RevealSection>
-                      <GalleryInspiration previewContent={activeCms} />
                     </RevealSection>
                   </LazySection>
                 );
@@ -229,24 +216,6 @@ function HomeSkeleton() {
               </div>
             </div>
           ))}
-        </div>
-      </div>
-
-      {/* Gallery Inspiration Skeleton */}
-      <div className="max-w-[1400px] mx-auto px-6 mt-20 lg:mt-32 animate-pulse">
-        <div className="flex flex-col items-center mb-8 lg:mb-10 text-center">
-          <div className="h-3 w-24 bg-surface-container-high rounded-full mb-2 mx-auto"></div>
-          <div className="h-8 lg:h-10 w-48 lg:w-64 bg-surface-container-high rounded-full mx-auto"></div>
-        </div>
-        <div className="columns-2 lg:columns-3 lg:columns-5 gap-3 lg:gap-5.5 space-y-3 lg:space-y-5.5">
-          {['aspect-[4/5]', 'aspect-square', 'aspect-[3/4]', 'aspect-[4/5]', 'aspect-square'].map(
-            (aspect, i) => (
-              <div
-                key={i}
-                className={`w-full ${aspect} bg-surface-container-high rounded-[24px]`}
-              ></div>
-            ),
-          )}
         </div>
       </div>
 

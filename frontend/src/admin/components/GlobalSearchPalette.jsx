@@ -27,13 +27,6 @@ const NAV_ITEMS = [
     keywords: 'cms, policy, settings, shipping, footer, headers',
   },
   {
-    label: 'Heritage Photo Gallery',
-    path: '/admin/gallery',
-    category: 'Navigation',
-    icon: 'photo_library',
-    keywords: 'gallery, media, designs, blueprint, curations',
-  },
-  {
     label: 'Catalog Products',
     path: '/admin/products',
     category: 'Navigation',
@@ -67,13 +60,6 @@ const NAV_ITEMS = [
     category: 'Navigation',
     icon: 'shopping_bag',
     keywords: 'orders, sales, shipping, packages, deliveries',
-  },
-  {
-    label: 'Custom Blueprints & Inquiries',
-    path: '/admin/custom-orders',
-    category: 'Navigation',
-    icon: 'architecture',
-    keywords: 'blueprints, custom, consultations, requests, event decor',
   },
   {
     label: 'Customer Relationship CRM',

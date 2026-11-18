@@ -35,7 +35,7 @@ export function AdminMobileBottomNav({ isFabOpen, setIsFabOpen, fabActions }) {
       { label: 'Orders', icon: 'shopping_bag', path: '/admin/orders' },
       { label: 'Search', icon: 'search', path: '/admin/enterprise-search', isAction: true },
       { label: 'Customers', icon: 'group', path: '/admin/customers' },
-      { label: 'Returns', icon: 'assignment_return', path: '/admin/returns' },
+      { label: 'Payments', icon: 'payments', path: '/admin/payments' },
     ];
   } else {
     // Owner / Manager

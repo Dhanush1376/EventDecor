@@ -32,22 +32,11 @@ export function ReviewStep({ formData, setFormData, colors }) {
         {/* Curation Highlight Toggle */}
         <div className="p-3.5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] flex items-center justify-between">
           <p className="text-[12.5px] font-bold text-[var(--admin-text-primary)]">
-            Featured Collection
+            Show on Home Screen
           </p>
           <AdminToggle
             checked={formData.featured}
             onChange={() => setFormData({ ...formData, featured: !formData.featured })}
-          />
-        </div>
-
-        {/* Show in Gallery Toggle */}
-        <div className="p-3.5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] flex items-center justify-between col-span-1 sm:col-span-2">
-          <p className="text-[12.5px] font-bold text-[var(--admin-text-primary)]">
-            Show in Inspiration Gallery
-          </p>
-          <AdminToggle
-            checked={formData.showInGallery}
-            onChange={() => setFormData({ ...formData, showInGallery: !formData.showInGallery })}
           />
         </div>
 
@@ -113,14 +102,6 @@ export function ReviewStep({ formData, setFormData, colors }) {
               </span>
               <span className="font-bold text-[var(--admin-text-primary)] sm:text-right">
                 {formData.featured ? 'Yes' : 'No'}
-              </span>
-            </div>
-            <div className="flex flex-col sm:flex-row sm:justify-between pb-1 gap-1">
-              <span className="font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider text-[11px]">
-                Show in Gallery
-              </span>
-              <span className="font-bold text-[var(--admin-text-primary)] sm:text-right">
-                {formData.showInGallery ? 'Yes' : 'No'}
               </span>
             </div>
           </div>

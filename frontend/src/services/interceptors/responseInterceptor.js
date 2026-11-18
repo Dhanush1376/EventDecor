@@ -38,6 +38,7 @@ export const createResponseInterceptor = ({
   },
   async (error) => {
     const originalRequest = error.config;
+    const status = error.response?.status;
     const normalized = normalizeApiError(error);
     error.normalized = normalized;
 

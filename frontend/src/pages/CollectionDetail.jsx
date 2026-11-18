@@ -107,7 +107,7 @@ export function CollectionDetail() {
             </Link>
             <span className="opacity-30">/</span>
             <Link to="/collections" className="hover:text-primary transition-colors">
-              Collections
+              Shop
             </Link>
             <span className="opacity-30">/</span>
             <span className="text-primary font-bold">{collectionTitle}</span>

@@ -13,7 +13,6 @@ const ROUTE_LABELS = {
   'custom-orders': 'Custom Orders',
   homepage: 'Edit Website',
   policies: 'Policies',
-  gallery: 'Photo Gallery',
   payments: 'Payments',
   products: 'Products',
   categories: 'Categories',
@@ -168,14 +167,17 @@ export function AdminTopBar() {
                   .slice(1)
                   .filter(
                     (segment) =>
-                      segment !== 'requests' && segment !== 'detail' && segment !== 'details',
+                      segment !== 'requests' &&
+                      segment !== 'detail' &&
+                      segment !== 'details' &&
+                      segment !== 'edit',
                   )
                   .map((segment, index, arr) => {
                     const label = getBreadcrumbLabel(segment, index, arr);
                     const isLast = index === arr.length - 1;
                     return (
                       <React.Fragment key={index}>
-                        <span className="material-symbols-outlined text-[13px] text-[var(--admin-text-tertiary)]/50 shrink-0">
+                        <span className="material-symbols-outlined text-[13px] text-[var(--admin-text-tertiary)] shrink-0">
                           chevron_right
                         </span>
                         {isLast ? (

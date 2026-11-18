@@ -2,7 +2,7 @@ import React from 'react';
 import { AdminSkeleton } from '../../ui/Skeletons';
 
 export function AdminProductWizardSkeleton() {
-  const steps = ['Media', 'Basic Info', 'Variants', 'Pricing', 'Policies', 'SEO', 'Publish'];
+  const steps = ['Media', 'Basic Info', 'Pricing & Policies', 'Publish'];
 
   return (
     <div

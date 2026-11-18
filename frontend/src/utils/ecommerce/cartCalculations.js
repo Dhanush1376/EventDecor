@@ -133,13 +133,16 @@ export function transformDbCart(dbCartItems) {
         title: item.product.title || item.title,
         price: itemPrice,
         oldPrice: isRental ? itemPrice : item.product.oldPrice || item.product.price || item.price,
+        // null = unlimited (made to order); the cart then caps at maxQuantityPerItem
         stock: isRental
           ? Number(item.product.rentalStock) > 0
             ? Number(item.product.rentalStock)
             : Number(item.product.stock) > 0
               ? Number(item.product.stock)
               : 10
-          : (item.product.stock ?? 10),
+          : item.product.inventoryMode === 'made_to_order'
+            ? null
+            : (item.product.stock ?? 10),
         seller: item.product.seller || `${BRAND.name} Artisans`,
         rating: item.product.rating || 0,
         imageSrc:

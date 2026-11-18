@@ -1,5 +1,7 @@
 import api from '../api';
 
+let sessionInitPromise = null;
+
 const normalizeOptions = (paramsOrOptions = {}) => {
   const { signal, ...params } = paramsOrOptions;
   return { params, signal };
@@ -114,13 +116,19 @@ export const recommendationService = {
   /**
    * Initialize tracking session.
    */
-  initSession: async () => {
-    try {
-      const response = await api.post('/tracking/session');
-      return response.data;
-    } catch {
-      return null;
+  initSession: () => {
+    // Every component using useRecommendationTracker calls this on mount; share one
+    // request per page load instead of creating a session per component.
+    if (!sessionInitPromise) {
+      sessionInitPromise = api
+        .post('/tracking/session')
+        .then((response) => response.data)
+        .catch(() => {
+          sessionInitPromise = null; // allow a later retry
+          return null;
+        });
     }
+    return sessionInitPromise;
   },
 
   // ── Admin Analytics ──

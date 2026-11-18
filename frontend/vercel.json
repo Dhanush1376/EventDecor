@@ -1,10 +1,117 @@
 {
+  "trailingSlash": false,
+  "functions": {
+    "api/page-meta.js": {
+      "maxDuration": 10
+    },
+    "api/sitemap.js": {
+      "maxDuration": 10
+    }
+  },
+  "redirects": [
+    {
+      "source": "/index.html",
+      "destination": "/",
+      "statusCode": 301
+    },
+    {
+      "source": "/shop",
+      "destination": "/collections",
+      "statusCode": 301
+    },
+    {
+      "source": "/showcases",
+      "destination": "/events",
+      "statusCode": 301
+    },
+    {
+      "source": "/gallery",
+      "destination": "/collections",
+      "statusCode": 301
+    },
+    {
+      "source": "/gallery/:path*",
+      "destination": "/collections",
+      "statusCode": 301
+    },
+    {
+      "source": "/custom-orders",
+      "destination": "/collections",
+      "statusCode": 301
+    },
+    {
+      "source": "/customize/:path*",
+      "destination": "/collections",
+      "statusCode": 301
+    },
+    {
+      "source": "/my-custom-orders",
+      "destination": "/dashboard/orders",
+      "statusCode": 301
+    },
+    {
+      "source": "/shipping",
+      "destination": "/policy/shipping-policy",
+      "statusCode": 301
+    },
+    {
+      "source": "/returns",
+      "destination": "/policy/return-policy",
+      "statusCode": 301
+    },
+    {
+      "source": "/exchange",
+      "destination": "/policy/exchange-policy",
+      "statusCode": 301
+    },
+    {
+      "source": "/refund",
+      "destination": "/policy/refund-policy",
+      "statusCode": 301
+    },
+    {
+      "source": "/cancellation",
+      "destination": "/policy/terms-and-conditions",
+      "statusCode": 301
+    },
+    {
+      "source": "/privacy",
+      "destination": "/policy/privacy-policy",
+      "statusCode": 301
+    },
+    {
+      "source": "/terms",
+      "destination": "/policy/terms-and-conditions",
+      "statusCode": 301
+    }
+  ],
   "rewrites": [
     {
       "source": "/sitemap.xml",
       "destination": "/api/sitemap"
     },
-
+    {
+      "source": "/product/:id",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(bot|crawler|spider|slurp|facebookexternalhit|facebookcatalog|whatsapp|telegram|discord|pinterest|linkedin|skypeuripreview|embedly|vkshare|redditbot|applebot|yandex|baidu|duckduck).*"
+        }
+      ],
+      "destination": "/api/page-meta?type=product&id=:id"
+    },
+    {
+      "source": "/events/:id((?!book$|dashboard$|collections$)[^/]+)",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(bot|crawler|spider|slurp|facebookexternalhit|facebookcatalog|whatsapp|telegram|discord|pinterest|linkedin|skypeuripreview|embedly|vkshare|redditbot|applebot|yandex|baidu|duckduck).*"
+        }
+      ],
+      "destination": "/api/page-meta?type=event&id=:id"
+    },
     {
       "source": "/api/:path*",
       "destination": "https://eventdecor-fg3l.onrender.com/api/:path*"
@@ -14,8 +121,52 @@
       "destination": "https://eventdecor-fg3l.onrender.com/socket.io/:path*"
     },
     {
-      "source": "/:path*",
-      "destination": "/index.html"
+      "source": "/collections",
+      "destination": "/_seo/shop.html"
+    },
+    {
+      "source": "/events",
+      "destination": "/_seo/events.html"
+    },
+    {
+      "source": "/about",
+      "destination": "/_seo/about.html"
+    },
+    {
+      "source": "/contact",
+      "destination": "/_seo/contact.html"
+    },
+    {
+      "source": "/blog",
+      "destination": "/_seo/blog.html"
+    },
+    {
+      "source": "/policy/privacy-policy",
+      "destination": "/_seo/policy-privacy-policy.html"
+    },
+    {
+      "source": "/policy/terms-and-conditions",
+      "destination": "/_seo/policy-terms-and-conditions.html"
+    },
+    {
+      "source": "/policy/shipping-policy",
+      "destination": "/_seo/policy-shipping-policy.html"
+    },
+    {
+      "source": "/policy/return-policy",
+      "destination": "/_seo/policy-return-policy.html"
+    },
+    {
+      "source": "/policy/exchange-policy",
+      "destination": "/_seo/policy-exchange-policy.html"
+    },
+    {
+      "source": "/policy/refund-policy",
+      "destination": "/_seo/policy-refund-policy.html"
+    },
+    {
+      "source": "/((?!assets/).*)",
+      "destination": "/app-shell.html"
     }
   ],
   "headers": [
@@ -26,7 +177,6 @@
           "key": "X-Frame-Options",
           "value": "DENY"
         },
-
         {
           "key": "X-Content-Type-Options",
           "value": "nosniff"
@@ -91,6 +241,159 @@
         {
           "key": "Cache-Control",
           "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/admin",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/admin/:path*",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/dashboard",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/dashboard/:path*",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/cart",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/checkout",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/wishlist",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/order-success",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/track/:path*",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/accept-invite",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/coupons",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/invoice-preview",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/booking-success/:path*",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/events/book",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/events/dashboard",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/product/:id/reviews",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/product/:id/reviews/images",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
         }
       ]
     }

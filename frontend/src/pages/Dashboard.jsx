@@ -9,13 +9,9 @@ import { EventsSection } from './Dashboard/EventsSection';
 import { AddressesSection } from './Dashboard/AddressesSection';
 import { SettingsSection } from './Dashboard/SettingsSection';
 import { WalletSection } from './Dashboard/WalletSection';
-import { MyCustomOrders } from './MyCustomOrders';
 import { NotificationsSection } from './Dashboard/NotificationsSection';
 
-import { MyReturns } from './returns/MyReturns';
-import { ReturnRequestPage } from './returns/ReturnRequestPage';
-import { ExchangeRequestPage } from './returns/ExchangeRequestPage';
-import { ReturnDetailPage } from './returns/ReturnDetailPage';
+import { WhatsAppReturnPage } from './returns/WhatsAppReturnPage';
 
 function DashboardIndex() {
   const [searchParams] = useSearchParams();
@@ -29,7 +25,7 @@ function DashboardIndex() {
   if (tab === 'wishlist') return <Navigate to="/wishlist" replace />;
   if (tab === 'loyalty') return <Navigate to="wallet" replace />;
   if (tab === 'notifications') return <Navigate to="notifications" replace />;
-  if (tab === 'returns') return <Navigate to="returns" replace />;
+  if (tab === 'returns') return <Navigate to="orders" replace />;
 
   return (
     <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-10 text-center shadow-xs flex flex-col items-center justify-center min-h-[50vh] hidden lg:flex">
@@ -60,12 +56,15 @@ export function Dashboard() {
           <Route path="addresses" element={<AddressesSection />} />
           <Route path="settings" element={<SettingsSection />} />
           <Route path="wallet" element={<WalletSection />} />
-          <Route path="custom-orders" element={<MyCustomOrders />} />
+          <Route path="custom-orders" element={<Navigate to="/dashboard/orders" replace />} />
           <Route path="notifications" element={<NotificationsSection />} />
-          <Route path="returns" element={<MyReturns />} />
-          <Route path="returns/new" element={<ReturnRequestPage />} />
-          <Route path="returns/exchanges/new" element={<ExchangeRequestPage />} />
-          <Route path="returns/:id" element={<ReturnDetailPage />} />
+          {/* Returns & exchanges are requested over WhatsApp; history lives on each order. */}
+          <Route path="returns/new" element={<WhatsAppReturnPage defaultType="return" />} />
+          <Route
+            path="returns/exchanges/new"
+            element={<WhatsAppReturnPage defaultType="exchange" />}
+          />
+          <Route path="returns/*" element={<Navigate to="/dashboard/orders" replace />} />
 
           <Route path="*" element={<Navigate to="/dashboard/profile" replace />} />
         </Route>

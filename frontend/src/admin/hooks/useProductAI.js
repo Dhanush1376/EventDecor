@@ -92,25 +92,6 @@ export function useProductAI({
     setIsApplyingFields(true);
     setShowAIHUD(false);
 
-    const baseVariants = [...(aiAnalysisResult.suggested_variants || [])];
-
-    // Auto-map top-level materials and colors to variants for storefront filtering!
-    if (aiAnalysisResult.materials?.length > 0) {
-      aiAnalysisResult.materials.forEach((m) => {
-        if (!baseVariants.some((v) => v.name.toLowerCase() === 'material' && v.value === m)) {
-          baseVariants.push({ name: 'Material', value: m, price: 0 });
-        }
-      });
-    }
-
-    if (aiAnalysisResult.colors?.length > 0) {
-      aiAnalysisResult.colors.forEach((c) => {
-        if (!baseVariants.some((v) => v.name.toLowerCase() === 'color' && v.value === c)) {
-          baseVariants.push({ name: 'Color', value: c, price: 0 });
-        }
-      });
-    }
-
     const fieldsToFill = [
       { key: 'title', value: aiAnalysisResult.english_title },
       { key: 'teluguTitle', value: aiAnalysisResult.telugu_title },
@@ -155,8 +136,6 @@ export function useProductAI({
       { key: '_personalization', value: aiAnalysisResult.personalization_enabled },
       // Customer note (from AI)
       { key: 'customerNote', value: aiAnalysisResult.customer_note },
-      // Variants (from AI + manual mapping)
-      { key: '_variants', value: baseVariants },
     ];
 
     let index = 0;
@@ -176,12 +155,8 @@ export function useProductAI({
       const field = fieldsToFill[index];
 
       // Navigate/Scroll to different steps if they are on a different page for visual polish!
-      if (field.key === 'tags') {
-        setCurrentStep(2); // Attributes step (new index 2)
-      } else if (field.key === 'seoTitle') {
-        setCurrentStep(3); // SEO step (new index 3)
-      } else if (field.key === 'price') {
-        setCurrentStep(4); // Pricing & Stock step
+      if (field.key === 'price') {
+        setCurrentStep(2); // Pricing & Stock step
       } else if (field.key === '_personalization' || field.key === 'customerNote') {
         setCurrentStep(1); // Back to Product Info step to show note filling
       }
@@ -245,18 +220,6 @@ export function useProductAI({
           ...prev,
           customerNote: note || prev.customerNote,
         }));
-      } else if (
-        field.key === '_variants' &&
-        Array.isArray(field.value) &&
-        field.value.length > 0
-      ) {
-        setFormData((prev) => {
-          if (prev.variants && prev.variants.length > 0) return prev; // don't overwrite if user already added variants
-          return {
-            ...prev,
-            variants: field.value.map((v, i) => ({ ...v, id: Date.now() + i })),
-          };
-        });
       } else if (!field.key.startsWith('_')) {
         setFormData((prev) => ({
           ...prev,

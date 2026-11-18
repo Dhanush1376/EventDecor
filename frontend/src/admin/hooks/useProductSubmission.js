@@ -198,7 +198,8 @@ export function useProductSubmission({
             : formData.tags,
         price: Number(formData.price),
         oldPrice: formData.oldPrice ? Number(formData.oldPrice) : undefined,
-        stock: Number(formData.stock),
+        stock: Number(formData.stock) || 0,
+        inventoryMode: formData.inventoryMode === 'made_to_order' ? 'made_to_order' : 'tracked',
         imageSrc: finalImageSrc,
         images: Array.from(new Set([finalImageSrc, ...finalImages].filter(Boolean))),
         badges:
@@ -216,7 +217,6 @@ export function useProductSubmission({
         featured: Boolean(formData.featured),
         isActive: Boolean(formData.isActive),
         isNonRefundable: !formData.returnSettings?.isReturnable,
-        showInGallery: Boolean(formData.showInGallery),
         variants: formData.variants,
         // Rental fields
         rentalEnabled: Boolean(formData.rentalEnabled),
@@ -239,12 +239,11 @@ export function useProductSubmission({
           maxLength: Number(formData.customizationConfig?.maxLength) || 500,
           helperText: formData.customizationConfig?.helperText || '',
         },
+        // One window covers both returns and exchanges (requested over WhatsApp).
         returnSettings: formData.returnSettings
           ? {
               returnWindow: Number(formData.returnSettings.returnWindowDays) || 0,
-              exchangeWindow: Number(formData.returnSettings.exchangeWindowDays) || 0,
-              restockingFeePercent: Number(formData.returnSettings.restockingFeePercentage) || 0,
-              inspectionRequired: formData.returnSettings.requiresInspection,
+              exchangeWindow: Number(formData.returnSettings.returnWindowDays) || 0,
             }
           : undefined,
       };
@@ -277,7 +276,6 @@ export function useProductSubmission({
 
         queryClient.invalidateQueries({ queryKey: ['products'] });
         queryClient.invalidateQueries({ queryKey: ['product_categories'] });
-        queryClient.invalidateQueries({ queryKey: ['gallery'] });
         queryClient.invalidateQueries({ queryKey: ['showcases'] });
         if (refreshProducts) {
           try {

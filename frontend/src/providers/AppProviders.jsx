@@ -10,8 +10,13 @@ import { ConfigProvider } from '../context/ConfigContext';
 import { QuickViewProvider } from '../context/QuickViewContext';
 import { ConfirmProvider } from '../context/ConfirmProvider';
 import { queryClient } from '../config/queryClient';
-import { BrowserRouter } from 'react-router-dom';
+import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 import { ProviderComposer } from './ProviderComposer';
+import { createSharedElementHistory } from '../utils/navigation/sharedElementTransition';
+
+// One history for the app's lifetime. It behaves like BrowserRouter's, plus shared element
+// transitions for navigations that start from a tagged product image.
+const appHistory = createSharedElementHistory();
 
 export function AppProviders({ children }) {
   return (
@@ -21,7 +26,7 @@ export function AppProviders({ children }) {
         <NetworkProvider />,
         <ConfigProvider />,
         <HelmetProvider />,
-        <BrowserRouter />,
+        <HistoryRouter history={appHistory} />,
         <AuthProvider />,
         <CartProvider />,
         <WishlistProvider />,

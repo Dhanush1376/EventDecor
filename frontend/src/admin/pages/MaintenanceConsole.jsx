@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { useMaintenanceSession } from '../hooks/useMaintenanceSession';
 import { maintenanceService } from '../../services/api/maintenanceService';
 import { SiriLogo } from '../../components/ui/SiriLogo';
+import '../../styles/admin-tailwind.css';
 import { useConfirm } from '../../context/ConfirmProvider';
 import { AdminMaintenanceConsoleSkeleton } from '../components/AdminUIKit';
 

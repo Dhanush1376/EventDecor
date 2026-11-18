@@ -1,9 +1,13 @@
+# Siri Arts & Crafts — https://siriartsandcrafts.com
+#
+# Public storefront pages, scripts, styles, images and the API used to render pages are all
+# crawlable. Private and transactional pages (cart, checkout, wishlist, account, order
+# tracking) are NOT blocked here on purpose: they send "noindex" (X-Robots-Tag header and
+# robots meta), and crawlers can only obey that if they are allowed to fetch the page.
+# Access to private data is enforced by authentication, not by this file.
+
 User-agent: *
-Disallow: /admin/
-Disallow: /dashboard/
-Disallow: /cart/
-Disallow: /checkout/
-Disallow: /wishlist/
-Disallow: /track/
-Disallow: /accept-invite/
+Allow: /
+Disallow: /admin
+
 Sitemap: https://siriartsandcrafts.com/sitemap.xml

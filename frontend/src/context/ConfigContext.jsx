@@ -1,5 +1,4 @@
 import { createContext, useContext, useState, useEffect, useMemo } from 'react';
-import api from '../services/api';
 import storeSettingsService from '../services/api/storeSettingsService';
 // socket.io is imported dynamically inside the useEffect to keep it out of the initial bundle
 import { getWebSocketUrl } from '../config/apiConfig';
@@ -8,10 +7,12 @@ import logger from '../utils/core/logger';
 import { BRAND, formatPhoneWithCountryCode } from '../config/brand';
 
 const ConfigContext = createContext(null);
+const EMPTY_CATEGORIES = [];
 
 export const ConfigProvider = ({ children }) => {
   const [config, setConfig] = useState({});
-  const [categories, setCategories] = useState([]);
+  // Kept for API compatibility with older consumers; populated by no request.
+  const categories = EMPTY_CATEGORIES;
   const [storeSettings, setStoreSettings] = useState(() => {
     try {
       const cached = localStorage.getItem('siri_public_settings');
@@ -25,15 +26,11 @@ export const ConfigProvider = ({ children }) => {
   useEffect(() => {
     let isMounted = true;
 
+    // Only public store settings are needed at startup. Categories used to be fetched
+    // here first (serially, before settings), but nothing reads them from this context:
+    // the navbar and homepage load their own category data.
     const fetchGlobalData = async () => {
       try {
-        // Fetch categories
-        const categoriesRes = await api.get('/categories/active');
-        if (isMounted && categoriesRes?.data?.success) {
-          setCategories(categoriesRes.data.data);
-        }
-
-        // Fetch store settings
         const settingsRes = await storeSettingsService.getPublicSettings();
         if (isMounted && settingsRes) {
           setStoreSettings(settingsRes);
@@ -261,8 +258,8 @@ export const ConfigProvider = ({ children }) => {
   const maxOrderValue = orderLimits.maxOrderValue;
   const platformFee = orderLimits.platformFee;
   const customerAuthMethod = storeSettings?.storefront?.customerAuthMethod || 'both';
-  const hideGallerySection = Boolean(storeSettings?.storefront?.hideGallerySection);
-  const hideProductsFromGallery = Boolean(storeSettings?.storefront?.hideProductsFromGallery);
+  const hideGallerySection = true;
+  const hideProductsFromGallery = true;
 
   const contextValue = useMemo(
     () => ({

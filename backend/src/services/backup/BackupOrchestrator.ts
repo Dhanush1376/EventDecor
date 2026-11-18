@@ -109,36 +109,41 @@ export class BackupOrchestrator {
 
       const providers = storageManager.getProviders();
       const storageRecords: any[] = [];
+      const remoteDir = `${record.backupId}`;
+      const files = [
+        { local: path.join(workDir, '_manifest.json'), remote: `${remoteDir}/_manifest.json` },
+        ...collectionsToBackup.map((col) => ({
+          local: path.join(workDir, `${col}.enc`),
+          remote: `${remoteDir}/${col}.enc`,
+        })),
+      ];
+      const sourceChecksums = new Map<string, string>();
+      for (const f of files) {
+        sourceChecksums.set(f.remote, await this.sha256File(f.local));
+      }
+      const uploaded: { provider: (typeof providers)[number]; storageRecord: any }[] = [];
 
       // Upload manifest and all collection files to all providers
       for (const provider of providers) {
         try {
-          const remoteDir = `${record.backupId}`;
-          // Upload Manifest
-          await provider.upload(
-            path.join(workDir, '_manifest.json'),
-            `${remoteDir}/_manifest.json`,
-          );
-
-          // Upload Collections
-          for (const col of collectionsToBackup) {
-            await provider.upload(path.join(workDir, `${col}.enc`), `${remoteDir}/${col}.enc`, {
-              immutable: record.immutable,
+          for (const f of files) {
+            await provider.upload(f.local, f.remote, {
+              immutable: f.remote.endsWith('.enc') ? record.immutable : undefined,
             });
           }
 
-          storageRecords.push({
+          const storageRecord = {
             provider: provider.type,
             region: provider.region,
             path: remoteDir,
             verified: false,
-          });
+          };
+          storageRecords.push(storageRecord);
+          uploaded.push({ provider, storageRecord });
         } catch (e: any) {
           logger.error(`[ORCHESTRATOR] Upload failed to ${provider.name}: ${e.message}`);
         }
       }
-
-      record.storage = storageRecords;
 
       // 6. UPLOADING -> VERIFYING
       record = await this.transitionState(
@@ -146,10 +151,44 @@ export class BackupOrchestrator {
         'verifying',
         'Verifying checksums and signatures',
       );
-      // ... VerificationService.verifyBackupIntegrity(record) ...
+
+      // Re-read every uploaded file from each provider and compare with the source checksum.
+      for (const { provider, storageRecord } of uploaded) {
+        try {
+          let allMatch = true;
+          for (const f of files) {
+            if (!(await provider.verify(f.remote, sourceChecksums.get(f.remote)!))) {
+              allMatch = false;
+              logger.error(`[ORCHESTRATOR] Checksum mismatch for ${f.remote} on ${provider.name}`);
+              break;
+            }
+          }
+          storageRecord.verified = allMatch;
+        } catch (e: any) {
+          logger.error(`[ORCHESTRATOR] Verification failed on ${provider.name}: ${e.message}`);
+        }
+      }
+      record.storage = storageRecords;
+
+      const verified = storageRecords.filter((s) => s.verified);
+      if (verified.length === 0) {
+        throw new Error('No storage provider holds a verified copy of this backup');
+      }
 
       // 7. VERIFYING -> COMPLETED
-      record = await this.transitionState(record, 'completed', 'All phases passed cleanly');
+      const offsite = verified.some((s) => s.provider !== 'local');
+      if (!offsite) {
+        logger.warn(
+          `[ORCHESTRATOR] Backup ${record.backupId} is stored on the local disk only (not off-site). Container disks are ephemeral; rely on Atlas snapshots for recovery.`,
+        );
+      }
+      record = await this.transitionState(
+        record,
+        'completed',
+        offsite
+          ? `Verified on ${verified.length} provider(s)`
+          : 'Verified on local disk only - NOT an off-site backup',
+      );
 
       // Post-backup analytics
       // await HealthAnalyzer.detectAnomalies(record);
@@ -164,6 +203,14 @@ export class BackupOrchestrator {
         await fs.promises.rm(workDir, { recursive: true, force: true });
       } catch (_e) {}
     }
+  }
+
+  private static async sha256File(filePath: string): Promise<string> {
+    const hash = crypto.createHash('sha256');
+    for await (const chunk of fs.createReadStream(filePath)) {
+      hash.update(chunk);
+    }
+    return hash.digest('hex');
   }
 
   /**

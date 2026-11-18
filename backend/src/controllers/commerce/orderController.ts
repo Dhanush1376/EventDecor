@@ -58,7 +58,14 @@ export const getOrderById = asyncHandler(async (req: Request, res: Response) => 
     throw new ApiError(403, 'You are not authorized to view this order');
   }
 
-  res.status(200).json(new ApiResponse(true, 'Order fetched successfully', order));
+  const publicTrackingToken = await LogisticsService.ensurePublicTrackingToken(order._id);
+
+  res.status(200).json(
+    new ApiResponse(true, 'Order fetched successfully', {
+      ...order.toObject(),
+      publicTrackingToken,
+    }),
+  );
 });
 
 export const getMyOrders = asyncHandler(async (req: Request, res: Response) => {
@@ -115,7 +122,10 @@ export const getOrderPublicTrack = asyncHandler(async (req: Request, res: Respon
     throw new ApiError(401, 'Valid tracking token is required');
   }
 
-  const order = await LogisticsService.verifyTrackingTokenAndGetOrder(trackingToken);
+  const order = await LogisticsService.verifyPublicTrackingAccess(
+    req.params.id as string,
+    trackingToken,
+  );
   const trackingData = await LogisticsService.formatPublicTrackingData(order);
 
   res.status(200).json(new ApiResponse(true, 'Order public tracking fetched', trackingData));
@@ -124,16 +134,16 @@ export const getOrderPublicTrack = asyncHandler(async (req: Request, res: Respon
 export const updateOrderPublicStatus = asyncHandler(async (req: Request, res: Response) => {
   const { status, note } = req.body;
 
-  // Customers/Unauthenticated clients with publicTrackingToken are only allowed to self-cancel or return
-  const allowedPublicStatuses = ['Cancelled', 'Returned'];
+  // Customer tracking links are read-only. Marking an order 'Returned' here would trigger an
+  // automatic refund without the item being received, so returns must use the returns workflow.
   const isPrivileged =
     (req.user && (STAFF_ROLES as readonly string[]).includes(req.user.role)) ||
     (req as any).isLogisticsToken;
 
-  if (!isPrivileged && !allowedPublicStatuses.includes(status)) {
+  if (!isPrivileged) {
     throw new ApiError(
-      400,
-      `Logistics tracking only permits self-cancellation or returns. Target status '${status}' is disallowed.`,
+      403,
+      'Tracking links cannot change order status. Please use My Orders to request a return.',
     );
   }
 
@@ -255,7 +265,17 @@ export const verifyCodOtp = asyncHandler(async (req: Request, res: Response) => 
 
 export const getOrderTimeline = asyncHandler(async (req: Request, res: Response) => {
   const orderId = req.params.id as string;
-  const timeline = await OrderTimelineService.getOrderTimeline(orderId);
+  const isStaff = (STAFF_ROLES as readonly string[]).includes(req.user!.role);
+  if (!isStaff) {
+    const order = await Order.findById(orderId).select('user').lean();
+    if (!order) throw new ApiError(404, 'Order not found');
+    if (String(order.user) !== req.user!.id) {
+      throw new ApiError(403, 'You are not authorized to view this order');
+    }
+  }
+  const timeline = await OrderTimelineService.getOrderTimeline(orderId, {
+    includeGatewayPayloads: isStaff,
+  });
   res.status(200).json(new ApiResponse(true, 'Order timeline fetched successfully', timeline));
 });
 

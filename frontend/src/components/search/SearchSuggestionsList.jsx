@@ -9,6 +9,7 @@ import {
   getStockLabel,
   formatDiscount,
 } from './searchUtils';
+import { productTransitionKey, sharedElementProps, VT_SCOPE_ATTRIBUTE } from '../../utils/navigation/sharedElementTransition';
 
 export function SearchSuggestionsList({
   query,
@@ -41,7 +42,7 @@ export function SearchSuggestionsList({
 
     displaySuggestions.forEach((item) => {
       if (item.type === 'category') groups[0].items.push(item);
-      else if (item.type === 'event' || item.type === 'gallery') groups[1].items.push(item);
+      else if (item.type === 'event') groups[1].items.push(item);
       else if (item.type === 'product') groups[2].items.push(item);
       else groups[3].items.push(item);
     });
@@ -63,6 +64,7 @@ export function SearchSuggestionsList({
       <button
         key={item.id}
         data-suggestion
+        {...(item.type === 'product' ? { [VT_SCOPE_ATTRIBUTE]: '' } : {})}
         role="option"
         aria-selected={isSelected}
         onClick={() => onSelectSuggestion(item)}
@@ -81,6 +83,7 @@ export function SearchSuggestionsList({
         <div className="relative">
           {item.image ? (
             <div
+              {...(item.type === 'product' ? sharedElementProps(productTransitionKey(item.slug || item.id)) : {})}
               className={`${
                 isMobile ? 'w-11 h-11 rounded-xl' : 'w-12 h-12 lg:w-14 lg:h-14 rounded-2xl'
               } overflow-hidden bg-stone-100 flex-shrink-0 border border-stone-200/60 shadow-xs ${

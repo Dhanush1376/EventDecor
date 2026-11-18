@@ -6,31 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, interactive-widget=resizes-content" />
     
     <!-- Anti-Stale Service Worker Cleanup Script -->
-
-    <!-- Anti-Stale Service Worker Cleanup Script -->
     <script defer src="/sw-cleanup.js"></script>
-
-    <!-- Font Loading Fallback Handler -->
-    <script>
-      // Add a class while fonts are loading, and replace it when they succeed or fail
-      if ("fonts" in document) {
-        document.documentElement.classList.add('fonts-loading');
-        Promise.all([
-          document.fonts.load('24px "Material Symbols Outlined"'),
-          document.fonts.load('16px "Inter"')
-        ]).then(function() {
-          document.documentElement.classList.remove('fonts-loading');
-          document.documentElement.classList.add('fonts-loaded');
-        }).catch(function() {
-          document.documentElement.classList.remove('fonts-loading');
-          document.documentElement.classList.add('fonts-failed');
-        });
-      } else {
-        document.documentElement.classList.add('fonts-loaded');
-      }
-    </script>
-
-
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="/MainLogo_bg.png" />
@@ -49,55 +25,19 @@
     <meta name="application-name" content="Siri Arts & Crafts" />
     <meta name="format-detection" content="telephone=no" />
 
-    <!-- SEO -->
-    <title>
-      Siri Arts & Crafts | Wedding Decor, Handmade Gifts & Event Essentials
-    </title>
-    
-    <meta
-      name="description"
-      content="Premium handcrafted wedding decor, pooja essentials, floral decorations, event decor, and customized gifts."
-    />
-    
-    <meta
-      name="keywords"
-      content="event decor, wedding decor, handmade gifts, pooja essentials, floral decorations, handcrafted items"
-    />
-    
-    <meta name="author" content="Siri Arts & Crafts" />
-    <link rel="canonical" href="https://siriartsandcrafts.com/" />
-
-    <!-- Google Search Console Verification -->
-    <!-- <meta name="google-site-verification" content="GSC_ID" /> -->
-
-    <!-- Open Graph -->
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content="Siri Arts & Crafts" />
-    <meta
-      property="og:description"
-      content="Premium handcrafted event decor & gifts."
-    />
-    
-    <meta
-      property="og:image"
-      content="https://siriartsandcrafts.com/og-image.webp"
-    />
-    
-    <meta property="og:url" content="https://siriartsandcrafts.com" />
-
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Siri Arts & Crafts" />
-    
-    <meta
-      name="twitter:description"
-      content="Premium handcrafted event decor & gifts."
-    />
-    
-    <meta
-      name="twitter:image"
-      content="https://siriartsandcrafts.com/og-image.webp"
-    />
+    <!-- SEO:START
+      Generic fallback head for routes without prerendered metadata. scripts/prerender-seo.mjs
+      replaces this block per route at build time, and <SEO /> (react-helmet-async) replaces it
+      at runtime; data-rh="true" lets Helmet take these tags over instead of duplicating them.
+      Deliberately no canonical here: a shared canonical would point every URL at one page. -->
+    <title>Siri Arts &amp; Crafts | Handcrafted Wedding &amp; Event Decor</title>
+    <meta data-rh="true" name="description" content="Handcrafted wedding trays, pooja and festival decor, return gifts and event decoration from Siri Arts &amp; Crafts in Ongole, Andhra Pradesh." />
+    <meta data-rh="true" property="og:type" content="website" />
+    <meta data-rh="true" property="og:site_name" content="Siri Arts &amp; Crafts" />
+    <meta data-rh="true" property="og:title" content="Siri Arts &amp; Crafts | Handcrafted Wedding &amp; Event Decor" />
+    <meta data-rh="true" property="og:image" content="https://siriartsandcrafts.com/og-image.webp" />
+    <meta data-rh="true" name="twitter:card" content="summary_large_image" />
+    <!-- SEO:END -->
 
     <!-- Performance: Preconnect & DNS Prefetch -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -107,78 +47,17 @@
     <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
     <link rel="dns-prefetch" href="https://www.google-analytics.com" />
     
-    <!-- Critical Assets Preload -->
-    <link rel="preload" as="image" href="/MainLogo.png" type="image/png" fetchpriority="high" />
+    <!-- Header logo (192px WebP, ~13KB; used by the boot shell and the navbar) -->
+    <link rel="preload" as="image" href="/MainLogo-192.webp" type="image/webp" />
 
-    <!-- LCP Preload Script: Preload page-specific hero background image as early as possible -->
-    <script>
-      (function() {
-        try {
-          var path = window.location.pathname;
-          var bgImg = '';
-          var cached = localStorage.getItem("siri_arts_website_content");
-          var parsed = cached ? JSON.parse(cached) : null;
+    <!-- Font-loading classes + early LCP preload for hero-image routes (one small sync script) -->
+    <script src="/boot.js"></script>
 
-          if (path === '/collections' || path === '/collections/') {
-            bgImg = (parsed && parsed.shopPage && parsed.shopPage.hero && parsed.shopPage.hero.backgroundImage)
-              ? parsed.shopPage.hero.backgroundImage
-              : 'https://lh3.googleusercontent.com/aida-public/AB6AXuC6Cy1TlK9jjSUwKlKlXEL_AKlV3Ff5c2VdyViS7GGN3dgR1UB3SgmAto5fKc__pxujkfieY8wFl8MLAhbv7fZHW-oIWdXX0Xqg7SaMj5Szj9w6aGsuChZguzRLBppvcE_7OyVd9N7Ldchm0izPUhXOQGyYaQUsd43cUxBLr5ift2YUa0I_rr4_34hldd6L-V9MeNbxa-BUn2gvZq7JQypKg2Wl6-8TPta6D_ZooOmuUfcwSJJUjNe8-voUHsu7mBKM_CeD9YFd204';
-          } else if (path === '/events/collections' || path === '/events/collections/' || path === '/events' || path === '/events/') {
-            bgImg = (parsed && parsed.eventsPage && parsed.eventsPage.hero && parsed.eventsPage.hero.backgroundImage)
-              ? parsed.eventsPage.hero.backgroundImage
-              : 'https://lh3.googleusercontent.com/aida-public/AB6AXuA7F3ck_1VBGtclja4rFpblASLZWmGyrrSeXc-D7PYlO1RJFSwwrZdHFE80h72hY1_kcwRRwjHuqfhG4Zlouur0m6jrXSLrhifw9vDKzna2lQ-ju5fdSEXiP7YRFTwnqlKsqohXveyKFObF5Wlx3w4eHE_H8k0Y1_l5DTr3WtpRbeEK40rGPLPe9CzEazxPBk_dKXe0G4hYrk0NZhhWEsdpFvGFb0pGyqjB5La45C5zfJ87FPCec_D1_Au1Z-IJca6gythEhj_rF4g';
-          }
-
-          if (bgImg) {
-            var link = document.createElement('link');
-            link.rel = 'preload';
-            link.as = 'image';
-            link.setAttribute('fetchpriority', 'high');
-
-            if (bgImg.indexOf('cloudinary.com') !== -1) {
-              var urlParts = bgImg.split('/upload/');
-              if (urlParts.length === 2) {
-                var pathPart = urlParts[1];
-                var firstSlash = pathPart.indexOf('/');
-                if (firstSlash > 0) {
-                  var potentialTransforms = pathPart.substring(0, firstSlash);
-                  if (potentialTransforms.indexOf('_') !== -1 && !potentialTransforms.startsWith('v')) {
-                    pathPart = pathPart.substring(firstSlash + 1);
-                  }
-                }
-                var breakpoints = [240, 320, 400, 500, 640, 800, 1024, 1280, 1536];
-                var srcsetArr = [];
-                for (var i = 0; i < breakpoints.length; i++) {
-                  var w = breakpoints[i];
-                  var t = 'w_' + w + ',c_limit,q_auto:good,f_auto,dpr_auto,fl_strip_profile';
-                  srcsetArr.push(urlParts[0] + '/upload/' + t + '/' + pathPart + ' ' + w + 'w');
-                }
-                link.setAttribute('imagesrcset', srcsetArr.join(', '));
-                link.setAttribute('imagesizes', '100vw');
-              } else {
-                link.href = bgImg;
-              }
-            } else if (bgImg.indexOf('googleusercontent.com') !== -1 && bgImg.indexOf('=') === -1) {
-              if (path === '/collections' || path === '/collections/') {
-                link.href = bgImg + '=w1920-h600-rw';
-              } else {
-                link.href = bgImg + '=w1920-rw';
-              }
-            } else {
-              link.href = bgImg;
-            }
-            document.head.appendChild(link);
-          }
-        } catch(e) {}
-      })();
-    </script>
-
-    <!-- Fonts Preload & Load -->
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" />
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0..1,0&display=swap" />
-    
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0..1,0&display=swap" />
+    <!-- Fonts are inserted by boot.js so they don't block first paint (display=swap). -->
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" />
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0..1,0&display=swap" />
+    </noscript>
 
     <!-- Critical CSS: Prevent FOUC -->
     <style>
@@ -254,18 +133,49 @@
         min-height: 100vh;
       }
 
+      /*
+       * Boot shell: a tiny CSS-only brand bar painted with the HTML, before any JS.
+       * It sits OUTSIDE #root (so React never tries to hydrate it) and is removed
+       * by App after React's first commit. Fixed-position, so removing it causes
+       * no layout shift.
+       */
+      #boot-shell {
+        position: fixed;
+        inset: 0 0 auto 0;
+        height: 64px;
+        z-index: 2147483000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #faf9f6;
+        border-bottom: 1px solid rgba(115, 92, 0, 0.08);
+        pointer-events: none;
+      }
+      #boot-shell img {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+      }
+      #boot-shell::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: -1px;
+        height: 2px;
+        width: 30%;
+        background: #d4af37;
+        animation: boot-bar 1.2s ease-in-out infinite;
+      }
+      @keyframes boot-bar {
+        from { transform: translateX(-100%); }
+        to { transform: translateX(340%); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #boot-shell::after { animation: none; width: 100%; opacity: 0.4; }
+      }
+
     </style>
 
-    <!-- Structured Data -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Organization",
-      "name": "Siri Arts & Crafts",
-      "url": "https://siriartsandcrafts.com",
-      "logo": "https://siriartsandcrafts.com/MainLogo.png"
-    }
-    </script>
   </head>
   <body>
     <!-- Noscript fallback for accessibility -->
@@ -276,70 +186,9 @@
       </div>
     </noscript>
 
-    <div id="root">
-      <!-- App Shell Skeleton: Displays instantly on cold start before React loads -->
-      <style>
-        .app-skeleton {
-          display: flex;
-          flex-direction: column;
-          min-height: 100vh;
-          background-color: #faf9f6;
-          overflow: hidden;
-        }
-        .skel-header {
-          height: 72px;
-          border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 0 5%;
-          background: rgba(250, 250, 250, 0.85);
-        }
-        .skel-pulse {
-          background: rgba(0, 0, 0, 0.06);
-          animation: skel-pulse 1.5s infinite ease-in-out;
-        }
-        @keyframes skel-pulse {
-          0% { opacity: 0.5; }
-          50% { opacity: 1; }
-          100% { opacity: 0.5; }
-        }
-        .skel-logo { width: 140px; height: 24px; border-radius: 6px; }
-        .skel-nav { display: flex; gap: 24px; }
-        .skel-nav-item { width: 64px; height: 16px; border-radius: 8px; }
-        .skel-icons { display: flex; gap: 16px; }
-        .skel-icon { width: 36px; height: 36px; border-radius: 50%; }
-        
-        .skel-hero {
-          margin: 32px 5%;
-          height: 60vh;
-          border-radius: 32px;
-        }
-        
-        @media (max-width: 768px) {
-          .skel-nav { display: none; }
-          .skel-header { padding: 0 24px; }
-          .skel-hero { height: 50vh; border-radius: 24px; margin: 24px 24px; }
-        }
-      </style>
-      <div id="app-shell" class="app-skeleton">
-        <div class="skel-header">
-          <div class="skel-pulse skel-logo"></div>
-          <div class="skel-nav">
-            <div class="skel-pulse skel-nav-item"></div>
-            <div class="skel-pulse skel-nav-item"></div>
-            <div class="skel-pulse skel-nav-item"></div>
-            <div class="skel-pulse skel-nav-item"></div>
-          </div>
-          <div class="skel-icons">
-            <div class="skel-pulse skel-icon"></div>
-            <div class="skel-pulse skel-icon" style="display: none;"></div>
-            <div class="skel-pulse skel-icon" style="display: none;"></div>
-          </div>
-        </div>
-        <div class="skel-pulse skel-hero"></div>
-      </div>
-    </div>
+    <div id="boot-shell" aria-hidden="true"><img src="/MainLogo-192.webp" alt="" width="44" height="44" /></div>
+    <!-- Keep #root empty: main.jsx hydrates when #root has children (prerendered HTML). -->
+    <div id="root"></div>
     <script type="module" src="/src/main.jsx" fetchpriority="high"></script>
 
   </body>

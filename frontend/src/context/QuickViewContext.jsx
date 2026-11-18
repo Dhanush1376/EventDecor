@@ -1,5 +1,20 @@
-import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
-import { QuickViewModal } from '../components/ui/QuickViewModal';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useMemo,
+  useEffect,
+  Suspense,
+} from 'react';
+import { lazyWithRetry as lazy } from '../utils/performance/lazyWithRetry';
+
+// The modal (~24 KB) only renders after a click, so it stays out of the entry chunk.
+// It is prefetched once the browser is idle so the first open is instant.
+const loadQuickViewModal = () => import('../components/ui/QuickViewModal');
+const QuickViewModal = lazy(() =>
+  loadQuickViewModal().then((m) => ({ default: m.QuickViewModal })),
+);
 
 const QuickViewContext = createContext();
 
@@ -28,6 +43,16 @@ export function QuickViewProvider({ children }) {
     setIsOpen(false);
   }, []);
 
+  useEffect(() => {
+    const prefetch = () => loadQuickViewModal().catch(() => {});
+    if (typeof requestIdleCallback === 'function') {
+      const id = requestIdleCallback(prefetch, { timeout: 5000 });
+      return () => cancelIdleCallback(id);
+    }
+    const t = setTimeout(prefetch, 3000);
+    return () => clearTimeout(t);
+  }, []);
+
   const contextValue = useMemo(
     () => ({ openQuickView, closeQuickView }),
     [openQuickView, closeQuickView],
@@ -37,7 +62,9 @@ export function QuickViewProvider({ children }) {
     <QuickViewContext.Provider value={contextValue}>
       {children}
       {isOpen && activeProduct && (
-        <QuickViewModal product={activeProduct} isOpen={isOpen} onClose={closeQuickView} />
+        <Suspense fallback={null}>
+          <QuickViewModal product={activeProduct} isOpen={isOpen} onClose={closeQuickView} />
+        </Suspense>
       )}
     </QuickViewContext.Provider>
   );

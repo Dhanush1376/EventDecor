@@ -12,8 +12,6 @@ const TTL_BY_PREFIX = [
   ['/cms', 5 * 60 * 1000],
   ['/products/categories', 30 * 1000],
   ['/products', 30 * 1000],
-  ['/gallery/categories', 10 * 60 * 1000],
-  ['/gallery', 5 * 60 * 1000],
   ['/events', 2 * 60 * 1000],
   ['/showcase', 5 * 60 * 1000],
   ['/recommendations', 3 * 60 * 1000],
@@ -50,6 +48,11 @@ const resolveTtl = (url = '') => {
 };
 
 const buildKey = (url, config) => `${url}?${JSON.stringify(config?.params || {})}`;
+
+/** True when a GET to this URL may be cached / shared (public, read-only endpoints). */
+export const isCacheableGet = (url) => resolveTtl(url) > 0;
+
+export const buildGetKey = buildKey;
 
 export const getCachedGet = (url, config) => {
   const ttl = resolveTtl(url);

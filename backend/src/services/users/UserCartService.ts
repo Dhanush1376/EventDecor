@@ -144,7 +144,7 @@ export class UserCartService {
     const user = await User.findById(userId).populate({
       path: 'cart.product',
       select:
-        'title isActive stock price imageSrc category rentalPricing securityDeposit isNonRefundable',
+        'title isActive stock inventoryMode price imageSrc category rentalPricing securityDeposit isNonRefundable',
     });
 
     if (!user) throw new ApiError(404, 'User not found');
@@ -161,12 +161,14 @@ export class UserCartService {
       const productId = item.product || item._id || item.id;
       if (!productId) continue;
 
-      const product = await Product.findById(productId).select('isActive stock rentalStock title');
+      const product = await Product.findById(productId).select(
+        'isActive stock rentalStock inventoryMode title',
+      );
       const itemType = item.type || 'purchase';
       const isOutOfStock =
         itemType === 'rental'
           ? (Number(product?.rentalStock) || 0) <= 0 && (Number(product?.stock) || 0) <= 0
-          : (Number(product?.stock) || 0) <= 0;
+          : product?.inventoryMode !== 'made_to_order' && (Number(product?.stock) || 0) <= 0;
 
       if (!product || !product.isActive || isOutOfStock) {
         droppedItems.push({ productId, reason: 'Unavailable or Out of Stock' });
@@ -224,7 +226,7 @@ export class UserCartService {
     const updatedUser = await User.findById(userId).populate({
       path: 'cart.product',
       select:
-        'title isActive stock price oldPrice imageSrc category rentalPricing securityDeposit isNonRefundable seller rating customizationConfig',
+        'title isActive stock inventoryMode price oldPrice imageSrc category rentalPricing securityDeposit isNonRefundable seller rating customizationConfig',
     });
 
     return { cart: updatedUser?.cart || [], droppedItems };

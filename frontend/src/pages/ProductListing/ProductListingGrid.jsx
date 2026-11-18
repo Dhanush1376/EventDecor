@@ -84,7 +84,7 @@ export const ProductListingGrid = React.memo(
           <div className="flex-1 min-w-0">
             <div className="hidden lg:flex items-center justify-between mb-6 pb-4 border-b border-outline-variant/15">
               <div>
-                <h1 className="font-heading text-[26px] xl:text-[30px] font-bold text-on-surface">
+                <h2 className="font-heading text-[26px] xl:text-[30px] font-bold text-on-surface">
                   {searchParam ? (
                     <>
                       Results for <span className="text-primary italic">"{searchParam}"</span>
@@ -94,7 +94,7 @@ export const ProductListingGrid = React.memo(
                   ) : (
                     categoryParam
                   )}
-                </h1>
+                </h2>
                 <div className="flex items-center gap-2 mt-0.5 text-on-surface-variant/70 font-medium text-body-sm flex-wrap">
                   <span>
                     <span className="font-semibold text-on-surface">{totalCount}</span>{' '}

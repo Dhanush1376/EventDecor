@@ -58,7 +58,7 @@ export function LivePreviewCard({ formData, mobileTab, categoriesList = [] }) {
                     .filter(Boolean)
                 : []
             }
-            stock={formData.stock !== '' ? Number(formData.stock) : 10}
+            stock={999999}
             rentalEnabled={formData.rentalEnabled}
             availabilityMode={formData.availabilityMode}
             rentalPricing={formData.rentalPricing}

@@ -6,8 +6,8 @@ export function NotFound() {
     <div className="min-h-[80vh] relative flex flex-col items-center justify-center px-4 overflow-hidden pt-24 lg:pt-32 pb-24 lg:pb-32">
       <SEO
         title="Page Not Found"
-        description="The heritage masterpiece or custom ceremony styling selection you are looking for has either found a new home or is currently unavailable."
-        robots="noindex, follow"
+        description="The page you are looking for has moved or is no longer available."
+        noindex
       />
       {/* Decorative background for 404 */}
       <div className="absolute inset-0 pointer-events-none -z-10 flex items-center justify-center opacity-[0.03]">
@@ -30,7 +30,7 @@ export function NotFound() {
               Return Home
             </Link>
             <Link to="/collections" className="btn-outline min-w-[200px]">
-              Browse Collections
+              Browse the Shop
             </Link>
           </div>
         </div>
@@ -48,12 +48,12 @@ export function NotFound() {
           </Link>
         </div>
         <div className="text-center">
-          <h3 className="font-label-sm mb-3">Services</h3>
+          <h3 className="font-label-sm mb-3">Support</h3>
           <Link
-            to="/custom-orders"
+            to="/contact"
             className="text-on-surface-variant hover:text-primary transition-colors text-sm"
           >
-            Custom Orders
+            Contact Us
           </Link>
         </div>
         <div className="text-center">

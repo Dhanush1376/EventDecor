@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef, Profiler } from 'react';
-import { useSearchParams, useLocation } from 'react-router-dom';
+import { useSearchParams, useLocation, useNavigationType } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 
 import { SEO } from '../../components/seo/SEO';
+import { STATIC_PAGES, categoryPath } from '../../seo/seoConfig';
 import { QuickViewModal } from '../../components/ui';
 import { couponService } from '../../services/domainServices';
 import { useWebsiteContent } from '../../hooks/useWebsiteContent';
@@ -23,6 +24,7 @@ import '../../styles/visual-search.css';
 export function ProductListing() {
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
+  const navigationType = useNavigationType();
 
   const isMobile = useMediaQuery('(max-width: 1023px)');
   const { scrollDirection, isAtTop } = useScrollDirection();
@@ -35,6 +37,29 @@ export function ProductListing() {
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
 
   const state = useProductListingState();
+
+  // One indexable URL per category (/collections?category=<name>); search results and other
+  // filtered views are noindex and canonicalise to the plain Shop page.
+  const activeCategory = state.categoryParam !== 'All' ? state.categoryParam : null;
+  const hasSearch = Boolean(searchParams.get('search'));
+  const shopSeo = hasSearch
+    ? { title: 'Search Results', noindex: true }
+    : activeCategory
+      ? {
+          title: `${activeCategory} | Shop`,
+          description: `Shop handcrafted ${activeCategory.toLowerCase()} from Siri Arts & Crafts. Browse designs, prices and availability, and order online.`,
+          canonicalUrl: categoryPath(activeCategory),
+          breadcrumbs: [
+            { name: 'Home', url: '/' },
+            { name: 'Shop', url: '/collections' },
+            { name: activeCategory, url: categoryPath(activeCategory) },
+          ],
+        }
+      : {
+          title: STATIC_PAGES['/collections'].title,
+          description: STATIC_PAGES['/collections'].description,
+          canonicalUrl: '/collections',
+        };
   const prevSearchRef = useRef(searchParams.get('search'));
   const prevCategoryRef = useRef(state.categoryParam);
   const prevCouponRef = useRef(searchParams.get('coupon'));
@@ -56,7 +81,9 @@ export function ProductListing() {
 
     if (isInitialMount.current) {
       isInitialMount.current = false;
-      if (hasActiveFilter) {
+      // Back/Forward: ScrollManager restores where the customer left off (and the shared
+      // element transition lands on that card); jumping to the shop anchor would undo it.
+      if (hasActiveFilter && navigationType !== 'POP') {
         // Immediate and staged scroll to guarantee exact position as DOM and lazy images settle
         scrollToShopAnchor({ smooth: false });
         const timer1 = setTimeout(() => {
@@ -100,7 +127,7 @@ export function ProductListing() {
       }, 60);
       return () => clearTimeout(timer);
     }
-  }, [state.categoryParam, searchParams, location.state]);
+  }, [state.categoryParam, searchParams, location.state, navigationType]);
 
   // Auto-scroll to shop anchor when search query itself changes
   useEffect(() => {
@@ -255,10 +282,7 @@ export function ProductListing() {
   return (
     <Profiler id="ProductListing" onRender={logRenderMetrics}>
       <div className="bg-surface min-h-screen">
-        <SEO
-          title="Shop"
-          description="Shop premium handcrafted wedding decor, pooja essentials, floral decorations, and personalized gifts."
-        />
+        <SEO {...shopSeo} />
 
         <ProductListingHeader
           isMobile={isMobile}

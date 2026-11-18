@@ -8,7 +8,10 @@ import InAppNotification from '../../../src/models/InAppNotification';
 import Product from '../../../src/models/Product';
 import Category from '../../../src/models/Category';
 import { getOrderById } from '../../../src/controllers/commerce/orderController';
-import { getReturnById } from '../../../src/controllers/returns/returnController';
+import {
+  getReturnForOrder,
+  getWhatsAppEligibility,
+} from '../../../src/controllers/returns/returnController';
 import { markAsRead } from '../../../src/controllers/notifications/notificationCenterController';
 import { requireAdmin } from '../../../src/middleware/authMiddleware';
 import { UserService } from '../../../src/services/users/userService';
@@ -262,9 +265,9 @@ describe('Authorization & IDOR Security Integration Suite', () => {
   });
 
   describe('2. Return Request Ownership & IDOR Protection', () => {
-    it('Customer B cannot access Customer A return request (returns 404 Not Found)', async () => {
+    it("Customer B cannot see Customer A's legacy return records for an order", async () => {
       const dummyOrderId = new mongoose.Types.ObjectId();
-      const returnRequestA = await ReturnRequest.create({
+      await ReturnRequest.create({
         userId: userA._id,
         orderId: dummyOrderId,
         returnId: `RET-${Date.now()}`,
@@ -291,21 +294,51 @@ describe('Authorization & IDOR Security Integration Suite', () => {
         status: 'submitted',
       } as any);
 
-      // Customer B attempts to fetch Customer A's return request by ID
       const req = makeReq({
-        params: { id: returnRequestA._id.toString() },
+        params: { orderId: dummyOrderId.toString() },
         user: { id: userB._id.toString(), role: 'user', email: userB.email },
       });
       const res = makeRes();
+      await executeHandler(getReturnForOrder, req, res, vi.fn());
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body.data.returns).toHaveLength(0);
+    });
+
+    it("Customer B cannot start a WhatsApp return for Customer A's order (404)", async () => {
+      const orderA = await Order.create({
+        user: userA._id,
+        items: [
+          { productId: product._id, title: product.title, price: 2500, quantity: 1, imageSrc: 'x' },
+        ],
+        shippingAddress: {
+          name: 'Customer A',
+          phone: '9876543210',
+          email: 'customera@example.com',
+          pincode: '500001',
+          locality: 'Banjara Hills',
+          address: '123 Main St',
+          city: 'Hyderabad',
+          state: 'Telangana',
+          country: 'India',
+        },
+        paymentMethod: 'razorpay',
+        paymentStatus: 'paid',
+        orderStatus: 'Delivered',
+        subtotal: 2500,
+        total: 2500,
+      } as any);
+
+      const req = makeReq({
+        params: { orderId: orderA._id.toString() },
+        user: { id: userB._id.toString(), role: 'user', email: userB.email },
+      });
       const next = vi.fn();
+      await executeHandler(getWhatsAppEligibility, req, makeRes(), next);
 
-      await executeHandler(getReturnById, req, res, next);
-
-      expect(next).toHaveBeenCalled();
       const err = next.mock.calls[0][0];
       expect(err).toBeInstanceOf(ApiError);
       expect(err.statusCode).toBe(404);
-      expect(err.message).toMatch(/return request not found/i);
     });
   });
 

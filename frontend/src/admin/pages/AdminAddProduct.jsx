@@ -2,10 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { ProductMediaStep } from './steps/ProductMediaStep';
 import { ProductInfoStep } from './steps/ProductInfoStep';
-import { ProductVariantsStep } from './steps/ProductVariantsStep';
-import { ProductSeoStep } from './steps/ProductSeoStep';
 import { ProductPricingStep } from './steps/ProductPricingStep';
-import { ProductReturnStep } from './steps/ProductReturnStep';
 import { ProductReviewStep } from './steps/ProductReviewStep';
 import { SkeletonWizard } from '../components/AdminUIKit';
 import { LivePreviewCard } from '../components/LivePreviewCard';
@@ -35,10 +32,7 @@ const slideIn = {
 const WIZARD_STEPS = [
   { id: 'images', label: 'Media', icon: 'photo_library' },
   { id: 'basics', label: 'Basic Info', icon: 'info' },
-  { id: 'variants', label: 'Variants', icon: 'style' },
-  { id: 'pricing', label: 'Pricing', icon: 'payments' },
-  { id: 'policies', label: 'Policies', icon: 'assignment_return' },
-  { id: 'seo', label: 'SEO', icon: 'search' },
+  { id: 'pricing', label: 'Pricing & Policies', icon: 'payments' },
   { id: 'review', label: 'Publish', icon: 'publish' },
 ];
 
@@ -460,24 +454,8 @@ export function AdminAddProduct({ editId }) {
                   />
                 )}
 
-                {/* STEP 2: VARIANTS */}
+                {/* STEP 2: PRICING & POLICIES */}
                 {currentStep === 2 && (
-                  <ProductVariantsStep
-                    formData={formData}
-                    setFormData={setFormData}
-                    isAIGenerating={isAIGenerating}
-                    handleAIFill={handleAIFill}
-                    focusedField={focusedField}
-                    newVariant={newVariant}
-                    setNewVariant={setNewVariant}
-                    handleAddVariant={handleAddVariant}
-                    handleRemoveVariant={handleRemoveVariant}
-                    handleRemoveAttributeGroup={handleRemoveAttributeGroup}
-                  />
-                )}
-
-                {/* STEP 3: PRICING & INVENTORY */}
-                {currentStep === 3 && (
                   <ProductPricingStep
                     formData={formData}
                     setFormData={setFormData}
@@ -489,24 +467,8 @@ export function AdminAddProduct({ editId }) {
                   />
                 )}
 
-                {/* STEP 4: RETURN POLICIES */}
-                {currentStep === 4 && (
-                  <ProductReturnStep formData={formData} setFormData={setFormData} />
-                )}
-
-                {/* STEP 5: SEO */}
-                {currentStep === 5 && (
-                  <ProductSeoStep
-                    formData={formData}
-                    setFormData={setFormData}
-                    focusedField={focusedField}
-                    handleAIFill={handleAIFill}
-                    isAIGenerating={isAIGenerating}
-                  />
-                )}
-
-                {/* STEP 6: REVIEW */}
-                {currentStep === 6 && (
+                {/* STEP 3: REVIEW & PUBLISH */}
+                {currentStep === 3 && (
                   <ProductReviewStep formData={formData} setFormData={setFormData} />
                 )}
               </motion.div>

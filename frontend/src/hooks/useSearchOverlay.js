@@ -101,7 +101,7 @@ export function useSearchOverlay() {
 
     list.forEach((item) => {
       if (item.type === 'category') groups[0].items.push(item);
-      else if (item.type === 'event' || item.type === 'gallery') groups[1].items.push(item);
+      else if (item.type === 'event') groups[1].items.push(item);
       else if (item.type === 'product') groups[2].items.push(item);
       else groups[3].items.push(item);
     });
@@ -197,14 +197,10 @@ export function useSearchOverlay() {
         navigate(`/product/${suggestion.slug || suggestion.id}`);
       } else if (suggestion.type === 'event') {
         navigate(`/events/${suggestion.slug || suggestion.id}`);
-      } else if (suggestion.type === 'gallery') {
-        navigate(`/gallery/${suggestion.id}`);
       } else {
         const currentPath = window.location.pathname;
         if (currentPath.startsWith('/events')) {
           navigate(`/events?search=${encodeURIComponent(suggestion.title)}`);
-        } else if (currentPath.startsWith('/gallery')) {
-          navigate(`/gallery?search=${encodeURIComponent(suggestion.title)}`);
         } else {
           navigate(`/collections?search=${encodeURIComponent(suggestion.title)}`);
         }
@@ -227,8 +223,6 @@ export function useSearchOverlay() {
       const currentPath = window.location.pathname;
       if (currentPath.startsWith('/events')) {
         navigate(`/events?search=${encodeURIComponent(q)}`);
-      } else if (currentPath.startsWith('/gallery')) {
-        navigate(`/gallery?search=${encodeURIComponent(q)}`);
       } else {
         navigate(`/collections?search=${encodeURIComponent(q)}`);
       }

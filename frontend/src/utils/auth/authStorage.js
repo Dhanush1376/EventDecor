@@ -17,13 +17,13 @@ export const clearSessionMarker = () => {
   persistentStorage.removeItem(SESSION_MARKER_KEY);
 };
 
-export const setFallbackRefreshToken = (token) => {
-  if (token) persistentStorage.setItem(REFRESH_TOKEN_KEY, token);
+// Refresh tokens live only in the HttpOnly cookie. These helpers remain as no-ops so a token is
+// never written to storage readable by page JavaScript; any value left by older builds is removed.
+export const setFallbackRefreshToken = () => {
+  clearFallbackRefreshToken();
 };
 
-export const getFallbackRefreshToken = () => {
-  return persistentStorage.getItem(REFRESH_TOKEN_KEY, { fallback: null });
-};
+export const getFallbackRefreshToken = () => null;
 
 export const clearFallbackRefreshToken = () => {
   persistentStorage.removeItem(REFRESH_TOKEN_KEY);
@@ -33,3 +33,10 @@ export const clearAuthStorage = () => {
   clearSessionMarker();
   clearFallbackRefreshToken();
 };
+
+// Remove refresh tokens persisted by earlier builds.
+try {
+  clearFallbackRefreshToken();
+} catch {
+  // storage unavailable
+}

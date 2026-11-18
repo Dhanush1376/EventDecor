@@ -7,6 +7,8 @@ export interface IInventoryReservation extends ISoftDeleted {
   quantity: number;
   status: 'reserved' | 'confirmed' | 'expired';
   expiresAt: Date;
+  /** false for made-to-order products: confirming must not deduct `stock`. Missing on legacy docs = true. */
+  tracksStock?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -22,6 +24,7 @@ const InventoryReservationSchema: Schema = new Schema(
       default: 'reserved',
     },
     expiresAt: { type: Date, required: true },
+    tracksStock: { type: Boolean, default: true },
   },
   {
     timestamps: true,

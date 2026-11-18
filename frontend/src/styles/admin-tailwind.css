@@ -1,0 +1,22 @@
+/*
+ * Admin-only Tailwind utilities.
+ *
+ * The storefront stylesheet (globals.css) excludes src/admin from Tailwind's
+ * class scan so customers never download admin-only utilities. This sheet
+ * generates the utilities used under src/admin and is imported only by admin
+ * entry points (AdminLayout, the admin route skeleton, maintenance pages), so
+ * it ships in their lazy chunks.
+ *
+ * Theme tokens and custom @utility definitions are re-imported so admin
+ * classes such as `bg-primary` or `font-label-sm` resolve to the same values.
+ * Any rules duplicated with the storefront sheet are identical, so order does
+ * not change the result.
+ */
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities) source(none);
+@source '../admin';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@import './globals/theme.css';
+@import './globals/utilities.css';

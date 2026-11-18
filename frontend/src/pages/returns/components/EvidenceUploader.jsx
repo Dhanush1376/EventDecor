@@ -12,9 +12,14 @@ const EvidenceUploader = ({
   onVideosChange,
   maxImages = 5,
   maxVideos = 2,
+  onUploadingChange,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
+  const [isUploading, setIsUploadingState] = useState(false);
+  const setIsUploading = (value) => {
+    setIsUploadingState(value);
+    onUploadingChange?.(value);
+  };
   const fileInputRef = useRef(null);
 
   const handleDragOver = (e) => {
@@ -117,13 +122,24 @@ const EvidenceUploader = ({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            fileInputRef.current?.click();
+          }
+        }}
+        role="button"
+        tabIndex={0}
+        aria-label="Upload photos"
       >
         <CloudUpload className="text-4xl text-on-surface-variant mb-2" strokeWidth={1.5} />
         <h3 className="text-on-surface font-medium mb-1">
           {isUploading ? 'Uploading...' : 'Click or drag files to upload'}
         </h3>
         <p className="text-sm text-on-surface-variant">
-          Images (max {maxImages}), Videos (max {maxVideos})
+          {maxVideos > 0
+            ? `Images (max ${maxImages}), Videos (max ${maxVideos})`
+            : `Images (max ${maxImages})`}
         </p>
         <input
           type="file"
@@ -131,7 +147,7 @@ const EvidenceUploader = ({
           onChange={handleFileSelect}
           className="hidden"
           multiple
-          accept="image/*,video/*"
+          accept={maxVideos > 0 ? 'image/*,video/*' : 'image/*'}
         />
       </div>
 
@@ -148,11 +164,13 @@ const EvidenceUploader = ({
               >
                 <img src={url} alt={`Evidence ${i + 1}`} className="w-full h-full object-cover" />
                 <button
+                  type="button"
+                  aria-label={`Remove image ${i + 1}`}
                   onClick={(e) => {
                     e.stopPropagation();
                     removeImage(i);
                   }}
-                  className="absolute top-1 right-1 w-6 h-6 bg-error text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute top-1 right-1 w-6 h-6 bg-error text-white rounded-full flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 transition-opacity"
                 >
                   <X className="text-[14px]" strokeWidth={1.5} />
                 </button>
@@ -167,11 +185,13 @@ const EvidenceUploader = ({
               >
                 <PlayCircle className="text-3xl text-on-surface-variant" strokeWidth={1.5} />
                 <button
+                  type="button"
+                  aria-label={`Remove video ${i + 1}`}
                   onClick={(e) => {
                     e.stopPropagation();
                     removeVideo(i);
                   }}
-                  className="absolute top-1 right-1 w-6 h-6 bg-error text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute top-1 right-1 w-6 h-6 bg-error text-white rounded-full flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 transition-opacity"
                 >
                   <X className="text-[14px]" strokeWidth={1.5} />
                 </button>

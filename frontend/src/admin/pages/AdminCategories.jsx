@@ -304,7 +304,7 @@ export function AdminCategories() {
 
             {/* Desktop Scope Segmented Pill Switcher */}
             <div className="hidden sm:flex items-center gap-1 p-1 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] h-[42px] min-h-[42px] max-h-[42px] box-border">
-              {['All', 'product', 'gallery', 'event'].map((t) => (
+              {['All', 'product', 'event'].map((t) => (
                 <button
                   key={t}
                   type="button"
@@ -369,7 +369,6 @@ export function AdminCategories() {
                   >
                     <option value="All">All Types</option>
                     <option value="product">Product</option>
-                    <option value="gallery">Gallery</option>
                     <option value="event">Event</option>
                   </select>
                 </div>

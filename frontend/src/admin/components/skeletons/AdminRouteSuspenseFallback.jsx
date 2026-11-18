@@ -1,5 +1,6 @@
 import { useLocation } from 'react-router-dom';
 import { getAdminRouteSkeleton } from './getAdminRouteSkeleton';
+import '../../../styles/admin-tailwind.css';
 
 /**
  * Fallback component for React.Suspense in AdminLayout and RouteSkeleton.

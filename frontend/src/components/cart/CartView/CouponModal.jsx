@@ -3,6 +3,7 @@ import { X, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import { useMobileDrawerEngine, DrawerDragHandle } from '../../ui/drawer';
+import { useScrollLock } from '../../../hooks/useScrollLock';
 
 export function CouponModal({
   isCouponModalOpen,
@@ -20,6 +21,8 @@ export function CouponModal({
     isOpen: isCouponModalOpen,
     onClose: () => setIsCouponModalOpen(false),
   });
+
+  useScrollLock(isCouponModalOpen);
 
   if (typeof document === 'undefined') return null;
 
@@ -48,19 +51,25 @@ export function CouponModal({
             }}
             transition={sheetTransition}
             {...dragProps}
-            className="relative w-full max-w-[500px] flex flex-col z-[1001] max-h-[88dvh] sm:max-h-[85vh]"
+            className="relative w-full sm:max-w-[480px] flex flex-col z-[1001] max-h-[90dvh] sm:max-h-[85vh]"
           >
-            <div className="w-full bg-surface-bright rounded-t-3xl sm:rounded-[24px] p-6 sm:p-8 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] sm:pb-8 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] overflow-hidden max-h-[88dvh] sm:max-h-[85vh] flex flex-col">
-              {isMobile && <DrawerDragHandle onClick={() => setIsCouponModalOpen(false)} />}
+            <div className="w-full bg-surface-bright rounded-t-[28px] sm:rounded-[24px] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] overflow-hidden max-h-[90dvh] sm:max-h-[85vh] flex flex-col">
+              {/* Perfectly positioned top drag handle */}
+              {isMobile && (
+                <div className="w-full pt-3 pb-1.5 flex justify-center shrink-0">
+                  <DrawerDragHandle onClick={() => setIsCouponModalOpen(false)} />
+                </div>
+              )}
               <button
                 onClick={() => setIsCouponModalOpen(false)}
-                className="absolute top-6 right-6 w-8 h-8 min-h-0 rounded-full bg-surface-container-lowest border border-outline-variant/40 flex items-center justify-center hover:bg-surface-container transition-all z-50 cursor-pointer shadow-xs hidden sm:flex"
+                className="absolute top-5 right-5 w-8 h-8 min-h-0 rounded-full bg-surface-container-lowest border border-outline-variant/40 flex items-center justify-center hover:bg-surface-container transition-all z-50 cursor-pointer shadow-xs hidden sm:flex"
               >
                 <X className="text-[16px]" strokeWidth={1.5} />
               </button>
-              <div className="relative z-10 flex flex-col h-full max-h-[75vh]">
-                <div className="mb-6">
-                  <h2 className="text-[20px] font-bold text-on-surface leading-tight mb-1">
+              
+              <div className="px-5 sm:px-7 pt-1 pb-6 sm:pb-7 flex flex-col h-full max-h-[75vh] overflow-hidden">
+                <div className="mb-4">
+                  <h2 className="text-[19px] sm:text-[20px] font-bold text-on-surface leading-tight mb-0.5">
                     Coupons & Offers
                   </h2>
                   <p className="text-secondary text-[12px]">
@@ -68,7 +77,7 @@ export function CouponModal({
                   </p>
                 </div>
 
-                <form onSubmit={(e) => handleApplyCoupon(e)} className="flex gap-2 mb-6">
+                <form onSubmit={(e) => handleApplyCoupon(e)} className="flex gap-2 mb-4">
                   <div className="relative flex-1">
                     <input
                       type="text"
@@ -78,7 +87,7 @@ export function CouponModal({
                         setCouponInput(e.target.value.toUpperCase());
                         if (couponError) setCouponError('');
                       }}
-                      className="w-full bg-surface-container-lowest border border-outline-variant/60 rounded-xl px-4 py-3 text-[13px] outline-none focus:border-primary text-on-surface font-bold uppercase transition-all tracking-wider"
+                      className="w-full bg-surface-container-lowest border border-outline-variant/60 rounded-xl px-4 py-2.5 text-[12px] sm:text-[13px] outline-none focus:border-primary text-on-surface font-bold uppercase transition-all tracking-wider"
                     />
                     <AnimatePresence>
                       {couponError && (
@@ -97,14 +106,14 @@ export function CouponModal({
                   <button
                     type="submit"
                     disabled={!couponInput.trim()}
-                    className="bg-on-surface text-surface disabled:opacity-30 disabled:cursor-not-allowed px-6 rounded-xl text-[12px] font-bold uppercase tracking-wider transition-all cursor-pointer hover:bg-on-surface/90"
+                    className="bg-on-surface text-surface disabled:opacity-30 disabled:cursor-not-allowed px-5 sm:px-6 rounded-xl text-[12px] font-bold uppercase tracking-wider transition-all cursor-pointer hover:bg-on-surface/90"
                   >
                     Apply
                   </button>
                 </form>
 
-                <div className="flex-1 overflow-y-auto overscroll-contain touch-pan-y pr-2 space-y-4 scrollbar-thin">
-                  <span className="text-[11px] font-bold uppercase tracking-widest text-secondary block">
+                <div className="flex-1 overflow-y-auto overscroll-contain touch-pan-y space-y-3 no-scrollbar">
+                  <span className="text-[11px] font-bold uppercase tracking-widest text-secondary block pb-0.5">
                     Available Offers
                   </span>
 

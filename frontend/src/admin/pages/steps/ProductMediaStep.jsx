@@ -17,63 +17,11 @@ export function ProductMediaStep({
       <div>
         <h2 className="text-[11px] font-bold text-[var(--admin-text-primary)]">Product Media</h2>
         <p className="text-[11px] text-[var(--admin-text-secondary)]">
-          Upload images or paste URLs. The first image acts as the primary cover.
+          Upload product images. The first image acts as the primary cover.
         </p>
       </div>
 
       <div className="space-y-4">
-        {/* URL Paste Box */}
-        <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] space-y-3">
-          <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-widest">
-            Paste Image URLs
-          </label>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              id="directUrlInput"
-              placeholder="Image URL"
-              className="flex-1 min-w-0 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] px-3 h-9 text-[12.5px] outline-none focus:border-[var(--admin-accent)]"
-            />
-            <button
-              type="button"
-              onClick={() => {
-                const input = document.getElementById('directUrlInput');
-                if (input.value) {
-                  const inputUrl = input.value.trim();
-
-                  setFormData((prev) => {
-                    const combinedImages = [...(prev.images || []), inputUrl];
-                    const limitedImages = combinedImages.slice(0, 4);
-
-                    if (combinedImages.length > 4) {
-                      toast.error('Maximum 4 images allowed. Only the first 4 were kept.');
-                    }
-
-                    const pendingUrlObj = {
-                      localUrl: inputUrl,
-                      file: inputUrl, // String, distinguished from File object
-                    };
-
-                    const previousPending = prev.pendingUploads || [];
-
-                    return {
-                      ...prev,
-                      images: limitedImages,
-                      imageSrc: limitedImages[0] || '',
-                      pendingUploads: [...previousPending, pendingUrlObj],
-                    };
-                  });
-                  toast.success('Image URL added locally! Will upload on publish.');
-                  input.value = '';
-                }
-              }}
-              className="shrink-0 bg-[var(--admin-accent)] text-white hover:opacity-95 px-4 h-9 rounded-[4px] text-[12px] font-bold uppercase tracking-wider transition-all active:scale-95 cursor-pointer whitespace-nowrap shadow-xs"
-            >
-              Add URL
-            </button>
-          </div>
-        </div>
-
         {/* Multi Upload Box */}
         <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] space-y-3">
           <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-widest flex justify-between items-center">

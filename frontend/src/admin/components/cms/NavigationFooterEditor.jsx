@@ -12,7 +12,6 @@ export function NavigationFooterEditor({ nav = {}, footer = {}, onUpdate }) {
       : [
           { label: 'Collections', href: '/collections' },
           { label: 'Events', href: '/events' },
-          { label: 'Gallery', href: '/gallery' },
         ];
 
   const studioLinks =
@@ -20,7 +19,6 @@ export function NavigationFooterEditor({ nav = {}, footer = {}, onUpdate }) {
       ? footer.studioLinks
       : [
           { label: 'Our Story', href: '/about' },
-          { label: 'Custom Orders', href: '/custom-orders' },
           { label: 'Contact', href: '/contact' },
         ];
 

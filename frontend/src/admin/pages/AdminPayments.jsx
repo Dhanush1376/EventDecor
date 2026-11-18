@@ -6,7 +6,6 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { useAdmin } from '../context/AdminContext';
 import { bookingService, customOrderService } from '../../services/domainServices';
 import rentalService from '../../services/api/rentalService';
-import { returnService } from '../../services/api/returnService';
 import logger from '../../utils/core/logger';
 import {
   PageHeader,
@@ -102,38 +101,16 @@ export function AdminPayments() {
     }
   }, []);
 
-  // 4. Fetch Returns
+  // 4–5. Returns & exchanges are handled manually over WhatsApp; no automated refund
+  // or exchange-payment records are created any more, so there is nothing to list.
   const fetchReturns = useCallback(async () => {
-    try {
-      setReturnsLoading(true);
-      const res = await returnService.getAllReturns({ page: 1, limit: 999999 });
-      const payload = res?.data?.data || res?.data || res;
-      const list = Array.isArray(payload)
-        ? payload
-        : payload.returns || payload.items || payload.data || [];
-      setReturns(list);
-    } catch (err) {
-      logger.error('Failed to load returns in payments:', err);
-    } finally {
-      setReturnsLoading(false);
-    }
+    setReturns([]);
+    setReturnsLoading(false);
   }, []);
 
-  // 5. Fetch Exchanges
   const fetchExchanges = useCallback(async () => {
-    try {
-      setExchangesLoading(true);
-      const res = await returnService.getAllExchanges({ page: 1, limit: 999999 });
-      const payload = res?.data?.data || res?.data || res;
-      const list = Array.isArray(payload)
-        ? payload
-        : payload.exchanges || payload.items || payload.data || [];
-      setExchanges(list);
-    } catch (err) {
-      logger.error('Failed to load exchanges in payments:', err);
-    } finally {
-      setExchangesLoading(false);
-    }
+    setExchanges([]);
+    setExchangesLoading(false);
   }, []);
 
   useEffect(() => {

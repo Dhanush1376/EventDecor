@@ -1,8 +1,12 @@
 @import 'tailwindcss';
 
+/* Admin utilities are generated separately in admin-tailwind.css (lazy admin chunks). */
+@source not '../admin';
+
 @custom-variant dark (&:where(.dark, .dark *));
 
 @import './globals/theme.css';
 @import './globals/base.css';
 @import './globals/components.css';
 @import './globals/utilities.css';
+@import './globals/view-transitions.css';
